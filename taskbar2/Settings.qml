@@ -150,451 +150,499 @@ ColumnLayout {
     pluginApi.saveSettings();
   }
 
-  NComboBox {
+  NTabBar {
+    id: tabBar
     Layout.fillWidth: true
-    label: pluginApi?.tr("settings.hideMode.label")
-    description: pluginApi?.tr("settings.hideMode.desc")
-    model: [
-      { "key": "visible", "name": pluginApi?.tr("options.visible") },
-      { "key": "hidden", "name": pluginApi?.tr("options.hidden") },
-      { "key": "transparent", "name": pluginApi?.tr("options.transparent") }
-    ]
-    currentKey: root.valueHideMode
-    onSelected: key => root.valueHideMode = key
-    defaultValue: defaults.hideMode ?? "hidden"
+    distributeEvenly: true
+    currentIndex: tabView.currentIndex
+
+    NTabButton { text: qsTr("General"); tabIndex: 0 }
+    NTabButton { text: qsTr("Organization"); tabIndex: 1 }
+    NTabButton { text: qsTr("Layout"); tabIndex: 2 }
+    NTabButton { text: qsTr("Colors"); tabIndex: 3 }
   }
 
-  NToggle {
+  NTabView {
+    id: tabView
     Layout.fillWidth: true
-    label: pluginApi?.tr("settings.onlySameOutput.label")
-    description: pluginApi?.tr("settings.onlySameOutput.desc")
-    checked: root.valueOnlySameOutput
-    onToggled: checked => root.valueOnlySameOutput = checked
-    defaultValue: defaults.onlySameOutput ?? true
-  }
+    currentIndex: tabBar.currentIndex
 
-  NToggle {
-    Layout.fillWidth: true
-    label: pluginApi?.tr("settings.onlyActiveWorkspaces.label")
-    description: pluginApi?.tr("settings.onlyActiveWorkspaces.desc")
-    checked: root.valueOnlyActiveWorkspaces
-    onToggled: checked => root.valueOnlyActiveWorkspaces = checked
-    defaultValue: defaults.onlyActiveWorkspaces ?? true
-  }
-
-  NToggle {
-    Layout.fillWidth: true
-    label: pluginApi?.tr("settings.colorizeIcons.label")
-    description: pluginApi?.tr("settings.colorizeIcons.desc")
-    checked: root.valueColorizeIcons
-    onToggled: checked => root.valueColorizeIcons = checked
-    defaultValue: defaults.colorizeIcons ?? false
-  }
-
-  NToggle {
-    Layout.fillWidth: true
-    label: pluginApi?.tr("settings.showPinnedApps.label")
-    description: pluginApi?.tr("settings.showPinnedApps.desc")
-    checked: root.valueShowPinnedApps
-    onToggled: checked => root.valueShowPinnedApps = checked
-    defaultValue: defaults.showPinnedApps ?? true
-  }
-
-  NHeader {
-    label: pluginApi?.tr("settings.sections.icon.label")
-    description: pluginApi?.tr("settings.sections.icon.desc")
-  }
-
-  NValueSlider {
-    Layout.fillWidth: true
-    label: pluginApi?.tr("settings.iconScale.label")
-    description: pluginApi?.tr("settings.iconScale.desc")
-    from: 0.5
-    to: 1
-    stepSize: 0.01
-    showReset: true
-    value: root.valueIconScale
-    defaultValue: defaults.iconScale ?? 0.8
-    onMoved: value => root.valueIconScale = value
-    text: Math.round(root.valueIconScale * 100) + "%"
-  }
-
-  NValueSlider {
-    Layout.fillWidth: true
-    label: pluginApi?.tr("settings.hoverIconScaleMultiplier.label")
-    description: pluginApi?.tr("settings.hoverIconScaleMultiplier.desc")
-    from: 1
-    to: 1.35
-    stepSize: 0.01
-    showReset: true
-    value: root.valueHoverIconScaleMultiplier
-    defaultValue: defaults.hoverIconScaleMultiplier ?? 1.0
-    onMoved: value => root.valueHoverIconScaleMultiplier = value
-    text: Math.round(root.valueHoverIconScaleMultiplier * 100) + "%"
-  }
-
-  NValueSlider {
-    Layout.fillWidth: true
-    label: pluginApi?.tr("settings.hoverItemScalePercent.label")
-    description: pluginApi?.tr("settings.hoverItemScalePercent.desc")
-    from: 0
-    to: 5
-    stepSize: 0.1
-    showReset: true
-    value: root.valueHoverItemScalePercent
-    defaultValue: defaults.hoverItemScalePercent ?? 0
-    onMoved: value => root.valueHoverItemScalePercent = value
-    text: root.valueHoverItemScalePercent.toFixed(1) + "%"
-  }
-
-  NDivider {
-    Layout.fillWidth: true
-  }
-
-  NHeader {
-    label: pluginApi?.tr("settings.sections.layout.label")
-    description: pluginApi?.tr("settings.sections.layout.desc")
-  }
-
-  NToggle {
-    Layout.fillWidth: true
-    label: pluginApi?.tr("settings.showTitle.label")
-    description: root.isVerticalBar ? pluginApi?.tr("settings.showTitle.descDisabled") : pluginApi?.tr("settings.showTitle.desc")
-    checked: root.valueShowTitle
-    onToggled: checked => root.valueShowTitle = checked
-    enabled: !root.isVerticalBar
-    defaultValue: defaults.showTitle ?? false
-  }
-
-  NTextInput {
-    visible: root.valueShowTitle && !root.isVerticalBar
-    Layout.fillWidth: true
-    label: pluginApi?.tr("settings.titleWidth.label")
-    description: pluginApi?.tr("settings.titleWidth.desc")
-    text: String(root.valueTitleWidth)
-    placeholderText: pluginApi?.tr("placeholders.enterWidthPixels")
-    onTextChanged: root.valueTitleWidth = parseInt(text) || (defaults.titleWidth ?? 120)
-    defaultValue: String(defaults.titleWidth ?? 120)
-  }
-
-  NToggle {
-    Layout.fillWidth: true
-    visible: !root.isVerticalBar && root.valueShowTitle
-    label: pluginApi?.tr("settings.smartWidth.label")
-    description: pluginApi?.tr("settings.smartWidth.desc")
-    checked: root.valueSmartWidth
-    onToggled: checked => root.valueSmartWidth = checked
-    defaultValue: defaults.smartWidth ?? true
-  }
-
-  NValueSlider {
-    visible: root.valueSmartWidth && !root.isVerticalBar
-    Layout.fillWidth: true
-    label: pluginApi?.tr("settings.maxTaskbarWidth.label")
-    description: pluginApi?.tr("settings.maxTaskbarWidth.desc")
-    from: 10
-    to: 100
-    stepSize: 5
-    showReset: true
-    value: root.valueMaxTaskbarWidth
-    defaultValue: defaults.maxTaskbarWidth ?? 40
-    onMoved: value => root.valueMaxTaskbarWidth = Math.round(value)
-    text: Math.round(root.valueMaxTaskbarWidth) + "%"
-  }
-
-  NValueSlider {
-    Layout.fillWidth: true
-    label: pluginApi?.tr("settings.itemGapUnits.label")
-    description: pluginApi?.tr("settings.itemGapUnits.desc")
-    from: 0
-    to: 12
-    stepSize: 1
-    showReset: true
-    value: root.valueItemGapUnits
-    defaultValue: defaults.itemGapUnits ?? 2
-    onMoved: value => root.valueItemGapUnits = Math.round(value)
-    text: Math.round(root.valueItemGapUnits)
-  }
-
-  NDivider {
-    Layout.fillWidth: true
-  }
-
-  NHeader {
-    label: pluginApi?.tr("settings.sections.typography.label")
-    description: pluginApi?.tr("settings.sections.typography.desc")
-  }
-
-  NSearchableComboBox {
-    visible: !root.isVerticalBar
-    Layout.fillWidth: true
-    label: pluginApi?.tr("settings.titleFontFamily.label")
-    description: pluginApi?.tr("settings.titleFontFamily.desc")
-    model: FontService.availableFonts
-    currentKey: root.valueTitleFontFamily
-    placeholder: pluginApi?.tr("settings.titleFontFamily.placeholder")
-    searchPlaceholder: pluginApi?.tr("settings.titleFontFamily.searchPlaceholder")
-    popupHeight: 420
-    defaultValue: defaults.titleFontFamily ?? ""
-    onSelected: key => root.valueTitleFontFamily = key
-  }
-
-  NValueSlider {
-    visible: !root.isVerticalBar
-    Layout.fillWidth: true
-    label: pluginApi?.tr("settings.titleFontScale.label")
-    description: pluginApi?.tr("settings.titleFontScale.desc")
-    from: 0.75
-    to: 1.25
-    stepSize: 0.01
-    showReset: true
-    value: root.valueTitleFontScale
-    defaultValue: defaults.titleFontScale ?? 1.0
-    onMoved: value => root.valueTitleFontScale = value
-    text: Math.round(root.valueTitleFontScale * 100) + "%"
-  }
-
-  NComboBox {
-    visible: !root.isVerticalBar
-    Layout.fillWidth: true
-    label: pluginApi?.tr("settings.titleFontWeight.label")
-    description: pluginApi?.tr("settings.titleFontWeight.desc")
-    model: root.titleFontWeightOptions
-    currentKey: root.valueTitleFontWeight
-    onSelected: key => root.valueTitleFontWeight = key
-    defaultValue: defaults.titleFontWeight ?? "medium"
-  }
-
-  NDivider {
-    Layout.fillWidth: true
-  }
-
-  NHeader {
-    label: pluginApi?.tr("settings.sections.itemColors.label")
-    description: pluginApi?.tr("settings.sections.itemColors.desc")
-  }
-
-  Repeater {
-    model: root.itemColorStates
-
-    delegate: ColumnLayout {
-      required property var modelData
-
+    ColumnLayout {
       Layout.fillWidth: true
-      spacing: Style.marginS
-
-      NHeader {
-        label: modelData.label
-        description: modelData.description
-      }
-
-      NColorChoice {
-        label: pluginApi?.tr("settings.itemColors.background.label")
-        description: pluginApi?.tr("settings.itemColors.background.desc")
-        currentKey: root.getItemColor(modelData.key, "background")
-        onSelected: key => root.setItemColor(modelData.key, "background", key)
-        defaultValue: root.getDefaultItemColor(modelData.key, "background")
-      }
-
-      NColorChoice {
-        label: pluginApi?.tr("settings.itemColors.border.label")
-        description: pluginApi?.tr("settings.itemColors.border.desc")
-        currentKey: root.getItemColor(modelData.key, "border")
-        onSelected: key => root.setItemColor(modelData.key, "border", key)
-        defaultValue: root.getDefaultItemColor(modelData.key, "border")
-      }
-
-      NColorChoice {
-        label: pluginApi?.tr("settings.itemColors.text.label")
-        description: pluginApi?.tr("settings.itemColors.text.desc")
-        currentKey: root.getItemColor(modelData.key, "text")
-        onSelected: key => root.setItemColor(modelData.key, "text", key)
-        defaultValue: root.getDefaultItemColor(modelData.key, "text")
-      }
-    }
-  }
-
-  NDivider {
-    Layout.fillWidth: true
-  }
-
-  NHeader {
-    label: pluginApi?.tr("settings.sections.grouping.label")
-    description: pluginApi?.tr("settings.sections.grouping.desc")
-  }
-
-  NToggle {
-    Layout.fillWidth: true
-    label: pluginApi?.tr("settings.groupApps.label")
-    description: pluginApi?.tr("settings.groupApps.desc")
-    checked: root.valueGroupApps
-    onToggled: checked => root.valueGroupApps = checked
-    defaultValue: defaults.groupApps ?? false
-  }
-
-  NComboBox {
-    visible: root.valueGroupApps
-    Layout.fillWidth: true
-    label: pluginApi?.tr("settings.groupClickAction.label")
-    description: pluginApi?.tr("settings.groupClickAction.desc")
-    model: [
-      { "key": "cycle", "name": pluginApi?.tr("options.groupClickCycle") },
-      { "key": "list", "name": pluginApi?.tr("options.groupClickList") }
-    ]
-    currentKey: root.valueGroupClickAction
-    onSelected: key => root.valueGroupClickAction = key
-    defaultValue: defaults.groupClickAction ?? "cycle"
-  }
-
-  NComboBox {
-    visible: root.valueGroupApps
-    Layout.fillWidth: true
-    label: pluginApi?.tr("settings.groupContextMenuMode.label")
-    description: pluginApi?.tr("settings.groupContextMenuMode.desc")
-    model: [
-      { "key": "extended", "name": pluginApi?.tr("options.groupMenuExtended") },
-      { "key": "list", "name": pluginApi?.tr("options.groupMenuList") }
-    ]
-    currentKey: root.valueGroupContextMenuMode
-    onSelected: key => root.valueGroupContextMenuMode = key
-    defaultValue: defaults.groupContextMenuMode ?? "extended"
-  }
-
-  NComboBox {
-    visible: root.valueGroupApps
-    Layout.fillWidth: true
-    label: pluginApi?.tr("settings.groupIndicatorStyle.label")
-    description: pluginApi?.tr("settings.groupIndicatorStyle.desc")
-    model: [
-      { "key": "number", "name": pluginApi?.tr("options.groupIndicatorNumber") },
-      { "key": "dots", "name": pluginApi?.tr("options.groupIndicatorDots") }
-    ]
-    currentKey: root.valueGroupIndicatorStyle
-    onSelected: key => root.valueGroupIndicatorStyle = key
-    defaultValue: defaults.groupIndicatorStyle ?? "number"
-  }
-
-  NToggle {
-    Layout.fillWidth: true
-    label: pluginApi?.tr("settings.groupByWorkspaceIndex.label")
-    description: pluginApi?.tr("settings.groupByWorkspaceIndex.desc")
-    checked: root.valueGroupByWorkspaceIndex
-    onToggled: checked => root.valueGroupByWorkspaceIndex = checked
-    defaultValue: defaults.groupByWorkspaceIndex ?? false
-  }
-
-  NToggle {
-    visible: root.valueGroupByWorkspaceIndex
-    Layout.fillWidth: true
-    label: pluginApi?.tr("settings.showWorkspaceSeparators.label")
-    description: pluginApi?.tr("settings.showWorkspaceSeparators.desc")
-    checked: root.valueShowWorkspaceSeparators
-    onToggled: checked => root.valueShowWorkspaceSeparators = checked
-    defaultValue: defaults.showWorkspaceSeparators ?? true
-  }
-
-  NToggle {
-    visible: root.valueGroupByWorkspaceIndex && root.valueShowWorkspaceSeparators
-    Layout.fillWidth: true
-    label: pluginApi?.tr("settings.workspaceSeparatorShowLabel.label")
-    description: pluginApi?.tr("settings.workspaceSeparatorShowLabel.desc")
-    checked: root.valueWorkspaceSeparatorShowLabel
-    onToggled: checked => root.valueWorkspaceSeparatorShowLabel = checked
-    defaultValue: defaults.workspaceSeparatorShowLabel ?? true
-  }
-
-  NToggle {
-    visible: root.valueGroupByWorkspaceIndex && root.valueShowWorkspaceSeparators
-    Layout.fillWidth: true
-    label: pluginApi?.tr("settings.workspaceSeparatorShowDivider.label")
-    description: pluginApi?.tr("settings.workspaceSeparatorShowDivider.desc")
-    checked: root.valueWorkspaceSeparatorShowDivider
-    onToggled: checked => root.valueWorkspaceSeparatorShowDivider = checked
-    defaultValue: defaults.workspaceSeparatorShowDivider ?? true
-  }
-
-  NTextInput {
-    visible: root.valueGroupByWorkspaceIndex && root.valueShowWorkspaceSeparators && root.valueWorkspaceSeparatorShowLabel
-    Layout.fillWidth: true
-    label: pluginApi?.tr("settings.workspaceSeparatorPrefix.label")
-    description: pluginApi?.tr("settings.workspaceSeparatorPrefix.desc")
-    text: root.valueWorkspaceSeparatorPrefix
-    onTextChanged: root.valueWorkspaceSeparatorPrefix = text
-    placeholderText: pluginApi?.tr("settings.workspaceSeparatorPrefix.placeholder")
-    defaultValue: defaults.workspaceSeparatorPrefix ?? ""
-  }
-
-  NTextInput {
-    visible: root.valueGroupByWorkspaceIndex && root.valueShowWorkspaceSeparators && root.valueWorkspaceSeparatorShowLabel
-    Layout.fillWidth: true
-    label: pluginApi?.tr("settings.workspaceSeparatorSuffix.label")
-    description: pluginApi?.tr("settings.workspaceSeparatorSuffix.desc")
-    text: root.valueWorkspaceSeparatorSuffix
-    onTextChanged: root.valueWorkspaceSeparatorSuffix = text
-    placeholderText: pluginApi?.tr("settings.workspaceSeparatorSuffix.placeholder")
-    defaultValue: defaults.workspaceSeparatorSuffix ?? ""
-  }
-
-  NToggle {
-    visible: root.valueGroupByWorkspaceIndex && root.valueShowWorkspaceSeparators
-    Layout.fillWidth: true
-    label: pluginApi?.tr("settings.workspaceSeparatorShowForFirst.label")
-    description: pluginApi?.tr("settings.workspaceSeparatorShowForFirst.desc")
-    checked: root.valueWorkspaceSeparatorShowForFirst
-    onToggled: checked => root.valueWorkspaceSeparatorShowForFirst = checked
-    defaultValue: defaults.workspaceSeparatorShowForFirst ?? false
-  }
-
-  NComboBox {
-    visible: root.valueGroupByWorkspaceIndex && root.valueShowWorkspaceSeparators && root.valueWorkspaceSeparatorShowDivider
-    Layout.fillWidth: true
-    label: pluginApi?.tr("settings.workspaceSeparatorDividerMode.label")
-    description: pluginApi?.tr("settings.workspaceSeparatorDividerMode.desc")
-    model: [
-      { "key": "line", "name": pluginApi?.tr("options.separatorModeLine") },
-      { "key": "character", "name": pluginApi?.tr("options.separatorModeCharacter") },
-      { "key": "icon", "name": pluginApi?.tr("options.separatorModeIcon") }
-    ]
-    currentKey: root.valueWorkspaceSeparatorDividerMode
-    onSelected: key => root.valueWorkspaceSeparatorDividerMode = key
-    defaultValue: defaults.workspaceSeparatorDividerMode ?? "line"
-  }
-
-  NTextInput {
-    visible: root.valueGroupByWorkspaceIndex && root.valueShowWorkspaceSeparators && root.valueWorkspaceSeparatorShowDivider && root.valueWorkspaceSeparatorDividerMode === "character"
-    Layout.fillWidth: true
-    label: pluginApi?.tr("settings.workspaceSeparatorDividerChar.label")
-    description: pluginApi?.tr("settings.workspaceSeparatorDividerChar.desc")
-    text: root.valueWorkspaceSeparatorDividerChar
-    onTextChanged: root.valueWorkspaceSeparatorDividerChar = text
-    placeholderText: pluginApi?.tr("settings.workspaceSeparatorDividerChar.placeholder")
-    defaultValue: defaults.workspaceSeparatorDividerChar ?? "|"
-  }
-
-  Item {
-    visible: root.valueGroupByWorkspaceIndex && root.valueShowWorkspaceSeparators && root.valueWorkspaceSeparatorShowDivider && root.valueWorkspaceSeparatorDividerMode === "icon"
-    Layout.fillWidth: true
-    implicitHeight: iconPickerRow.height
-
-    RowLayout {
-      id: iconPickerRow
-      anchors.left: parent.left
-      anchors.right: parent.right
       spacing: Style.marginM
 
-      NLabel {
-        label: pluginApi?.tr("settings.workspaceSeparatorDividerIcon.label")
-        description: pluginApi?.tr("settings.workspaceSeparatorDividerIcon.desc")
+      NComboBox {
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.hideMode.label")
+        description: pluginApi?.tr("settings.hideMode.desc")
+        model: [
+          { "key": "visible", "name": pluginApi?.tr("options.visible") },
+          { "key": "hidden", "name": pluginApi?.tr("options.hidden") },
+          { "key": "transparent", "name": pluginApi?.tr("options.transparent") }
+        ]
+        currentKey: root.valueHideMode
+        onSelected: key => root.valueHideMode = key
+        defaultValue: defaults.hideMode ?? "hidden"
+      }
+
+      NToggle {
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.onlySameOutput.label")
+        description: pluginApi?.tr("settings.onlySameOutput.desc")
+        checked: root.valueOnlySameOutput
+        onToggled: checked => root.valueOnlySameOutput = checked
+        defaultValue: defaults.onlySameOutput ?? true
+      }
+
+      NToggle {
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.onlyActiveWorkspaces.label")
+        description: pluginApi?.tr("settings.onlyActiveWorkspaces.desc")
+        checked: root.valueOnlyActiveWorkspaces
+        onToggled: checked => root.valueOnlyActiveWorkspaces = checked
+        defaultValue: defaults.onlyActiveWorkspaces ?? true
+      }
+
+      NToggle {
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.showPinnedApps.label")
+        description: pluginApi?.tr("settings.showPinnedApps.desc")
+        checked: root.valueShowPinnedApps
+        onToggled: checked => root.valueShowPinnedApps = checked
+        defaultValue: defaults.showPinnedApps ?? true
+      }
+    }
+
+    ColumnLayout {
+      Layout.fillWidth: true
+      spacing: Style.marginM
+
+      NHeader {
+        label: pluginApi?.tr("settings.sections.workspaceContainers.label")
+        description: pluginApi?.tr("settings.sections.workspaceContainers.desc")
+      }
+
+      NToggle {
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.groupByWorkspaceIndex.label")
+        description: pluginApi?.tr("settings.groupByWorkspaceIndex.desc")
+        checked: root.valueGroupByWorkspaceIndex
+        onToggled: checked => root.valueGroupByWorkspaceIndex = checked
+        defaultValue: defaults.groupByWorkspaceIndex ?? false
+      }
+
+      NToggle {
+        visible: root.valueGroupByWorkspaceIndex
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.showWorkspaceSeparators.label")
+        description: pluginApi?.tr("settings.showWorkspaceSeparators.desc")
+        checked: root.valueShowWorkspaceSeparators
+        onToggled: checked => root.valueShowWorkspaceSeparators = checked
+        defaultValue: defaults.showWorkspaceSeparators ?? true
+      }
+
+      NToggle {
+        visible: root.valueGroupByWorkspaceIndex && root.valueShowWorkspaceSeparators
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.workspaceSeparatorShowForFirst.label")
+        description: pluginApi?.tr("settings.workspaceSeparatorShowForFirst.desc")
+        checked: root.valueWorkspaceSeparatorShowForFirst
+        onToggled: checked => root.valueWorkspaceSeparatorShowForFirst = checked
+        defaultValue: defaults.workspaceSeparatorShowForFirst ?? false
+      }
+
+      NToggle {
+        visible: root.valueGroupByWorkspaceIndex && root.valueShowWorkspaceSeparators
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.workspaceSeparatorShowLabel.label")
+        description: pluginApi?.tr("settings.workspaceSeparatorShowLabel.desc")
+        checked: root.valueWorkspaceSeparatorShowLabel
+        onToggled: checked => root.valueWorkspaceSeparatorShowLabel = checked
+        defaultValue: defaults.workspaceSeparatorShowLabel ?? true
+      }
+
+      NTextInput {
+        visible: root.valueGroupByWorkspaceIndex && root.valueShowWorkspaceSeparators && root.valueWorkspaceSeparatorShowLabel
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.workspaceSeparatorPrefix.label")
+        description: pluginApi?.tr("settings.workspaceSeparatorPrefix.desc")
+        text: root.valueWorkspaceSeparatorPrefix
+        onTextChanged: root.valueWorkspaceSeparatorPrefix = text
+        placeholderText: pluginApi?.tr("settings.workspaceSeparatorPrefix.placeholder")
+        defaultValue: defaults.workspaceSeparatorPrefix ?? ""
+      }
+
+      NTextInput {
+        visible: root.valueGroupByWorkspaceIndex && root.valueShowWorkspaceSeparators && root.valueWorkspaceSeparatorShowLabel
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.workspaceSeparatorSuffix.label")
+        description: pluginApi?.tr("settings.workspaceSeparatorSuffix.desc")
+        text: root.valueWorkspaceSeparatorSuffix
+        onTextChanged: root.valueWorkspaceSeparatorSuffix = text
+        placeholderText: pluginApi?.tr("settings.workspaceSeparatorSuffix.placeholder")
+        defaultValue: defaults.workspaceSeparatorSuffix ?? ""
+      }
+
+      NToggle {
+        visible: root.valueGroupByWorkspaceIndex && root.valueShowWorkspaceSeparators
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.workspaceSeparatorShowDivider.label")
+        description: pluginApi?.tr("settings.workspaceSeparatorShowDivider.desc")
+        checked: root.valueWorkspaceSeparatorShowDivider
+        onToggled: checked => root.valueWorkspaceSeparatorShowDivider = checked
+        defaultValue: defaults.workspaceSeparatorShowDivider ?? true
+      }
+
+      NComboBox {
+        visible: root.valueGroupByWorkspaceIndex && root.valueShowWorkspaceSeparators && root.valueWorkspaceSeparatorShowDivider
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.workspaceSeparatorDividerMode.label")
+        description: pluginApi?.tr("settings.workspaceSeparatorDividerMode.desc")
+        model: [
+          { "key": "line", "name": pluginApi?.tr("options.separatorModeLine") },
+          { "key": "character", "name": pluginApi?.tr("options.separatorModeCharacter") },
+          { "key": "icon", "name": pluginApi?.tr("options.separatorModeIcon") }
+        ]
+        currentKey: root.valueWorkspaceSeparatorDividerMode
+        onSelected: key => root.valueWorkspaceSeparatorDividerMode = key
+        defaultValue: defaults.workspaceSeparatorDividerMode ?? "line"
+      }
+
+      NTextInput {
+        visible: root.valueGroupByWorkspaceIndex && root.valueShowWorkspaceSeparators && root.valueWorkspaceSeparatorShowDivider && root.valueWorkspaceSeparatorDividerMode === "character"
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.workspaceSeparatorDividerChar.label")
+        description: pluginApi?.tr("settings.workspaceSeparatorDividerChar.desc")
+        text: root.valueWorkspaceSeparatorDividerChar
+        onTextChanged: root.valueWorkspaceSeparatorDividerChar = text
+        placeholderText: pluginApi?.tr("settings.workspaceSeparatorDividerChar.placeholder")
+        defaultValue: defaults.workspaceSeparatorDividerChar ?? "|"
+      }
+
+      Item {
+        visible: root.valueGroupByWorkspaceIndex && root.valueShowWorkspaceSeparators && root.valueWorkspaceSeparatorShowDivider && root.valueWorkspaceSeparatorDividerMode === "icon"
+        Layout.fillWidth: true
+        implicitHeight: iconPickerRow.height
+
+        RowLayout {
+          id: iconPickerRow
+          anchors.left: parent.left
+          anchors.right: parent.right
+          spacing: Style.marginM
+
+          NLabel {
+            label: pluginApi?.tr("settings.workspaceSeparatorDividerIcon.label")
+            description: pluginApi?.tr("settings.workspaceSeparatorDividerIcon.desc")
+            Layout.fillWidth: true
+          }
+
+          NIconButton {
+            icon: root.valueWorkspaceSeparatorDividerIcon || "minus"
+            tooltipText: pluginApi?.tr("settings.workspaceSeparatorDividerIcon.pickIcon")
+            onClicked: {
+              iconPicker.initialIcon = root.valueWorkspaceSeparatorDividerIcon || "minus";
+              iconPicker.query = root.valueWorkspaceSeparatorDividerIcon || "";
+              iconPicker.open();
+            }
+          }
+        }
+      }
+
+      NDivider {
         Layout.fillWidth: true
       }
 
-      NIconButton {
-        icon: root.valueWorkspaceSeparatorDividerIcon || "minus"
-        tooltipText: pluginApi?.tr("settings.workspaceSeparatorDividerIcon.pickIcon")
-        onClicked: {
-          iconPicker.initialIcon = root.valueWorkspaceSeparatorDividerIcon || "minus";
-          iconPicker.query = root.valueWorkspaceSeparatorDividerIcon || "";
-          iconPicker.open();
+      NHeader {
+        label: pluginApi?.tr("settings.sections.applicationGrouping.label")
+        description: pluginApi?.tr("settings.sections.applicationGrouping.desc")
+      }
+
+      NToggle {
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.groupApps.label")
+        description: pluginApi?.tr("settings.groupApps.desc")
+        checked: root.valueGroupApps
+        onToggled: checked => root.valueGroupApps = checked
+        defaultValue: defaults.groupApps ?? false
+      }
+
+      NComboBox {
+        visible: root.valueGroupApps
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.groupClickAction.label")
+        description: pluginApi?.tr("settings.groupClickAction.desc")
+        model: [
+          { "key": "cycle", "name": pluginApi?.tr("options.groupClickCycle") },
+          { "key": "list", "name": pluginApi?.tr("options.groupClickList") }
+        ]
+        currentKey: root.valueGroupClickAction
+        onSelected: key => root.valueGroupClickAction = key
+        defaultValue: defaults.groupClickAction ?? "cycle"
+      }
+
+      NComboBox {
+        visible: root.valueGroupApps
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.groupContextMenuMode.label")
+        description: pluginApi?.tr("settings.groupContextMenuMode.desc")
+        model: [
+          { "key": "extended", "name": pluginApi?.tr("options.groupMenuExtended") },
+          { "key": "list", "name": pluginApi?.tr("options.groupMenuList") }
+        ]
+        currentKey: root.valueGroupContextMenuMode
+        onSelected: key => root.valueGroupContextMenuMode = key
+        defaultValue: defaults.groupContextMenuMode ?? "extended"
+      }
+
+      NComboBox {
+        visible: root.valueGroupApps
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.groupIndicatorStyle.label")
+        description: pluginApi?.tr("settings.groupIndicatorStyle.desc")
+        model: [
+          { "key": "number", "name": pluginApi?.tr("options.groupIndicatorNumber") },
+          { "key": "dots", "name": pluginApi?.tr("options.groupIndicatorDots") }
+        ]
+        currentKey: root.valueGroupIndicatorStyle
+        onSelected: key => root.valueGroupIndicatorStyle = key
+        defaultValue: defaults.groupIndicatorStyle ?? "number"
+      }
+    }
+
+    ColumnLayout {
+      Layout.fillWidth: true
+      spacing: Style.marginM
+
+      NHeader {
+        label: pluginApi?.tr("settings.sections.icon.label")
+        description: pluginApi?.tr("settings.sections.icon.desc")
+      }
+
+      NValueSlider {
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.iconScale.label")
+        description: pluginApi?.tr("settings.iconScale.desc")
+        from: 0.5
+        to: 1
+        stepSize: 0.01
+        showReset: true
+        value: root.valueIconScale
+        defaultValue: defaults.iconScale ?? 0.8
+        onMoved: value => root.valueIconScale = value
+        text: Math.round(root.valueIconScale * 100) + "%"
+      }
+
+      NValueSlider {
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.hoverIconScaleMultiplier.label")
+        description: pluginApi?.tr("settings.hoverIconScaleMultiplier.desc")
+        from: 1
+        to: 1.35
+        stepSize: 0.01
+        showReset: true
+        value: root.valueHoverIconScaleMultiplier
+        defaultValue: defaults.hoverIconScaleMultiplier ?? 1.0
+        onMoved: value => root.valueHoverIconScaleMultiplier = value
+        text: Math.round(root.valueHoverIconScaleMultiplier * 100) + "%"
+      }
+
+      NToggle {
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.colorizeIcons.label")
+        description: pluginApi?.tr("settings.colorizeIcons.desc")
+        checked: root.valueColorizeIcons
+        onToggled: checked => root.valueColorizeIcons = checked
+        defaultValue: defaults.colorizeIcons ?? false
+      }
+
+      NDivider {
+        Layout.fillWidth: true
+      }
+
+      NHeader {
+        label: pluginApi?.tr("settings.sections.geometry.label")
+        description: pluginApi?.tr("settings.sections.geometry.desc")
+      }
+
+      NValueSlider {
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.hoverItemScalePercent.label")
+        description: pluginApi?.tr("settings.hoverItemScalePercent.desc")
+        from: 0
+        to: 5
+        stepSize: 0.1
+        showReset: true
+        value: root.valueHoverItemScalePercent
+        defaultValue: defaults.hoverItemScalePercent ?? 0
+        onMoved: value => root.valueHoverItemScalePercent = value
+        text: root.valueHoverItemScalePercent.toFixed(1) + "%"
+      }
+
+      NValueSlider {
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.itemGapUnits.label")
+        description: pluginApi?.tr("settings.itemGapUnits.desc")
+        from: 0
+        to: 12
+        stepSize: 1
+        showReset: true
+        value: root.valueItemGapUnits
+        defaultValue: defaults.itemGapUnits ?? 2
+        onMoved: value => root.valueItemGapUnits = Math.round(value)
+        text: Math.round(root.valueItemGapUnits)
+      }
+
+      NDivider {
+        Layout.fillWidth: true
+      }
+
+      NHeader {
+        label: pluginApi?.tr("settings.sections.title.label")
+        description: pluginApi?.tr("settings.sections.title.desc")
+      }
+
+      NToggle {
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.showTitle.label")
+        description: root.isVerticalBar ? pluginApi?.tr("settings.showTitle.descDisabled") : pluginApi?.tr("settings.showTitle.desc")
+        checked: root.valueShowTitle
+        onToggled: checked => root.valueShowTitle = checked
+        enabled: !root.isVerticalBar
+        defaultValue: defaults.showTitle ?? false
+      }
+
+      NTextInput {
+        visible: root.valueShowTitle && !root.isVerticalBar
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.titleWidth.label")
+        description: pluginApi?.tr("settings.titleWidth.desc")
+        text: String(root.valueTitleWidth)
+        placeholderText: pluginApi?.tr("placeholders.enterWidthPixels")
+        onTextChanged: root.valueTitleWidth = parseInt(text) || (defaults.titleWidth ?? 120)
+        defaultValue: String(defaults.titleWidth ?? 120)
+      }
+
+      NToggle {
+        Layout.fillWidth: true
+        visible: !root.isVerticalBar && root.valueShowTitle
+        label: pluginApi?.tr("settings.smartWidth.label")
+        description: pluginApi?.tr("settings.smartWidth.desc")
+        checked: root.valueSmartWidth
+        onToggled: checked => root.valueSmartWidth = checked
+        defaultValue: defaults.smartWidth ?? true
+      }
+
+      NValueSlider {
+        visible: root.valueSmartWidth && !root.isVerticalBar
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.maxTaskbarWidth.label")
+        description: pluginApi?.tr("settings.maxTaskbarWidth.desc")
+        from: 10
+        to: 100
+        stepSize: 5
+        showReset: true
+        value: root.valueMaxTaskbarWidth
+        defaultValue: defaults.maxTaskbarWidth ?? 40
+        onMoved: value => root.valueMaxTaskbarWidth = Math.round(value)
+        text: Math.round(root.valueMaxTaskbarWidth) + "%"
+      }
+
+      NDivider {
+        Layout.fillWidth: true
+      }
+
+      NHeader {
+        label: pluginApi?.tr("settings.sections.typography.label")
+        description: pluginApi?.tr("settings.sections.typography.desc")
+      }
+
+      NSearchableComboBox {
+        visible: !root.isVerticalBar
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.titleFontFamily.label")
+        description: pluginApi?.tr("settings.titleFontFamily.desc")
+        model: FontService.availableFonts
+        currentKey: root.valueTitleFontFamily
+        placeholder: pluginApi?.tr("settings.titleFontFamily.placeholder")
+        searchPlaceholder: pluginApi?.tr("settings.titleFontFamily.searchPlaceholder")
+        popupHeight: 420
+        defaultValue: defaults.titleFontFamily ?? ""
+        onSelected: key => root.valueTitleFontFamily = key
+      }
+
+      NValueSlider {
+        visible: !root.isVerticalBar
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.titleFontScale.label")
+        description: pluginApi?.tr("settings.titleFontScale.desc")
+        from: 0.75
+        to: 1.25
+        stepSize: 0.01
+        showReset: true
+        value: root.valueTitleFontScale
+        defaultValue: defaults.titleFontScale ?? 1.0
+        onMoved: value => root.valueTitleFontScale = value
+        text: Math.round(root.valueTitleFontScale * 100) + "%"
+      }
+
+      NComboBox {
+        visible: !root.isVerticalBar
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.titleFontWeight.label")
+        description: pluginApi?.tr("settings.titleFontWeight.desc")
+        model: root.titleFontWeightOptions
+        currentKey: root.valueTitleFontWeight
+        onSelected: key => root.valueTitleFontWeight = key
+        defaultValue: defaults.titleFontWeight ?? "medium"
+      }
+    }
+
+    ColumnLayout {
+      Layout.fillWidth: true
+      spacing: Style.marginM
+
+      NHeader {
+        label: pluginApi?.tr("settings.sections.itemColors.label")
+        description: pluginApi?.tr("settings.sections.itemColors.desc")
+      }
+
+      Repeater {
+        model: root.itemColorStates
+
+        delegate: ColumnLayout {
+          required property var modelData
+
+          Layout.fillWidth: true
+          spacing: Style.marginS
+
+          NHeader {
+            label: modelData.label
+            description: modelData.description
+          }
+
+          NColorChoice {
+            label: pluginApi?.tr("settings.itemColors.background.label")
+            description: pluginApi?.tr("settings.itemColors.background.desc")
+            currentKey: root.getItemColor(modelData.key, "background")
+            onSelected: key => root.setItemColor(modelData.key, "background", key)
+            defaultValue: root.getDefaultItemColor(modelData.key, "background")
+          }
+
+          NColorChoice {
+            label: pluginApi?.tr("settings.itemColors.border.label")
+            description: pluginApi?.tr("settings.itemColors.border.desc")
+            currentKey: root.getItemColor(modelData.key, "border")
+            onSelected: key => root.setItemColor(modelData.key, "border", key)
+            defaultValue: root.getDefaultItemColor(modelData.key, "border")
+          }
+
+          NColorChoice {
+            label: pluginApi?.tr("settings.itemColors.text.label")
+            description: pluginApi?.tr("settings.itemColors.text.desc")
+            currentKey: root.getItemColor(modelData.key, "text")
+            onSelected: key => root.setItemColor(modelData.key, "text", key)
+            defaultValue: root.getDefaultItemColor(modelData.key, "text")
+          }
         }
       }
     }

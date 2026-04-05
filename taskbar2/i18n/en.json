@@ -24,6 +24,22 @@
       "grouping": {
         "label": "Grouping",
         "desc": "Configure app grouping and workspace grouping behavior for the taskbar."
+      },
+      "workspaceContainers": {
+        "label": "Workspace Containers",
+        "desc": "Group taskbar entries by workspace and configure separator appearance."
+      },
+      "applicationGrouping": {
+        "label": "Application Grouping",
+        "desc": "Control how multiple windows from the same app are combined into a single entry."
+      },
+      "geometry": {
+        "label": "Geometry",
+        "desc": "Adjust hover effects and spacing between taskbar items."
+      },
+      "title": {
+        "label": "Title",
+        "desc": "Control title visibility, width, and smart sizing."
       }
     },
     "hideMode": {
