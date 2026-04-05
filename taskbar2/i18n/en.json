@@ -27,88 +27,88 @@
       },
       "workspaceContainers": {
         "label": "Workspace Containers",
-        "desc": "Group taskbar entries by workspace and configure separator appearance."
+        "desc": "Sort windows into workspace-based sections and configure separator labels and dividers."
       },
       "applicationGrouping": {
         "label": "Application Grouping",
-        "desc": "Control how multiple windows from the same app are combined into a single entry."
+        "desc": "Aggregate multiple windows from the same app into a single taskbar entry."
       },
       "geometry": {
         "label": "Geometry",
-        "desc": "Adjust hover effects and spacing between taskbar items."
+        "desc": "Define the spatial footprint of taskbar items and gaps between them."
       },
       "title": {
         "label": "Title",
-        "desc": "Control title visibility, width, and smart sizing."
+        "desc": "Configure title visibility, width, and automatic smart sizing."
       }
     },
-    "hideMode": {
-      "label": "Visibility mode",
-      "desc": "Choose how the taskbar behaves when it has no windows or pinned apps."
-    },
-    "onlySameOutput": {
-      "label": "Only same monitor",
-      "desc": "Show only windows that belong to the current monitor."
-    },
-    "onlyActiveWorkspaces": {
-      "label": "Only active workspaces",
-      "desc": "Limit the taskbar to windows from currently active workspaces."
-    },
-    "colorizeIcons": {
-      "label": "Colorize icons",
-      "desc": "Apply the themed icon tint used by the shell."
-    },
+      "hideMode": {
+        "label": "Visibility mode",
+        "desc": "Choose how the taskbar behaves when there are no windows or pinned apps."
+      },
+      "onlySameOutput": {
+        "label": "Only same monitor",
+        "desc": "Only show windows that belong to the current monitor."
+      },
+      "onlyActiveWorkspaces": {
+        "label": "Only active workspaces",
+        "desc": "Only show windows from currently active workspaces."
+      },
+      "colorizeIcons": {
+        "label": "Colorize icons",
+        "desc": "Apply the themed icon tint to match the shell color scheme."
+      },
     "showPinnedApps": {
       "label": "Show pinned apps",
       "desc": "Keep pinned applications visible even when they are not running."
     },
-    "iconScale": {
-      "label": "Icon scale",
-      "desc": "Adjust the icon size inside each taskbar entry."
-    },
-    "hoverIconScaleMultiplier": {
-      "label": "Hover icon size",
-      "desc": "Increase icon size while the pointer is over a taskbar item."
-    },
-    "hoverItemScalePercent": {
-      "label": "Hover item size",
-      "desc": "Increase the full taskbar item size while the pointer is over it."
-    },
-    "showTitle": {
-      "label": "Show titles",
-      "desc": "Display window titles next to icons on horizontal bars.",
-      "descDisabled": "Window titles are disabled on vertical bars."
-    },
-    "titleWidth": {
-      "label": "Title width",
-      "desc": "Maximum width in pixels for each visible title."
-    },
-    "smartWidth": {
-      "label": "Smart width",
-      "desc": "Shrink title width automatically when the taskbar would become too wide."
-    },
-    "maxTaskbarWidth": {
-      "label": "Max taskbar width",
-      "desc": "Maximum percentage of the bar width that the taskbar may use."
-    },
-    "itemGapUnits": {
-      "label": "Item spacing",
-      "desc": "Adjust the gap between taskbar items."
-    },
-    "titleFontFamily": {
-      "label": "Title font family",
-      "desc": "Choose the font used for taskbar titles.",
-      "placeholder": "Use the default interface font",
-      "searchPlaceholder": "Search fonts"
-    },
-    "titleFontScale": {
-      "label": "Title font scale",
-      "desc": "Scale the taskbar title font relative to the bar font size."
-    },
-    "titleFontWeight": {
-      "label": "Title font weight",
-      "desc": "Choose how bold taskbar titles should appear."
-    },
+      "iconScale": {
+        "label": "Icon scale",
+        "desc": "Scale the icon size inside each taskbar entry."
+      },
+      "hoverIconScaleMultiplier": {
+        "label": "Hover icon size",
+        "desc": "Multiplier applied to icon size while hovering a taskbar item."
+      },
+      "hoverItemScalePercent": {
+        "label": "Hover item size",
+        "desc": "Additional size increase applied to the entire item while hovering."
+      },
+      "showTitle": {
+        "label": "Show titles",
+        "desc": "Display window titles next to icons on horizontal bars.",
+        "descDisabled": "Titles are only available on horizontal bars."
+      },
+      "titleWidth": {
+        "label": "Title width",
+        "desc": "Maximum pixel width for each visible title."
+      },
+      "smartWidth": {
+        "label": "Smart width",
+        "desc": "Automatically shrink title width when the taskbar would exceed its maximum."
+      },
+      "maxTaskbarWidth": {
+        "label": "Max taskbar width",
+        "desc": "Maximum percentage of bar width the taskbar may occupy."
+      },
+      "itemGapUnits": {
+        "label": "Item spacing",
+        "desc": "Gap between adjacent taskbar items."
+      },
+      "titleFontFamily": {
+        "label": "Title font family",
+        "desc": "Font used for taskbar title text.",
+        "placeholder": "Use the default interface font",
+        "searchPlaceholder": "Search fonts"
+      },
+      "titleFontScale": {
+        "label": "Title font scale",
+        "desc": "Scale the title font relative to the bar's base font size."
+      },
+      "titleFontWeight": {
+        "label": "Title font weight",
+        "desc": "Font weight for taskbar title text."
+      },
     "itemColors": {
       "background": {
         "label": "Background color",
@@ -141,66 +141,66 @@
         }
       }
     },
-    "groupApps": {
-      "label": "Group apps",
-      "desc": "Collapse multiple windows from the same app into a single taskbar entry."
-    },
-    "groupClickAction": {
-      "label": "Grouped left click",
-      "desc": "Choose whether left-click cycles grouped windows or opens their list."
-    },
-    "groupContextMenuMode": {
-      "label": "Grouped context menu",
-      "desc": "Choose whether grouped right-click shows only the window list or the full extended menu."
-    },
-    "groupIndicatorStyle": {
-      "label": "Grouped indicator style",
-      "desc": "Choose how grouped entries display the number of running windows."
-    },
-    "groupByWorkspaceIndex": {
-      "label": "Group all activity by workspace",
-      "desc": "When Only active workspaces is off, group entries by workspace index."
-    },
-    "showWorkspaceSeparators": {
-      "label": "Show workspace separators",
-      "desc": "Insert separators between visible workspace groups in the all-activity view."
-    },
-    "workspaceSeparatorShowLabel": {
-      "label": "Show workspace label",
-      "desc": "Display the workspace index text on each separator."
-    },
-    "workspaceSeparatorShowDivider": {
-      "label": "Show workspace divider",
-      "desc": "Display a themed divider line next to each workspace label."
-    },
-    "workspaceSeparatorPrefix": {
-      "label": "Workspace label prefix",
-      "desc": "Text placed before the workspace index on separators.",
-      "placeholder": "Optional prefix"
-    },
-    "workspaceSeparatorSuffix": {
-      "label": "Workspace label suffix",
-      "desc": "Text placed after the workspace index on separators.",
-      "placeholder": "Optional suffix"
-    },
+      "groupApps": {
+        "label": "Group apps",
+        "desc": "Collapse multiple windows of the same app into a single taskbar entry."
+      },
+      "groupClickAction": {
+        "label": "Grouped left click",
+        "desc": "Whether left-click on a grouped entry cycles windows or opens a list."
+      },
+      "groupContextMenuMode": {
+        "label": "Grouped context menu",
+        "desc": "Whether right-click on a grouped entry shows the window list or the full menu."
+      },
+      "groupIndicatorStyle": {
+        "label": "Grouped indicator style",
+        "desc": "Visual indicator showing the number of windows in a grouped entry."
+      },
+      "groupByWorkspaceIndex": {
+        "label": "Group all activity by workspace",
+        "desc": "When showing all workspaces, sort entries into sections by workspace index."
+      },
+      "showWorkspaceSeparators": {
+        "label": "Show workspace separators",
+        "desc": "Insert visual separators between workspace groups in the all-activity view."
+      },
+      "workspaceSeparatorShowLabel": {
+        "label": "Show workspace label",
+        "desc": "Display the workspace index text on each separator."
+      },
+      "workspaceSeparatorShowDivider": {
+        "label": "Show workspace divider",
+        "desc": "Display a themed divider line alongside each workspace label."
+      },
+      "workspaceSeparatorPrefix": {
+        "label": "Workspace label prefix",
+        "desc": "Text prepended to the workspace index on each separator.",
+        "placeholder": "Optional prefix"
+      },
+      "workspaceSeparatorSuffix": {
+        "label": "Workspace label suffix",
+        "desc": "Text appended after the workspace index on each separator.",
+        "placeholder": "Optional suffix"
+      },
     "workspaceSeparatorShowForFirst": {
       "label": "Show separator before first workspace",
       "desc": "Display a separator before the first workspace group."
     },
-    "workspaceSeparatorDividerMode": {
-      "label": "Separator style",
-      "desc": "Choose how workspace separators are displayed."
-    },
-    "workspaceSeparatorDividerChar": {
-      "label": "Separator character",
-      "desc": "Character to use as workspace separator.",
-      "placeholder": "Enter a character"
-    },
-    "workspaceSeparatorDividerIcon": {
-      "label": "Separator icon",
-      "desc": "Icon to use as workspace separator.",
-      "pickIcon": "Pick icon"
-    }
+      "workspaceSeparatorDividerMode": {
+        "label": "Separator style",
+        "desc": "Choose the visual style used for workspace separators."
+      },
+      "workspaceSeparatorDividerChar": {
+        "label": "Separator character",
+        "desc": "Custom character used as the workspace divider when style is set to character.",
+        "placeholder": "Enter a character"
+      },
+      "workspaceSeparatorDividerIcon": {
+        "label": "Separator icon",
+        "desc": "Custom icon used as the workspace divider when style is set to icon.",
+        "pickIcon": "Pick icon"
+      }
   },
   "options": {
     "visible": "Visible",

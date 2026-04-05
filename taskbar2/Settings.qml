@@ -251,6 +251,11 @@ ColumnLayout {
         defaultValue: defaults.workspaceSeparatorShowForFirst ?? false
       }
 
+      NDivider {
+        visible: root.valueGroupByWorkspaceIndex && root.valueShowWorkspaceSeparators
+        Layout.fillWidth: true
+      }
+
       NToggle {
         visible: root.valueGroupByWorkspaceIndex && root.valueShowWorkspaceSeparators
         Layout.fillWidth: true
@@ -281,6 +286,11 @@ ColumnLayout {
         onTextChanged: root.valueWorkspaceSeparatorSuffix = text
         placeholderText: pluginApi?.tr("settings.workspaceSeparatorSuffix.placeholder")
         defaultValue: defaults.workspaceSeparatorSuffix ?? ""
+      }
+
+      NDivider {
+        visible: root.valueGroupByWorkspaceIndex && root.valueShowWorkspaceSeparators
+        Layout.fillWidth: true
       }
 
       NToggle {
