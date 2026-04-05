@@ -1,13 +1,16 @@
 {
   "id": "taskbar2",
-  "name": "Taskbar2",
+  "name": "Taskbar 2",
   "version": "1.0.0",
   "minNoctaliaVersion": "4.6.6",
   "author": "OpenAI",
   "license": "MIT",
-  "repository": "https://github.com/noctalia-dev/noctalia-plugins",
-  "description": "A standalone taskbar bar widget ported from Noctalia Shell.",
-  "tags": ["Bar", "Utility"],
+  "repository": "https://github.com/rigerc/noctalia-plugins",
+  "description": "A standalone taskbar bar widget ported from Noctalia Shell, with improvements.",
+  "tags": [
+    "Bar",
+    "Utility"
+  ],
   "entryPoints": {
     "barWidget": "BarWidget.qml",
     "settings": "Settings.qml"
