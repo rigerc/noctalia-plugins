@@ -952,6 +952,10 @@ Item {
 
             if (menuMode === "extended") {
                 items.push({
+                    "action": "_separator",
+                    "enabled": false
+                });
+                items.push({
                     "label": I18n.tr("common.focus"),
                     "action": "focus",
                     "icon": "eye"
@@ -1206,8 +1210,6 @@ Item {
 
             rows: isVerticalBar ? -1 : 1
             columns: isVerticalBar ? 1 : -1
-      rowSpacing: isVerticalBar ? root.itemGap : 0
-      columnSpacing: isVerticalBar ? 0 : root.itemGap
 
             Repeater {
                 model: root.combinedModel
@@ -1406,8 +1408,8 @@ Item {
                     }
 
                     Item {
-                        visible: !taskbarItem.isSeparator
                         id: draggableContent
+                        visible: !taskbarItem.isSeparator
                         width: parent.width
                         height: parent.height
                         anchors.centerIn: dragging ? undefined : parent
