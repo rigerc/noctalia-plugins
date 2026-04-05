@@ -1,0 +1,54 @@
+{
+  "onlySameOutput": true,
+  "onlyActiveWorkspaces": false,
+  "hideMode": "visible",
+  "colorizeIcons": false,
+  "showTitle": true,
+  "titleWidth": 120,
+  "showPinnedApps": false,
+  "smartWidth": true,
+  "maxTaskbarWidth": 35,
+  "iconScale": 0.84,
+  "hoverIconScaleMultiplier": 1.06,
+  "hoverItemScalePercent": 1.2000000000000002,
+  "itemGapUnits": 12,
+  "titleFontFamily": "",
+  "titleFontScale": 1,
+  "titleFontWeight": "medium",
+  "itemColors": {
+    "default": {
+      "background": "none",
+      "border": "none",
+      "text": "none"
+    },
+    "hovered": {
+      "background": "none",
+      "border": "none",
+      "text": "none"
+    },
+    "focused": {
+      "background": "none",
+      "border": "none",
+      "text": "none"
+    },
+    "inactive": {
+      "background": "none",
+      "border": "none",
+      "text": "none"
+    }
+  },
+  "groupApps": true,
+  "groupClickAction": "cycle",
+  "groupContextMenuMode": "extended",
+  "groupIndicatorStyle": "dots",
+  "groupByWorkspaceIndex": true,
+  "showWorkspaceSeparators": true,
+  "workspaceSeparatorShowLabel": true,
+  "workspaceSeparatorShowDivider": true,
+  "workspaceSeparatorPrefix": "WS",
+  "workspaceSeparatorSuffix": "",
+  "workspaceSeparatorDividerMode": "icon",
+  "workspaceSeparatorDividerChar": "|",
+  "workspaceSeparatorDividerIcon": "chalkboard",
+  "workspaceSeparatorShowForFirst": true
+}
