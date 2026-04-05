@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+      - master
     paths:
       - '**/manifest.json'
       - '.github/workflows/update-registry.mjs'
@@ -20,15 +21,15 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: 24
-      
+
       - name: Run registry update script
         run: node .github/workflows/update-registry.mjs
-      
+
       - name: Check for changes
         id: check_changes
         run: |
@@ -39,7 +40,7 @@ jobs:
             echo "changed=true" >> $GITHUB_OUTPUT
             echo "Changes detected in registry.json"
           fi
-      
+
       - name: Commit and push changes
         if: steps.check_changes.outputs.changed == 'true'
         run: |
@@ -48,7 +49,7 @@ jobs:
           git add registry.json
           git commit -m "chore: update plugin registry [skip ci]"
           git push
-      
+
       - name: Upload registry artifact
         if: steps.check_changes.outputs.changed == 'true'
         uses: actions/upload-artifact@v7
