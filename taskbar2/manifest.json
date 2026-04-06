@@ -74,8 +74,8 @@
       "workspaceSeparatorShowForFirst": false,
       "previewsEnabled": true,
       "previewLive": true,
-      "previewWidth": 400,
-      "previewHeight": 250,
+      "previewWidth": 320,
+      "previewHeight": 180,
       "previewDelayMs": 200
     }
   }

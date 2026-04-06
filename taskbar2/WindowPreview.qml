@@ -13,8 +13,8 @@ PopupWindow {
     property var targetWindow: null
     property var _toplevel: null
     property bool livePreview: true
-    property real previewWidth: 400 * Style.uiScaleRatio
-    property real previewHeight: 250 * Style.uiScaleRatio
+    property real previewWidth: 320 * Style.uiScaleRatio
+    property real previewHeight: 180 * Style.uiScaleRatio
     property real hoverDelayMs: 200
     property string windowTitle: ""
 
@@ -38,7 +38,8 @@ PopupWindow {
 
     function requestShow(item, windowObj, title) {
         showTimer.stop();
-        if (!item || !windowObj) return;
+        if (!item || !windowObj)
+            return;
         root.anchorItem = item;
         root.targetWindow = windowObj;
         root.windowTitle = title || "";
@@ -75,13 +76,16 @@ PopupWindow {
         root.anchor.rect.x = root._anchorX;
         root.anchor.rect.y = root._anchorY;
         root.visible = true;
-        Qt.callLater(function() {
-            try { root.anchor.updateAnchor(); } catch (e) {}
+        Qt.callLater(function () {
+            try {
+                root.anchor.updateAnchor();
+            } catch (e) {}
         });
     }
 
     function _computePosition() {
-        if (!root.anchorItem) return;
+        if (!root.anchorItem)
+            return;
         try {
             var barPos = Settings.getBarPositionForScreen(root.anchorItem.screen?.name || "");
         } catch (e) {
@@ -118,10 +122,13 @@ PopupWindow {
     }
 
     function resolveToplevel(windowObj) {
-        if (!windowObj) return null;
+        if (!windowObj)
+            return null;
 
-        if (windowObj.handle) return windowObj.handle;
-        if (windowObj.toplevel) return windowObj.toplevel;
+        if (windowObj.handle)
+            return windowObj.handle;
+        if (windowObj.toplevel)
+            return windowObj.toplevel;
 
         var wId = windowObj.id || "";
         var wTitle = windowObj.title || "";
@@ -133,7 +140,8 @@ PopupWindow {
             if (tmToplevels && tmToplevels.length > 0) {
                 for (var i = 0; i < tmToplevels.length; i++) {
                     var tl = tmToplevels[i];
-                    if (!tl) continue;
+                    if (!tl)
+                        continue;
                     var tlAppId = tl.appId || "";
                     var tlTitle = tl.title || "";
                     var tlScreens = tl.screens || [];
@@ -141,9 +149,11 @@ PopupWindow {
 
                     if (tlAppId && wAppId && tlAppId === wAppId) {
                         if (wOutput && tlScreenName && wOutput === tlScreenName) {
-                            if (!tlTitle || tlTitle === wTitle || !wTitle) return tl;
+                            if (!tlTitle || tlTitle === wTitle || !wTitle)
+                                return tl;
                         } else if (!wOutput || !tlScreenName) {
-                            if (!tlTitle || tlTitle === wTitle || !wTitle) return tl;
+                            if (!tlTitle || tlTitle === wTitle || !wTitle)
+                                return tl;
                         }
                     }
                 }
@@ -156,9 +166,11 @@ PopupWindow {
                 if (hlToplevels && hlToplevels.length > 0 && wId) {
                     for (var j = 0; j < hlToplevels.length; j++) {
                         var htl = hlToplevels[j];
-                        if (!htl) continue;
+                        if (!htl)
+                            continue;
                         var htlAddr = htl.address || "";
-                        if (htlAddr === wId || htlAddr === "0x" + wId || wId === "0x" + htlAddr) return htl;
+                        if (htlAddr === wId || htlAddr === "0x" + wId || wId === "0x" + htlAddr)
+                            return htl;
                     }
                 }
             }
@@ -175,6 +187,7 @@ PopupWindow {
         border.color: Color.mOutline
         border.width: Style.borderS
         clip: true
+        opacity: root._scale
 
         Rectangle {
             id: titleBar
