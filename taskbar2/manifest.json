@@ -71,7 +71,12 @@
       "workspaceSeparatorDividerMode": "line",
       "workspaceSeparatorDividerChar": "|",
       "workspaceSeparatorDividerIcon": "minus",
-      "workspaceSeparatorShowForFirst": false
+      "workspaceSeparatorShowForFirst": false,
+      "previewsEnabled": true,
+      "previewLive": true,
+      "previewWidth": 400,
+      "previewHeight": 250,
+      "previewDelayMs": 200
     }
   }
 }

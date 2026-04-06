@@ -50,5 +50,10 @@
   "workspaceSeparatorDividerMode": "icon",
   "workspaceSeparatorDividerChar": "|",
   "workspaceSeparatorDividerIcon": "chalkboard",
-  "workspaceSeparatorShowForFirst": true
+  "workspaceSeparatorShowForFirst": true,
+  "previewsEnabled": true,
+  "previewLive": false,
+  "previewWidth": 400,
+  "previewHeight": 250,
+  "previewDelayMs": 200
 }

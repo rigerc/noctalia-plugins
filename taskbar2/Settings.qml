@@ -72,6 +72,11 @@ ColumnLayout {
   property string valueWorkspaceSeparatorDividerChar: cfg.workspaceSeparatorDividerChar ?? defaults.workspaceSeparatorDividerChar ?? "|"
   property string valueWorkspaceSeparatorDividerIcon: cfg.workspaceSeparatorDividerIcon ?? defaults.workspaceSeparatorDividerIcon ?? "minus"
   property bool valueWorkspaceSeparatorShowForFirst: cfg.workspaceSeparatorShowForFirst ?? defaults.workspaceSeparatorShowForFirst ?? false
+  property bool valuePreviewsEnabled: cfg.previewsEnabled ?? defaults.previewsEnabled ?? true
+  property bool valuePreviewLive: cfg.previewLive ?? defaults.previewLive ?? true
+  property int valuePreviewWidth: cfg.previewWidth ?? defaults.previewWidth ?? 400
+  property int valuePreviewHeight: cfg.previewHeight ?? defaults.previewHeight ?? 250
+  property int valuePreviewDelayMs: cfg.previewDelayMs ?? defaults.previewDelayMs ?? 200
 
   spacing: Style.marginM
 
@@ -147,6 +152,11 @@ ColumnLayout {
     pluginApi.pluginSettings.workspaceSeparatorDividerChar = root.valueWorkspaceSeparatorDividerChar;
     pluginApi.pluginSettings.workspaceSeparatorDividerIcon = root.valueWorkspaceSeparatorDividerIcon;
     pluginApi.pluginSettings.workspaceSeparatorShowForFirst = root.valueWorkspaceSeparatorShowForFirst;
+    pluginApi.pluginSettings.previewsEnabled = root.valuePreviewsEnabled;
+    pluginApi.pluginSettings.previewLive = root.valuePreviewLive;
+    pluginApi.pluginSettings.previewWidth = root.valuePreviewWidth;
+    pluginApi.pluginSettings.previewHeight = root.valuePreviewHeight;
+    pluginApi.pluginSettings.previewDelayMs = root.valuePreviewDelayMs;
     pluginApi.saveSettings();
   }
 
@@ -210,6 +220,79 @@ ColumnLayout {
         checked: root.valueShowPinnedApps
         onToggled: checked => root.valueShowPinnedApps = checked
         defaultValue: defaults.showPinnedApps ?? true
+      }
+
+      NDivider {
+        Layout.fillWidth: true
+      }
+
+      NHeader {
+        label: pluginApi?.tr("settings.sections.preview.label")
+        description: pluginApi?.tr("settings.sections.preview.desc")
+      }
+
+      NToggle {
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.previewsEnabled.label")
+        description: pluginApi?.tr("settings.previewsEnabled.desc")
+        checked: root.valuePreviewsEnabled
+        onToggled: checked => root.valuePreviewsEnabled = checked
+        defaultValue: defaults.previewsEnabled ?? true
+      }
+
+      NToggle {
+        visible: root.valuePreviewsEnabled
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.previewLive.label")
+        description: pluginApi?.tr("settings.previewLive.desc")
+        checked: root.valuePreviewLive
+        onToggled: checked => root.valuePreviewLive = checked
+        defaultValue: defaults.previewLive ?? true
+      }
+
+      NValueSlider {
+        visible: root.valuePreviewsEnabled
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.previewWidth.label")
+        description: pluginApi?.tr("settings.previewWidth.desc")
+        from: 200
+        to: 800
+        stepSize: 10
+        showReset: true
+        value: root.valuePreviewWidth
+        defaultValue: defaults.previewWidth ?? 400
+        onMoved: value => root.valuePreviewWidth = Math.round(value)
+        text: Math.round(root.valuePreviewWidth) + "px"
+      }
+
+      NValueSlider {
+        visible: root.valuePreviewsEnabled
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.previewHeight.label")
+        description: pluginApi?.tr("settings.previewHeight.desc")
+        from: 120
+        to: 500
+        stepSize: 10
+        showReset: true
+        value: root.valuePreviewHeight
+        defaultValue: defaults.previewHeight ?? 250
+        onMoved: value => root.valuePreviewHeight = Math.round(value)
+        text: Math.round(root.valuePreviewHeight) + "px"
+      }
+
+      NValueSlider {
+        visible: root.valuePreviewsEnabled
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.previewDelayMs.label")
+        description: pluginApi?.tr("settings.previewDelayMs.desc")
+        from: 0
+        to: 1000
+        stepSize: 50
+        showReset: true
+        value: root.valuePreviewDelayMs
+        defaultValue: defaults.previewDelayMs ?? 200
+        onMoved: value => root.valuePreviewDelayMs = Math.round(value)
+        text: Math.round(root.valuePreviewDelayMs) + "ms"
       }
     }
 

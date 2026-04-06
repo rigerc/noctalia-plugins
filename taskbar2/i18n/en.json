@@ -40,6 +40,10 @@
       "title": {
         "label": "Title",
         "desc": "Configure title visibility, width, and automatic smart sizing."
+      },
+      "preview": {
+        "label": "Window Preview",
+        "desc": "Show a live thumbnail of the window when hovering over a taskbar item."
       }
     },
       "hideMode": {
@@ -196,11 +200,31 @@
         "desc": "Custom character used as the workspace divider when style is set to character.",
         "placeholder": "Enter a character"
       },
-      "workspaceSeparatorDividerIcon": {
-        "label": "Separator icon",
-        "desc": "Custom icon used as the workspace divider when style is set to icon.",
-        "pickIcon": "Pick icon"
-      }
+    "workspaceSeparatorDividerIcon": {
+      "label": "Separator icon",
+      "desc": "Custom icon used as the workspace divider when style is set to icon.",
+      "pickIcon": "Pick icon"
+    },
+    "previewsEnabled": {
+      "label": "Enable previews",
+      "desc": "Show a live window thumbnail when hovering over a taskbar item."
+    },
+    "previewLive": {
+      "label": "Live preview",
+      "desc": "Continuously update the preview while hovering. Disable for a static snapshot."
+    },
+    "previewWidth": {
+      "label": "Preview width",
+      "desc": "Width of the window preview popup in pixels."
+    },
+    "previewHeight": {
+      "label": "Preview height",
+      "desc": "Height of the window preview popup in pixels."
+    },
+    "previewDelayMs": {
+      "label": "Preview delay",
+      "desc": "How long to hover before showing the preview."
+    }
   },
   "options": {
     "visible": "Visible",

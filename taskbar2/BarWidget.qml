@@ -63,6 +63,11 @@ Item {
     readonly property string workspaceSeparatorDividerChar: cfg.workspaceSeparatorDividerChar ?? defaults.workspaceSeparatorDividerChar ?? "|"
     readonly property string workspaceSeparatorDividerIcon: cfg.workspaceSeparatorDividerIcon ?? defaults.workspaceSeparatorDividerIcon ?? "minus"
     readonly property bool workspaceSeparatorShowForFirst: cfg.workspaceSeparatorShowForFirst ?? defaults.workspaceSeparatorShowForFirst ?? false
+    readonly property bool previewsEnabled: cfg.previewsEnabled ?? defaults.previewsEnabled ?? true
+    readonly property bool previewLive: cfg.previewLive ?? defaults.previewLive ?? true
+    readonly property int previewWidth: cfg.previewWidth ?? defaults.previewWidth ?? 400
+    readonly property int previewHeight: cfg.previewHeight ?? defaults.previewHeight ?? 250
+    readonly property int previewDelayMs: cfg.previewDelayMs ?? defaults.previewDelayMs ?? 200
     readonly property bool workspaceGroupingActive: groupByWorkspaceIndex && !onlyActiveWorkspaces
     readonly property int itemSize: Style.toOdd(capsuleHeight * Math.max(0.1, iconScale))
     readonly property int appEntryCount: getAppEntries(combinedModel).length
@@ -1692,6 +1697,8 @@ Item {
                             if (!modelData)
                                 return;
 
+                            windowPreview.hide();
+
                             const runningWindows = taskbarItem.windows;
                             const primaryWindow = root.getPrimaryWindowForEntryKey(modelData.entryKey);
 
@@ -1720,16 +1727,34 @@ Item {
 
                         onEntered: {
                             root.hoveredEntryKey = taskbarItem.modelData.entryKey;
-                            TooltipService.show(taskbarItem, taskbarItem.title, BarService.getTooltipDirection(root.screen?.name));
+                            if (root.previewsEnabled && taskbarItem.isRunning) {
+                                const primaryWin = root.getPrimaryWindowForEntryKey(taskbarItem.modelData.entryKey);
+                                if (primaryWin) {
+                                    windowPreview.requestShow(taskbarItem, primaryWin, taskbarItem.title);
+                                } else {
+                                    TooltipService.show(taskbarItem, taskbarItem.title, BarService.getTooltipDirection(root.screen?.name));
+                                }
+                            } else {
+                                TooltipService.show(taskbarItem, taskbarItem.title, BarService.getTooltipDirection(root.screen?.name));
+                            }
                         }
 
                         onExited: {
                             root.hoveredEntryKey = "";
                             TooltipService.hide();
+                            windowPreview.hide();
                         }
                     }
                 }
             }
         }
+    }
+
+    WindowPreview {
+        id: windowPreview
+        previewWidth: root.previewWidth * Style.uiScaleRatio
+        previewHeight: root.previewHeight * Style.uiScaleRatio
+        livePreview: root.previewLive
+        hoverDelayMs: root.previewDelayMs
     }
 }
