@@ -97,6 +97,8 @@ Item {
     property var sessionAppOrder: []
     property var groupCycleIndices: ({})
     property var liveEntriesByKey: ({})
+    property var stableWindowKeyEntries: []
+    property int stableWindowKeyCounter: 0
 
     property int wheelAccumulatedDelta: 0
     property bool wheelCooldown: false
@@ -106,6 +108,8 @@ Item {
     property string selectedAppId: ""
     property string selectedEntryKey: ""
     property string selectedMenuMode: ""
+    property bool pendingModelRefresh: false
+    property bool pendingForceStructuralRefresh: false
     property int modelUpdateTrigger: 0
     property int liveDataRevision: 0
 
@@ -155,6 +159,65 @@ Item {
         return id;
     }
 
+    function getWindowHandle(window) {
+        if (!window)
+            return null;
+        if (window.handle)
+            return window.handle;
+        if (window.toplevel)
+            return window.toplevel;
+        return null;
+    }
+
+    function getStableWindowKey(window) {
+        if (!window)
+            return "";
+
+        const handle = getWindowHandle(window);
+        if (handle) {
+            for (let i = 0; i < stableWindowKeyEntries.length; i++) {
+                const entry = stableWindowKeyEntries[i];
+                if (entry && entry.handle === handle)
+                    return entry.key;
+            }
+
+            stableWindowKeyCounter += 1;
+            const key = "window:" + stableWindowKeyCounter;
+            stableWindowKeyEntries = stableWindowKeyEntries.concat([{
+                "handle": handle,
+                "key": key
+            }]);
+            return key;
+        }
+
+        if (window.id !== undefined && window.id !== null)
+            return "backend:" + String(window.id);
+
+        return "fallback:" + normalizeAppId(window.appId) + ":" + String(window.workspaceId ?? "") + ":" + String(window.output ?? "");
+    }
+
+    function pruneStableWindowKeys(activeWindows) {
+        if (!stableWindowKeyEntries || stableWindowKeyEntries.length === 0)
+            return;
+
+        const activeHandles = [];
+        (activeWindows || []).forEach(window => {
+            const handle = getWindowHandle(window);
+            if (handle)
+                activeHandles.push(handle);
+        });
+
+        if (activeHandles.length === 0)
+            return;
+
+        const nextEntries = stableWindowKeyEntries.filter(entry => {
+            return activeHandles.some(handle => handle === entry.handle);
+        });
+
+        if (nextEntries.length !== stableWindowKeyEntries.length)
+            stableWindowKeyEntries = nextEntries;
+    }
+
     function getAppKey(appData) {
         if (!appData)
             return null;
@@ -169,6 +232,9 @@ Item {
 
         if (appData.type === "pinned" || appData.type === "pinned-running")
             return appData.appId;
+
+        if (appData.windowStableKey)
+            return appData.windowStableKey;
 
         if (appData.window)
             return appData.window;
@@ -185,8 +251,11 @@ Item {
         if (groupApps)
             return "app:" + appData.appId;
 
+        if (appData.windowStableKey)
+            return appData.windowStableKey;
+
         if (appData.window)
-            return "window:" + String(appData.window.id);
+            return getStableWindowKey(appData.window);
 
         return "pinned:" + appData.appId;
     }
@@ -488,6 +557,7 @@ Item {
                     "fallbackTitle": app.title || getAppNameFromDesktopEntry(app.appId),
                     "isPinned": app.type === "pinned" || app.type === "pinned-running",
                     "orderKey": getAppKey(app),
+                    "windowStableKey": app.windowStableKey || "",
                     "workspaceId": app.workspaceId ?? -1,
                     "workspaceIndex": app.workspaceIndex ?? -1
                 };
@@ -504,8 +574,9 @@ Item {
 
             if (existing) {
                 windows.forEach(window => {
-                    if (window && existing.windowIds.indexOf(String(window.id)) === -1) {
-                        existing.windowIds.push(String(window.id));
+                    const stableKey = getStableWindowKey(window);
+                    if (window && stableKey && existing.windowStableKeys.indexOf(stableKey) === -1) {
+                        existing.windowStableKeys.push(stableKey);
                     }
                 });
                 if (app.type === "pinned" || app.type === "pinned-running") {
@@ -518,7 +589,7 @@ Item {
                     "appId": appId,
                     "type": app.type,
                     "fallbackTitle": app.title || getAppNameFromDesktopEntry(appId),
-                    "windowIds": windows.map(window => String(window.id)),
+                    "windowStableKeys": windows.map(window => getStableWindowKey(window)).filter(windowKey => windowKey !== ""),
                     "isPinned": app.type === "pinned" || app.type === "pinned-running",
                     "orderKey": appId,
                     "workspaceId": app.workspaceId ?? -1,
@@ -530,9 +601,9 @@ Item {
         });
 
         grouped.forEach(entry => {
-            if (entry.windowIds.length > 0 && entry.isPinned) {
+            if (entry.windowStableKeys.length > 0 && entry.isPinned) {
                 entry.type = "pinned-running";
-            } else if (entry.windowIds.length > 0) {
+            } else if (entry.windowStableKeys.length > 0) {
                 entry.type = "running";
             } else {
                 entry.type = "pinned";
@@ -600,7 +671,7 @@ Item {
         return renderEntries;
     }
 
-    function buildLiveEntries(structuralEntries, windowsById) {
+    function buildLiveEntries(structuralEntries, windowsById, windowsByStableKey) {
         const liveEntries = {};
 
         structuralEntries.forEach(entry => {
@@ -611,20 +682,19 @@ Item {
             const windows = [];
 
             if (groupApps) {
-                if (entry.windowIds) {
-                    entry.windowIds.forEach(windowId => {
-                        const liveWindow = windowsById[windowId];
+                if (entry.windowStableKeys) {
+                    entry.windowStableKeys.forEach(windowKey => {
+                        const liveWindow = windowsByStableKey[windowKey];
                         if (liveWindow) {
-                            windowIds.push(windowId);
+                            windowIds.push(String(liveWindow.id));
                             windows.push(liveWindow);
                         }
                     });
                 }
-            } else if (entry.entryKey.startsWith("window:")) {
-                const windowId = entry.entryKey.substring("window:".length);
-                const liveWindow = windowsById[windowId];
+            } else if (entry.windowStableKey) {
+                const liveWindow = windowsByStableKey[entry.windowStableKey];
                 if (liveWindow) {
-                    windowIds.push(windowId);
+                    windowIds.push(String(liveWindow.id));
                     windows.push(liveWindow);
                 }
             }
@@ -656,7 +726,7 @@ Item {
         if (!isAppEntry(entry)) {
             return ["separator", entry.workspaceId, entry.workspaceIndex, entry.label || ""].join("|");
         }
-        const ids = entry.windowIds ? entry.windowIds.join(",") : "";
+        const ids = entry.windowStableKeys ? entry.windowStableKeys.join(",") : (entry.windowStableKey || "");
         return [entry.entryKey, entry.appId, entry.type, entry.isPinned ? "1" : "0", ids].join("|");
     }
 
@@ -683,12 +753,18 @@ Item {
         }
 
         const windowsById = {};
+        const windowsByStableKey = {};
         const windows = collectVisibleWindows();
         for (let i = 0; i < windows.length; i++) {
-            windowsById[String(windows[i].id)] = windows[i];
+            const window = windows[i];
+            windowsById[String(window.id)] = window;
+            const stableKey = getStableWindowKey(window);
+            if (stableKey)
+                windowsByStableKey[stableKey] = window;
         }
+        pruneStableWindowKeys(windows);
 
-        liveEntriesByKey = buildLiveEntries(combinedModel, windowsById);
+        liveEntriesByKey = buildLiveEntries(combinedModel, windowsById, windowsByStableKey);
         liveDataRevision++;
         updateHasWindow();
     }
@@ -755,6 +831,7 @@ Item {
                 combined.push({
                     "type": entryType,
                     "window": window,
+                    "windowStableKey": getStableWindowKey(window),
                     "appId": canonicalId,
                     "title": title || window.title || getAppNameFromDesktopEntry(appId),
                     "workspaceId": workspaceInfo ? workspaceInfo.id : -1,
@@ -825,6 +902,32 @@ Item {
 
     function refreshLiveData() {
         applySnapshot(buildStructuralEntries(), false);
+    }
+
+    function isInteractionActive() {
+        return hoveredEntryKey !== "" || dragSourceIndex !== -1 || contextMenu.visible;
+    }
+
+    function flushPendingModelRefresh() {
+        if (!pendingModelRefresh || isInteractionActive())
+            return;
+
+        const forceStructural = pendingForceStructuralRefresh;
+        pendingModelRefresh = false;
+        pendingForceStructuralRefresh = false;
+        updateCombinedModel(forceStructural);
+    }
+
+    function scheduleModelRefresh(forceStructural) {
+        pendingForceStructuralRefresh = pendingForceStructuralRefresh || (forceStructural === true);
+        pendingModelRefresh = true;
+
+        if (isInteractionActive()) {
+            refreshLiveData();
+            return;
+        }
+
+        modelRefreshDebounce.restart();
     }
 
     function updateHasWindow() {
@@ -1046,6 +1149,11 @@ Item {
     NPopupContextMenu {
         id: contextMenu
 
+        onVisibleChanged: {
+            if (!visible)
+                root.flushPendingModelRefresh();
+        }
+
         onTriggered: (action, item) => {
             contextMenu.close();
             PanelService.closeContextMenu(root.screen);
@@ -1084,29 +1192,31 @@ Item {
             refreshLiveData();
         }
         function onWindowListChanged() {
-            updateCombinedModel(false);
+            scheduleModelRefresh(false);
         }
         function onWorkspaceChanged() {
-            updateCombinedModel(true);
+            scheduleModelRefresh(true);
         }
     }
 
     Connections {
         target: Settings.data.dock
         function onPinnedAppsChanged() {
-            updateCombinedModel(true);
+            scheduleModelRefresh(true);
         }
     }
 
-    onOnlySameOutputChanged: updateCombinedModel(true)
-    onOnlyActiveWorkspacesChanged: updateCombinedModel(true)
-    onShowPinnedAppsChanged: updateCombinedModel(true)
-    onGroupAppsChanged: updateCombinedModel(true)
-    onGroupByWorkspaceIndexChanged: updateCombinedModel(true)
-    onShowWorkspaceSeparatorsChanged: updateCombinedModel(true)
+    onOnlySameOutputChanged: scheduleModelRefresh(true)
+    onOnlyActiveWorkspacesChanged: scheduleModelRefresh(true)
+    onShowPinnedAppsChanged: scheduleModelRefresh(true)
+    onGroupAppsChanged: scheduleModelRefresh(true)
+    onGroupByWorkspaceIndexChanged: scheduleModelRefresh(true)
+    onShowWorkspaceSeparatorsChanged: scheduleModelRefresh(true)
+    onHoveredEntryKeyChanged: flushPendingModelRefresh()
+    onDragSourceIndexChanged: flushPendingModelRefresh()
 
     Component.onCompleted: updateCombinedModel(true)
-    onScreenChanged: updateCombinedModel(true)
+    onScreenChanged: scheduleModelRefresh(true)
 
     Timer {
         id: wheelDebounce
@@ -1115,6 +1225,21 @@ Item {
         onTriggered: {
             root.wheelCooldown = false;
             root.wheelAccumulatedDelta = 0;
+        }
+    }
+
+    Timer {
+        id: modelRefreshDebounce
+        interval: 60
+        repeat: false
+        onTriggered: {
+            if (!root.pendingModelRefresh)
+                return;
+
+            const forceStructural = root.pendingForceStructuralRefresh;
+            root.pendingModelRefresh = false;
+            root.pendingForceStructuralRefresh = false;
+            root.updateCombinedModel(forceStructural);
         }
     }
 
