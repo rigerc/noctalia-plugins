@@ -143,10 +143,6 @@
         "label": "Focus transparency",
         "desc": "Reduce the opacity of the focus marker and its glow."
       },
-      "focusTransitionPreview": {
-        "label": "Preview",
-        "desc": "Shows the current marker size, blur, transparency, and color choices in a looping preview."
-      },
       "titleFontFamily": {
         "label": "Title font family",
         "desc": "Font used for taskbar title text.",

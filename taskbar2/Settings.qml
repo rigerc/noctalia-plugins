@@ -3,7 +3,6 @@ import QtQuick.Layouts
 import qs.Commons
 import qs.Services.System
 import qs.Widgets
-import "FocusTransitionStyle.js" as FocusTransitionStyle
 
 ColumnLayout {
     id: root
@@ -130,13 +129,6 @@ ColumnLayout {
     property string valueWorkspaceSeparatorDividerChar: cfg.workspaceSeparatorDividerChar ?? defaults.workspaceSeparatorDividerChar ?? "|"
     property string valueWorkspaceSeparatorDividerIcon: cfg.workspaceSeparatorDividerIcon ?? defaults.workspaceSeparatorDividerIcon ?? "minus"
     property bool valueWorkspaceSeparatorShowForFirst: cfg.workspaceSeparatorShowForFirst ?? defaults.workspaceSeparatorShowForFirst ?? false
-    readonly property real focusPreviewWidth: Math.round(380 * Style.uiScaleRatio)
-    readonly property real focusPreviewHeight: Math.round(48 * Style.uiScaleRatio)
-    readonly property real focusPreviewCrossSpace: isVerticalBar ? Math.round(34 * Style.uiScaleRatio) : Math.round(18 * Style.uiScaleRatio)
-    readonly property real focusPreviewMainSpace: isVerticalBar ? Math.round(72 * Style.uiScaleRatio) : Math.round(72 * Style.uiScaleRatio)
-    readonly property real previewOpacityRatio: 1 - (valueFocusTransitionTransparency / 100)
-    property real previewLoopProgress: 0
-
     spacing: Style.marginM
 
     function normalizeStateColors(sourceState, fallbackState) {
@@ -172,12 +164,6 @@ ColumnLayout {
     function getDefaultItemColor(stateKey, colorRole) {
         const fallbackColors = normalizeItemColors(defaults.itemColors || ({}));
         return fallbackColors[stateKey][colorRole];
-    }
-
-    function resolvePreviewColor(colorKey, fallbackColor) {
-        if (!colorKey || colorKey === "none")
-            return fallbackColor;
-        return Color.resolveColorKey(colorKey);
     }
 
     function saveSettings() {
@@ -711,7 +697,7 @@ ColumnLayout {
                 label: pluginApi?.tr("settings.focusTransitionThickness.label")
                 description: pluginApi?.tr("settings.focusTransitionThickness.desc")
                 from: 2
-                to: Math.max(2, Math.round(root.focusPreviewCrossSpace * 1.5))
+                to: Math.round(48 * Style.uiScaleRatio)
                 stepSize: 1
                 showReset: true
                 value: root.valueFocusTransitionThickness
@@ -781,184 +767,6 @@ ColumnLayout {
                 defaultValue: defaults.focusTransitionTransparency ?? 15
                 onMoved: value => root.valueFocusTransitionTransparency = Math.round(value)
                 text: Math.round(root.valueFocusTransitionTransparency) + "%"
-            }
-
-            Item {
-                visible: root.valueFocusTransitionEnabled
-                Layout.fillWidth: true
-                implicitHeight: previewColumn.implicitHeight
-
-                ColumnLayout {
-                    id: previewColumn
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    spacing: Style.marginS
-
-                    NHeader {
-                        label: pluginApi?.tr("settings.focusTransitionPreview.label")
-                        description: pluginApi?.tr("settings.focusTransitionPreview.desc")
-                    }
-
-                    Item {
-                        Layout.fillWidth: true
-                        implicitHeight: previewFrame.height
-
-                        Rectangle {
-                            id: previewFrame
-                            width: Math.min(parent.width, root.focusPreviewWidth)
-                            height: root.focusPreviewHeight
-                            anchors.left: parent.left
-                            radius: Style.radiusM
-                            color: Qt.alpha(Style.capsuleColor, 0.92)
-                            border.color: Style.capsuleBorderColor
-                            border.width: Style.capsuleBorderWidth
-
-                            Item {
-                                id: previewLayer
-                                anchors.fill: parent
-                                anchors.margins: Style.marginM
-                                readonly property real availableMainSpace: root.isVerticalBar ? height : width
-                                readonly property real availableCrossSpace: root.isVerticalBar ? width : height
-                                readonly property real trackMainSpace: Math.min(root.focusPreviewMainSpace, availableMainSpace)
-                                readonly property real trackCrossSpace: Math.min(root.focusPreviewCrossSpace, availableCrossSpace)
-                                readonly property real markerLengthBase: Math.min(trackMainSpace, Math.max(6, trackMainSpace * Math.max(0.2, Math.min(root.valueFocusTransitionMarkerScale / 2.5, 1))))
-                                readonly property real travelDistance: Math.max(0, trackMainSpace - markerLengthBase)
-                                readonly property var styleSpec: FocusTransitionStyle.buildSpec({
-                                    "style": root.valueFocusTransitionStyle,
-                                    "startAxis": 0,
-                                    "endAxis": travelDistance,
-                                    "startLength": markerLengthBase,
-                                    "endLength": markerLengthBase,
-                                    "duration": Math.max(1, root.valueFocusTransitionDurationMs),
-                                    "direction": 1,
-                                    "intensityRatio": root.valueFocusTransitionIntensity / 100,
-                                    "uiScaleRatio": Style.uiScaleRatio
-                                })
-                                readonly property var frameState: FocusTransitionStyle.evaluateFrame(styleSpec, root.previewLoopProgress, 0, markerLengthBase)
-                                readonly property real markerThickness: Math.min(root.valueFocusTransitionThickness, trackCrossSpace * 1.5)
-                                readonly property real markerLength: Math.max(3, frameState.length)
-                                readonly property real markerAxisPosition: frameState.axisPosition
-                                readonly property real markerCrossPosition: root.isVerticalBar ? Math.round((previewTrack.width - markerThickness) / 2) : Math.round((previewTrack.height - markerThickness) / 2)
-                                readonly property real markerCenterAxis: markerAxisPosition + markerLength / 2
-                                readonly property real trailStartAxis: Math.min(markerLength / 2, markerCenterAxis)
-                                readonly property real trailExtent: Math.max(0, Math.abs(markerCenterAxis - markerLength / 2))
-                                readonly property real markerOpacity: Math.max(0, Math.min(1, frameState.opacity)) * root.previewOpacityRatio
-
-                                Rectangle {
-                                    id: previewTrack
-                                    anchors.centerIn: parent
-                                    height: root.isVerticalBar ? previewLayer.trackMainSpace : previewLayer.trackCrossSpace
-                                    width: root.isVerticalBar ? previewLayer.trackCrossSpace : previewLayer.trackMainSpace
-                                    radius: Style.radiusM
-                                    color: Qt.alpha(Color.mSurface, 0.45)
-                                    border.color: Qt.alpha(Color.mOutline, 0.45)
-                                    border.width: Style.borderS
-                                }
-
-                                Rectangle {
-                                    visible: previewLayer.styleSpec.ribbonStrength > 0 && previewLayer.trailExtent > 0
-                                    x: root.isVerticalBar ? (previewTrack.x + previewLayer.markerCrossPosition + previewLayer.markerThickness * 0.18) : (previewTrack.x + previewLayer.trailStartAxis)
-                                    y: root.isVerticalBar ? (previewTrack.y + previewLayer.trailStartAxis) : (previewTrack.y + previewLayer.markerCrossPosition + previewLayer.markerThickness * 0.18)
-                                    width: root.isVerticalBar ? Math.max(2, previewLayer.markerThickness * 0.64) : previewLayer.trailExtent
-                                    height: root.isVerticalBar ? previewLayer.trailExtent : Math.max(2, previewLayer.markerThickness * 0.64)
-                                    radius: height / 2
-                                    color: Qt.alpha(root.resolvePreviewColor(root.valueFocusTransitionGlowColor, Color.mPrimary), previewLayer.styleSpec.ribbonStrength * previewLayer.markerOpacity)
-                                }
-
-                                Rectangle {
-                                    visible: previewLayer.trailExtent > 1 && previewLayer.styleSpec.trailStrength > 0
-                                    x: root.isVerticalBar ? (previewTrack.x + previewLayer.markerCrossPosition - 2 - root.valueFocusTransitionBlur * 0.5) : (previewTrack.x + previewLayer.trailStartAxis - root.valueFocusTransitionBlur * 0.5)
-                                    y: root.isVerticalBar ? (previewTrack.y + previewLayer.trailStartAxis - root.valueFocusTransitionBlur * 0.5) : (previewTrack.y + previewLayer.markerCrossPosition - 2 - root.valueFocusTransitionBlur * 0.5)
-                                    width: root.isVerticalBar ? (previewLayer.markerThickness + 4 + root.valueFocusTransitionBlur) : (previewLayer.trailExtent + root.valueFocusTransitionBlur)
-                                    height: root.isVerticalBar ? (previewLayer.trailExtent + root.valueFocusTransitionBlur) : (previewLayer.markerThickness + 4 + root.valueFocusTransitionBlur)
-                                    radius: Math.max(width, height) / 2
-                                    color: Qt.alpha(root.resolvePreviewColor(root.valueFocusTransitionGlowColor, Color.mPrimary), previewLayer.styleSpec.trailStrength * previewLayer.markerOpacity)
-                                }
-
-                                Rectangle {
-                                    visible: previewLayer.styleSpec.glowStrength > 0
-                                    x: root.isVerticalBar ? (previewTrack.x + previewLayer.markerCrossPosition - 4 - root.valueFocusTransitionBlur) : (previewTrack.x + previewLayer.markerAxisPosition - 4 - root.valueFocusTransitionBlur)
-                                    y: root.isVerticalBar ? (previewTrack.y + previewLayer.markerAxisPosition - 4 - root.valueFocusTransitionBlur) : (previewTrack.y + previewLayer.markerCrossPosition - 4 - root.valueFocusTransitionBlur)
-                                    width: root.isVerticalBar ? (previewLayer.markerThickness + 8 + root.valueFocusTransitionBlur * 2) : (previewLayer.markerLength + 8 + root.valueFocusTransitionBlur * 2)
-                                    height: root.isVerticalBar ? (previewLayer.markerLength + 8 + root.valueFocusTransitionBlur * 2) : (previewLayer.markerThickness + 8 + root.valueFocusTransitionBlur * 2)
-                                    radius: Math.max(width, height) / 2
-                                    color: Qt.alpha(root.resolvePreviewColor(root.valueFocusTransitionGlowColor, Color.mPrimary), previewLayer.styleSpec.glowStrength * previewLayer.markerOpacity)
-                                }
-
-                                Rectangle {
-                                    visible: previewLayer.styleSpec.haloStrength > 0
-                                    x: root.isVerticalBar ? (previewTrack.x + previewLayer.markerCrossPosition - 3 - root.valueFocusTransitionBlur * 0.25) : (previewTrack.x + previewLayer.markerAxisPosition - 3 - root.valueFocusTransitionBlur * 0.25)
-                                    y: root.isVerticalBar ? (previewTrack.y + previewLayer.markerAxisPosition - 3 - root.valueFocusTransitionBlur * 0.25) : (previewTrack.y + previewLayer.markerCrossPosition - 3 - root.valueFocusTransitionBlur * 0.25)
-                                    width: root.isVerticalBar ? (previewLayer.markerThickness + 6 + root.valueFocusTransitionBlur * 0.5) : (previewLayer.markerLength + 6 + root.valueFocusTransitionBlur * 0.5)
-                                    height: root.isVerticalBar ? (previewLayer.markerLength + 6 + root.valueFocusTransitionBlur * 0.5) : (previewLayer.markerThickness + 6 + root.valueFocusTransitionBlur * 0.5)
-                                    radius: Math.max(width, height) / 2
-                                    color: "transparent"
-                                    border.width: Math.max(1, Style.borderS)
-                                    border.color: Qt.alpha(root.resolvePreviewColor(root.valueFocusTransitionGlowColor, Color.mPrimary), previewLayer.styleSpec.haloStrength * previewLayer.markerOpacity)
-                                }
-
-                                Repeater {
-                                    model: 4
-
-                                    delegate: Rectangle {
-                                        required property int index
-                                        readonly property bool enabledPiece: previewLayer.styleSpec.trailingPieces > index && previewLayer.styleSpec.trailShape !== "none"
-                                        readonly property real lag: previewLayer.styleSpec.trailingGap * (index + 1)
-                                        readonly property real centerAxis: previewLayer.markerCenterAxis - lag
-                                        readonly property real scaleFactor: Math.max(0.18, 1 - index * previewLayer.styleSpec.trailingScaleFalloff)
-                                        readonly property real baseMain: previewLayer.markerLength * previewLayer.styleSpec.trailingMainRatio
-                                        readonly property real baseCross: previewLayer.markerThickness * previewLayer.styleSpec.trailingCrossRatio
-                                        readonly property real pieceMain: previewLayer.styleSpec.trailShape === "dot" ? Math.max(3, Math.min(baseMain, baseCross) * scaleFactor) : Math.max(3, baseMain * scaleFactor)
-                                        readonly property real pieceCross: previewLayer.styleSpec.trailShape === "dot" ? pieceMain : Math.max(3, baseCross * scaleFactor)
-                                        readonly property real pieceOpacity: Math.max(0, previewLayer.markerOpacity * (1 - index * previewLayer.styleSpec.trailingOpacityFalloff))
-
-                                        visible: enabledPiece
-                                        x: root.isVerticalBar ? (previewTrack.x + previewLayer.markerCrossPosition + (previewLayer.markerThickness - pieceCross) / 2) : (previewTrack.x + centerAxis - pieceMain / 2)
-                                        y: root.isVerticalBar ? (previewTrack.y + centerAxis - pieceMain / 2) : (previewTrack.y + previewLayer.markerCrossPosition + (previewLayer.markerThickness - pieceCross) / 2)
-                                        width: root.isVerticalBar ? pieceCross : pieceMain
-                                        height: root.isVerticalBar ? pieceMain : pieceCross
-                                        radius: {
-                                            switch (previewLayer.styleSpec.trailShape) {
-                                            case "shard":
-                                                return Math.min(Style.radiusXXS, Math.min(width, height) / 3);
-                                            case "dot":
-                                                return width / 2;
-                                            default:
-                                                return Math.max(width, height) / 2;
-                                            }
-                                        }
-                                        color: Qt.alpha(root.resolvePreviewColor(root.valueFocusTransitionGlowColor, Color.mPrimary), pieceOpacity)
-                                        border.width: previewLayer.styleSpec.trailShape === "echo" ? Math.max(1, Style.borderS) : 0
-                                        border.color: previewLayer.styleSpec.trailShape === "echo" ? Qt.alpha(root.resolvePreviewColor(root.valueFocusTransitionGlowColor, Color.mPrimary), pieceOpacity * 0.9) : "transparent"
-                                    }
-                                }
-
-                                Rectangle {
-                                    x: root.isVerticalBar ? (previewTrack.x + previewLayer.markerCrossPosition) : (previewTrack.x + previewLayer.markerAxisPosition)
-                                    y: root.isVerticalBar ? (previewTrack.y + previewLayer.markerAxisPosition) : (previewTrack.y + previewLayer.markerCrossPosition)
-                                    width: root.isVerticalBar ? previewLayer.markerThickness : previewLayer.markerLength
-                                    height: root.isVerticalBar ? previewLayer.markerLength : previewLayer.markerThickness
-                                    radius: previewLayer.styleSpec.leadShape === "rect" ? Math.min(Style.radiusXS, Math.min(width, height) / 3) : Math.max(width, height) / 2
-                                    border.width: previewLayer.styleSpec.leadShape === "rect" ? Math.max(1, Style.borderS) : 0
-                                    border.color: previewLayer.styleSpec.leadShape === "rect" ? Qt.alpha(root.resolvePreviewColor(root.valueFocusTransitionColor, Color.mPrimary), 0.65 * previewLayer.markerOpacity) : "transparent"
-                                    color: Qt.alpha(root.resolvePreviewColor(root.valueFocusTransitionColor, Color.mPrimary), previewLayer.markerOpacity)
-                                }
-
-                                Rectangle {
-                                    readonly property real bloomLength: previewLayer.markerLength * previewLayer.frameState.bloomScale
-                                    readonly property real bloomThickness: previewLayer.markerThickness * previewLayer.frameState.bloomScale
-                                    visible: previewLayer.frameState.bloomActive && previewLayer.frameState.bloomOpacity > 0.001
-                                    x: root.isVerticalBar ? (previewTrack.x + previewLayer.markerCrossPosition + (previewLayer.markerThickness - bloomThickness) / 2 - root.valueFocusTransitionBlur) : (previewTrack.x + previewLayer.travelDistance + (previewLayer.markerLength - bloomLength) / 2 - root.valueFocusTransitionBlur)
-                                    y: root.isVerticalBar ? (previewTrack.y + previewLayer.travelDistance + (previewLayer.markerLength - bloomLength) / 2 - root.valueFocusTransitionBlur) : (previewTrack.y + previewLayer.markerCrossPosition + (previewLayer.markerThickness - bloomThickness) / 2 - root.valueFocusTransitionBlur)
-                                    width: root.isVerticalBar ? (bloomThickness + root.valueFocusTransitionBlur * 2) : (bloomLength + root.valueFocusTransitionBlur * 2)
-                                    height: root.isVerticalBar ? (bloomLength + root.valueFocusTransitionBlur * 2) : (bloomThickness + root.valueFocusTransitionBlur * 2)
-                                    radius: Math.max(width, height) / 2
-                                    color: Qt.alpha(root.resolvePreviewColor(root.valueFocusTransitionGlowColor, Color.mPrimary), previewLayer.frameState.bloomOpacity * root.previewOpacityRatio * 0.7)
-                                }
-                            }
-                        }
-                    }
-                }
             }
 
             NDivider {
@@ -1125,34 +933,4 @@ ColumnLayout {
         }
     }
 
-    SequentialAnimation {
-        running: root.valueFocusTransitionEnabled
-        loops: Animation.Infinite
-
-        NumberAnimation {
-            target: root
-            property: "previewLoopProgress"
-            from: 0
-            to: 1
-            duration: 1200
-            easing.type: Easing.InOutCubic
-        }
-
-        PauseAnimation {
-            duration: 180
-        }
-
-        NumberAnimation {
-            target: root
-            property: "previewLoopProgress"
-            from: 1
-            to: 0.18
-            duration: 960
-            easing.type: Easing.InOutCubic
-        }
-
-        PauseAnimation {
-            duration: 220
-        }
-    }
 }
