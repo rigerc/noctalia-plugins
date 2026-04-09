@@ -72,7 +72,10 @@ Item {
     readonly property real focusTransitionMarkerScale: Math.max(0.5, cfg.focusTransitionMarkerScale ?? defaults.focusTransitionMarkerScale ?? 1.4)
     readonly property string focusTransitionColorKey: cfg.focusTransitionColor ?? defaults.focusTransitionColor ?? "primary"
     readonly property string focusTransitionGlowColorKey: cfg.focusTransitionGlowColor ?? defaults.focusTransitionGlowColor ?? "primary"
+    readonly property real focusTransitionBlur: Math.max(0, cfg.focusTransitionBlur ?? defaults.focusTransitionBlur ?? 6)
+    readonly property int focusTransitionTransparency: Math.max(0, Math.min(90, cfg.focusTransitionTransparency ?? defaults.focusTransitionTransparency ?? 15))
     readonly property real focusTransitionIntensityRatio: focusTransitionIntensity / 100
+    readonly property real focusTransitionOpacityRatio: 1 - (focusTransitionTransparency / 100)
     readonly property bool workspaceGroupingActive: groupByWorkspaceIndex && !onlyActiveWorkspaces
     readonly property int itemSize: Style.toOdd(capsuleHeight * Math.max(0.1, iconScale))
     readonly property int appEntryCount: getAppEntries(combinedModel).length
@@ -1773,8 +1776,10 @@ Item {
 
                         const iconPoint = iconContainer.mapToItem(visualCapsule, 0, 0);
                         const itemPoint = taskbarItem.mapToItem(visualCapsule, 0, 0);
-                        const markerLength = Math.max(6, Math.round(root.itemSize * 0.25 * root.focusTransitionMarkerScale));
-                        const markerThickness = Math.round(root.focusTransitionThickness);
+                        const availableMainSpace = root.isVerticalBar ? iconContainer.height : iconContainer.width;
+                        const availableCrossSpace = (root.isVerticalBar ? taskbarItem.width - 4 : taskbarItem.height - 4) * 1.5;
+                        const markerLength = Math.min(availableMainSpace, Math.max(6, Math.round(root.itemSize * 0.25 * root.focusTransitionMarkerScale)));
+                        const markerThickness = Math.min(Math.max(2, availableCrossSpace), Math.round(root.focusTransitionThickness));
                         const rect = root.isVerticalBar ? {
                             "x": Math.round(itemPoint.x + taskbarItem.width - markerThickness - 2),
                             "y": Math.round(iconPoint.y + (iconContainer.height - markerLength) / 2),
@@ -2287,22 +2292,22 @@ Item {
 
             Rectangle {
                 visible: root.focusTravelTrailExtent > 1 && root.focusTravelTrailStrength > 0
-                x: root.isVerticalBar ? (root.focusTravelCrossPosition - 2) : root.focusTravelTrailStartAxis
-                y: root.isVerticalBar ? root.focusTravelTrailStartAxis : (root.focusTravelCrossPosition - 2)
-                width: root.isVerticalBar ? (root.focusTravelThickness + 4) : root.focusTravelTrailExtent
-                height: root.isVerticalBar ? root.focusTravelTrailExtent : (root.focusTravelThickness + 4)
+                x: root.isVerticalBar ? (root.focusTravelCrossPosition - 2 - root.focusTransitionBlur * 0.5) : (root.focusTravelTrailStartAxis - root.focusTransitionBlur * 0.5)
+                y: root.isVerticalBar ? (root.focusTravelTrailStartAxis - root.focusTransitionBlur * 0.5) : (root.focusTravelCrossPosition - 2 - root.focusTransitionBlur * 0.5)
+                width: root.isVerticalBar ? (root.focusTravelThickness + 4 + root.focusTransitionBlur) : (root.focusTravelTrailExtent + root.focusTransitionBlur)
+                height: root.isVerticalBar ? (root.focusTravelTrailExtent + root.focusTransitionBlur) : (root.focusTravelThickness + 4 + root.focusTransitionBlur)
                 radius: Math.max(width, height) / 2
-                color: Qt.alpha(root.resolveFocusTransitionColor(root.focusTransitionGlowColorKey, Color.mPrimary), root.focusTravelTrailStrength * root.focusTravelOpacity)
+                color: Qt.alpha(root.resolveFocusTransitionColor(root.focusTransitionGlowColorKey, Color.mPrimary), root.focusTravelTrailStrength * root.focusTravelOpacity * root.focusTransitionOpacityRatio)
             }
 
             Rectangle {
                 visible: root.focusTravelGlowStrength > 0
-                x: root.isVerticalBar ? (root.focusTravelCrossPosition - 4 - (root.focusTravelBloomScale - 1) * 2) : (root.focusTravelAxisPosition - 4 - (root.focusTravelBloomScale - 1) * 4)
-                y: root.isVerticalBar ? (root.focusTravelAxisPosition - 4 - (root.focusTravelBloomScale - 1) * 4) : (root.focusTravelCrossPosition - 4 - (root.focusTravelBloomScale - 1) * 2)
-                width: root.isVerticalBar ? (root.focusTravelThickness + 8 + (root.focusTravelBloomScale - 1) * 4) : (root.focusTravelLength + 8 + (root.focusTravelBloomScale - 1) * 8)
-                height: root.isVerticalBar ? (root.focusTravelLength + 8 + (root.focusTravelBloomScale - 1) * 8) : (root.focusTravelThickness + 8 + (root.focusTravelBloomScale - 1) * 4)
+                x: root.isVerticalBar ? (root.focusTravelCrossPosition - 4 - (root.focusTravelBloomScale - 1) * 2 - root.focusTransitionBlur) : (root.focusTravelAxisPosition - 4 - (root.focusTravelBloomScale - 1) * 4 - root.focusTransitionBlur)
+                y: root.isVerticalBar ? (root.focusTravelAxisPosition - 4 - (root.focusTravelBloomScale - 1) * 4 - root.focusTransitionBlur) : (root.focusTravelCrossPosition - 4 - (root.focusTravelBloomScale - 1) * 2 - root.focusTransitionBlur)
+                width: root.isVerticalBar ? (root.focusTravelThickness + 8 + (root.focusTravelBloomScale - 1) * 4 + root.focusTransitionBlur * 2) : (root.focusTravelLength + 8 + (root.focusTravelBloomScale - 1) * 8 + root.focusTransitionBlur * 2)
+                height: root.isVerticalBar ? (root.focusTravelLength + 8 + (root.focusTravelBloomScale - 1) * 8 + root.focusTransitionBlur * 2) : (root.focusTravelThickness + 8 + (root.focusTravelBloomScale - 1) * 4 + root.focusTransitionBlur * 2)
                 radius: Math.max(width, height) / 2
-                color: Qt.alpha(root.resolveFocusTransitionColor(root.focusTransitionGlowColorKey, Color.mPrimary), root.focusTravelGlowStrength * root.focusTravelOpacity)
+                color: Qt.alpha(root.resolveFocusTransitionColor(root.focusTransitionGlowColorKey, Color.mPrimary), root.focusTravelGlowStrength * root.focusTravelOpacity * root.focusTransitionOpacityRatio)
             }
 
             Rectangle {
@@ -2311,17 +2316,23 @@ Item {
                 width: root.isVerticalBar ? root.focusTravelThickness : root.focusTravelLength
                 height: root.isVerticalBar ? root.focusTravelLength : root.focusTravelThickness
                 radius: Math.max(width, height) / 2
-                color: Qt.alpha(root.resolveFocusTransitionColor(root.focusTransitionColorKey, Color.mPrimary), root.focusTravelOpacity)
+                color: Qt.alpha(root.resolveFocusTransitionColor(root.focusTransitionColorKey, Color.mPrimary), root.focusTravelOpacity * root.focusTransitionOpacityRatio)
             }
 
             Rectangle {
+                readonly property var bloomRect: root.focusTravelEndRect || ({
+                    "x": 0,
+                    "y": 0,
+                    "width": 0,
+                    "height": 0
+                })
                 visible: root.focusTravelBloomOpacity > 0 && root.focusTravelEndRect
-                x: root.isVerticalBar ? (root.focusTravelEndRect.x - (root.focusTravelBloomScale - 1) * 3) : (root.focusTravelEndRect.x - (root.focusTravelBloomScale - 1) * 6)
-                y: root.isVerticalBar ? (root.focusTravelEndRect.y - (root.focusTravelBloomScale - 1) * 6) : (root.focusTravelEndRect.y - (root.focusTravelBloomScale - 1) * 3)
-                width: root.isVerticalBar ? (root.focusTravelEndRect.width + (root.focusTravelBloomScale - 1) * 6) : (root.focusTravelEndRect.width + (root.focusTravelBloomScale - 1) * 12)
-                height: root.isVerticalBar ? (root.focusTravelEndRect.height + (root.focusTravelBloomScale - 1) * 12) : (root.focusTravelEndRect.height + (root.focusTravelBloomScale - 1) * 6)
+                x: root.isVerticalBar ? (bloomRect.x - (root.focusTravelBloomScale - 1) * 3 - root.focusTransitionBlur) : (bloomRect.x - (root.focusTravelBloomScale - 1) * 6 - root.focusTransitionBlur)
+                y: root.isVerticalBar ? (bloomRect.y - (root.focusTravelBloomScale - 1) * 6 - root.focusTransitionBlur) : (bloomRect.y - (root.focusTravelBloomScale - 1) * 3 - root.focusTransitionBlur)
+                width: root.isVerticalBar ? (bloomRect.width + (root.focusTravelBloomScale - 1) * 6 + root.focusTransitionBlur * 2) : (bloomRect.width + (root.focusTravelBloomScale - 1) * 12 + root.focusTransitionBlur * 2)
+                height: root.isVerticalBar ? (bloomRect.height + (root.focusTravelBloomScale - 1) * 12 + root.focusTransitionBlur * 2) : (bloomRect.height + (root.focusTravelBloomScale - 1) * 6 + root.focusTransitionBlur * 2)
                 radius: Math.max(width, height) / 2
-                color: Qt.alpha(root.resolveFocusTransitionColor(root.focusTransitionGlowColorKey, Color.mPrimary), root.focusTravelBloomOpacity)
+                color: Qt.alpha(root.resolveFocusTransitionColor(root.focusTransitionGlowColorKey, Color.mPrimary), root.focusTravelBloomOpacity * root.focusTransitionOpacityRatio)
             }
         }
     }

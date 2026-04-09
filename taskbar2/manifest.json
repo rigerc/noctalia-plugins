@@ -45,6 +45,8 @@
       "focusTransitionMarkerScale": 1.4,
       "focusTransitionColor": "primary",
       "focusTransitionGlowColor": "primary",
+      "focusTransitionBlur": 6,
+      "focusTransitionTransparency": 15,
       "itemColors": {
         "default": {
           "background": "none",

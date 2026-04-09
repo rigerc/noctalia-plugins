@@ -74,6 +74,8 @@ ColumnLayout {
   property real valueFocusTransitionMarkerScale: cfg.focusTransitionMarkerScale ?? defaults.focusTransitionMarkerScale ?? 1.4
   property string valueFocusTransitionColor: cfg.focusTransitionColor ?? defaults.focusTransitionColor ?? "primary"
   property string valueFocusTransitionGlowColor: cfg.focusTransitionGlowColor ?? defaults.focusTransitionGlowColor ?? "primary"
+  property int valueFocusTransitionBlur: cfg.focusTransitionBlur ?? defaults.focusTransitionBlur ?? 6
+  property int valueFocusTransitionTransparency: cfg.focusTransitionTransparency ?? defaults.focusTransitionTransparency ?? 15
   property bool valueGroupApps: cfg.groupApps ?? defaults.groupApps ?? false
   property string valueGroupClickAction: cfg.groupClickAction ?? defaults.groupClickAction ?? "cycle"
   property string valueGroupContextMenuMode: cfg.groupContextMenuMode ?? defaults.groupContextMenuMode ?? "extended"
@@ -88,6 +90,11 @@ ColumnLayout {
   property string valueWorkspaceSeparatorDividerChar: cfg.workspaceSeparatorDividerChar ?? defaults.workspaceSeparatorDividerChar ?? "|"
   property string valueWorkspaceSeparatorDividerIcon: cfg.workspaceSeparatorDividerIcon ?? defaults.workspaceSeparatorDividerIcon ?? "minus"
   property bool valueWorkspaceSeparatorShowForFirst: cfg.workspaceSeparatorShowForFirst ?? defaults.workspaceSeparatorShowForFirst ?? false
+  readonly property real focusPreviewWidth: Math.round(180 * Style.uiScaleRatio)
+  readonly property real focusPreviewHeight: Math.round(48 * Style.uiScaleRatio)
+  readonly property real focusPreviewCrossSpace: isVerticalBar ? Math.round(34 * Style.uiScaleRatio) : Math.round(18 * Style.uiScaleRatio)
+  readonly property real focusPreviewMainSpace: isVerticalBar ? Math.round(72 * Style.uiScaleRatio) : Math.round(72 * Style.uiScaleRatio)
+  property real previewLoopProgress: 0
 
   spacing: Style.marginM
 
@@ -126,6 +133,12 @@ ColumnLayout {
     return fallbackColors[stateKey][colorRole];
   }
 
+  function resolvePreviewColor(colorKey, fallbackColor) {
+    if (!colorKey || colorKey === "none")
+      return fallbackColor;
+    return Color.resolveColorKey(colorKey);
+  }
+
   function saveSettings() {
     if (!pluginApi) {
       Logger.e("Taskbar2", "Cannot save settings: pluginApi is null");
@@ -158,6 +171,8 @@ ColumnLayout {
     pluginApi.pluginSettings.focusTransitionMarkerScale = root.valueFocusTransitionMarkerScale;
     pluginApi.pluginSettings.focusTransitionColor = root.valueFocusTransitionColor;
     pluginApi.pluginSettings.focusTransitionGlowColor = root.valueFocusTransitionGlowColor;
+    pluginApi.pluginSettings.focusTransitionBlur = root.valueFocusTransitionBlur;
+    pluginApi.pluginSettings.focusTransitionTransparency = root.valueFocusTransitionTransparency;
     pluginApi.pluginSettings.groupApps = root.valueGroupApps;
     pluginApi.pluginSettings.groupClickAction = root.valueGroupClickAction;
     pluginApi.pluginSettings.groupContextMenuMode = root.valueGroupContextMenuMode;
@@ -607,7 +622,7 @@ ColumnLayout {
         label: pluginApi?.tr("settings.focusTransitionThickness.label")
         description: pluginApi?.tr("settings.focusTransitionThickness.desc")
         from: 2
-        to: 16
+        to: Math.max(2, Math.round(root.focusPreviewCrossSpace * 1.5))
         stepSize: 1
         showReset: true
         value: root.valueFocusTransitionThickness
@@ -647,6 +662,133 @@ ColumnLayout {
         currentKey: root.valueFocusTransitionGlowColor
         onSelected: key => root.valueFocusTransitionGlowColor = key
         defaultValue: defaults.focusTransitionGlowColor ?? "primary"
+      }
+
+      NValueSlider {
+        visible: root.valueFocusTransitionEnabled
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.focusTransitionBlur.label")
+        description: pluginApi?.tr("settings.focusTransitionBlur.desc")
+        from: 0
+        to: 24
+        stepSize: 1
+        showReset: true
+        value: root.valueFocusTransitionBlur
+        defaultValue: defaults.focusTransitionBlur ?? 6
+        onMoved: value => root.valueFocusTransitionBlur = Math.round(value)
+        text: Math.round(root.valueFocusTransitionBlur) + " px"
+      }
+
+      NValueSlider {
+        visible: root.valueFocusTransitionEnabled
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.focusTransitionTransparency.label")
+        description: pluginApi?.tr("settings.focusTransitionTransparency.desc")
+        from: 0
+        to: 85
+        stepSize: 5
+        showReset: true
+        value: root.valueFocusTransitionTransparency
+        defaultValue: defaults.focusTransitionTransparency ?? 15
+        onMoved: value => root.valueFocusTransitionTransparency = Math.round(value)
+        text: Math.round(root.valueFocusTransitionTransparency) + "%"
+      }
+
+      Item {
+        visible: root.valueFocusTransitionEnabled
+        Layout.fillWidth: true
+        implicitHeight: previewColumn.implicitHeight
+
+        ColumnLayout {
+          id: previewColumn
+          anchors.left: parent.left
+          anchors.right: parent.right
+          spacing: Style.marginS
+
+          NHeader {
+            label: pluginApi?.tr("settings.focusTransitionPreview.label")
+            description: pluginApi?.tr("settings.focusTransitionPreview.desc")
+          }
+
+          Item {
+            Layout.fillWidth: true
+            implicitHeight: previewFrame.height
+
+            Rectangle {
+              id: previewFrame
+              width: Math.min(parent.width, root.focusPreviewWidth)
+              height: root.focusPreviewHeight
+              anchors.left: parent.left
+              radius: Style.radiusM
+              color: Qt.alpha(Style.capsuleColor, 0.92)
+              border.color: Style.capsuleBorderColor
+              border.width: Style.capsuleBorderWidth
+
+              Item {
+                anchors.fill: parent
+                anchors.margins: Style.marginM
+
+                Rectangle {
+                  id: previewTrack
+                  anchors.verticalCenter: parent.verticalCenter
+                  anchors.left: parent.left
+                  anchors.right: parent.right
+                  height: root.isVerticalBar ? parent.height : root.focusPreviewCrossSpace
+                  width: root.isVerticalBar ? root.focusPreviewCrossSpace : parent.width
+                  radius: Style.radiusM
+                  color: Qt.alpha(Color.mSurface, 0.45)
+                  border.color: Qt.alpha(Color.mOutline, 0.45)
+                  border.width: Style.borderS
+                }
+
+                Rectangle {
+                  visible: !root.isVerticalBar
+                  anchors.verticalCenter: previewTrack.verticalCenter
+                  x: previewTrack.x + (previewTrack.width - width) * previewLoopProgress
+                  width: Math.max(0, previewTrack.width * Math.max(0.2, 0.45 + root.valueFocusTransitionIntensity / 200))
+                  height: Math.min(previewTrack.height + 4 + root.valueFocusTransitionBlur, parent.height + root.valueFocusTransitionBlur)
+                  radius: height / 2
+                  color: Qt.alpha(root.resolvePreviewColor(root.valueFocusTransitionGlowColor, Color.mPrimary), 0.16 * (1 - root.valueFocusTransitionTransparency / 100))
+                }
+
+                Rectangle {
+                  visible: root.isVerticalBar
+                  anchors.horizontalCenter: previewTrack.horizontalCenter
+                  y: previewTrack.y + (previewTrack.height - height) * previewLoopProgress
+                  width: Math.min(previewTrack.width + 4 + root.valueFocusTransitionBlur, parent.width + root.valueFocusTransitionBlur)
+                  height: Math.max(0, previewTrack.height * Math.max(0.2, 0.45 + root.valueFocusTransitionIntensity / 200))
+                  radius: width / 2
+                  color: Qt.alpha(root.resolvePreviewColor(root.valueFocusTransitionGlowColor, Color.mPrimary), 0.16 * (1 - root.valueFocusTransitionTransparency / 100))
+                }
+
+                Rectangle {
+                  readonly property real previewThickness: Math.min(root.valueFocusTransitionThickness, root.focusPreviewCrossSpace * 1.5)
+                  readonly property real previewLength: Math.min(root.focusPreviewMainSpace, Math.max(6, root.focusPreviewMainSpace * Math.max(0.2, Math.min(root.valueFocusTransitionMarkerScale / 2.5, 1))))
+                  anchors.verticalCenter: root.isVerticalBar ? undefined : previewTrack.verticalCenter
+                  anchors.horizontalCenter: root.isVerticalBar ? previewTrack.horizontalCenter : undefined
+                  x: root.isVerticalBar ? Math.round((previewTrack.width - previewThickness) / 2) : Math.round(previewTrack.x + (previewTrack.width - previewLength) * previewLoopProgress)
+                  y: root.isVerticalBar ? Math.round(previewTrack.y + (previewTrack.height - previewLength) * previewLoopProgress) : Math.round((previewTrack.height - previewThickness) / 2)
+                  width: root.isVerticalBar ? previewThickness : previewLength
+                  height: root.isVerticalBar ? previewLength : previewThickness
+                  radius: Math.max(width, height) / 2
+                  color: Qt.alpha(root.resolvePreviewColor(root.valueFocusTransitionColor, Color.mPrimary), 1 - root.valueFocusTransitionTransparency / 100)
+                }
+
+                Rectangle {
+                  visible: root.valueFocusTransitionBlur > 0
+                  anchors.verticalCenter: root.isVerticalBar ? undefined : previewTrack.verticalCenter
+                  anchors.horizontalCenter: root.isVerticalBar ? previewTrack.horizontalCenter : undefined
+                  x: root.isVerticalBar ? Math.round((previewTrack.width - (Math.min(root.valueFocusTransitionThickness, root.focusPreviewCrossSpace * 1.5) + root.valueFocusTransitionBlur * 2)) / 2) : Math.round(previewTrack.x + (previewTrack.width - Math.min(root.focusPreviewMainSpace, Math.max(6, root.focusPreviewMainSpace * Math.max(0.2, Math.min(root.valueFocusTransitionMarkerScale / 2.5, 1)))) - root.valueFocusTransitionBlur * 2) * previewLoopProgress - root.valueFocusTransitionBlur)
+                  y: root.isVerticalBar ? Math.round(previewTrack.y + (previewTrack.height - Math.min(root.focusPreviewMainSpace, Math.max(6, root.focusPreviewMainSpace * Math.max(0.2, Math.min(root.valueFocusTransitionMarkerScale / 2.5, 1)))) - root.valueFocusTransitionBlur * 2) * previewLoopProgress - root.valueFocusTransitionBlur) : Math.round((previewTrack.height - (Math.min(root.valueFocusTransitionThickness, root.focusPreviewCrossSpace * 1.5) + root.valueFocusTransitionBlur * 2)) / 2)
+                  width: root.isVerticalBar ? Math.min(root.valueFocusTransitionThickness, root.focusPreviewCrossSpace * 1.5) + root.valueFocusTransitionBlur * 2 : Math.min(root.focusPreviewMainSpace, Math.max(6, root.focusPreviewMainSpace * Math.max(0.2, Math.min(root.valueFocusTransitionMarkerScale / 2.5, 1)))) + root.valueFocusTransitionBlur * 2
+                  height: root.isVerticalBar ? Math.min(root.focusPreviewMainSpace, Math.max(6, root.focusPreviewMainSpace * Math.max(0.2, Math.min(root.valueFocusTransitionMarkerScale / 2.5, 1)))) + root.valueFocusTransitionBlur * 2 : Math.min(root.valueFocusTransitionThickness, root.focusPreviewCrossSpace * 1.5) + root.valueFocusTransitionBlur * 2
+                  radius: Math.max(width, height) / 2
+                  color: Qt.alpha(root.resolvePreviewColor(root.valueFocusTransitionGlowColor, Color.mPrimary), 0.18 * (1 - root.valueFocusTransitionTransparency / 100))
+                }
+              }
+            }
+          }
+        }
       }
 
       NDivider {
@@ -810,6 +952,37 @@ ColumnLayout {
     initialIcon: root.valueWorkspaceSeparatorDividerIcon || "minus"
     onIconSelected: function (iconName) {
       root.valueWorkspaceSeparatorDividerIcon = iconName;
+    }
+  }
+
+  SequentialAnimation {
+    running: root.valueFocusTransitionEnabled
+    loops: Animation.Infinite
+
+    NumberAnimation {
+      target: root
+      property: "previewLoopProgress"
+      from: 0
+      to: 1
+      duration: 1200
+      easing.type: Easing.InOutCubic
+    }
+
+    PauseAnimation {
+      duration: 180
+    }
+
+    NumberAnimation {
+      target: root
+      property: "previewLoopProgress"
+      from: 1
+      to: 0.18
+      duration: 960
+      easing.type: Easing.InOutCubic
+    }
+
+    PauseAnimation {
+      duration: 220
     }
   }
 }

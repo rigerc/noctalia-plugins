@@ -135,6 +135,18 @@
         "label": "Focus glow color",
         "desc": "Color used for the marker's trail, glow, and landing bloom."
       },
+      "focusTransitionBlur": {
+        "label": "Focus blur",
+        "desc": "Increase the softness and spread of the marker glow."
+      },
+      "focusTransitionTransparency": {
+        "label": "Focus transparency",
+        "desc": "Reduce the opacity of the focus marker and its glow."
+      },
+      "focusTransitionPreview": {
+        "label": "Preview",
+        "desc": "Shows the current marker size, blur, transparency, and color choices in a looping preview."
+      },
       "titleFontFamily": {
         "label": "Title font family",
         "desc": "Font used for taskbar title text.",
