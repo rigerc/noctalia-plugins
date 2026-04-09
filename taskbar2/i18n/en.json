@@ -37,6 +37,10 @@
         "label": "Geometry",
         "desc": "Define the spatial footprint of taskbar items and gaps between them."
       },
+      "animation": {
+        "label": "Animation",
+        "desc": "Tune the delayed focus-travel marker that slides between focused taskbar entries."
+      },
       "title": {
         "label": "Title",
         "desc": "Configure title visibility, width, and automatic smart sizing."
@@ -94,6 +98,42 @@
       "itemGapUnits": {
         "label": "Item spacing",
         "desc": "Gap between adjacent taskbar items."
+      },
+      "focusTransitionEnabled": {
+        "label": "Directional focus animation",
+        "desc": "Slide a compact accent marker from the previously focused entry to the newly focused one."
+      },
+      "focusTransitionDelayMs": {
+        "label": "Focus animation delay",
+        "desc": "Wait time before the focus-travel marker begins moving."
+      },
+      "focusTransitionDurationMs": {
+        "label": "Focus animation duration",
+        "desc": "Travel time for the focus-travel marker between taskbar entries."
+      },
+      "focusTransitionStyle": {
+        "label": "Focus animation style",
+        "desc": "Choose which motion style the focus-travel overlay uses."
+      },
+      "focusTransitionIntensity": {
+        "label": "Focus animation intensity",
+        "desc": "Adjust how strong the style's glow, stretch, or bounce effects feel."
+      },
+      "focusTransitionThickness": {
+        "label": "Focus marker thickness",
+        "desc": "Increase the cross-axis thickness of the moving focus marker and its trail."
+      },
+      "focusTransitionMarkerScale": {
+        "label": "Focus marker length",
+        "desc": "Scale the destination marker footprint used by the animation."
+      },
+      "focusTransitionColor": {
+        "label": "Focus marker color",
+        "desc": "Color used for the main moving focus marker."
+      },
+      "focusTransitionGlowColor": {
+        "label": "Focus glow color",
+        "desc": "Color used for the marker's trail, glow, and landing bloom."
       },
       "titleFontFamily": {
         "label": "Title font family",
@@ -216,6 +256,11 @@
     "groupMenuList": "Window list only",
     "groupIndicatorNumber": "Number",
     "groupIndicatorDots": "Dots",
+    "focusTransitionStyleMinimalSlide": "Minimal slide",
+    "focusTransitionStyleFadeGlide": "Fade glide",
+    "focusTransitionStyleSoftWipe": "Soft wipe",
+    "focusTransitionStyleMicroBounce": "Micro-bounce",
+    "focusTransitionStyleGlowHandoff": "Glow handoff",
     "separatorModeLine": "Divider line",
     "separatorModeCharacter": "Custom character",
     "separatorModeIcon": "Custom icon"

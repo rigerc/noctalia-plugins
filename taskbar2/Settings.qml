@@ -40,6 +40,13 @@ ColumnLayout {
     { "key": "semibold", "name": pluginApi?.tr("options.fontWeightSemiBold") },
     { "key": "bold", "name": pluginApi?.tr("options.fontWeightBold") }
   ]
+  readonly property var focusTransitionStyleOptions: [
+    { "key": "minimal-slide", "name": pluginApi?.tr("options.focusTransitionStyleMinimalSlide") },
+    { "key": "fade-glide", "name": pluginApi?.tr("options.focusTransitionStyleFadeGlide") },
+    { "key": "soft-wipe", "name": pluginApi?.tr("options.focusTransitionStyleSoftWipe") },
+    { "key": "micro-bounce", "name": pluginApi?.tr("options.focusTransitionStyleMicroBounce") },
+    { "key": "glow-handoff", "name": pluginApi?.tr("options.focusTransitionStyleGlowHandoff") }
+  ]
 
   property string valueHideMode: cfg.hideMode ?? defaults.hideMode ?? "hidden"
   property bool valueOnlyActiveWorkspaces: cfg.onlyActiveWorkspaces ?? defaults.onlyActiveWorkspaces ?? true
@@ -58,6 +65,15 @@ ColumnLayout {
   property real valueTitleFontScale: cfg.titleFontScale ?? defaults.titleFontScale ?? 1.0
   property string valueTitleFontWeight: cfg.titleFontWeight ?? defaults.titleFontWeight ?? "medium"
   property var valueItemColors: normalizeItemColors(cfg.itemColors ?? defaults.itemColors ?? ({}))
+  property bool valueFocusTransitionEnabled: cfg.focusTransitionEnabled ?? defaults.focusTransitionEnabled ?? true
+  property int valueFocusTransitionDelayMs: cfg.focusTransitionDelayMs ?? defaults.focusTransitionDelayMs ?? 120
+  property int valueFocusTransitionDurationMs: cfg.focusTransitionDurationMs ?? defaults.focusTransitionDurationMs ?? 220
+  property string valueFocusTransitionStyle: cfg.focusTransitionStyle ?? defaults.focusTransitionStyle ?? "minimal-slide"
+  property int valueFocusTransitionIntensity: cfg.focusTransitionIntensity ?? defaults.focusTransitionIntensity ?? 60
+  property int valueFocusTransitionThickness: cfg.focusTransitionThickness ?? defaults.focusTransitionThickness ?? 6
+  property real valueFocusTransitionMarkerScale: cfg.focusTransitionMarkerScale ?? defaults.focusTransitionMarkerScale ?? 1.4
+  property string valueFocusTransitionColor: cfg.focusTransitionColor ?? defaults.focusTransitionColor ?? "primary"
+  property string valueFocusTransitionGlowColor: cfg.focusTransitionGlowColor ?? defaults.focusTransitionGlowColor ?? "primary"
   property bool valueGroupApps: cfg.groupApps ?? defaults.groupApps ?? false
   property string valueGroupClickAction: cfg.groupClickAction ?? defaults.groupClickAction ?? "cycle"
   property string valueGroupContextMenuMode: cfg.groupContextMenuMode ?? defaults.groupContextMenuMode ?? "extended"
@@ -133,6 +149,15 @@ ColumnLayout {
     pluginApi.pluginSettings.titleFontScale = root.valueTitleFontScale;
     pluginApi.pluginSettings.titleFontWeight = root.valueTitleFontWeight;
     pluginApi.pluginSettings.itemColors = normalizeItemColors(root.valueItemColors);
+    pluginApi.pluginSettings.focusTransitionEnabled = root.valueFocusTransitionEnabled;
+    pluginApi.pluginSettings.focusTransitionDelayMs = root.valueFocusTransitionDelayMs;
+    pluginApi.pluginSettings.focusTransitionDurationMs = root.valueFocusTransitionDurationMs;
+    pluginApi.pluginSettings.focusTransitionStyle = root.valueFocusTransitionStyle;
+    pluginApi.pluginSettings.focusTransitionIntensity = root.valueFocusTransitionIntensity;
+    pluginApi.pluginSettings.focusTransitionThickness = root.valueFocusTransitionThickness;
+    pluginApi.pluginSettings.focusTransitionMarkerScale = root.valueFocusTransitionMarkerScale;
+    pluginApi.pluginSettings.focusTransitionColor = root.valueFocusTransitionColor;
+    pluginApi.pluginSettings.focusTransitionGlowColor = root.valueFocusTransitionGlowColor;
     pluginApi.pluginSettings.groupApps = root.valueGroupApps;
     pluginApi.pluginSettings.groupClickAction = root.valueGroupClickAction;
     pluginApi.pluginSettings.groupContextMenuMode = root.valueGroupContextMenuMode;
@@ -500,6 +525,128 @@ ColumnLayout {
         defaultValue: defaults.itemGapUnits ?? 2
         onMoved: value => root.valueItemGapUnits = Math.round(value)
         text: Math.round(root.valueItemGapUnits)
+      }
+
+      NDivider {
+        Layout.fillWidth: true
+      }
+
+      NHeader {
+        label: pluginApi?.tr("settings.sections.animation.label")
+        description: pluginApi?.tr("settings.sections.animation.desc")
+      }
+
+      NToggle {
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.focusTransitionEnabled.label")
+        description: pluginApi?.tr("settings.focusTransitionEnabled.desc")
+        checked: root.valueFocusTransitionEnabled
+        onToggled: checked => root.valueFocusTransitionEnabled = checked
+        defaultValue: defaults.focusTransitionEnabled ?? true
+      }
+
+      NValueSlider {
+        visible: root.valueFocusTransitionEnabled
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.focusTransitionDelayMs.label")
+        description: pluginApi?.tr("settings.focusTransitionDelayMs.desc")
+        from: 0
+        to: 400
+        stepSize: 10
+        showReset: true
+        value: root.valueFocusTransitionDelayMs
+        defaultValue: defaults.focusTransitionDelayMs ?? 120
+        onMoved: value => root.valueFocusTransitionDelayMs = Math.round(value)
+        text: Math.round(root.valueFocusTransitionDelayMs) + " ms"
+      }
+
+      NValueSlider {
+        visible: root.valueFocusTransitionEnabled
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.focusTransitionDurationMs.label")
+        description: pluginApi?.tr("settings.focusTransitionDurationMs.desc")
+        from: 80
+        to: 600
+        stepSize: 10
+        showReset: true
+        value: root.valueFocusTransitionDurationMs
+        defaultValue: defaults.focusTransitionDurationMs ?? 220
+        onMoved: value => root.valueFocusTransitionDurationMs = Math.round(value)
+        text: Math.round(root.valueFocusTransitionDurationMs) + " ms"
+      }
+
+      NComboBox {
+        visible: root.valueFocusTransitionEnabled
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.focusTransitionStyle.label")
+        description: pluginApi?.tr("settings.focusTransitionStyle.desc")
+        model: root.focusTransitionStyleOptions
+        currentKey: root.valueFocusTransitionStyle
+        onSelected: key => root.valueFocusTransitionStyle = key
+        defaultValue: defaults.focusTransitionStyle ?? "minimal-slide"
+      }
+
+      NValueSlider {
+        visible: root.valueFocusTransitionEnabled
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.focusTransitionIntensity.label")
+        description: pluginApi?.tr("settings.focusTransitionIntensity.desc")
+        from: 0
+        to: 100
+        stepSize: 5
+        showReset: true
+        value: root.valueFocusTransitionIntensity
+        defaultValue: defaults.focusTransitionIntensity ?? 60
+        onMoved: value => root.valueFocusTransitionIntensity = Math.round(value)
+        text: Math.round(root.valueFocusTransitionIntensity) + "%"
+      }
+
+      NValueSlider {
+        visible: root.valueFocusTransitionEnabled
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.focusTransitionThickness.label")
+        description: pluginApi?.tr("settings.focusTransitionThickness.desc")
+        from: 2
+        to: 16
+        stepSize: 1
+        showReset: true
+        value: root.valueFocusTransitionThickness
+        defaultValue: defaults.focusTransitionThickness ?? 6
+        onMoved: value => root.valueFocusTransitionThickness = Math.round(value)
+        text: Math.round(root.valueFocusTransitionThickness) + " px"
+      }
+
+      NValueSlider {
+        visible: root.valueFocusTransitionEnabled
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.focusTransitionMarkerScale.label")
+        description: pluginApi?.tr("settings.focusTransitionMarkerScale.desc")
+        from: 0.75
+        to: 2.5
+        stepSize: 0.05
+        showReset: true
+        value: root.valueFocusTransitionMarkerScale
+        defaultValue: defaults.focusTransitionMarkerScale ?? 1.4
+        onMoved: value => root.valueFocusTransitionMarkerScale = value
+        text: root.valueFocusTransitionMarkerScale.toFixed(2) + "x"
+      }
+
+      NColorChoice {
+        visible: root.valueFocusTransitionEnabled
+        label: pluginApi?.tr("settings.focusTransitionColor.label")
+        description: pluginApi?.tr("settings.focusTransitionColor.desc")
+        currentKey: root.valueFocusTransitionColor
+        onSelected: key => root.valueFocusTransitionColor = key
+        defaultValue: defaults.focusTransitionColor ?? "primary"
+      }
+
+      NColorChoice {
+        visible: root.valueFocusTransitionEnabled
+        label: pluginApi?.tr("settings.focusTransitionGlowColor.label")
+        description: pluginApi?.tr("settings.focusTransitionGlowColor.desc")
+        currentKey: root.valueFocusTransitionGlowColor
+        onSelected: key => root.valueFocusTransitionGlowColor = key
+        defaultValue: defaults.focusTransitionGlowColor ?? "primary"
       }
 
       NDivider {

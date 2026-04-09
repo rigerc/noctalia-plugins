@@ -5,7 +5,7 @@
   "minNoctaliaVersion": "4.6.6",
   "author": "OpenAI",
   "license": "MIT",
-  "repository": "https://github.com/rigerc/noctalia-plugins",
+  "repository": "https://github.com/noctalia-dev/noctalia-plugins",
   "description": "A standalone taskbar bar widget ported from Noctalia Shell, with improvements.",
   "tags": [
     "Bar",
@@ -36,6 +36,15 @@
       "titleFontFamily": "",
       "titleFontScale": 1.0,
       "titleFontWeight": "medium",
+      "focusTransitionEnabled": true,
+      "focusTransitionDelayMs": 120,
+      "focusTransitionDurationMs": 220,
+      "focusTransitionStyle": "minimal-slide",
+      "focusTransitionIntensity": 60,
+      "focusTransitionThickness": 6,
+      "focusTransitionMarkerScale": 1.4,
+      "focusTransitionColor": "primary",
+      "focusTransitionGlowColor": "primary",
       "itemColors": {
         "default": {
           "background": "none",

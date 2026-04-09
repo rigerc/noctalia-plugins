@@ -63,6 +63,16 @@ Item {
     readonly property string workspaceSeparatorDividerChar: cfg.workspaceSeparatorDividerChar ?? defaults.workspaceSeparatorDividerChar ?? "|"
     readonly property string workspaceSeparatorDividerIcon: cfg.workspaceSeparatorDividerIcon ?? defaults.workspaceSeparatorDividerIcon ?? "minus"
     readonly property bool workspaceSeparatorShowForFirst: cfg.workspaceSeparatorShowForFirst ?? defaults.workspaceSeparatorShowForFirst ?? false
+    readonly property bool focusTransitionEnabled: cfg.focusTransitionEnabled ?? defaults.focusTransitionEnabled ?? true
+    readonly property int focusTransitionDelayMs: Math.max(0, cfg.focusTransitionDelayMs ?? defaults.focusTransitionDelayMs ?? 120)
+    readonly property int focusTransitionDurationMs: Math.max(0, cfg.focusTransitionDurationMs ?? defaults.focusTransitionDurationMs ?? 220)
+    readonly property string focusTransitionStyle: cfg.focusTransitionStyle ?? defaults.focusTransitionStyle ?? "minimal-slide"
+    readonly property int focusTransitionIntensity: Math.max(0, Math.min(100, cfg.focusTransitionIntensity ?? defaults.focusTransitionIntensity ?? 60))
+    readonly property real focusTransitionThickness: Math.max(2, cfg.focusTransitionThickness ?? defaults.focusTransitionThickness ?? 6)
+    readonly property real focusTransitionMarkerScale: Math.max(0.5, cfg.focusTransitionMarkerScale ?? defaults.focusTransitionMarkerScale ?? 1.4)
+    readonly property string focusTransitionColorKey: cfg.focusTransitionColor ?? defaults.focusTransitionColor ?? "primary"
+    readonly property string focusTransitionGlowColorKey: cfg.focusTransitionGlowColor ?? defaults.focusTransitionGlowColor ?? "primary"
+    readonly property real focusTransitionIntensityRatio: focusTransitionIntensity / 100
     readonly property bool workspaceGroupingActive: groupByWorkspaceIndex && !onlyActiveWorkspaces
     readonly property int itemSize: Style.toOdd(capsuleHeight * Math.max(0.1, iconScale))
     readonly property int appEntryCount: getAppEntries(combinedModel).length
@@ -112,6 +122,28 @@ Item {
     property bool pendingForceStructuralRefresh: false
     property int modelUpdateTrigger: 0
     property int liveDataRevision: 0
+    property var entryIndicatorRectsByKey: ({})
+    property bool focusTrackingInitialized: false
+    property string lastFocusedEntryKey: ""
+    property string currentFocusedEntryKey: ""
+    property string pendingFocusTransitionStartKey: ""
+    property string pendingFocusTransitionEndKey: ""
+    property bool focusTravelActive: false
+    property real focusTravelAxisPosition: 0
+    property real focusTravelCrossPosition: 0
+    property real focusTravelLength: 0
+    property real focusTravelThickness: 0
+    property real focusTravelStartCenterAxis: 0
+    property real focusTravelOpacity: 0
+    property real focusTravelTrailStrength: 0
+    property real focusTravelGlowStrength: 0
+    property real focusTravelBloomOpacity: 0
+    property real focusTravelBloomScale: 1
+    property var focusTravelStartRect: null
+    property var focusTravelEndRect: null
+    readonly property real focusTravelMarkerCenterAxis: focusTravelAxisPosition + (focusTravelLength / 2)
+    readonly property real focusTravelTrailStartAxis: Math.min(focusTravelStartCenterAxis, focusTravelMarkerCenterAxis)
+    readonly property real focusTravelTrailExtent: Math.max(0, Math.abs(focusTravelMarkerCenterAxis - focusTravelStartCenterAxis))
 
     function titleFontFamilyValue() {
         return titleFontFamily && titleFontFamily.length > 0 ? titleFontFamily : Settings.data.ui.fontDefault;
@@ -148,6 +180,12 @@ Item {
         if (colorRole === "text")
             return Color.resolveColorKey(colorKey);
         return Color.resolveColorKeyOptional(colorKey);
+    }
+
+    function resolveFocusTransitionColor(colorKey, fallbackColor) {
+        if (!colorKey || colorKey === "none")
+            return fallbackColor;
+        return Color.resolveColorKey(colorKey);
     }
 
     function normalizeAppId(appId) {
@@ -766,6 +804,7 @@ Item {
 
         liveEntriesByKey = buildLiveEntries(combinedModel, windowsById, windowsByStableKey);
         liveDataRevision++;
+        updateFocusedEntryTracking(getFocusedEntryKey(liveEntriesByKey));
         updateHasWindow();
     }
 
@@ -936,6 +975,230 @@ Item {
 
     function getLiveEntry(entryKey) {
         return liveEntriesByKey[entryKey] || null;
+    }
+
+    function getFocusedEntryKey(liveEntries) {
+        const entries = liveEntries || ({});
+        for (var entryKey in entries) {
+            if (entries[entryKey] && entries[entryKey].isFocused)
+                return entryKey;
+        }
+        return "";
+    }
+
+    function updateEntryIndicatorRect(entryKey, rect) {
+        if (!entryKey)
+            return;
+        const nextRects = Object.assign({}, entryIndicatorRectsByKey);
+        nextRects[entryKey] = rect;
+        entryIndicatorRectsByKey = nextRects;
+    }
+
+    function clearEntryIndicatorRect(entryKey) {
+        if (!entryKey || !entryIndicatorRectsByKey[entryKey])
+            return;
+        const nextRects = Object.assign({}, entryIndicatorRectsByKey);
+        delete nextRects[entryKey];
+        entryIndicatorRectsByKey = nextRects;
+    }
+
+    function getEntryIndicatorRect(entryKey) {
+        if (!entryKey)
+            return null;
+        return entryIndicatorRectsByKey[entryKey] || null;
+    }
+
+    function normalizedFocusTransitionStyle() {
+        switch (focusTransitionStyle) {
+        case "fade-glide":
+        case "soft-wipe":
+        case "micro-bounce":
+        case "glow-handoff":
+            return focusTransitionStyle;
+        default:
+            return "minimal-slide";
+        }
+    }
+
+    function configureAxisAnimation(firstTo, firstDuration, firstEasing, secondTo, secondDuration, secondEasing) {
+        focusTravelAxisStep1.to = firstTo;
+        focusTravelAxisStep1.duration = Math.max(0, Math.round(firstDuration));
+        focusTravelAxisStep1.easing.type = firstEasing;
+        focusTravelAxisStep2.to = secondTo;
+        focusTravelAxisStep2.duration = Math.max(0, Math.round(secondDuration));
+        focusTravelAxisStep2.easing.type = secondEasing;
+        focusTravelAxisSequence.restart();
+    }
+
+    function configureLengthAnimation(firstTo, firstDuration, firstEasing, secondTo, secondDuration, secondEasing) {
+        focusTravelLengthStep1.to = firstTo;
+        focusTravelLengthStep1.duration = Math.max(0, Math.round(firstDuration));
+        focusTravelLengthStep1.easing.type = firstEasing;
+        focusTravelLengthStep2.to = secondTo;
+        focusTravelLengthStep2.duration = Math.max(0, Math.round(secondDuration));
+        focusTravelLengthStep2.easing.type = secondEasing;
+        focusTravelLengthSequence.restart();
+    }
+
+    function configureOpacityAnimation(startOpacity, fadeInTo, fadeInDuration, holdDuration, fadeOutTo, fadeOutDuration) {
+        focusTravelOpacity = startOpacity;
+        focusTravelOpacityStep1.to = fadeInTo;
+        focusTravelOpacityStep1.duration = Math.max(0, Math.round(fadeInDuration));
+        focusTravelOpacityPause.duration = Math.max(0, Math.round(holdDuration));
+        focusTravelOpacityStep2.to = fadeOutTo;
+        focusTravelOpacityStep2.duration = Math.max(0, Math.round(fadeOutDuration));
+        focusTravelOpacitySequence.restart();
+    }
+
+    function configureBloomAnimation(delayDuration, riseTo, riseDuration, fallDuration, scaleTo) {
+        focusTravelBloomOpacity = 0;
+        focusTravelBloomScale = 1;
+        focusTravelBloomPause.duration = Math.max(0, Math.round(delayDuration));
+        focusTravelBloomOpacityRise.to = riseTo;
+        focusTravelBloomOpacityRise.duration = Math.max(0, Math.round(riseDuration));
+        focusTravelBloomOpacityFall.to = 0;
+        focusTravelBloomOpacityFall.duration = Math.max(0, Math.round(fallDuration));
+        focusTravelBloomScaleRise.to = scaleTo;
+        focusTravelBloomScaleRise.duration = Math.max(0, Math.round(riseDuration));
+        focusTravelBloomScaleFall.to = 1;
+        focusTravelBloomScaleFall.duration = Math.max(0, Math.round(fallDuration));
+        focusTravelBloomOpacitySequence.restart();
+        focusTravelBloomScaleSequence.restart();
+    }
+
+    function cancelFocusTransition() {
+        focusTravelActive = false;
+        focusTravelOpacity = 0;
+        focusTravelTrailStrength = 0;
+        focusTravelGlowStrength = 0;
+        focusTravelBloomOpacity = 0;
+        focusTravelBloomScale = 1;
+        focusTravelStartRect = null;
+        focusTravelEndRect = null;
+        focusTransitionDelayTimer.stop();
+        focusTravelAxisSequence.stop();
+        focusTravelLengthSequence.stop();
+        focusTravelOpacitySequence.stop();
+        focusTravelBloomOpacitySequence.stop();
+        focusTravelBloomScaleSequence.stop();
+        pendingFocusTransitionStartKey = "";
+        pendingFocusTransitionEndKey = "";
+    }
+
+    function beginFocusTransition(startRect, endRect) {
+        if (!startRect || !endRect)
+            return;
+
+        const startAxis = isVerticalBar ? startRect.y : startRect.x;
+        const endAxis = isVerticalBar ? endRect.y : endRect.x;
+        const startLength = isVerticalBar ? startRect.height : startRect.width;
+        const endLength = isVerticalBar ? endRect.height : endRect.width;
+        const duration = Math.max(1, focusTransitionDurationMs);
+        const distance = Math.abs(endAxis - startAxis);
+        const direction = endAxis >= startAxis ? 1 : -1;
+        const intensity = focusTransitionIntensityRatio;
+        const styleKey = normalizedFocusTransitionStyle();
+        const fadeOutDuration = 90;
+        const settleDuration = Math.max(50, Math.round(duration * 0.22));
+        const primaryDuration = Math.max(1, duration - settleDuration);
+
+        focusTravelStartRect = startRect;
+        focusTravelEndRect = endRect;
+        focusTravelLength = styleKey === "soft-wipe" ? startLength : endLength;
+        focusTravelThickness = isVerticalBar ? endRect.width : endRect.height;
+        focusTravelAxisPosition = startAxis;
+        focusTravelCrossPosition = isVerticalBar ? endRect.x : endRect.y;
+        focusTravelStartCenterAxis = startAxis + focusTravelLength / 2;
+        focusTravelTrailStrength = 0;
+        focusTravelGlowStrength = 0;
+        focusTravelBloomOpacity = 0;
+        focusTravelBloomScale = 1;
+        focusTravelActive = true;
+
+        switch (styleKey) {
+        case "fade-glide": {
+            const fadeInDuration = Math.max(40, Math.round(duration * 0.22));
+            const fadeOutPhase = Math.max(70, Math.round(duration * 0.28));
+            const holdDuration = Math.max(0, duration - fadeInDuration - fadeOutPhase);
+            focusTravelGlowStrength = 0.06 + intensity * 0.07;
+            configureAxisAnimation(endAxis, duration, Easing.InOutCubic, endAxis, 0, Easing.Linear);
+            configureLengthAnimation(endLength, 0, Easing.Linear, endLength, 0, Easing.Linear);
+            configureOpacityAnimation(0, 0.72 + intensity * 0.18, fadeInDuration, holdDuration, 0, fadeOutPhase);
+            break;
+        }
+        case "soft-wipe": {
+            const stretchLength = Math.max(endLength * 1.35, endLength + distance * (0.35 + intensity * 0.25));
+            const stretchDuration = Math.max(60, Math.round(duration * 0.55));
+            const collapseDuration = Math.max(60, duration - stretchDuration);
+            focusTravelTrailStrength = 0.10 + intensity * 0.08;
+            focusTravelGlowStrength = 0.10 + intensity * 0.08;
+            configureAxisAnimation(endAxis, duration, Easing.InOutCubic, endAxis, 0, Easing.Linear);
+            configureLengthAnimation(stretchLength, stretchDuration, Easing.OutCubic, endLength, collapseDuration, Easing.InOutCubic);
+            configureOpacityAnimation(0.92, 0.92, 0, duration, 0, fadeOutDuration);
+            break;
+        }
+        case "micro-bounce": {
+            const overshoot = Math.max(4, Math.min(22, Math.round((6 + intensity * 14) * Style.uiScaleRatio)));
+            focusTravelTrailStrength = 0.08 + intensity * 0.06;
+            focusTravelGlowStrength = 0.09 + intensity * 0.05;
+            configureAxisAnimation(endAxis + direction * overshoot, primaryDuration, Easing.OutCubic, endAxis, settleDuration, Easing.OutBack);
+            configureLengthAnimation(endLength, 0, Easing.Linear, endLength, 0, Easing.Linear);
+            configureOpacityAnimation(0.96, 0.96, 0, duration, 0, fadeOutDuration);
+            break;
+        }
+        case "glow-handoff": {
+            const bloomRiseDuration = Math.max(45, Math.round(duration * 0.16));
+            const bloomFallDuration = Math.max(60, Math.round(duration * 0.2));
+            const bloomDelay = Math.max(0, duration - bloomRiseDuration - Math.round(bloomFallDuration * 0.5));
+            focusTravelTrailStrength = 0.18 + intensity * 0.18;
+            focusTravelGlowStrength = 0.18 + intensity * 0.14;
+            configureAxisAnimation(endAxis, duration, Easing.InOutCubic, endAxis, 0, Easing.Linear);
+            configureLengthAnimation(endLength, 0, Easing.Linear, endLength, 0, Easing.Linear);
+            configureOpacityAnimation(0.96, 0.96, 0, duration, 0, fadeOutDuration);
+            configureBloomAnimation(bloomDelay, 0.24 + intensity * 0.34, bloomRiseDuration, bloomFallDuration, 1.18 + intensity * 0.26);
+            break;
+        }
+        default:
+            focusTravelTrailStrength = 0.08 + intensity * 0.06;
+            focusTravelGlowStrength = 0.08 + intensity * 0.05;
+            configureAxisAnimation(endAxis, duration, Easing.InOutCubic, endAxis, 0, Easing.Linear);
+            configureLengthAnimation(endLength, 0, Easing.Linear, endLength, 0, Easing.Linear);
+            configureOpacityAnimation(0.94, 0.94, 0, duration, 0, fadeOutDuration);
+            break;
+        }
+    }
+
+    function scheduleFocusTransition(startEntryKey, endEntryKey) {
+        cancelFocusTransition();
+        if (!focusTransitionEnabled || !startEntryKey || !endEntryKey)
+            return;
+
+        pendingFocusTransitionStartKey = startEntryKey;
+        pendingFocusTransitionEndKey = endEntryKey;
+        focusTransitionDelayTimer.interval = focusTransitionDelayMs;
+        focusTransitionDelayTimer.restart();
+    }
+
+    function updateFocusedEntryTracking(nextFocusedEntryKey) {
+        const previousFocusedEntryKey = currentFocusedEntryKey;
+
+        if (!focusTrackingInitialized) {
+            currentFocusedEntryKey = nextFocusedEntryKey;
+            lastFocusedEntryKey = nextFocusedEntryKey;
+            focusTrackingInitialized = true;
+            return;
+        }
+
+        if (previousFocusedEntryKey === nextFocusedEntryKey)
+            return;
+
+        lastFocusedEntryKey = previousFocusedEntryKey;
+        currentFocusedEntryKey = nextFocusedEntryKey;
+
+        if (previousFocusedEntryKey && nextFocusedEntryKey)
+            scheduleFocusTransition(previousFocusedEntryKey, nextFocusedEntryKey);
+        else
+            cancelFocusTransition();
     }
 
     function getEntryForAppId(appId) {
@@ -1214,6 +1477,9 @@ Item {
     onShowWorkspaceSeparatorsChanged: scheduleModelRefresh(true)
     onHoveredEntryKeyChanged: flushPendingModelRefresh()
     onDragSourceIndexChanged: flushPendingModelRefresh()
+    onFocusTransitionEnabledChanged: if (!focusTransitionEnabled) cancelFocusTransition()
+    onFocusTransitionStyleChanged: cancelFocusTransition()
+    onFocusTransitionIntensityChanged: cancelFocusTransition()
 
     Component.onCompleted: updateCombinedModel(true)
     onScreenChanged: scheduleModelRefresh(true)
@@ -1240,6 +1506,127 @@ Item {
             root.pendingModelRefresh = false;
             root.pendingForceStructuralRefresh = false;
             root.updateCombinedModel(forceStructural);
+        }
+    }
+
+    Timer {
+        id: focusTransitionDelayTimer
+        interval: root.focusTransitionDelayMs
+        repeat: false
+        onTriggered: {
+            const startRect = root.getEntryIndicatorRect(root.pendingFocusTransitionStartKey);
+            const endRect = root.getEntryIndicatorRect(root.pendingFocusTransitionEndKey);
+            root.pendingFocusTransitionStartKey = "";
+            root.pendingFocusTransitionEndKey = "";
+
+            if (!startRect || !endRect)
+                return;
+
+            root.beginFocusTransition(startRect, endRect);
+        }
+    }
+
+    SequentialAnimation {
+        id: focusTravelAxisSequence
+        running: false
+
+        NumberAnimation {
+            id: focusTravelAxisStep1
+            target: root
+            property: "focusTravelAxisPosition"
+        }
+
+        NumberAnimation {
+            id: focusTravelAxisStep2
+            target: root
+            property: "focusTravelAxisPosition"
+        }
+    }
+
+    SequentialAnimation {
+        id: focusTravelLengthSequence
+        running: false
+
+        NumberAnimation {
+            id: focusTravelLengthStep1
+            target: root
+            property: "focusTravelLength"
+        }
+
+        NumberAnimation {
+            id: focusTravelLengthStep2
+            target: root
+            property: "focusTravelLength"
+        }
+    }
+
+    SequentialAnimation {
+        id: focusTravelOpacitySequence
+        running: false
+        onStopped: root.focusTravelActive = false
+
+        NumberAnimation {
+            id: focusTravelOpacityStep1
+            target: root
+            property: "focusTravelOpacity"
+            easing.type: Easing.OutCubic
+        }
+
+        PauseAnimation {
+            id: focusTravelOpacityPause
+        }
+
+        NumberAnimation {
+            id: focusTravelOpacityStep2
+            target: root
+            property: "focusTravelOpacity"
+            easing.type: Easing.InCubic
+        }
+    }
+
+    SequentialAnimation {
+        id: focusTravelBloomOpacitySequence
+        running: false
+
+        PauseAnimation {
+            id: focusTravelBloomPause
+        }
+
+        NumberAnimation {
+            id: focusTravelBloomOpacityRise
+            target: root
+            property: "focusTravelBloomOpacity"
+            easing.type: Easing.OutCubic
+        }
+
+        NumberAnimation {
+            id: focusTravelBloomOpacityFall
+            target: root
+            property: "focusTravelBloomOpacity"
+            easing.type: Easing.InCubic
+        }
+    }
+
+    SequentialAnimation {
+        id: focusTravelBloomScaleSequence
+        running: false
+
+        PauseAnimation {
+            duration: focusTravelBloomPause.duration
+        }
+
+        NumberAnimation {
+            id: focusTravelBloomScaleRise
+            target: root
+            property: "focusTravelBloomScale"
+            easing.type: Easing.OutCubic
+        }
+
+        NumberAnimation {
+            id: focusTravelBloomScaleFall
+            target: root
+            property: "focusTravelBloomScale"
+            easing.type: Easing.InCubic
         }
     }
 
@@ -1378,6 +1765,31 @@ Item {
                     readonly property real separatorVisualWidth: root.isVerticalBar ? root.barHeight : Math.round(Style.marginM * 2 + separatorLabelWidth + ((root.workspaceSeparatorShowLabel && root.workspaceSeparatorShowDivider && separatorLabelWidth > 0) ? Style.marginS : 0) + (root.workspaceSeparatorShowDivider ? separatorLineLength : 0))
                     readonly property real separatorVisualHeight: root.isVerticalBar ? Math.round(Style.marginM * 2 + separatorLabelWidth + ((root.workspaceSeparatorShowLabel && root.workspaceSeparatorShowDivider && separatorLabelWidth > 0) ? Style.marginS : 0) + (root.workspaceSeparatorShowDivider ? separatorLineLength : 0)) : root.barHeight
 
+                    function syncIndicatorRect() {
+                        if (isSeparator)
+                            return;
+                        if (!visualCapsule || !iconContainer)
+                            return;
+
+                        const iconPoint = iconContainer.mapToItem(visualCapsule, 0, 0);
+                        const itemPoint = taskbarItem.mapToItem(visualCapsule, 0, 0);
+                        const markerLength = Math.max(6, Math.round(root.itemSize * 0.25 * root.focusTransitionMarkerScale));
+                        const markerThickness = Math.round(root.focusTransitionThickness);
+                        const rect = root.isVerticalBar ? {
+                            "x": Math.round(itemPoint.x + taskbarItem.width - markerThickness - 2),
+                            "y": Math.round(iconPoint.y + (iconContainer.height - markerLength) / 2),
+                            "width": markerThickness,
+                            "height": markerLength
+                        } : {
+                            "x": Math.round(iconPoint.x + (iconContainer.width - markerLength) / 2),
+                            "y": Math.round(itemPoint.y + taskbarItem.height - markerThickness - 2),
+                            "width": markerLength,
+                            "height": markerThickness
+                        };
+
+                        root.updateEntryIndicatorRect(modelData.entryKey, rect);
+                    }
+
                     Layout.preferredWidth: isSeparator ? (root.isVerticalBar ? root.barHeight : separatorVisualWidth) : (root.isVerticalBar ? root.barHeight : visualWidth)
                     Layout.preferredHeight: isSeparator ? (root.isVerticalBar ? separatorVisualHeight : root.barHeight) : (root.isVerticalBar ? root.capsuleHeight : root.barHeight)
                     Layout.alignment: Qt.AlignCenter
@@ -1385,6 +1797,13 @@ Item {
                     z: (root.dragSourceIndex === index) ? 1000 : 1
                     property int modelIndex: index
                     objectName: isSeparator ? "taskbarSeparatorItem" : "taskbarAppItem"
+
+                    Component.onCompleted: syncIndicatorRect()
+                    Component.onDestruction: root.clearEntryIndicatorRect(modelData.entryKey)
+                    onXChanged: syncIndicatorRect()
+                    onYChanged: syncIndicatorRect()
+                    onWidthChanged: syncIndicatorRect()
+                    onHeightChanged: syncIndicatorRect()
 
                     DropArea {
                         visible: !taskbarItem.isSeparator
@@ -1643,6 +2062,10 @@ Item {
                                     Layout.preferredWidth: root.itemSize
                                     Layout.preferredHeight: root.itemSize
                                     Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
+                                    onXChanged: taskbarItem.syncIndicatorRect()
+                                    onYChanged: taskbarItem.syncIndicatorRect()
+                                    onWidthChanged: taskbarItem.syncIndicatorRect()
+                                    onHeightChanged: taskbarItem.syncIndicatorRect()
 
                                     Item {
                                         anchors.fill: parent
@@ -1854,6 +2277,51 @@ Item {
                         }
                     }
                 }
+            }
+        }
+
+        Item {
+            anchors.fill: parent
+            visible: root.focusTravelActive && root.focusTravelOpacity > 0
+            z: 20
+
+            Rectangle {
+                visible: root.focusTravelTrailExtent > 1 && root.focusTravelTrailStrength > 0
+                x: root.isVerticalBar ? (root.focusTravelCrossPosition - 2) : root.focusTravelTrailStartAxis
+                y: root.isVerticalBar ? root.focusTravelTrailStartAxis : (root.focusTravelCrossPosition - 2)
+                width: root.isVerticalBar ? (root.focusTravelThickness + 4) : root.focusTravelTrailExtent
+                height: root.isVerticalBar ? root.focusTravelTrailExtent : (root.focusTravelThickness + 4)
+                radius: Math.max(width, height) / 2
+                color: Qt.alpha(root.resolveFocusTransitionColor(root.focusTransitionGlowColorKey, Color.mPrimary), root.focusTravelTrailStrength * root.focusTravelOpacity)
+            }
+
+            Rectangle {
+                visible: root.focusTravelGlowStrength > 0
+                x: root.isVerticalBar ? (root.focusTravelCrossPosition - 4 - (root.focusTravelBloomScale - 1) * 2) : (root.focusTravelAxisPosition - 4 - (root.focusTravelBloomScale - 1) * 4)
+                y: root.isVerticalBar ? (root.focusTravelAxisPosition - 4 - (root.focusTravelBloomScale - 1) * 4) : (root.focusTravelCrossPosition - 4 - (root.focusTravelBloomScale - 1) * 2)
+                width: root.isVerticalBar ? (root.focusTravelThickness + 8 + (root.focusTravelBloomScale - 1) * 4) : (root.focusTravelLength + 8 + (root.focusTravelBloomScale - 1) * 8)
+                height: root.isVerticalBar ? (root.focusTravelLength + 8 + (root.focusTravelBloomScale - 1) * 8) : (root.focusTravelThickness + 8 + (root.focusTravelBloomScale - 1) * 4)
+                radius: Math.max(width, height) / 2
+                color: Qt.alpha(root.resolveFocusTransitionColor(root.focusTransitionGlowColorKey, Color.mPrimary), root.focusTravelGlowStrength * root.focusTravelOpacity)
+            }
+
+            Rectangle {
+                x: root.isVerticalBar ? root.focusTravelCrossPosition : root.focusTravelAxisPosition
+                y: root.isVerticalBar ? root.focusTravelAxisPosition : root.focusTravelCrossPosition
+                width: root.isVerticalBar ? root.focusTravelThickness : root.focusTravelLength
+                height: root.isVerticalBar ? root.focusTravelLength : root.focusTravelThickness
+                radius: Math.max(width, height) / 2
+                color: Qt.alpha(root.resolveFocusTransitionColor(root.focusTransitionColorKey, Color.mPrimary), root.focusTravelOpacity)
+            }
+
+            Rectangle {
+                visible: root.focusTravelBloomOpacity > 0 && root.focusTravelEndRect
+                x: root.isVerticalBar ? (root.focusTravelEndRect.x - (root.focusTravelBloomScale - 1) * 3) : (root.focusTravelEndRect.x - (root.focusTravelBloomScale - 1) * 6)
+                y: root.isVerticalBar ? (root.focusTravelEndRect.y - (root.focusTravelBloomScale - 1) * 6) : (root.focusTravelEndRect.y - (root.focusTravelBloomScale - 1) * 3)
+                width: root.isVerticalBar ? (root.focusTravelEndRect.width + (root.focusTravelBloomScale - 1) * 6) : (root.focusTravelEndRect.width + (root.focusTravelBloomScale - 1) * 12)
+                height: root.isVerticalBar ? (root.focusTravelEndRect.height + (root.focusTravelBloomScale - 1) * 12) : (root.focusTravelEndRect.height + (root.focusTravelBloomScale - 1) * 6)
+                radius: Math.max(width, height) / 2
+                color: Qt.alpha(root.resolveFocusTransitionColor(root.focusTransitionGlowColorKey, Color.mPrimary), root.focusTravelBloomOpacity)
             }
         }
     }

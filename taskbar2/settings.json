@@ -15,6 +15,15 @@
   "titleFontFamily": "",
   "titleFontScale": 1,
   "titleFontWeight": "medium",
+  "focusTransitionEnabled": true,
+  "focusTransitionDelayMs": 120,
+  "focusTransitionDurationMs": 300,
+  "focusTransitionStyle": "glow-handoff",
+  "focusTransitionIntensity": 100,
+  "focusTransitionThickness": 16,
+  "focusTransitionMarkerScale": 2.5,
+  "focusTransitionColor": "secondary",
+  "focusTransitionGlowColor": "primary",
   "itemColors": {
     "default": {
       "background": "none",
@@ -37,7 +46,7 @@
       "text": "none"
     }
   },
-  "groupApps": true,
+  "groupApps": false,
   "groupClickAction": "cycle",
   "groupContextMenuMode": "extended",
   "groupIndicatorStyle": "dots",
