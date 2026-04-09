@@ -9,6 +9,7 @@ import qs.Services.Compositor
 import qs.Services.System
 import qs.Services.UI
 import qs.Widgets
+import "FocusTransitionStyle.js" as FocusTransitionStyle
 
 Item {
     id: root
@@ -66,7 +67,7 @@ Item {
     readonly property bool focusTransitionEnabled: cfg.focusTransitionEnabled ?? defaults.focusTransitionEnabled ?? true
     readonly property int focusTransitionDelayMs: Math.max(0, cfg.focusTransitionDelayMs ?? defaults.focusTransitionDelayMs ?? 120)
     readonly property int focusTransitionDurationMs: Math.max(0, cfg.focusTransitionDurationMs ?? defaults.focusTransitionDurationMs ?? 220)
-    readonly property string focusTransitionStyle: cfg.focusTransitionStyle ?? defaults.focusTransitionStyle ?? "minimal-slide"
+    readonly property string focusTransitionStyle: cfg.focusTransitionStyle ?? defaults.focusTransitionStyle ?? "soft-comet"
     readonly property int focusTransitionIntensity: Math.max(0, Math.min(100, cfg.focusTransitionIntensity ?? defaults.focusTransitionIntensity ?? 60))
     readonly property real focusTransitionThickness: Math.max(2, cfg.focusTransitionThickness ?? defaults.focusTransitionThickness ?? 6)
     readonly property real focusTransitionMarkerScale: Math.max(0.5, cfg.focusTransitionMarkerScale ?? defaults.focusTransitionMarkerScale ?? 1.4)
@@ -142,6 +143,17 @@ Item {
     property real focusTravelGlowStrength: 0
     property real focusTravelBloomOpacity: 0
     property real focusTravelBloomScale: 1
+    property real focusTravelDirectionSign: 1
+    property string focusTravelLeadShape: "pill"
+    property string focusTravelTrailShape: "none"
+    property int focusTravelTrailingPieces: 0
+    property real focusTravelTrailingGap: 0
+    property real focusTravelTrailingMainRatio: 0.7
+    property real focusTravelTrailingCrossRatio: 0.7
+    property real focusTravelTrailingOpacityFalloff: 0.2
+    property real focusTravelTrailingScaleFalloff: 0.14
+    property real focusTravelRibbonStrength: 0
+    property real focusTravelHaloStrength: 0
     property var focusTravelStartRect: null
     property var focusTravelEndRect: null
     readonly property real focusTravelMarkerCenterAxis: focusTravelAxisPosition + (focusTravelLength / 2)
@@ -1011,35 +1023,38 @@ Item {
         return entryIndicatorRectsByKey[entryKey] || null;
     }
 
-    function normalizedFocusTransitionStyle() {
-        switch (focusTransitionStyle) {
-        case "fade-glide":
-        case "soft-wipe":
-        case "micro-bounce":
-        case "glow-handoff":
-            return focusTransitionStyle;
+    function resolveEasingType(name) {
+        switch (name) {
+        case "inCubic":
+            return Easing.InCubic;
+        case "outCubic":
+            return Easing.OutCubic;
+        case "inOutCubic":
+            return Easing.InOutCubic;
+        case "outBack":
+            return Easing.OutBack;
         default:
-            return "minimal-slide";
+            return Easing.Linear;
         }
     }
 
     function configureAxisAnimation(firstTo, firstDuration, firstEasing, secondTo, secondDuration, secondEasing) {
         focusTravelAxisStep1.to = firstTo;
         focusTravelAxisStep1.duration = Math.max(0, Math.round(firstDuration));
-        focusTravelAxisStep1.easing.type = firstEasing;
+        focusTravelAxisStep1.easing.type = resolveEasingType(firstEasing);
         focusTravelAxisStep2.to = secondTo;
         focusTravelAxisStep2.duration = Math.max(0, Math.round(secondDuration));
-        focusTravelAxisStep2.easing.type = secondEasing;
+        focusTravelAxisStep2.easing.type = resolveEasingType(secondEasing);
         focusTravelAxisSequence.restart();
     }
 
     function configureLengthAnimation(firstTo, firstDuration, firstEasing, secondTo, secondDuration, secondEasing) {
         focusTravelLengthStep1.to = firstTo;
         focusTravelLengthStep1.duration = Math.max(0, Math.round(firstDuration));
-        focusTravelLengthStep1.easing.type = firstEasing;
+        focusTravelLengthStep1.easing.type = resolveEasingType(firstEasing);
         focusTravelLengthStep2.to = secondTo;
         focusTravelLengthStep2.duration = Math.max(0, Math.round(secondDuration));
-        focusTravelLengthStep2.easing.type = secondEasing;
+        focusTravelLengthStep2.easing.type = resolveEasingType(secondEasing);
         focusTravelLengthSequence.restart();
     }
 
@@ -1069,6 +1084,16 @@ Item {
         focusTravelBloomScaleSequence.restart();
     }
 
+    function setFocusTransitionPieces(shape, count, gap, mainRatio, crossRatio, opacityFalloff, scaleFalloff) {
+        focusTravelTrailShape = shape;
+        focusTravelTrailingPieces = count;
+        focusTravelTrailingGap = gap;
+        focusTravelTrailingMainRatio = mainRatio;
+        focusTravelTrailingCrossRatio = crossRatio;
+        focusTravelTrailingOpacityFalloff = opacityFalloff;
+        focusTravelTrailingScaleFalloff = scaleFalloff;
+    }
+
     function cancelFocusTransition() {
         focusTravelActive = false;
         focusTravelOpacity = 0;
@@ -1076,6 +1101,17 @@ Item {
         focusTravelGlowStrength = 0;
         focusTravelBloomOpacity = 0;
         focusTravelBloomScale = 1;
+        focusTravelDirectionSign = 1;
+        focusTravelLeadShape = "pill";
+        focusTravelTrailShape = "none";
+        focusTravelTrailingPieces = 0;
+        focusTravelTrailingGap = 0;
+        focusTravelTrailingMainRatio = 0.7;
+        focusTravelTrailingCrossRatio = 0.7;
+        focusTravelTrailingOpacityFalloff = 0.2;
+        focusTravelTrailingScaleFalloff = 0.14;
+        focusTravelRibbonStrength = 0;
+        focusTravelHaloStrength = 0;
         focusTravelStartRect = null;
         focusTravelEndRect = null;
         focusTransitionDelayTimer.stop();
@@ -1097,77 +1133,48 @@ Item {
         const startLength = isVerticalBar ? startRect.height : startRect.width;
         const endLength = isVerticalBar ? endRect.height : endRect.width;
         const duration = Math.max(1, focusTransitionDurationMs);
-        const distance = Math.abs(endAxis - startAxis);
         const direction = endAxis >= startAxis ? 1 : -1;
-        const intensity = focusTransitionIntensityRatio;
-        const styleKey = normalizedFocusTransitionStyle();
-        const fadeOutDuration = 90;
-        const settleDuration = Math.max(50, Math.round(duration * 0.22));
-        const primaryDuration = Math.max(1, duration - settleDuration);
+        const spec = FocusTransitionStyle.buildSpec({
+            "style": focusTransitionStyle,
+            "startAxis": startAxis,
+            "endAxis": endAxis,
+            "startLength": startLength,
+            "endLength": endLength,
+            "duration": duration,
+            "direction": direction,
+            "intensityRatio": focusTransitionIntensityRatio,
+            "uiScaleRatio": Style.uiScaleRatio
+        });
 
         focusTravelStartRect = startRect;
         focusTravelEndRect = endRect;
-        focusTravelLength = styleKey === "soft-wipe" ? startLength : endLength;
+        focusTravelLength = spec.useStartLength ? startLength : endLength;
         focusTravelThickness = isVerticalBar ? endRect.width : endRect.height;
         focusTravelAxisPosition = startAxis;
         focusTravelCrossPosition = isVerticalBar ? endRect.x : endRect.y;
         focusTravelStartCenterAxis = startAxis + focusTravelLength / 2;
-        focusTravelTrailStrength = 0;
-        focusTravelGlowStrength = 0;
+        focusTravelTrailStrength = spec.trailStrength;
+        focusTravelGlowStrength = spec.glowStrength;
         focusTravelBloomOpacity = 0;
         focusTravelBloomScale = 1;
+        focusTravelDirectionSign = direction;
+        focusTravelLeadShape = spec.leadShape;
+        focusTravelRibbonStrength = spec.ribbonStrength;
+        focusTravelHaloStrength = spec.haloStrength;
+        setFocusTransitionPieces(spec.trailShape, spec.trailingPieces, spec.trailingGap, spec.trailingMainRatio, spec.trailingCrossRatio, spec.trailingOpacityFalloff, spec.trailingScaleFalloff);
         focusTravelActive = true;
 
-        switch (styleKey) {
-        case "fade-glide": {
-            const fadeInDuration = Math.max(40, Math.round(duration * 0.22));
-            const fadeOutPhase = Math.max(70, Math.round(duration * 0.28));
-            const holdDuration = Math.max(0, duration - fadeInDuration - fadeOutPhase);
-            focusTravelGlowStrength = 0.06 + intensity * 0.07;
-            configureAxisAnimation(endAxis, duration, Easing.InOutCubic, endAxis, 0, Easing.Linear);
-            configureLengthAnimation(endLength, 0, Easing.Linear, endLength, 0, Easing.Linear);
-            configureOpacityAnimation(0, 0.72 + intensity * 0.18, fadeInDuration, holdDuration, 0, fadeOutPhase);
-            break;
-        }
-        case "soft-wipe": {
-            const stretchLength = Math.max(endLength * 1.35, endLength + distance * (0.35 + intensity * 0.25));
-            const stretchDuration = Math.max(60, Math.round(duration * 0.55));
-            const collapseDuration = Math.max(60, duration - stretchDuration);
-            focusTravelTrailStrength = 0.10 + intensity * 0.08;
-            focusTravelGlowStrength = 0.10 + intensity * 0.08;
-            configureAxisAnimation(endAxis, duration, Easing.InOutCubic, endAxis, 0, Easing.Linear);
-            configureLengthAnimation(stretchLength, stretchDuration, Easing.OutCubic, endLength, collapseDuration, Easing.InOutCubic);
-            configureOpacityAnimation(0.92, 0.92, 0, duration, 0, fadeOutDuration);
-            break;
-        }
-        case "micro-bounce": {
-            const overshoot = Math.max(4, Math.min(22, Math.round((6 + intensity * 14) * Style.uiScaleRatio)));
-            focusTravelTrailStrength = 0.08 + intensity * 0.06;
-            focusTravelGlowStrength = 0.09 + intensity * 0.05;
-            configureAxisAnimation(endAxis + direction * overshoot, primaryDuration, Easing.OutCubic, endAxis, settleDuration, Easing.OutBack);
-            configureLengthAnimation(endLength, 0, Easing.Linear, endLength, 0, Easing.Linear);
-            configureOpacityAnimation(0.96, 0.96, 0, duration, 0, fadeOutDuration);
-            break;
-        }
-        case "glow-handoff": {
-            const bloomRiseDuration = Math.max(45, Math.round(duration * 0.16));
-            const bloomFallDuration = Math.max(60, Math.round(duration * 0.2));
-            const bloomDelay = Math.max(0, duration - bloomRiseDuration - Math.round(bloomFallDuration * 0.5));
-            focusTravelTrailStrength = 0.18 + intensity * 0.18;
-            focusTravelGlowStrength = 0.18 + intensity * 0.14;
-            configureAxisAnimation(endAxis, duration, Easing.InOutCubic, endAxis, 0, Easing.Linear);
-            configureLengthAnimation(endLength, 0, Easing.Linear, endLength, 0, Easing.Linear);
-            configureOpacityAnimation(0.96, 0.96, 0, duration, 0, fadeOutDuration);
-            configureBloomAnimation(bloomDelay, 0.24 + intensity * 0.34, bloomRiseDuration, bloomFallDuration, 1.18 + intensity * 0.26);
-            break;
-        }
-        default:
-            focusTravelTrailStrength = 0.08 + intensity * 0.06;
-            focusTravelGlowStrength = 0.08 + intensity * 0.05;
-            configureAxisAnimation(endAxis, duration, Easing.InOutCubic, endAxis, 0, Easing.Linear);
-            configureLengthAnimation(endLength, 0, Easing.Linear, endLength, 0, Easing.Linear);
-            configureOpacityAnimation(0.94, 0.94, 0, duration, 0, fadeOutDuration);
-            break;
+        configureAxisAnimation(spec.axis.firstTo, spec.axis.firstDuration, spec.axis.firstEasing, spec.axis.secondTo, spec.axis.secondDuration, spec.axis.secondEasing);
+        configureLengthAnimation(spec.length.firstTo, spec.length.firstDuration, spec.length.firstEasing, spec.length.secondTo, spec.length.secondDuration, spec.length.secondEasing);
+        configureOpacityAnimation(spec.opacity.startOpacity, spec.opacity.fadeInTo, spec.opacity.fadeInDuration, spec.opacity.holdDuration, spec.opacity.fadeOutTo, spec.opacity.fadeOutDuration);
+
+        if (spec.bloom) {
+            configureBloomAnimation(spec.bloom.delayDuration, spec.bloom.riseTo, spec.bloom.riseDuration, spec.bloom.fallDuration, spec.bloom.scaleTo);
+        } else {
+            focusTravelBloomOpacitySequence.stop();
+            focusTravelBloomScaleSequence.stop();
+            focusTravelBloomOpacity = 0;
+            focusTravelBloomScale = 1;
         }
     }
 
@@ -1420,7 +1427,7 @@ Item {
                 root.flushPendingModelRefresh();
         }
 
-        onTriggered: (action, item) => {
+        onTriggered: function(action, item) {
             contextMenu.close();
             PanelService.closeContextMenu(root.screen);
 
@@ -2291,6 +2298,16 @@ Item {
             z: 20
 
             Rectangle {
+                visible: root.focusTravelRibbonStrength > 0 && root.focusTravelTrailExtent > 0
+                x: root.isVerticalBar ? (root.focusTravelCrossPosition + root.focusTravelThickness * 0.18) : root.focusTravelTrailStartAxis
+                y: root.isVerticalBar ? root.focusTravelTrailStartAxis : (root.focusTravelCrossPosition + root.focusTravelThickness * 0.18)
+                width: root.isVerticalBar ? Math.max(2, root.focusTravelThickness * 0.64) : root.focusTravelTrailExtent
+                height: root.isVerticalBar ? root.focusTravelTrailExtent : Math.max(2, root.focusTravelThickness * 0.64)
+                radius: Math.max(width, height) / 2
+                color: Qt.alpha(root.resolveFocusTransitionColor(root.focusTransitionGlowColorKey, Color.mPrimary), root.focusTravelRibbonStrength * root.focusTravelOpacity * root.focusTransitionOpacityRatio)
+            }
+
+            Rectangle {
                 visible: root.focusTravelTrailExtent > 1 && root.focusTravelTrailStrength > 0
                 x: root.isVerticalBar ? (root.focusTravelCrossPosition - 2 - root.focusTransitionBlur * 0.5) : (root.focusTravelTrailStartAxis - root.focusTransitionBlur * 0.5)
                 y: root.isVerticalBar ? (root.focusTravelTrailStartAxis - root.focusTransitionBlur * 0.5) : (root.focusTravelCrossPosition - 2 - root.focusTransitionBlur * 0.5)
@@ -2311,11 +2328,74 @@ Item {
             }
 
             Rectangle {
+                visible: root.focusTravelHaloStrength > 0
+                x: root.isVerticalBar ? (root.focusTravelCrossPosition - 3 - root.focusTransitionBlur * 0.25) : (root.focusTravelAxisPosition - 3 - root.focusTransitionBlur * 0.25)
+                y: root.isVerticalBar ? (root.focusTravelAxisPosition - 3 - root.focusTransitionBlur * 0.25) : (root.focusTravelCrossPosition - 3 - root.focusTransitionBlur * 0.25)
+                width: root.isVerticalBar ? (root.focusTravelThickness + 6 + root.focusTransitionBlur * 0.5) : (root.focusTravelLength + 6 + root.focusTransitionBlur * 0.5)
+                height: root.isVerticalBar ? (root.focusTravelLength + 6 + root.focusTransitionBlur * 0.5) : (root.focusTravelThickness + 6 + root.focusTransitionBlur * 0.5)
+                radius: Math.max(width, height) / 2
+                color: "transparent"
+                border.width: Math.max(1, Style.borderS)
+                border.color: Qt.alpha(root.resolveFocusTransitionColor(root.focusTransitionGlowColorKey, Color.mPrimary), root.focusTravelHaloStrength * root.focusTravelOpacity * root.focusTransitionOpacityRatio)
+            }
+
+            Repeater {
+                model: 4
+
+                delegate: Rectangle {
+                    required property int index
+                    readonly property bool enabledPiece: root.focusTravelTrailingPieces > index && root.focusTravelTrailShape !== "none"
+                    readonly property real lag: root.focusTravelTrailingGap * (index + 1)
+                    readonly property real centerAxis: root.focusTravelMarkerCenterAxis - root.focusTravelDirectionSign * lag
+                    readonly property real scaleFactor: Math.max(0.18, 1 - index * root.focusTravelTrailingScaleFalloff)
+                    readonly property real baseMain: root.focusTravelLength * root.focusTravelTrailingMainRatio
+                    readonly property real baseCross: root.focusTravelThickness * root.focusTravelTrailingCrossRatio
+                    readonly property real pieceMain: {
+                        if (root.focusTravelTrailShape === "dot")
+                            return Math.max(3, Math.min(baseMain, baseCross) * scaleFactor);
+                        return Math.max(3, baseMain * scaleFactor);
+                    }
+                    readonly property real pieceCross: {
+                        if (root.focusTravelTrailShape === "dot")
+                            return pieceMain;
+                        return Math.max(3, baseCross * scaleFactor);
+                    }
+                    readonly property real pieceOpacity: Math.max(0, root.focusTravelOpacity * root.focusTransitionOpacityRatio * (1 - index * root.focusTravelTrailingOpacityFalloff))
+                    readonly property real pieceX: root.isVerticalBar ? (root.focusTravelCrossPosition + (root.focusTravelThickness - pieceCross) / 2) : (centerAxis - pieceMain / 2)
+                    readonly property real pieceY: root.isVerticalBar ? (centerAxis - pieceMain / 2) : (root.focusTravelCrossPosition + (root.focusTravelThickness - pieceCross) / 2)
+                    readonly property real pieceWidth: root.isVerticalBar ? pieceCross : pieceMain
+                    readonly property real pieceHeight: root.isVerticalBar ? pieceMain : pieceCross
+                    readonly property color pieceColor: root.resolveFocusTransitionColor(root.focusTransitionGlowColorKey, Color.mPrimary)
+
+                    visible: enabledPiece
+                    x: pieceX
+                    y: pieceY
+                    width: pieceWidth
+                    height: pieceHeight
+                    radius: {
+                        switch (root.focusTravelTrailShape) {
+                        case "shard":
+                            return Math.min(Style.radiusXXS, Math.min(width, height) / 3);
+                        case "dot":
+                            return width / 2;
+                        default:
+                            return Math.max(width, height) / 2;
+                        }
+                    }
+                    color: Qt.alpha(pieceColor, pieceOpacity)
+                    border.width: root.focusTravelTrailShape === "echo" ? Math.max(1, Style.borderS) : 0
+                    border.color: root.focusTravelTrailShape === "echo" ? Qt.alpha(pieceColor, pieceOpacity * 0.9) : "transparent"
+                }
+            }
+
+            Rectangle {
                 x: root.isVerticalBar ? root.focusTravelCrossPosition : root.focusTravelAxisPosition
                 y: root.isVerticalBar ? root.focusTravelAxisPosition : root.focusTravelCrossPosition
                 width: root.isVerticalBar ? root.focusTravelThickness : root.focusTravelLength
                 height: root.isVerticalBar ? root.focusTravelLength : root.focusTravelThickness
-                radius: Math.max(width, height) / 2
+                radius: root.focusTravelLeadShape === "rect" ? Math.min(Style.radiusXS, Math.min(width, height) / 3) : Math.max(width, height) / 2
+                border.width: root.focusTravelLeadShape === "rect" ? Math.max(1, Style.borderS) : 0
+                border.color: root.focusTravelLeadShape === "rect" ? Qt.alpha(root.resolveFocusTransitionColor(root.focusTransitionColorKey, Color.mPrimary), 0.65 * root.focusTravelOpacity * root.focusTransitionOpacityRatio) : "transparent"
                 color: Qt.alpha(root.resolveFocusTransitionColor(root.focusTransitionColorKey, Color.mPrimary), root.focusTravelOpacity * root.focusTransitionOpacityRatio)
             }
 

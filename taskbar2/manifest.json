@@ -39,7 +39,7 @@
       "focusTransitionEnabled": true,
       "focusTransitionDelayMs": 120,
       "focusTransitionDurationMs": 220,
-      "focusTransitionStyle": "minimal-slide",
+      "focusTransitionStyle": "soft-comet",
       "focusTransitionIntensity": 60,
       "focusTransitionThickness": 6,
       "focusTransitionMarkerScale": 1.4,
