@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Commons
 import qs.Services.System
@@ -10,6 +11,7 @@ ColumnLayout {
     property var pluginApi: null
     property var cfg: pluginApi?.pluginSettings || ({})
     property var defaults: pluginApi?.manifest?.metadata?.defaultSettings || ({})
+    property real preferredWidth: 760 * Style.uiScaleRatio
 
     readonly property bool isVerticalBar: Settings.data.bar.position === "left" || Settings.data.bar.position === "right"
     readonly property var itemColorStates: [
@@ -145,6 +147,7 @@ ColumnLayout {
     property string valueWorkspaceSeparatorDividerIcon: cfg.workspaceSeparatorDividerIcon ?? defaults.workspaceSeparatorDividerIcon ?? "minus"
     property bool valueWorkspaceSeparatorShowForFirst: cfg.workspaceSeparatorShowForFirst ?? defaults.workspaceSeparatorShowForFirst ?? false
     spacing: Style.marginM
+    implicitWidth: preferredWidth
 
     function normalizeStateColors(sourceState, fallbackState) {
         return {
@@ -257,122 +260,90 @@ ColumnLayout {
         }
     }
 
-    NBox {
-        visible: tabView.currentIndex === 2
-        Layout.fillWidth: true
-        implicitHeight: previewColumn.implicitHeight + Style.marginM * 2
-        color: Color.mSurfaceVariant
-
-        ColumnLayout {
-            id: previewColumn
-            anchors.fill: parent
-            anchors.margins: Style.marginM
-            spacing: Style.marginS
-
-            NLabel {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.focusTransitionPreview.label")
-                description: pluginApi?.tr("settings.focusTransitionPreview.desc")
-            }
-
-            FocusTransitionPreview {
-                Layout.alignment: Qt.AlignHCenter
-                isVerticalBar: root.isVerticalBar
-                transitionEnabled: root.valueFocusTransitionEnabled
-                delayMs: root.valueFocusTransitionDelayMs
-                durationMs: root.valueFocusTransitionDurationMs
-                styleKey: root.valueFocusTransitionStyle
-                intensity: root.valueFocusTransitionIntensity
-                scale: root.valueFocusTransitionScale
-                leadColorKey: root.valueFocusTransitionLeadColor
-                glowColorKey: root.valueFocusTransitionGlowColor
-                blurRadius: root.valueFocusTransitionBlur
-                transparency: root.valueFocusTransitionTransparency
-                effectColorKey: root.valueFocusTransitionEffectColor
-                verticalPosition: root.valueFocusTransitionVerticalPosition
-                iconScale: root.valueIconScale
-                itemGapUnits: root.valueItemGapUnits
-                showTitle: root.valueShowTitle && !root.isVerticalBar
-                titleWidth: root.valueTitleWidth
-                hoverIconScaleMultiplier: root.valueHoverIconScaleMultiplier
-                hoverItemScalePercent: root.valueHoverItemScalePercent
-                titleFontFamily: root.valueTitleFontFamily
-                titleFontScale: root.valueTitleFontScale
-                titleFontWeight: root.valueTitleFontWeight
-                colorizeIcons: root.valueColorizeIcons
-                itemColors: root.valueItemColors
-            }
-        }
-    }
-
     NTabView {
         id: tabView
         Layout.fillWidth: true
+        Layout.fillHeight: true
         currentIndex: tabBar.currentIndex
 
-        ColumnLayout {
-            Layout.fillWidth: true
-            spacing: Style.marginM
+        NScrollView {
+            id: generalScrollView
+            clip: true
+            horizontalPolicy: ScrollBar.AlwaysOff
+            reserveScrollbarSpace: false
+            gradientColor: Color.mSurface
 
-            NComboBox {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.hideMode.label")
-                description: pluginApi?.tr("settings.hideMode.desc")
-                model: [
-                    {
-                        "key": "visible",
-                        "name": pluginApi?.tr("options.visible")
-                    },
-                    {
-                        "key": "hidden",
-                        "name": pluginApi?.tr("options.hidden")
-                    },
-                    {
-                        "key": "transparent",
-                        "name": pluginApi?.tr("options.transparent")
-                    }
-                ]
-                currentKey: root.valueHideMode
-                onSelected: key => root.valueHideMode = key
-                defaultValue: defaults.hideMode ?? "hidden"
-            }
+            ColumnLayout {
+                width: generalScrollView.availableWidth
+                spacing: Style.marginM
 
-            NToggle {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.onlySameOutput.label")
-                description: pluginApi?.tr("settings.onlySameOutput.desc")
-                checked: root.valueOnlySameOutput
-                onToggled: checked => root.valueOnlySameOutput = checked
-                defaultValue: defaults.onlySameOutput ?? true
-            }
+                NComboBox {
+                    Layout.fillWidth: true
+                    label: pluginApi?.tr("settings.hideMode.label")
+                    description: pluginApi?.tr("settings.hideMode.desc")
+                    model: [
+                        {
+                            "key": "visible",
+                            "name": pluginApi?.tr("options.visible")
+                        },
+                        {
+                            "key": "hidden",
+                            "name": pluginApi?.tr("options.hidden")
+                        },
+                        {
+                            "key": "transparent",
+                            "name": pluginApi?.tr("options.transparent")
+                        }
+                    ]
+                    currentKey: root.valueHideMode
+                    onSelected: key => root.valueHideMode = key
+                    defaultValue: defaults.hideMode ?? "hidden"
+                }
 
-            NToggle {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.onlyActiveWorkspaces.label")
-                description: pluginApi?.tr("settings.onlyActiveWorkspaces.desc")
-                checked: root.valueOnlyActiveWorkspaces
-                onToggled: checked => root.valueOnlyActiveWorkspaces = checked
-                defaultValue: defaults.onlyActiveWorkspaces ?? true
-            }
+                NToggle {
+                    Layout.fillWidth: true
+                    label: pluginApi?.tr("settings.onlySameOutput.label")
+                    description: pluginApi?.tr("settings.onlySameOutput.desc")
+                    checked: root.valueOnlySameOutput
+                    onToggled: checked => root.valueOnlySameOutput = checked
+                    defaultValue: defaults.onlySameOutput ?? true
+                }
 
-            NToggle {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.showPinnedApps.label")
-                description: pluginApi?.tr("settings.showPinnedApps.desc")
-                checked: root.valueShowPinnedApps
-                onToggled: checked => root.valueShowPinnedApps = checked
-                defaultValue: defaults.showPinnedApps ?? true
+                NToggle {
+                    Layout.fillWidth: true
+                    label: pluginApi?.tr("settings.onlyActiveWorkspaces.label")
+                    description: pluginApi?.tr("settings.onlyActiveWorkspaces.desc")
+                    checked: root.valueOnlyActiveWorkspaces
+                    onToggled: checked => root.valueOnlyActiveWorkspaces = checked
+                    defaultValue: defaults.onlyActiveWorkspaces ?? true
+                }
+
+                NToggle {
+                    Layout.fillWidth: true
+                    label: pluginApi?.tr("settings.showPinnedApps.label")
+                    description: pluginApi?.tr("settings.showPinnedApps.desc")
+                    checked: root.valueShowPinnedApps
+                    onToggled: checked => root.valueShowPinnedApps = checked
+                    defaultValue: defaults.showPinnedApps ?? true
+                }
             }
         }
 
-        ColumnLayout {
-            Layout.fillWidth: true
-            spacing: Style.marginM
+        NScrollView {
+            id: organizationScrollView
+            clip: true
+            horizontalPolicy: ScrollBar.AlwaysOff
+            reserveScrollbarSpace: false
+            gradientColor: Color.mSurface
 
-            NHeader {
-                label: pluginApi?.tr("settings.sections.workspaceContainers.label")
-                description: pluginApi?.tr("settings.sections.workspaceContainers.desc")
-            }
+            ColumnLayout {
+                width: organizationScrollView.availableWidth
+                spacing: Style.marginM
+
+                NHeader {
+                    label: pluginApi?.tr("settings.sections.workspaceContainers.label")
+                    description: pluginApi?.tr("settings.sections.workspaceContainers.desc")
+                }
 
             NToggle {
                 Layout.fillWidth: true
@@ -577,30 +548,85 @@ ColumnLayout {
                 defaultValue: defaults.groupContextMenuMode ?? "extended"
             }
 
-            NComboBox {
-                visible: root.valueGroupApps
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.groupIndicatorStyle.label")
-                description: pluginApi?.tr("settings.groupIndicatorStyle.desc")
-                model: [
-                    {
-                        "key": "number",
-                        "name": pluginApi?.tr("options.groupIndicatorNumber")
-                    },
-                    {
-                        "key": "dots",
-                        "name": pluginApi?.tr("options.groupIndicatorDots")
-                    }
-                ]
-                currentKey: root.valueGroupIndicatorStyle
-                onSelected: key => root.valueGroupIndicatorStyle = key
-                defaultValue: defaults.groupIndicatorStyle ?? "number"
+                NComboBox {
+                    visible: root.valueGroupApps
+                    Layout.fillWidth: true
+                    label: pluginApi?.tr("settings.groupIndicatorStyle.label")
+                    description: pluginApi?.tr("settings.groupIndicatorStyle.desc")
+                    model: [
+                        {
+                            "key": "number",
+                            "name": pluginApi?.tr("options.groupIndicatorNumber")
+                        },
+                        {
+                            "key": "dots",
+                            "name": pluginApi?.tr("options.groupIndicatorDots")
+                        }
+                    ]
+                    currentKey: root.valueGroupIndicatorStyle
+                    onSelected: key => root.valueGroupIndicatorStyle = key
+                    defaultValue: defaults.groupIndicatorStyle ?? "number"
+                }
             }
         }
 
-        ColumnLayout {
-            Layout.fillWidth: true
-            spacing: Style.marginM
+        NScrollView {
+            id: layoutScrollView
+            clip: true
+            horizontalPolicy: ScrollBar.AlwaysOff
+            reserveScrollbarSpace: false
+            gradientColor: Color.mSurface
+
+            ColumnLayout {
+                width: layoutScrollView.availableWidth
+                spacing: Style.marginM
+
+                NBox {
+                    Layout.fillWidth: true
+                    implicitHeight: previewColumn.implicitHeight + Style.marginM * 2
+                    color: Color.mSurfaceVariant
+
+                    ColumnLayout {
+                        id: previewColumn
+                        anchors.fill: parent
+                        anchors.margins: Style.marginM
+                        spacing: Style.marginS
+
+                        NLabel {
+                            Layout.fillWidth: true
+                            label: pluginApi?.tr("settings.focusTransitionPreview.label")
+                            description: pluginApi?.tr("settings.focusTransitionPreview.desc")
+                        }
+
+                        FocusTransitionPreview {
+                            Layout.alignment: Qt.AlignHCenter
+                            isVerticalBar: root.isVerticalBar
+                            transitionEnabled: root.valueFocusTransitionEnabled
+                            delayMs: root.valueFocusTransitionDelayMs
+                            durationMs: root.valueFocusTransitionDurationMs
+                            styleKey: root.valueFocusTransitionStyle
+                            intensity: root.valueFocusTransitionIntensity
+                            scale: root.valueFocusTransitionScale
+                            leadColorKey: root.valueFocusTransitionLeadColor
+                            glowColorKey: root.valueFocusTransitionGlowColor
+                            blurRadius: root.valueFocusTransitionBlur
+                            transparency: root.valueFocusTransitionTransparency
+                            effectColorKey: root.valueFocusTransitionEffectColor
+                            verticalPosition: root.valueFocusTransitionVerticalPosition
+                            iconScale: root.valueIconScale
+                            itemGapUnits: root.valueItemGapUnits
+                            showTitle: root.valueShowTitle && !root.isVerticalBar
+                            titleWidth: root.valueTitleWidth
+                            hoverIconScaleMultiplier: root.valueHoverIconScaleMultiplier
+                            hoverItemScalePercent: root.valueHoverItemScalePercent
+                            titleFontFamily: root.valueTitleFontFamily
+                            titleFontScale: root.valueTitleFontScale
+                            titleFontWeight: root.valueTitleFontWeight
+                            colorizeIcons: root.valueColorizeIcons
+                            itemColors: root.valueItemColors
+                        }
+                    }
+                }
 
             NHeader {
                 label: pluginApi?.tr("settings.sections.icon.label")
@@ -985,53 +1011,62 @@ ColumnLayout {
                 onSelected: key => root.valueTitleFontWeight = key
                 defaultValue: defaults.titleFontWeight ?? "medium"
             }
+            }
         }
 
-        ColumnLayout {
-            Layout.fillWidth: true
-            spacing: Style.marginM
+        NScrollView {
+            id: colorsScrollView
+            clip: true
+            horizontalPolicy: ScrollBar.AlwaysOff
+            reserveScrollbarSpace: false
+            gradientColor: Color.mSurface
 
-            NHeader {
-                label: pluginApi?.tr("settings.sections.itemColors.label")
-                description: pluginApi?.tr("settings.sections.itemColors.desc")
-            }
+            ColumnLayout {
+                width: colorsScrollView.availableWidth
+                spacing: Style.marginM
 
-            Repeater {
-                model: root.itemColorStates
+                NHeader {
+                    label: pluginApi?.tr("settings.sections.itemColors.label")
+                    description: pluginApi?.tr("settings.sections.itemColors.desc")
+                }
 
-                delegate: ColumnLayout {
-                    required property var modelData
+                Repeater {
+                    model: root.itemColorStates
 
-                    Layout.fillWidth: true
-                    spacing: Style.marginS
+                    delegate: ColumnLayout {
+                        required property var modelData
 
-                    NHeader {
-                        label: modelData.label
-                        description: modelData.description
-                    }
+                        Layout.fillWidth: true
+                        spacing: Style.marginS
 
-                    NColorChoice {
-                        label: pluginApi?.tr("settings.itemColors.background.label")
-                        description: pluginApi?.tr("settings.itemColors.background.desc")
-                        currentKey: root.getItemColor(modelData.key, "background")
-                        onSelected: key => root.setItemColor(modelData.key, "background", key)
-                        defaultValue: root.getDefaultItemColor(modelData.key, "background")
-                    }
+                        NHeader {
+                            label: modelData.label
+                            description: modelData.description
+                        }
 
-                    NColorChoice {
-                        label: pluginApi?.tr("settings.itemColors.border.label")
-                        description: pluginApi?.tr("settings.itemColors.border.desc")
-                        currentKey: root.getItemColor(modelData.key, "border")
-                        onSelected: key => root.setItemColor(modelData.key, "border", key)
-                        defaultValue: root.getDefaultItemColor(modelData.key, "border")
-                    }
+                        NColorChoice {
+                            label: pluginApi?.tr("settings.itemColors.background.label")
+                            description: pluginApi?.tr("settings.itemColors.background.desc")
+                            currentKey: root.getItemColor(modelData.key, "background")
+                            onSelected: key => root.setItemColor(modelData.key, "background", key)
+                            defaultValue: root.getDefaultItemColor(modelData.key, "background")
+                        }
 
-                    NColorChoice {
-                        label: pluginApi?.tr("settings.itemColors.text.label")
-                        description: pluginApi?.tr("settings.itemColors.text.desc")
-                        currentKey: root.getItemColor(modelData.key, "text")
-                        onSelected: key => root.setItemColor(modelData.key, "text", key)
-                        defaultValue: root.getDefaultItemColor(modelData.key, "text")
+                        NColorChoice {
+                            label: pluginApi?.tr("settings.itemColors.border.label")
+                            description: pluginApi?.tr("settings.itemColors.border.desc")
+                            currentKey: root.getItemColor(modelData.key, "border")
+                            onSelected: key => root.setItemColor(modelData.key, "border", key)
+                            defaultValue: root.getDefaultItemColor(modelData.key, "border")
+                        }
+
+                        NColorChoice {
+                            label: pluginApi?.tr("settings.itemColors.text.label")
+                            description: pluginApi?.tr("settings.itemColors.text.desc")
+                            currentKey: root.getItemColor(modelData.key, "text")
+                            onSelected: key => root.setItemColor(modelData.key, "text", key)
+                            defaultValue: root.getDefaultItemColor(modelData.key, "text")
+                        }
                     }
                 }
             }
