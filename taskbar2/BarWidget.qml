@@ -139,10 +139,21 @@ Item {
     property real focusTravelThickness: 0
     property real focusTravelStartCenterAxis: 0
     property real focusTravelOpacity: 0
+    property real focusTravelLeadOpacity: 0
+    property real focusTravelTrailOpacity: 0
+    property real focusTravelGlowOpacity: 0
+    property real focusTravelHaloOpacity: 0
+    property real focusTravelRibbonOpacity: 0
     property real focusTravelTrailStrength: 0
     property real focusTravelGlowStrength: 0
     property real focusTravelBloomOpacity: 0
     property real focusTravelBloomScale: 1
+    property real focusTravelLeadColorMix: 0.08
+    property real focusTravelTrailColorMix: 0.72
+    property real focusTravelGlowColorMix: 1
+    property real focusTravelHaloColorMix: 0.86
+    property real focusTravelRibbonColorMix: 0.56
+    property real focusTravelBloomColorMix: 0.94
     property real focusTravelDirectionSign: 1
     property string focusTravelLeadShape: "pill"
     property string focusTravelTrailShape: "none"
@@ -201,6 +212,22 @@ Item {
         if (!colorKey || colorKey === "none")
             return fallbackColor;
         return Color.resolveColorKey(colorKey);
+    }
+
+    function mixTransitionColors(mixRatio) {
+        const baseColor = resolveFocusTransitionColor(focusTransitionColorKey, Color.mPrimary);
+        const glowColor = resolveFocusTransitionColor(focusTransitionGlowColorKey, Color.mPrimary);
+        const ratio = Math.max(0, Math.min(1, mixRatio));
+        return Qt.rgba(
+            baseColor.r + (glowColor.r - baseColor.r) * ratio,
+            baseColor.g + (glowColor.g - baseColor.g) * ratio,
+            baseColor.b + (glowColor.b - baseColor.b) * ratio,
+            1
+        );
+    }
+
+    function applyTransitionAlpha(colorValue, opacityValue) {
+        return Qt.rgba(colorValue.r, colorValue.g, colorValue.b, Math.max(0, Math.min(1, opacityValue)));
     }
 
     function normalizeAppId(appId) {
@@ -1084,6 +1111,27 @@ Item {
         focusTravelBloomScaleSequence.restart();
     }
 
+    function configureLayerOpacityAnimation(sequence, step1, pause, step2, propertyName, spec, fadeInEasing, fadeOutEasing) {
+        const layerSpec = spec || ({
+            "startOpacity": 0,
+            "fadeInTo": 0,
+            "fadeInDuration": 0,
+            "holdDuration": 0,
+            "fadeOutTo": 0,
+            "fadeOutDuration": 0
+        });
+
+        root[propertyName] = layerSpec.startOpacity;
+        step1.to = layerSpec.fadeInTo;
+        step1.duration = Math.max(0, Math.round(layerSpec.fadeInDuration));
+        step1.easing.type = resolveEasingType(fadeInEasing || "outCubic");
+        pause.duration = Math.max(0, Math.round(layerSpec.holdDuration));
+        step2.to = layerSpec.fadeOutTo;
+        step2.duration = Math.max(0, Math.round(layerSpec.fadeOutDuration));
+        step2.easing.type = resolveEasingType(fadeOutEasing || "inCubic");
+        sequence.restart();
+    }
+
     function setFocusTransitionPieces(shape, count, gap, mainRatio, crossRatio, opacityFalloff, scaleFalloff) {
         focusTravelTrailShape = shape;
         focusTravelTrailingPieces = count;
@@ -1097,10 +1145,21 @@ Item {
     function cancelFocusTransition() {
         focusTravelActive = false;
         focusTravelOpacity = 0;
+        focusTravelLeadOpacity = 0;
+        focusTravelTrailOpacity = 0;
+        focusTravelGlowOpacity = 0;
+        focusTravelHaloOpacity = 0;
+        focusTravelRibbonOpacity = 0;
         focusTravelTrailStrength = 0;
         focusTravelGlowStrength = 0;
         focusTravelBloomOpacity = 0;
         focusTravelBloomScale = 1;
+        focusTravelLeadColorMix = 0.08;
+        focusTravelTrailColorMix = 0.72;
+        focusTravelGlowColorMix = 1;
+        focusTravelHaloColorMix = 0.86;
+        focusTravelRibbonColorMix = 0.56;
+        focusTravelBloomColorMix = 0.94;
         focusTravelDirectionSign = 1;
         focusTravelLeadShape = "pill";
         focusTravelTrailShape = "none";
@@ -1118,6 +1177,11 @@ Item {
         focusTravelAxisSequence.stop();
         focusTravelLengthSequence.stop();
         focusTravelOpacitySequence.stop();
+        focusTravelLeadOpacitySequence.stop();
+        focusTravelTrailOpacitySequence.stop();
+        focusTravelGlowOpacitySequence.stop();
+        focusTravelHaloOpacitySequence.stop();
+        focusTravelRibbonOpacitySequence.stop();
         focusTravelBloomOpacitySequence.stop();
         focusTravelBloomScaleSequence.stop();
         pendingFocusTransitionStartKey = "";
@@ -1157,6 +1221,12 @@ Item {
         focusTravelGlowStrength = spec.glowStrength;
         focusTravelBloomOpacity = 0;
         focusTravelBloomScale = 1;
+        focusTravelLeadColorMix = spec.colorMix?.lead ?? 0.08;
+        focusTravelTrailColorMix = spec.colorMix?.trail ?? 0.72;
+        focusTravelGlowColorMix = spec.colorMix?.glow ?? 1;
+        focusTravelHaloColorMix = spec.colorMix?.halo ?? 0.86;
+        focusTravelRibbonColorMix = spec.colorMix?.ribbon ?? 0.56;
+        focusTravelBloomColorMix = spec.colorMix?.bloom ?? 0.94;
         focusTravelDirectionSign = direction;
         focusTravelLeadShape = spec.leadShape;
         focusTravelRibbonStrength = spec.ribbonStrength;
@@ -1167,6 +1237,11 @@ Item {
         configureAxisAnimation(spec.axis.firstTo, spec.axis.firstDuration, spec.axis.firstEasing, spec.axis.secondTo, spec.axis.secondDuration, spec.axis.secondEasing);
         configureLengthAnimation(spec.length.firstTo, spec.length.firstDuration, spec.length.firstEasing, spec.length.secondTo, spec.length.secondDuration, spec.length.secondEasing);
         configureOpacityAnimation(spec.opacity.startOpacity, spec.opacity.fadeInTo, spec.opacity.fadeInDuration, spec.opacity.holdDuration, spec.opacity.fadeOutTo, spec.opacity.fadeOutDuration);
+        configureLayerOpacityAnimation(focusTravelLeadOpacitySequence, focusTravelLeadOpacityStep1, focusTravelLeadOpacityPause, focusTravelLeadOpacityStep2, "focusTravelLeadOpacity", spec.layers?.lead, "outCubic", "inCubic");
+        configureLayerOpacityAnimation(focusTravelTrailOpacitySequence, focusTravelTrailOpacityStep1, focusTravelTrailOpacityPause, focusTravelTrailOpacityStep2, "focusTravelTrailOpacity", spec.layers?.trail, "outCubic", "inCubic");
+        configureLayerOpacityAnimation(focusTravelGlowOpacitySequence, focusTravelGlowOpacityStep1, focusTravelGlowOpacityPause, focusTravelGlowOpacityStep2, "focusTravelGlowOpacity", spec.layers?.glow, "outCubic", "inCubic");
+        configureLayerOpacityAnimation(focusTravelHaloOpacitySequence, focusTravelHaloOpacityStep1, focusTravelHaloOpacityPause, focusTravelHaloOpacityStep2, "focusTravelHaloOpacity", spec.layers?.halo, "outCubic", "inCubic");
+        configureLayerOpacityAnimation(focusTravelRibbonOpacitySequence, focusTravelRibbonOpacityStep1, focusTravelRibbonOpacityPause, focusTravelRibbonOpacityStep2, "focusTravelRibbonOpacity", spec.layers?.ribbon, "outCubic", "inCubic");
 
         if (spec.bloom) {
             configureBloomAnimation(spec.bloom.delayDuration, spec.bloom.riseTo, spec.bloom.riseDuration, spec.bloom.fallDuration, spec.bloom.scaleTo);
@@ -1595,6 +1670,111 @@ Item {
     }
 
     SequentialAnimation {
+        id: focusTravelLeadOpacitySequence
+        running: false
+
+        NumberAnimation {
+            id: focusTravelLeadOpacityStep1
+            target: root
+            property: "focusTravelLeadOpacity"
+        }
+
+        PauseAnimation {
+            id: focusTravelLeadOpacityPause
+        }
+
+        NumberAnimation {
+            id: focusTravelLeadOpacityStep2
+            target: root
+            property: "focusTravelLeadOpacity"
+        }
+    }
+
+    SequentialAnimation {
+        id: focusTravelTrailOpacitySequence
+        running: false
+
+        NumberAnimation {
+            id: focusTravelTrailOpacityStep1
+            target: root
+            property: "focusTravelTrailOpacity"
+        }
+
+        PauseAnimation {
+            id: focusTravelTrailOpacityPause
+        }
+
+        NumberAnimation {
+            id: focusTravelTrailOpacityStep2
+            target: root
+            property: "focusTravelTrailOpacity"
+        }
+    }
+
+    SequentialAnimation {
+        id: focusTravelGlowOpacitySequence
+        running: false
+
+        NumberAnimation {
+            id: focusTravelGlowOpacityStep1
+            target: root
+            property: "focusTravelGlowOpacity"
+        }
+
+        PauseAnimation {
+            id: focusTravelGlowOpacityPause
+        }
+
+        NumberAnimation {
+            id: focusTravelGlowOpacityStep2
+            target: root
+            property: "focusTravelGlowOpacity"
+        }
+    }
+
+    SequentialAnimation {
+        id: focusTravelHaloOpacitySequence
+        running: false
+
+        NumberAnimation {
+            id: focusTravelHaloOpacityStep1
+            target: root
+            property: "focusTravelHaloOpacity"
+        }
+
+        PauseAnimation {
+            id: focusTravelHaloOpacityPause
+        }
+
+        NumberAnimation {
+            id: focusTravelHaloOpacityStep2
+            target: root
+            property: "focusTravelHaloOpacity"
+        }
+    }
+
+    SequentialAnimation {
+        id: focusTravelRibbonOpacitySequence
+        running: false
+
+        NumberAnimation {
+            id: focusTravelRibbonOpacityStep1
+            target: root
+            property: "focusTravelRibbonOpacity"
+        }
+
+        PauseAnimation {
+            id: focusTravelRibbonOpacityPause
+        }
+
+        NumberAnimation {
+            id: focusTravelRibbonOpacityStep2
+            target: root
+            property: "focusTravelRibbonOpacity"
+        }
+    }
+
+    SequentialAnimation {
         id: focusTravelBloomOpacitySequence
         running: false
 
@@ -1768,6 +1948,17 @@ Item {
                     readonly property bool showGroupedIndicator: root.groupApps && groupedCount > 1 && isRunning
                     readonly property real titlePointSize: Math.max(Style.fontSizeXS, root.barFontSize * root.titleFontScale)
                     readonly property real hoverItemScale: 1 + (root.hoverItemScalePercent / 100.0)
+                    readonly property color focusAccentColor: root.mixTransitionColors(0.18)
+                    readonly property color focusSecondaryColor: root.mixTransitionColors(0.9)
+                    readonly property real focusVisualStrength: isFocused ? 1.0 : (isHovered ? 0.4 : 0.0)
+                    readonly property real focusWashOpacity: isFocused ? 0.22 : (isHovered ? 0.1 : 0.0)
+                    readonly property real iconGlowOpacity: isFocused ? 0.32 : (isHovered ? 0.12 : 0.0)
+                    readonly property real iconFocusScale: isFocused ? 1.18 : (isHovered ? Math.max(root.hoverIconScaleMultiplier, 1.05) : 1.0)
+                    readonly property real iconFocusLift: isFocused ? -1 : 0
+                    readonly property real titleFocusOpacity: isFocused ? 1.0 : (isHovered ? 0.94 : 0.84)
+                    readonly property real titleFocusOffset: isFocused ? -2 : (isHovered ? -1 : 0)
+                    readonly property real badgeFocusScale: isFocused ? 1.08 : 1.0
+                    readonly property real indicatorOpacity: isFocused ? 1.0 : (isHovered ? 0.72 : 0.0)
                     readonly property bool isSeparator: modelData.type === "separator"
                     readonly property string separatorLabel: root.getWorkspaceLabel(modelData.workspaceIndex ?? 0)
                     readonly property real separatorLabelWidth: root.workspaceSeparatorShowLabel ? Math.max(0, Math.round(separatorLabel.length * root.barFontSize * 0.62)) : 0
@@ -2037,6 +2228,7 @@ Item {
                         }
 
                         Rectangle {
+                            id: capsuleBackground
                             anchors.centerIn: parent
                             width: root.isVerticalBar ? root.capsuleHeight : taskbarItem.visualWidth
                             height: root.capsuleHeight
@@ -2056,6 +2248,36 @@ Item {
                                 ColorAnimation {
                                     duration: Style.animationFast
                                     easing.type: Easing.InOutQuad
+                                }
+                            }
+
+                            Rectangle {
+                                anchors.fill: parent
+                                anchors.margins: Math.max(1, Style.borderS)
+                                radius: Math.max(0, capsuleBackground.radius - Style.borderS)
+                                color: "transparent"
+                                opacity: taskbarItem.focusWashOpacity
+                                gradient: Gradient {
+                                    orientation: root.isVerticalBar ? Gradient.Vertical : Gradient.Horizontal
+                                    GradientStop {
+                                        position: 0.0
+                                        color: Qt.rgba(taskbarItem.focusAccentColor.r, taskbarItem.focusAccentColor.g, taskbarItem.focusAccentColor.b, 0.95)
+                                    }
+                                    GradientStop {
+                                        position: 0.55
+                                        color: Qt.rgba(taskbarItem.focusSecondaryColor.r, taskbarItem.focusSecondaryColor.g, taskbarItem.focusSecondaryColor.b, 0.55)
+                                    }
+                                    GradientStop {
+                                        position: 1.0
+                                        color: Qt.rgba(taskbarItem.focusAccentColor.r, taskbarItem.focusAccentColor.g, taskbarItem.focusAccentColor.b, 0.18)
+                                    }
+                                }
+
+                                Behavior on opacity {
+                                    NumberAnimation {
+                                        duration: Style.animationNormal
+                                        easing.type: Easing.OutCubic
+                                    }
                                 }
                             }
                         }
@@ -2081,13 +2303,53 @@ Item {
 
                                     Item {
                                         anchors.fill: parent
-                                        scale: taskbarItem.isHovered ? root.hoverIconScaleMultiplier : 1.0
+                                        y: taskbarItem.iconFocusLift
+                                        scale: taskbarItem.iconFocusScale
+                                        opacity: 0.78 + taskbarItem.focusVisualStrength * 0.22
                                         transformOrigin: Item.Center
+
+                                        Behavior on y {
+                                            NumberAnimation {
+                                                duration: Style.animationFast
+                                                easing.type: Easing.OutCubic
+                                            }
+                                        }
 
                                         Behavior on scale {
                                             NumberAnimation {
-                                                duration: Style.animationFast
+                                                duration: Style.animationNormal
                                                 easing.type: Easing.OutQuad
+                                            }
+                                        }
+
+                                        Behavior on opacity {
+                                            NumberAnimation {
+                                                duration: Style.animationFast
+                                                easing.type: Easing.OutCubic
+                                            }
+                                        }
+
+                                        Rectangle {
+                                            anchors.centerIn: parent
+                                            width: Math.round(parent.width * 0.9)
+                                            height: Math.round(parent.height * 0.9)
+                                            radius: Math.max(width, height) / 2
+                                            color: Qt.rgba(taskbarItem.focusSecondaryColor.r, taskbarItem.focusSecondaryColor.g, taskbarItem.focusSecondaryColor.b, 1)
+                                            opacity: taskbarItem.iconGlowOpacity
+                                            scale: 0.86 + taskbarItem.focusVisualStrength * 0.28
+
+                                            Behavior on opacity {
+                                                NumberAnimation {
+                                                    duration: Style.animationNormal
+                                                    easing.type: Easing.OutCubic
+                                                }
+                                            }
+
+                                            Behavior on scale {
+                                                NumberAnimation {
+                                                    duration: Style.animationNormal
+                                                    easing.type: Easing.OutCubic
+                                                }
                                             }
                                         }
 
@@ -2111,13 +2373,28 @@ Item {
                                         anchors.bottom: parent.bottom
                                         anchors.bottomMargin: -2
                                         anchors.horizontalCenter: parent.horizontalCenter
-                                        width: Style.toOdd(root.itemSize * 0.25)
+                                        width: Style.toOdd(root.itemSize * (0.22 + taskbarItem.focusVisualStrength * 0.18))
                                         height: 4
-                                        color: taskbarItem.isFocused ? Color.mPrimary : (taskbarItem.isHovered ? Color.mHover : "transparent")
+                                        color: taskbarItem.isFocused ? taskbarItem.focusAccentColor : taskbarItem.focusSecondaryColor
+                                        opacity: taskbarItem.indicatorOpacity
                                         radius: Math.min(Style.radiusXXS, width / 2)
+
+                                        Behavior on width {
+                                            NumberAnimation {
+                                                duration: Style.animationNormal
+                                                easing.type: Easing.OutCubic
+                                            }
+                                        }
 
                                         Behavior on color {
                                             ColorAnimation {
+                                                duration: Style.animationFast
+                                                easing.type: Easing.OutCubic
+                                            }
+                                        }
+
+                                        Behavior on opacity {
+                                            NumberAnimation {
                                                 duration: Style.animationFast
                                                 easing.type: Easing.OutCubic
                                             }
@@ -2152,10 +2429,32 @@ Item {
 
                                             width: Math.max(badgeHeight, Math.round(numberLabel.implicitWidth + horizontalPadding * 2))
                                             height: badgeHeight
+                                            scale: taskbarItem.badgeFocusScale
                                             radius: height / 2
-                                            color: taskbarItem.focusedWindowIndex >= 0 ? Color.mPrimary : Qt.alpha(Color.mSurface, 0.96)
-                                            border.color: taskbarItem.focusedWindowIndex >= 0 ? Color.mSurface : Qt.alpha(Color.mOutline, 0.8)
+                                            color: taskbarItem.focusedWindowIndex >= 0 ? taskbarItem.focusAccentColor : Qt.alpha(taskbarItem.focusSecondaryColor, 0.28)
+                                            border.color: taskbarItem.focusedWindowIndex >= 0 ? Qt.alpha(Color.mSurface, 0.92) : Qt.alpha(taskbarItem.focusSecondaryColor, 0.58)
                                             border.width: Style.borderS
+
+                                            Behavior on scale {
+                                                NumberAnimation {
+                                                    duration: Style.animationFast
+                                                    easing.type: Easing.OutBack
+                                                }
+                                            }
+
+                                            Behavior on color {
+                                                ColorAnimation {
+                                                    duration: Style.animationFast
+                                                    easing.type: Easing.OutCubic
+                                                }
+                                            }
+
+                                            Behavior on border.color {
+                                                ColorAnimation {
+                                                    duration: Style.animationFast
+                                                    easing.type: Easing.OutCubic
+                                                }
+                                            }
 
                                             NText {
                                                 id: numberLabel
@@ -2165,7 +2464,14 @@ Item {
                                                 pointSize: Math.max(Style.fontSizeXS, Math.min(root.barFontSize * 0.8, Style.fontSizeS))
                                                 applyUiScale: false
                                                 font.weight: Style.fontWeightBold
-                                                color: taskbarItem.focusedWindowIndex >= 0 ? Color.mOnPrimary : Color.mOnSurface
+                                                color: taskbarItem.focusedWindowIndex >= 0 ? Color.mOnPrimary : taskbarItem.itemTextColor
+
+                                                Behavior on color {
+                                                    ColorAnimation {
+                                                        duration: Style.animationFast
+                                                        easing.type: Easing.OutCubic
+                                                    }
+                                                }
                                             }
                                         }
                                     }
@@ -2198,11 +2504,33 @@ Item {
                                                     readonly property int actualIndex: parent.windowStart + index
                                                     width: parent.dotSize
                                                     height: parent.dotSize
+                                                    scale: actualIndex === taskbarItem.focusedWindowIndex ? 1.35 : 1.0
                                                     radius: width / 2
                                                     x: root.isVerticalBar ? 0 : index * (parent.dotSize + parent.dotSpacing)
                                                     y: root.isVerticalBar ? index * (parent.dotSize + parent.dotSpacing) : 0
-                                                    color: actualIndex === taskbarItem.focusedWindowIndex ? Color.mPrimary : Color.mOnSurfaceVariant
-                                                    opacity: 0.95
+                                                    color: actualIndex === taskbarItem.focusedWindowIndex ? taskbarItem.focusAccentColor : taskbarItem.focusSecondaryColor
+                                                    opacity: actualIndex === taskbarItem.focusedWindowIndex ? 1.0 : 0.56
+
+                                                    Behavior on scale {
+                                                        NumberAnimation {
+                                                            duration: Style.animationFast
+                                                            easing.type: Easing.OutBack
+                                                        }
+                                                    }
+
+                                                    Behavior on color {
+                                                        ColorAnimation {
+                                                            duration: Style.animationFast
+                                                            easing.type: Easing.OutCubic
+                                                        }
+                                                    }
+
+                                                    Behavior on opacity {
+                                                        NumberAnimation {
+                                                            duration: Style.animationFast
+                                                            easing.type: Easing.OutCubic
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
@@ -2215,6 +2543,7 @@ Item {
                                     Layout.preferredHeight: root.itemSize
                                     Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
                                     Layout.fillWidth: false
+                                    Layout.leftMargin: taskbarItem.titleFocusOffset
                                     text: taskbarItem.title
                                     family: root.titleFontFamilyValue()
                                     elide: Text.ElideRight
@@ -2222,8 +2551,22 @@ Item {
                                     horizontalAlignment: Text.AlignLeft
                                     pointSize: taskbarItem.titlePointSize
                                     color: taskbarItem.itemTextColor
-                                    opacity: Style.opacityFull
+                                    opacity: taskbarItem.titleFocusOpacity
                                     font.weight: root.titleFontWeightValue()
+
+                                    Behavior on opacity {
+                                        NumberAnimation {
+                                            duration: Style.animationFast
+                                            easing.type: Easing.OutCubic
+                                        }
+                                    }
+
+                                    Behavior on color {
+                                        ColorAnimation {
+                                            duration: Style.animationFast
+                                            easing.type: Easing.OutCubic
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -2293,42 +2636,50 @@ Item {
         }
 
         Item {
+            id: focusTravelOverlay
             anchors.fill: parent
             visible: root.focusTravelActive && root.focusTravelOpacity > 0
             z: 20
 
+            readonly property color ribbonColor: root.mixTransitionColors(root.focusTravelRibbonColorMix)
+            readonly property color trailColor: root.mixTransitionColors(root.focusTravelTrailColorMix)
+            readonly property color glowColor: root.mixTransitionColors(root.focusTravelGlowColorMix)
+            readonly property color haloColor: root.mixTransitionColors(root.focusTravelHaloColorMix)
+            readonly property color leadColor: root.mixTransitionColors(root.focusTravelLeadColorMix)
+            readonly property color bloomColor: root.mixTransitionColors(root.focusTravelBloomColorMix)
+
             Rectangle {
-                visible: root.focusTravelRibbonStrength > 0 && root.focusTravelTrailExtent > 0
+                visible: root.focusTravelRibbonStrength > 0 && root.focusTravelTrailExtent > 0 && root.focusTravelRibbonOpacity > 0
                 x: root.isVerticalBar ? (root.focusTravelCrossPosition + root.focusTravelThickness * 0.18) : root.focusTravelTrailStartAxis
                 y: root.isVerticalBar ? root.focusTravelTrailStartAxis : (root.focusTravelCrossPosition + root.focusTravelThickness * 0.18)
                 width: root.isVerticalBar ? Math.max(2, root.focusTravelThickness * 0.64) : root.focusTravelTrailExtent
                 height: root.isVerticalBar ? root.focusTravelTrailExtent : Math.max(2, root.focusTravelThickness * 0.64)
                 radius: Math.max(width, height) / 2
-                color: Qt.alpha(root.resolveFocusTransitionColor(root.focusTransitionGlowColorKey, Color.mPrimary), root.focusTravelRibbonStrength * root.focusTravelOpacity * root.focusTransitionOpacityRatio)
+                color: root.applyTransitionAlpha(focusTravelOverlay.ribbonColor, root.focusTravelRibbonStrength * root.focusTravelOpacity * root.focusTransitionOpacityRatio * root.focusTravelRibbonOpacity)
             }
 
             Rectangle {
-                visible: root.focusTravelTrailExtent > 1 && root.focusTravelTrailStrength > 0
+                visible: root.focusTravelTrailExtent > 1 && root.focusTravelTrailStrength > 0 && root.focusTravelTrailOpacity > 0
                 x: root.isVerticalBar ? (root.focusTravelCrossPosition - 2 - root.focusTransitionBlur * 0.5) : (root.focusTravelTrailStartAxis - root.focusTransitionBlur * 0.5)
                 y: root.isVerticalBar ? (root.focusTravelTrailStartAxis - root.focusTransitionBlur * 0.5) : (root.focusTravelCrossPosition - 2 - root.focusTransitionBlur * 0.5)
                 width: root.isVerticalBar ? (root.focusTravelThickness + 4 + root.focusTransitionBlur) : (root.focusTravelTrailExtent + root.focusTransitionBlur)
                 height: root.isVerticalBar ? (root.focusTravelTrailExtent + root.focusTransitionBlur) : (root.focusTravelThickness + 4 + root.focusTransitionBlur)
                 radius: Math.max(width, height) / 2
-                color: Qt.alpha(root.resolveFocusTransitionColor(root.focusTransitionGlowColorKey, Color.mPrimary), root.focusTravelTrailStrength * root.focusTravelOpacity * root.focusTransitionOpacityRatio)
+                color: root.applyTransitionAlpha(focusTravelOverlay.trailColor, root.focusTravelTrailStrength * root.focusTravelOpacity * root.focusTransitionOpacityRatio * root.focusTravelTrailOpacity)
             }
 
             Rectangle {
-                visible: root.focusTravelGlowStrength > 0
+                visible: root.focusTravelGlowStrength > 0 && root.focusTravelGlowOpacity > 0
                 x: root.isVerticalBar ? (root.focusTravelCrossPosition - 4 - (root.focusTravelBloomScale - 1) * 2 - root.focusTransitionBlur) : (root.focusTravelAxisPosition - 4 - (root.focusTravelBloomScale - 1) * 4 - root.focusTransitionBlur)
                 y: root.isVerticalBar ? (root.focusTravelAxisPosition - 4 - (root.focusTravelBloomScale - 1) * 4 - root.focusTransitionBlur) : (root.focusTravelCrossPosition - 4 - (root.focusTravelBloomScale - 1) * 2 - root.focusTransitionBlur)
                 width: root.isVerticalBar ? (root.focusTravelThickness + 8 + (root.focusTravelBloomScale - 1) * 4 + root.focusTransitionBlur * 2) : (root.focusTravelLength + 8 + (root.focusTravelBloomScale - 1) * 8 + root.focusTransitionBlur * 2)
                 height: root.isVerticalBar ? (root.focusTravelLength + 8 + (root.focusTravelBloomScale - 1) * 8 + root.focusTransitionBlur * 2) : (root.focusTravelThickness + 8 + (root.focusTravelBloomScale - 1) * 4 + root.focusTransitionBlur * 2)
                 radius: Math.max(width, height) / 2
-                color: Qt.alpha(root.resolveFocusTransitionColor(root.focusTransitionGlowColorKey, Color.mPrimary), root.focusTravelGlowStrength * root.focusTravelOpacity * root.focusTransitionOpacityRatio)
+                color: root.applyTransitionAlpha(focusTravelOverlay.glowColor, root.focusTravelGlowStrength * root.focusTravelOpacity * root.focusTransitionOpacityRatio * root.focusTravelGlowOpacity)
             }
 
             Rectangle {
-                visible: root.focusTravelHaloStrength > 0
+                visible: root.focusTravelHaloStrength > 0 && root.focusTravelHaloOpacity > 0
                 x: root.isVerticalBar ? (root.focusTravelCrossPosition - 3 - root.focusTransitionBlur * 0.25) : (root.focusTravelAxisPosition - 3 - root.focusTransitionBlur * 0.25)
                 y: root.isVerticalBar ? (root.focusTravelAxisPosition - 3 - root.focusTransitionBlur * 0.25) : (root.focusTravelCrossPosition - 3 - root.focusTransitionBlur * 0.25)
                 width: root.isVerticalBar ? (root.focusTravelThickness + 6 + root.focusTransitionBlur * 0.5) : (root.focusTravelLength + 6 + root.focusTransitionBlur * 0.5)
@@ -2336,7 +2687,7 @@ Item {
                 radius: Math.max(width, height) / 2
                 color: "transparent"
                 border.width: Math.max(1, Style.borderS)
-                border.color: Qt.alpha(root.resolveFocusTransitionColor(root.focusTransitionGlowColorKey, Color.mPrimary), root.focusTravelHaloStrength * root.focusTravelOpacity * root.focusTransitionOpacityRatio)
+                border.color: root.applyTransitionAlpha(focusTravelOverlay.haloColor, root.focusTravelHaloStrength * root.focusTravelOpacity * root.focusTransitionOpacityRatio * root.focusTravelHaloOpacity)
             }
 
             Repeater {
@@ -2360,12 +2711,12 @@ Item {
                             return pieceMain;
                         return Math.max(3, baseCross * scaleFactor);
                     }
-                    readonly property real pieceOpacity: Math.max(0, root.focusTravelOpacity * root.focusTransitionOpacityRatio * (1 - index * root.focusTravelTrailingOpacityFalloff))
+                    readonly property real pieceOpacity: Math.max(0, root.focusTravelOpacity * root.focusTravelTrailOpacity * root.focusTransitionOpacityRatio * (1 - index * root.focusTravelTrailingOpacityFalloff))
                     readonly property real pieceX: root.isVerticalBar ? (root.focusTravelCrossPosition + (root.focusTravelThickness - pieceCross) / 2) : (centerAxis - pieceMain / 2)
                     readonly property real pieceY: root.isVerticalBar ? (centerAxis - pieceMain / 2) : (root.focusTravelCrossPosition + (root.focusTravelThickness - pieceCross) / 2)
                     readonly property real pieceWidth: root.isVerticalBar ? pieceCross : pieceMain
                     readonly property real pieceHeight: root.isVerticalBar ? pieceMain : pieceCross
-                    readonly property color pieceColor: root.resolveFocusTransitionColor(root.focusTransitionGlowColorKey, Color.mPrimary)
+                    readonly property color pieceColor: focusTravelOverlay.trailColor
 
                     visible: enabledPiece
                     x: pieceX
@@ -2395,8 +2746,8 @@ Item {
                 height: root.isVerticalBar ? root.focusTravelLength : root.focusTravelThickness
                 radius: root.focusTravelLeadShape === "rect" ? Math.min(Style.radiusXS, Math.min(width, height) / 3) : Math.max(width, height) / 2
                 border.width: root.focusTravelLeadShape === "rect" ? Math.max(1, Style.borderS) : 0
-                border.color: root.focusTravelLeadShape === "rect" ? Qt.alpha(root.resolveFocusTransitionColor(root.focusTransitionColorKey, Color.mPrimary), 0.65 * root.focusTravelOpacity * root.focusTransitionOpacityRatio) : "transparent"
-                color: Qt.alpha(root.resolveFocusTransitionColor(root.focusTransitionColorKey, Color.mPrimary), root.focusTravelOpacity * root.focusTransitionOpacityRatio)
+                border.color: root.focusTravelLeadShape === "rect" ? root.applyTransitionAlpha(focusTravelOverlay.leadColor, 0.65 * root.focusTravelOpacity * root.focusTransitionOpacityRatio * root.focusTravelLeadOpacity) : "transparent"
+                color: root.applyTransitionAlpha(focusTravelOverlay.leadColor, root.focusTravelOpacity * root.focusTransitionOpacityRatio * root.focusTravelLeadOpacity)
             }
 
             Rectangle {
@@ -2412,7 +2763,7 @@ Item {
                 width: root.isVerticalBar ? (bloomRect.width + (root.focusTravelBloomScale - 1) * 6 + root.focusTransitionBlur * 2) : (bloomRect.width + (root.focusTravelBloomScale - 1) * 12 + root.focusTransitionBlur * 2)
                 height: root.isVerticalBar ? (bloomRect.height + (root.focusTravelBloomScale - 1) * 12 + root.focusTransitionBlur * 2) : (bloomRect.height + (root.focusTravelBloomScale - 1) * 6 + root.focusTransitionBlur * 2)
                 radius: Math.max(width, height) / 2
-                color: Qt.alpha(root.resolveFocusTransitionColor(root.focusTransitionGlowColorKey, Color.mPrimary), root.focusTravelBloomOpacity * root.focusTransitionOpacityRatio)
+                color: root.applyTransitionAlpha(focusTravelOverlay.bloomColor, root.focusTravelBloomOpacity * root.focusTransitionOpacityRatio)
             }
         }
     }
