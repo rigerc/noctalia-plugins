@@ -16,18 +16,17 @@
   "titleFontScale": 1,
   "titleFontWeight": "medium",
   "focusTransitionEnabled": true,
-  "focusTransitionDelayMs": 120,
-  "focusTransitionDurationMs": 600,
-  "focusTransitionStyle": "dot-wake",
-  "focusTransitionIntensity": 100,
-  "focusTransitionThickness": 31,
-  "focusTransitionMarkerScale": 0.75,
-  "focusTransitionColor": "primary",
+  "focusTransitionDelayMs": 10,
+  "focusTransitionDurationMs": 300,
+  "focusTransitionStyle": "pebble-chain",
+  "focusTransitionIntensity": 50,
+  "focusTransitionScale": 0.9500000000000001,
+  "focusTransitionLeadColor": "error",
   "focusTransitionGlowColor": "tertiary",
-  "focusTransitionBlur": 11,
-  "focusTransitionTransparency": 0,
-  "focusTransitionEffectColor": "error",
-  "focusTransitionVerticalPosition": "bottom",
+  "focusTransitionBlur": 6,
+  "focusTransitionTransparency": 10,
+  "focusTransitionEffectColor": "primary",
+  "focusTransitionVerticalPosition": "middle",
   "itemColors": {
     "default": {
       "background": "none",
@@ -63,5 +62,8 @@
   "workspaceSeparatorDividerMode": "icon",
   "workspaceSeparatorDividerChar": "|",
   "workspaceSeparatorDividerIcon": "chalkboard",
-  "workspaceSeparatorShowForFirst": true
+  "workspaceSeparatorShowForFirst": true,
+  "focusTransitionHeight": 3,
+  "focusTransitionWidth": 4,
+  "focusTransitionColor": "primary"
 }

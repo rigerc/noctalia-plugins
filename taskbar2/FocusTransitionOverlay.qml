@@ -12,7 +12,7 @@ Item {
     property string styleKey: "soft-comet"
     property real intensityRatio: 0.6
     property real thickness: 6
-    property string colorKey: "primary"
+    property string leadColorKey: "primary"
     property string glowColorKey: "primary"
     property string effectColorKey: "tertiary"
     property string verticalPosition: "bottom"
@@ -78,7 +78,7 @@ Item {
     }
 
     function mixTransitionColors(mixRatio, effectRatio) {
-        const baseColor = resolveFocusTransitionColor(colorKey, Color.mPrimary);
+        const baseColor = resolveFocusTransitionColor(leadColorKey, Color.mPrimary);
         const glowColor = resolveFocusTransitionColor(glowColorKey, Color.mPrimary);
         const effColor = resolveFocusTransitionColor(effectColorKey, Color.mTertiary);
         const ratio = Math.max(0, Math.min(1, mixRatio));

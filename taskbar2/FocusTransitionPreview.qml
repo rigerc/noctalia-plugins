@@ -11,9 +11,8 @@ Item {
     property int durationMs: 220
     property string styleKey: "soft-comet"
     property int intensity: 60
-    property real thickness: 6
-    property real markerScale: 1.4
-    property string colorKey: "primary"
+    property real scale: 1.0
+    property string leadColorKey: "primary"
     property string glowColorKey: "primary"
     property string effectColorKey: "tertiary"
     property real blurRadius: 6
@@ -104,9 +103,8 @@ Item {
     onDurationMsChanged: resetLoop()
     onStyleKeyChanged: resetLoop()
     onIntensityChanged: resetLoop()
-    onThicknessChanged: resetLoop()
-    onMarkerScaleChanged: resetLoop()
-    onColorKeyChanged: resetLoop()
+    onScaleChanged: resetLoop()
+    onLeadColorKeyChanged: resetLoop()
     onGlowColorKeyChanged: resetLoop()
     onBlurRadiusChanged: resetLoop()
     onTransparencyChanged: resetLoop()
@@ -159,8 +157,8 @@ Item {
                     const itemPoint = previewItem.mapToItem(previewSurface, 0, 0);
                     const availableMainSpace = root.isVerticalBar ? iconContainer.height : iconContainer.width;
                     const availableCrossSpace = (root.isVerticalBar ? previewItem.width - 4 : previewItem.height - 4) * 1.5;
-                    const markerLength = Math.min(availableMainSpace, Math.max(6, Math.round(root.itemSize * 0.25 * root.markerScale)));
-                    const markerThickness = Math.min(Math.max(2, availableCrossSpace), Math.round(root.thickness));
+                    const markerLength = Math.min(availableMainSpace, Math.max(6, Math.round(root.itemSize * 0.25 * root.scale)));
+                    const markerThickness = Math.min(Math.max(2, availableCrossSpace), Math.round(6 * root.scale));
                     let markerY;
                     if (root.verticalPosition === "top")
                         markerY = Math.round(itemPoint.y + 2);
@@ -316,12 +314,12 @@ Item {
             durationMs: root.durationMs
             styleKey: root.styleKey
             intensityRatio: root.intensityRatio
-            thickness: root.thickness
-            colorKey: root.colorKey
+            thickness: 6 * root.scale
+            leadColorKey: root.leadColorKey
             glowColorKey: root.glowColorKey
             effectColorKey: root.effectColorKey
             verticalPosition: root.verticalPosition
-            blurRadius: root.blurRadius
+            blurRadius: root.blurRadius * root.scale
             opacityRatio: root.opacityRatio
             onTransitionFinished: {
                 if (root.transitionEnabled)

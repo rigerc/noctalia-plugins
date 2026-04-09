@@ -41,6 +41,22 @@
         "label": "Animation",
         "desc": "Tune the delayed focus-travel marker that slides between focused taskbar entries."
       },
+      "animationTiming": {
+        "label": "Timing",
+        "desc": "Control when and how fast the focus animation plays."
+      },
+      "animationStyle": {
+        "label": "Style",
+        "desc": "Choose the motion style and adjust the visual size of all animation elements."
+      },
+      "animationColors": {
+        "label": "Colors",
+        "desc": "Pick the color palette used by the focus animation layers."
+      },
+      "animationEffects": {
+        "label": "Effects",
+        "desc": "Adjust the blur softness and overall transparency of all animation elements."
+      },
       "title": {
         "label": "Title",
         "desc": "Configure title visibility, width, and automatic smart sizing."
@@ -123,32 +139,28 @@
         "label": "Focus animation intensity",
         "desc": "Adjust how strong the style's glow, stretch, or bounce effects feel."
       },
-      "focusTransitionThickness": {
-        "label": "Focus marker thickness",
-        "desc": "Increase the cross-axis thickness of the moving focus marker and its trail."
+      "focusTransitionScale": {
+        "label": "Element scale",
+        "desc": "Scale the size of all focus animation elements uniformly."
       },
-      "focusTransitionMarkerScale": {
-        "label": "Focus marker length",
-        "desc": "Scale the destination marker footprint used by the animation."
-      },
-      "focusTransitionColor": {
-        "label": "Focus marker color",
-        "desc": "Color used for the main moving focus marker."
+      "focusTransitionLeadColor": {
+        "label": "Lead color",
+        "desc": "Primary color used for the moving focus marker."
       },
       "focusTransitionGlowColor": {
-        "label": "Focus glow color",
+        "label": "Glow color",
         "desc": "Color used for the marker's trail, glow, and landing bloom."
       },
       "focusTransitionBlur": {
-        "label": "Focus blur",
-        "desc": "Increase the softness and spread of the marker glow."
+        "label": "Blur",
+        "desc": "Increase the softness and spread of all animation elements."
       },
       "focusTransitionTransparency": {
-        "label": "Focus transparency",
-        "desc": "Reduce the opacity of the focus marker and its glow."
+        "label": "Transparency",
+        "desc": "Reduce the opacity of all animation elements."
       },
       "focusTransitionEffectColor": {
-        "label": "Focus effect color",
+        "label": "Effect color",
         "desc": "A third color blended into the focus animation for extra depth."
       },
       "focusTransitionVerticalPosition": {

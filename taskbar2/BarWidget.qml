@@ -68,9 +68,9 @@ Item {
     readonly property int focusTransitionDurationMs: Math.max(0, cfg.focusTransitionDurationMs ?? defaults.focusTransitionDurationMs ?? 220)
     readonly property string focusTransitionStyle: cfg.focusTransitionStyle ?? defaults.focusTransitionStyle ?? "soft-comet"
     readonly property int focusTransitionIntensity: Math.max(0, Math.min(100, cfg.focusTransitionIntensity ?? defaults.focusTransitionIntensity ?? 60))
-    readonly property real focusTransitionThickness: Math.max(2, cfg.focusTransitionThickness ?? defaults.focusTransitionThickness ?? 6)
-    readonly property real focusTransitionMarkerScale: Math.max(0.5, cfg.focusTransitionMarkerScale ?? defaults.focusTransitionMarkerScale ?? 1.4)
-    readonly property string focusTransitionColorKey: cfg.focusTransitionColor ?? defaults.focusTransitionColor ?? "primary"
+    readonly property real focusTransitionBaseThickness: 6
+    readonly property real focusTransitionScale: Math.max(0.5, cfg.focusTransitionScale ?? defaults.focusTransitionScale ?? 1.0)
+    readonly property string focusTransitionLeadColorKey: cfg.focusTransitionLeadColor ?? defaults.focusTransitionLeadColor ?? "primary"
     readonly property string focusTransitionGlowColorKey: cfg.focusTransitionGlowColor ?? defaults.focusTransitionGlowColor ?? "primary"
     readonly property real focusTransitionBlur: Math.max(0, cfg.focusTransitionBlur ?? defaults.focusTransitionBlur ?? 6)
     readonly property int focusTransitionTransparency: Math.max(0, Math.min(90, cfg.focusTransitionTransparency ?? defaults.focusTransitionTransparency ?? 15))
@@ -169,14 +169,14 @@ Item {
         return Color.resolveColorKeyOptional(colorKey);
     }
 
-    function resolveFocusTransitionColor(colorKey, fallbackColor) {
+    function resolveFocusTransitionColor(colorKeyValue, fallbackColor) {
         if (!colorKey || colorKey === "none")
             return fallbackColor;
         return Color.resolveColorKey(colorKey);
     }
 
     function mixTransitionColors(mixRatio, effectRatio) {
-        const baseColor = resolveFocusTransitionColor(focusTransitionColorKey, Color.mPrimary);
+        const baseColor = resolveFocusTransitionColor(focusTransitionLeadColorKey, Color.mPrimary);
         const glowColor = resolveFocusTransitionColor(focusTransitionGlowColorKey, Color.mPrimary);
         const effColor = resolveFocusTransitionColor(focusTransitionEffectColorKey, Color.mTertiary);
         const ratio = Math.max(0, Math.min(1, mixRatio));
@@ -1519,8 +1519,8 @@ Item {
                         const itemPoint = taskbarItem.mapToItem(visualCapsule, 0, 0);
                         const availableMainSpace = root.isVerticalBar ? iconContainer.height : iconContainer.width;
                         const availableCrossSpace = (root.isVerticalBar ? taskbarItem.width - 4 : taskbarItem.height - 4) * 1.5;
-                        const markerLength = Math.min(availableMainSpace, Math.max(6, Math.round(root.itemSize * 0.25 * root.focusTransitionMarkerScale)));
-                        const markerThickness = Math.min(Math.max(2, availableCrossSpace), Math.round(root.focusTransitionThickness));
+                        const markerLength = Math.min(availableMainSpace, Math.max(6, Math.round(root.itemSize * 0.25 * root.focusTransitionScale)));
+                        const markerThickness = Math.min(Math.max(2, availableCrossSpace), Math.round(6 * root.focusTransitionScale));
                         let markerY;
                         if (root.focusTransitionVerticalPosition === "top")
                             markerY = Math.round(itemPoint.y + 2);
@@ -2195,12 +2195,12 @@ Item {
             durationMs: root.focusTransitionDurationMs
             styleKey: root.focusTransitionStyle
             intensityRatio: root.focusTransitionIntensityRatio
-            thickness: root.focusTransitionThickness
-            colorKey: root.focusTransitionColorKey
+            thickness: root.focusTransitionBaseThickness * root.focusTransitionScale
+            leadColorKey: root.focusTransitionLeadColorKey
             glowColorKey: root.focusTransitionGlowColorKey
             effectColorKey: root.focusTransitionEffectColorKey
             verticalPosition: root.focusTransitionVerticalPosition
-            blurRadius: root.focusTransitionBlur
+            blurRadius: root.focusTransitionBlur * root.focusTransitionScale
             opacityRatio: root.focusTransitionOpacityRatio
         }
     }
