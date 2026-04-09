@@ -14,6 +14,8 @@ Item {
     property real thickness: 6
     property string colorKey: "primary"
     property string glowColorKey: "primary"
+    property string effectColorKey: "tertiary"
+    property string verticalPosition: "bottom"
     property real blurRadius: 6
     property real opacityRatio: 0.85
     property int totalDurationMs: Math.max(1, durationMs)
@@ -40,6 +42,12 @@ Item {
     property real focusTravelHaloColorMix: 0.86
     property real focusTravelRibbonColorMix: 0.56
     property real focusTravelBloomColorMix: 0.94
+    property real focusTravelLeadEffectMix: 0.15
+    property real focusTravelTrailEffectMix: 0.25
+    property real focusTravelGlowEffectMix: 0.18
+    property real focusTravelHaloEffectMix: 0.22
+    property real focusTravelRibbonEffectMix: 0.3
+    property real focusTravelBloomEffectMix: 0.2
     property real focusTravelDirectionSign: 1
     property string focusTravelLeadShape: "pill"
     property string focusTravelTrailShape: "none"
@@ -69,14 +77,19 @@ Item {
         return Color.resolveColorKey(key);
     }
 
-    function mixTransitionColors(mixRatio) {
+    function mixTransitionColors(mixRatio, effectRatio) {
         const baseColor = resolveFocusTransitionColor(colorKey, Color.mPrimary);
         const glowColor = resolveFocusTransitionColor(glowColorKey, Color.mPrimary);
+        const effColor = resolveFocusTransitionColor(effectColorKey, Color.mTertiary);
         const ratio = Math.max(0, Math.min(1, mixRatio));
+        const eRatio = Math.max(0, Math.min(1, effectRatio || 0));
+        const r1 = baseColor.r + (glowColor.r - baseColor.r) * ratio;
+        const g1 = baseColor.g + (glowColor.g - baseColor.g) * ratio;
+        const b1 = baseColor.b + (glowColor.b - baseColor.b) * ratio;
         return Qt.rgba(
-            baseColor.r + (glowColor.r - baseColor.r) * ratio,
-            baseColor.g + (glowColor.g - baseColor.g) * ratio,
-            baseColor.b + (glowColor.b - baseColor.b) * ratio,
+            r1 + (effColor.r - r1) * eRatio,
+            g1 + (effColor.g - g1) * eRatio,
+            b1 + (effColor.b - b1) * eRatio,
             1
         );
     }
@@ -240,6 +253,12 @@ Item {
         focusTravelHaloColorMix = 0.86;
         focusTravelRibbonColorMix = 0.56;
         focusTravelBloomColorMix = 0.94;
+        focusTravelLeadEffectMix = 0.15;
+        focusTravelTrailEffectMix = 0.25;
+        focusTravelGlowEffectMix = 0.18;
+        focusTravelHaloEffectMix = 0.22;
+        focusTravelRibbonEffectMix = 0.3;
+        focusTravelBloomEffectMix = 0.2;
         focusTravelDirectionSign = 1;
         focusTravelLeadShape = "pill";
         focusTravelTrailShape = "none";
@@ -308,6 +327,12 @@ Item {
         focusTravelHaloColorMix = spec.colorMix?.halo ?? 0.86;
         focusTravelRibbonColorMix = spec.colorMix?.ribbon ?? 0.56;
         focusTravelBloomColorMix = spec.colorMix?.bloom ?? 0.94;
+        focusTravelLeadEffectMix = spec.effectMix?.lead ?? 0.15;
+        focusTravelTrailEffectMix = spec.effectMix?.trail ?? 0.25;
+        focusTravelGlowEffectMix = spec.effectMix?.glow ?? 0.18;
+        focusTravelHaloEffectMix = spec.effectMix?.halo ?? 0.22;
+        focusTravelRibbonEffectMix = spec.effectMix?.ribbon ?? 0.3;
+        focusTravelBloomEffectMix = spec.effectMix?.bloom ?? 0.2;
         focusTravelDirectionSign = direction;
         focusTravelLeadShape = spec.leadShape;
         focusTravelRibbonStrength = spec.ribbonStrength;
@@ -580,12 +605,12 @@ Item {
 
     visible: focusTravelActive && focusTravelOpacity > 0
 
-    readonly property color ribbonColor: mixTransitionColors(focusTravelRibbonColorMix)
-    readonly property color trailColor: mixTransitionColors(focusTravelTrailColorMix)
-    readonly property color glowColor: mixTransitionColors(focusTravelGlowColorMix)
-    readonly property color haloColor: mixTransitionColors(focusTravelHaloColorMix)
-    readonly property color leadColor: mixTransitionColors(focusTravelLeadColorMix)
-    readonly property color bloomColor: mixTransitionColors(focusTravelBloomColorMix)
+    readonly property color ribbonColor: mixTransitionColors(focusTravelRibbonColorMix, focusTravelRibbonEffectMix)
+    readonly property color trailColor: mixTransitionColors(focusTravelTrailColorMix, focusTravelTrailEffectMix)
+    readonly property color glowColor: mixTransitionColors(focusTravelGlowColorMix, focusTravelGlowEffectMix)
+    readonly property color haloColor: mixTransitionColors(focusTravelHaloColorMix, focusTravelHaloEffectMix)
+    readonly property color leadColor: mixTransitionColors(focusTravelLeadColorMix, focusTravelLeadEffectMix)
+    readonly property color bloomColor: mixTransitionColors(focusTravelBloomColorMix, focusTravelBloomEffectMix)
 
     Rectangle {
         visible: root.focusTravelRibbonStrength > 0 && root.focusTravelTrailExtent > 0 && root.focusTravelRibbonOpacity > 0

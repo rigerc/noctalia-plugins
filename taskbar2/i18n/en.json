@@ -147,6 +147,14 @@
         "label": "Focus transparency",
         "desc": "Reduce the opacity of the focus marker and its glow."
       },
+      "focusTransitionEffectColor": {
+        "label": "Focus effect color",
+        "desc": "A third color blended into the focus animation for extra depth."
+      },
+      "focusTransitionVerticalPosition": {
+        "label": "Focus marker position",
+        "desc": "Vertical placement of the focus marker on horizontal bars."
+      },
       "titleFontFamily": {
         "label": "Title font family",
         "desc": "Font used for taskbar title text.",
@@ -278,7 +286,10 @@
     "focusTransitionStylePebbleChain": "Pebble chain",
     "separatorModeLine": "Divider line",
     "separatorModeCharacter": "Custom character",
-    "separatorModeIcon": "Custom icon"
+    "separatorModeIcon": "Custom icon",
+    "focusTransitionPositionBottom": "Bottom",
+    "focusTransitionPositionMiddle": "Middle",
+    "focusTransitionPositionTop": "Top"
   },
   "placeholders": {
     "enterWidthPixels": "Enter width in pixels"

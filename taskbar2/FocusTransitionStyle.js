@@ -95,6 +95,14 @@ function buildSpec(params) {
         ribbon: 0.56,
         bloom: 0.94
     };
+    spec.effectMix = {
+        lead: 0.15,
+        trail: 0.25,
+        glow: 0.18,
+        halo: 0.22,
+        ribbon: 0.3,
+        bloom: 0.2
+    };
     spec.layers = {
         lead: makeOpacitySpec(0.92, 1, 0, duration, 0, fadeOutDuration),
         trail: makeOpacitySpec(0.84, 0.84, 0, Math.max(0, Math.round(duration * 0.76)), 0, Math.max(60, Math.round(duration * 0.34))),
@@ -118,8 +126,12 @@ function buildSpec(params) {
         spec.opacity.fadeInTo = 0.9;
         spec.opacity.fadeOutDuration = Math.max(70, Math.round(duration * 0.24));
         spec.colorMix.trail = 0.84;
-        spec.colorMix.glow = 1;
+        spec.colorMix.glow = 0.92;
         spec.colorMix.halo = 0.92;
+        spec.effectMix.lead = 0.18;
+        spec.effectMix.trail = 0.22;
+        spec.effectMix.glow = 0.28;
+        spec.effectMix.halo = 0.16;
         spec.layers.trail = makeOpacitySpec(0.34, 0.76, Math.max(28, Math.round(duration * 0.14)), Math.max(0, Math.round(duration * 0.42)), 0, Math.max(76, Math.round(duration * 0.34)));
         spec.layers.glow = makeOpacitySpec(0.1, 0.52, Math.max(36, Math.round(duration * 0.18)), Math.max(0, Math.round(duration * 0.28)), 0, Math.max(86, Math.round(duration * 0.44)));
         spec.layers.halo = makeOpacitySpec(0.12, 0.64, Math.max(30, Math.round(duration * 0.16)), Math.max(0, Math.round(duration * 0.26)), 0, Math.max(80, Math.round(duration * 0.42)));
@@ -140,6 +152,9 @@ function buildSpec(params) {
         spec.colorMix.lead = 0.18;
         spec.colorMix.trail = 0.9;
         spec.colorMix.glow = 0.96;
+        spec.effectMix.lead = 0.22;
+        spec.effectMix.trail = 0.15;
+        spec.effectMix.glow = 0.26;
         spec.layers.trail = makeOpacitySpec(0.18, 0.8, Math.max(20, Math.round(duration * 0.1)), Math.max(0, Math.round(duration * 0.32)), 0, Math.max(84, Math.round(duration * 0.52)));
         spec.layers.glow = makeOpacitySpec(0.08, 0.42, Math.max(24, Math.round(duration * 0.14)), Math.max(0, Math.round(duration * 0.2)), 0, Math.max(70, Math.round(duration * 0.38)));
         break;
@@ -157,8 +172,11 @@ function buildSpec(params) {
         spec.axis.firstEasing = "inQuint";  // Changed from "inCubic" - sharper acceleration
         spec.opacity.startOpacity = 0.92;
         spec.opacity.fadeInTo = 0.92;
-        spec.colorMix.lead = 0;
+        spec.colorMix.lead = 0.06;
         spec.colorMix.trail = 0.66;
+        spec.effectMix.lead = 0.3;
+        spec.effectMix.trail = 0.2;
+        spec.effectMix.glow = 0.25;
         spec.layers.lead = makeOpacitySpec(0.96, 1, 0, Math.max(0, Math.round(duration * 0.78)), 0, Math.max(74, Math.round(duration * 0.26)));
         spec.layers.trail = makeOpacitySpec(0.32, 0.78, Math.max(22, Math.round(duration * 0.12)), Math.max(0, Math.round(duration * 0.38)), 0, Math.max(68, Math.round(duration * 0.32)));
         spec.layers.glow = makeOpacitySpec(0.08, 0.48, Math.max(26, Math.round(duration * 0.14)), Math.max(0, Math.round(duration * 0.22)), 0, Math.max(80, Math.round(duration * 0.44)));
@@ -175,6 +193,9 @@ function buildSpec(params) {
         spec.length.secondEasing = "inOutQuart";  // Changed from "inOutCubic" - smoother settle
         spec.colorMix.ribbon = 0.62;
         spec.colorMix.trail = 0.8;
+        spec.effectMix.ribbon = 0.28;
+        spec.effectMix.trail = 0.18;
+        spec.effectMix.glow = 0.22;
         spec.layers.ribbon = makeOpacitySpec(0.18, 0.78, Math.max(18, Math.round(duration * 0.08)), Math.max(0, Math.round(duration * 0.5)), 0, Math.max(72, Math.round(duration * 0.34)));
         spec.layers.trail = makeOpacitySpec(0.3, 0.68, Math.max(22, Math.round(duration * 0.1)), Math.max(0, Math.round(duration * 0.34)), 0, Math.max(76, Math.round(duration * 0.36)));
         spec.layers.glow = makeOpacitySpec(0.14, 0.66, Math.max(28, Math.round(duration * 0.12)), Math.max(0, Math.round(duration * 0.3)), 0, Math.max(82, Math.round(duration * 0.4)));
@@ -199,6 +220,8 @@ function buildSpec(params) {
         spec.opacity.fadeInTo = 0.96;
         spec.colorMix.lead = 0.14;
         spec.colorMix.trail = 0.74;
+        spec.effectMix.lead = 0.2;
+        spec.effectMix.trail = 0.24;
         spec.layers.lead = makeOpacitySpec(0.82, 1, Math.max(24, Math.round(duration * 0.12)), Math.max(0, Math.round(duration * 0.5)), 0, Math.max(82, Math.round(duration * 0.3)));
         spec.layers.trail = makeOpacitySpec(0.22, 0.72, Math.max(18, Math.round(duration * 0.08)), Math.max(0, Math.round(duration * 0.28)), 0, Math.max(90, Math.round(duration * 0.44)));
         break;
@@ -221,7 +244,11 @@ function buildSpec(params) {
         spec.opacity.fadeOutEasing = "outSine";   // Gentle fade-out
         spec.opacity.holdDuration = Math.max(0, duration - spec.opacity.fadeInDuration - spec.opacity.fadeOutDuration);
         spec.colorMix.trail = 0.9;
-        spec.colorMix.halo = 1;
+        spec.colorMix.halo = 0.92;
+        spec.effectMix.lead = 0.14;
+        spec.effectMix.trail = 0.2;
+        spec.effectMix.glow = 0.18;
+        spec.effectMix.halo = 0.32;
         spec.layers.trail = makeOpacitySpec(0.08, 0.46, Math.max(30, Math.round(duration * 0.16)), Math.max(0, Math.round(duration * 0.18)), 0, Math.max(78, Math.round(duration * 0.42)));
         spec.layers.glow = makeOpacitySpec(0.04, 0.34, Math.max(36, Math.round(duration * 0.18)), Math.max(0, Math.round(duration * 0.14)), 0, Math.max(84, Math.round(duration * 0.46)));
         spec.layers.halo = makeOpacitySpec(0.12, 0.86, Math.max(26, Math.round(duration * 0.14)), Math.max(0, Math.round(duration * 0.3)), 0, Math.max(96, Math.round(duration * 0.48)));
@@ -239,6 +266,8 @@ function buildSpec(params) {
         spec.opacity.startOpacity = 0.9;
         spec.opacity.fadeInTo = 0.9;
         spec.colorMix.trail = 0.82;
+        spec.effectMix.trail = 0.18;
+        spec.effectMix.glow = 0.2;
         spec.layers.trail = makeOpacitySpec(0.2, 0.78, Math.max(18, Math.round(duration * 0.08)), Math.max(0, Math.round(duration * 0.36)), 0, Math.max(88, Math.round(duration * 0.48)));
         spec.layers.glow = makeOpacitySpec(0.1, 0.44, Math.max(22, Math.round(duration * 0.1)), Math.max(0, Math.round(duration * 0.18)), 0, Math.max(76, Math.round(duration * 0.4)));
         break;
@@ -255,8 +284,12 @@ function buildSpec(params) {
         };
         spec.colorMix.lead = 0.12;
         spec.colorMix.trail = 0.78;
-        spec.colorMix.glow = 1;
-        spec.colorMix.bloom = 0.98;
+        spec.colorMix.glow = 0.94;
+        spec.colorMix.bloom = 0.92;
+        spec.effectMix.lead = 0.16;
+        spec.effectMix.trail = 0.22;
+        spec.effectMix.glow = 0.26;
+        spec.effectMix.bloom = 0.3;
         spec.layers.trail = makeOpacitySpec(0.38, 0.82, Math.max(24, Math.round(duration * 0.12)), Math.max(0, Math.round(duration * 0.4)), 0, Math.max(78, Math.round(duration * 0.4)));
         spec.layers.glow = makeOpacitySpec(0.12, 0.58, Math.max(32, Math.round(duration * 0.16)), Math.max(0, Math.round(duration * 0.26)), 0, Math.max(94, Math.round(duration * 0.48)));
         break;

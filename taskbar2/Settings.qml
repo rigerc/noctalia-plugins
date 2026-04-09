@@ -86,6 +86,20 @@ ColumnLayout {
             "name": pluginApi?.tr("options.focusTransitionStylePebbleChain")
         }
     ]
+    readonly property var focusTransitionVerticalPositionOptions: [
+        {
+            "key": "bottom",
+            "name": pluginApi?.tr("options.focusTransitionPositionBottom")
+        },
+        {
+            "key": "middle",
+            "name": pluginApi?.tr("options.focusTransitionPositionMiddle")
+        },
+        {
+            "key": "top",
+            "name": pluginApi?.tr("options.focusTransitionPositionTop")
+        }
+    ]
 
     property string valueHideMode: cfg.hideMode ?? defaults.hideMode ?? "hidden"
     property bool valueOnlyActiveWorkspaces: cfg.onlyActiveWorkspaces ?? defaults.onlyActiveWorkspaces ?? true
@@ -115,6 +129,8 @@ ColumnLayout {
     property string valueFocusTransitionGlowColor: cfg.focusTransitionGlowColor ?? defaults.focusTransitionGlowColor ?? "primary"
     property int valueFocusTransitionBlur: cfg.focusTransitionBlur ?? defaults.focusTransitionBlur ?? 6
     property int valueFocusTransitionTransparency: cfg.focusTransitionTransparency ?? defaults.focusTransitionTransparency ?? 15
+    property string valueFocusTransitionEffectColor: cfg.focusTransitionEffectColor ?? defaults.focusTransitionEffectColor ?? "tertiary"
+    property string valueFocusTransitionVerticalPosition: cfg.focusTransitionVerticalPosition ?? defaults.focusTransitionVerticalPosition ?? "bottom"
     property bool valueGroupApps: cfg.groupApps ?? defaults.groupApps ?? false
     property string valueGroupClickAction: cfg.groupClickAction ?? defaults.groupClickAction ?? "cycle"
     property string valueGroupContextMenuMode: cfg.groupContextMenuMode ?? defaults.groupContextMenuMode ?? "extended"
@@ -200,6 +216,8 @@ ColumnLayout {
         pluginApi.pluginSettings.focusTransitionGlowColor = root.valueFocusTransitionGlowColor;
         pluginApi.pluginSettings.focusTransitionBlur = root.valueFocusTransitionBlur;
         pluginApi.pluginSettings.focusTransitionTransparency = root.valueFocusTransitionTransparency;
+        pluginApi.pluginSettings.focusTransitionEffectColor = root.valueFocusTransitionEffectColor;
+        pluginApi.pluginSettings.focusTransitionVerticalPosition = root.valueFocusTransitionVerticalPosition;
         pluginApi.pluginSettings.groupApps = root.valueGroupApps;
         pluginApi.pluginSettings.groupClickAction = root.valueGroupClickAction;
         pluginApi.pluginSettings.groupContextMenuMode = root.valueGroupContextMenuMode;
@@ -666,6 +684,8 @@ ColumnLayout {
                         glowColorKey: root.valueFocusTransitionGlowColor
                         blurRadius: root.valueFocusTransitionBlur
                         transparency: root.valueFocusTransitionTransparency
+                        effectColorKey: root.valueFocusTransitionEffectColor
+                        verticalPosition: root.valueFocusTransitionVerticalPosition
                     }
                 }
             }
@@ -802,6 +822,26 @@ ColumnLayout {
                 defaultValue: defaults.focusTransitionTransparency ?? 15
                 onMoved: value => root.valueFocusTransitionTransparency = Math.round(value)
                 text: Math.round(root.valueFocusTransitionTransparency) + "%"
+            }
+
+            NColorChoice {
+                visible: root.valueFocusTransitionEnabled
+                label: pluginApi?.tr("settings.focusTransitionEffectColor.label")
+                description: pluginApi?.tr("settings.focusTransitionEffectColor.desc")
+                currentKey: root.valueFocusTransitionEffectColor
+                onSelected: key => root.valueFocusTransitionEffectColor = key
+                defaultValue: defaults.focusTransitionEffectColor ?? "tertiary"
+            }
+
+            NComboBox {
+                visible: root.valueFocusTransitionEnabled && !root.isVerticalBar
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.focusTransitionVerticalPosition.label")
+                description: pluginApi?.tr("settings.focusTransitionVerticalPosition.desc")
+                model: root.focusTransitionVerticalPositionOptions
+                currentKey: root.valueFocusTransitionVerticalPosition
+                onSelected: key => root.valueFocusTransitionVerticalPosition = key
+                defaultValue: defaults.focusTransitionVerticalPosition ?? "bottom"
             }
 
             NDivider {

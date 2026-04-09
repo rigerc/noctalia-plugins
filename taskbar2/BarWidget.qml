@@ -76,6 +76,8 @@ Item {
     readonly property int focusTransitionTransparency: Math.max(0, Math.min(90, cfg.focusTransitionTransparency ?? defaults.focusTransitionTransparency ?? 15))
     readonly property real focusTransitionIntensityRatio: focusTransitionIntensity / 100
     readonly property real focusTransitionOpacityRatio: 1 - (focusTransitionTransparency / 100)
+    readonly property string focusTransitionEffectColorKey: cfg.focusTransitionEffectColor ?? defaults.focusTransitionEffectColor ?? "tertiary"
+    readonly property string focusTransitionVerticalPosition: cfg.focusTransitionVerticalPosition ?? defaults.focusTransitionVerticalPosition ?? "bottom"
     readonly property bool workspaceGroupingActive: groupByWorkspaceIndex && !onlyActiveWorkspaces
     readonly property int itemSize: Style.toOdd(capsuleHeight * Math.max(0.1, iconScale))
     readonly property int appEntryCount: getAppEntries(combinedModel).length
@@ -173,14 +175,19 @@ Item {
         return Color.resolveColorKey(colorKey);
     }
 
-    function mixTransitionColors(mixRatio) {
+    function mixTransitionColors(mixRatio, effectRatio) {
         const baseColor = resolveFocusTransitionColor(focusTransitionColorKey, Color.mPrimary);
         const glowColor = resolveFocusTransitionColor(focusTransitionGlowColorKey, Color.mPrimary);
+        const effColor = resolveFocusTransitionColor(focusTransitionEffectColorKey, Color.mTertiary);
         const ratio = Math.max(0, Math.min(1, mixRatio));
+        const eRatio = Math.max(0, Math.min(1, effectRatio || 0));
+        const r1 = baseColor.r + (glowColor.r - baseColor.r) * ratio;
+        const g1 = baseColor.g + (glowColor.g - baseColor.g) * ratio;
+        const b1 = baseColor.b + (glowColor.b - baseColor.b) * ratio;
         return Qt.rgba(
-            baseColor.r + (glowColor.r - baseColor.r) * ratio,
-            baseColor.g + (glowColor.g - baseColor.g) * ratio,
-            baseColor.b + (glowColor.b - baseColor.b) * ratio,
+            r1 + (effColor.r - r1) * eRatio,
+            g1 + (effColor.g - g1) * eRatio,
+            b1 + (effColor.b - b1) * eRatio,
             1
         );
     }
@@ -1319,6 +1326,13 @@ Item {
     onFocusTransitionEnabledChanged: if (!focusTransitionEnabled) focusTransitionOverlay.cancelTransition()
     onFocusTransitionStyleChanged: focusTransitionOverlay.cancelTransition()
     onFocusTransitionIntensityChanged: focusTransitionOverlay.cancelTransition()
+    onFocusTransitionVerticalPositionChanged: {
+        for (let i = 0; i < entryRepeater.count; i++) {
+            const item = entryRepeater.itemAt(i);
+            if (item && item.syncIndicatorRect)
+                item.syncIndicatorRect();
+        }
+    }
 
     Component.onCompleted: updateCombinedModel(true)
     onScreenChanged: scheduleModelRefresh(true)
@@ -1442,6 +1456,7 @@ Item {
             columns: isVerticalBar ? 1 : -1
 
             Repeater {
+                id: entryRepeater
                 model: root.combinedModel
                 delegate: Item {
                     id: taskbarItem
@@ -1506,6 +1521,13 @@ Item {
                         const availableCrossSpace = (root.isVerticalBar ? taskbarItem.width - 4 : taskbarItem.height - 4) * 1.5;
                         const markerLength = Math.min(availableMainSpace, Math.max(6, Math.round(root.itemSize * 0.25 * root.focusTransitionMarkerScale)));
                         const markerThickness = Math.min(Math.max(2, availableCrossSpace), Math.round(root.focusTransitionThickness));
+                        let markerY;
+                        if (root.focusTransitionVerticalPosition === "top")
+                            markerY = Math.round(itemPoint.y + 2);
+                        else if (root.focusTransitionVerticalPosition === "middle")
+                            markerY = Math.round(itemPoint.y + (taskbarItem.height - markerThickness) / 2);
+                        else
+                            markerY = Math.round(itemPoint.y + taskbarItem.height - markerThickness - 2);
                         const rect = root.isVerticalBar ? {
                             "x": Math.round(itemPoint.x + taskbarItem.width - markerThickness - 2),
                             "y": Math.round(iconPoint.y + (iconContainer.height - markerLength) / 2),
@@ -1513,7 +1535,7 @@ Item {
                             "height": markerLength
                         } : {
                             "x": Math.round(iconPoint.x + (iconContainer.width - markerLength) / 2),
-                            "y": Math.round(itemPoint.y + taskbarItem.height - markerThickness - 2),
+                            "y": markerY,
                             "width": markerLength,
                             "height": markerThickness
                         };
@@ -2176,6 +2198,8 @@ Item {
             thickness: root.focusTransitionThickness
             colorKey: root.focusTransitionColorKey
             glowColorKey: root.focusTransitionGlowColorKey
+            effectColorKey: root.focusTransitionEffectColorKey
+            verticalPosition: root.focusTransitionVerticalPosition
             blurRadius: root.focusTransitionBlur
             opacityRatio: root.focusTransitionOpacityRatio
         }

@@ -15,8 +15,10 @@ Item {
     property real markerScale: 1.4
     property string colorKey: "primary"
     property string glowColorKey: "primary"
+    property string effectColorKey: "tertiary"
     property real blurRadius: 6
     property int transparency: 15
+    property string verticalPosition: "bottom"
 
     property int focusedIndex: 1
     property int direction: 1
@@ -109,6 +111,8 @@ Item {
     onBlurRadiusChanged: resetLoop()
     onTransparencyChanged: resetLoop()
     onIsVerticalBarChanged: resetLoop()
+    onEffectColorKeyChanged: resetLoop()
+    onVerticalPositionChanged: resetLoop()
 
     Component.onCompleted: resetLoop()
 
@@ -157,6 +161,13 @@ Item {
                     const availableCrossSpace = (root.isVerticalBar ? previewItem.width - 4 : previewItem.height - 4) * 1.5;
                     const markerLength = Math.min(availableMainSpace, Math.max(6, Math.round(root.itemSize * 0.25 * root.markerScale)));
                     const markerThickness = Math.min(Math.max(2, availableCrossSpace), Math.round(root.thickness));
+                    let markerY;
+                    if (root.verticalPosition === "top")
+                        markerY = Math.round(itemPoint.y + 2);
+                    else if (root.verticalPosition === "middle")
+                        markerY = Math.round(itemPoint.y + (previewItem.height - markerThickness) / 2);
+                    else
+                        markerY = Math.round(itemPoint.y + previewItem.height - markerThickness - 2);
                     const rect = root.isVerticalBar ? {
                         "x": Math.round(itemPoint.x + previewItem.width - markerThickness - 2),
                         "y": Math.round(iconPoint.y + (iconContainer.height - markerLength) / 2),
@@ -164,7 +175,7 @@ Item {
                         "height": markerLength
                     } : {
                         "x": Math.round(iconPoint.x + (iconContainer.width - markerLength) / 2),
-                        "y": Math.round(itemPoint.y + previewItem.height - markerThickness - 2),
+                        "y": markerY,
                         "width": markerLength,
                         "height": markerThickness
                     };
@@ -308,6 +319,8 @@ Item {
             thickness: root.thickness
             colorKey: root.colorKey
             glowColorKey: root.glowColorKey
+            effectColorKey: root.effectColorKey
+            verticalPosition: root.verticalPosition
             blurRadius: root.blurRadius
             opacityRatio: root.opacityRatio
             onTransitionFinished: {

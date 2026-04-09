@@ -47,6 +47,8 @@
       "focusTransitionGlowColor": "primary",
       "focusTransitionBlur": 6,
       "focusTransitionTransparency": 15,
+      "focusTransitionEffectColor": "tertiary",
+      "focusTransitionVerticalPosition": "bottom",
       "itemColors": {
         "default": {
           "background": "none",
