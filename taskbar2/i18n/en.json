@@ -103,6 +103,10 @@
         "label": "Directional focus animation",
         "desc": "Slide a compact accent marker from the previously focused entry to the newly focused one."
       },
+      "focusTransitionPreview": {
+        "label": "Live preview",
+        "desc": "Placeholder taskbar items loop the current focus animation settings indefinitely."
+      },
       "focusTransitionDelayMs": {
         "label": "Focus animation delay",
         "desc": "Wait time before the focus-travel marker begins moving."

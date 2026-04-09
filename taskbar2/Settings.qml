@@ -635,6 +635,41 @@ ColumnLayout {
                 defaultValue: defaults.focusTransitionEnabled ?? true
             }
 
+            NBox {
+                Layout.fillWidth: true
+                implicitHeight: previewColumn.implicitHeight + Style.marginM * 2
+                color: Color.mSurfaceVariant
+
+                ColumnLayout {
+                    id: previewColumn
+                    anchors.fill: parent
+                    anchors.margins: Style.marginM
+                    spacing: Style.marginS
+
+                    NLabel {
+                        Layout.fillWidth: true
+                        label: pluginApi?.tr("settings.focusTransitionPreview.label")
+                        description: pluginApi?.tr("settings.focusTransitionPreview.desc")
+                    }
+
+                    FocusTransitionPreview {
+                        Layout.alignment: Qt.AlignHCenter
+                        isVerticalBar: root.isVerticalBar
+                        transitionEnabled: root.valueFocusTransitionEnabled
+                        delayMs: root.valueFocusTransitionDelayMs
+                        durationMs: root.valueFocusTransitionDurationMs
+                        styleKey: root.valueFocusTransitionStyle
+                        intensity: root.valueFocusTransitionIntensity
+                        thickness: root.valueFocusTransitionThickness
+                        markerScale: root.valueFocusTransitionMarkerScale
+                        colorKey: root.valueFocusTransitionColor
+                        glowColorKey: root.valueFocusTransitionGlowColor
+                        blurRadius: root.valueFocusTransitionBlur
+                        transparency: root.valueFocusTransitionTransparency
+                    }
+                }
+            }
+
             NValueSlider {
                 visible: root.valueFocusTransitionEnabled
                 Layout.fillWidth: true
