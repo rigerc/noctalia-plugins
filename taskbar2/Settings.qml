@@ -257,6 +257,54 @@ ColumnLayout {
         }
     }
 
+    NBox {
+        visible: tabView.currentIndex === 2
+        Layout.fillWidth: true
+        implicitHeight: previewColumn.implicitHeight + Style.marginM * 2
+        color: Color.mSurfaceVariant
+
+        ColumnLayout {
+            id: previewColumn
+            anchors.fill: parent
+            anchors.margins: Style.marginM
+            spacing: Style.marginS
+
+            NLabel {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.focusTransitionPreview.label")
+                description: pluginApi?.tr("settings.focusTransitionPreview.desc")
+            }
+
+            FocusTransitionPreview {
+                Layout.alignment: Qt.AlignHCenter
+                isVerticalBar: root.isVerticalBar
+                transitionEnabled: root.valueFocusTransitionEnabled
+                delayMs: root.valueFocusTransitionDelayMs
+                durationMs: root.valueFocusTransitionDurationMs
+                styleKey: root.valueFocusTransitionStyle
+                intensity: root.valueFocusTransitionIntensity
+                scale: root.valueFocusTransitionScale
+                leadColorKey: root.valueFocusTransitionLeadColor
+                glowColorKey: root.valueFocusTransitionGlowColor
+                blurRadius: root.valueFocusTransitionBlur
+                transparency: root.valueFocusTransitionTransparency
+                effectColorKey: root.valueFocusTransitionEffectColor
+                verticalPosition: root.valueFocusTransitionVerticalPosition
+                iconScale: root.valueIconScale
+                itemGapUnits: root.valueItemGapUnits
+                showTitle: root.valueShowTitle && !root.isVerticalBar
+                titleWidth: root.valueTitleWidth
+                hoverIconScaleMultiplier: root.valueHoverIconScaleMultiplier
+                hoverItemScalePercent: root.valueHoverItemScalePercent
+                titleFontFamily: root.valueTitleFontFamily
+                titleFontScale: root.valueTitleFontScale
+                titleFontWeight: root.valueTitleFontWeight
+                colorizeIcons: root.valueColorizeIcons
+                itemColors: root.valueItemColors
+            }
+        }
+    }
+
     NTabView {
         id: tabView
         Layout.fillWidth: true
@@ -649,42 +697,6 @@ ColumnLayout {
                 checked: root.valueFocusTransitionEnabled
                 onToggled: checked => root.valueFocusTransitionEnabled = checked
                 defaultValue: defaults.focusTransitionEnabled ?? true
-            }
-
-            NBox {
-                Layout.fillWidth: true
-                implicitHeight: previewColumn.implicitHeight + Style.marginM * 2
-                color: Color.mSurfaceVariant
-
-                ColumnLayout {
-                    id: previewColumn
-                    anchors.fill: parent
-                    anchors.margins: Style.marginM
-                    spacing: Style.marginS
-
-                    NLabel {
-                        Layout.fillWidth: true
-                        label: pluginApi?.tr("settings.focusTransitionPreview.label")
-                        description: pluginApi?.tr("settings.focusTransitionPreview.desc")
-                    }
-
-                    FocusTransitionPreview {
-                        Layout.alignment: Qt.AlignHCenter
-                        isVerticalBar: root.isVerticalBar
-                        transitionEnabled: root.valueFocusTransitionEnabled
-                        delayMs: root.valueFocusTransitionDelayMs
-                        durationMs: root.valueFocusTransitionDurationMs
-                        styleKey: root.valueFocusTransitionStyle
-                        intensity: root.valueFocusTransitionIntensity
-                        scale: root.valueFocusTransitionScale
-                        leadColorKey: root.valueFocusTransitionLeadColor
-                        glowColorKey: root.valueFocusTransitionGlowColor
-                        blurRadius: root.valueFocusTransitionBlur
-                        transparency: root.valueFocusTransitionTransparency
-                        effectColorKey: root.valueFocusTransitionEffectColor
-                        verticalPosition: root.valueFocusTransitionVerticalPosition
-                    }
-                }
             }
 
             NDivider {

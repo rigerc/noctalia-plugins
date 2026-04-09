@@ -170,9 +170,9 @@ Item {
     }
 
     function resolveFocusTransitionColor(colorKeyValue, fallbackColor) {
-        if (!colorKey || colorKey === "none")
+        if (!colorKeyValue || colorKeyValue === "none")
             return fallbackColor;
-        return Color.resolveColorKey(colorKey);
+        return Color.resolveColorKey(colorKeyValue);
     }
 
     function mixTransitionColors(mixRatio, effectRatio) {

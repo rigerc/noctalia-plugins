@@ -305,5 +305,11 @@
   },
   "placeholders": {
     "enterWidthPixels": "Enter width in pixels"
+  },
+  "preview": {
+    "stateInactive": "Inactive",
+    "stateDefault": "Default",
+    "stateHovered": "Hovered",
+    "stateFocused": "Focused"
   }
 }
