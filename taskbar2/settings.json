@@ -18,7 +18,7 @@
   "focusTransitionEnabled": true,
   "focusTransitionDelayMs": 120,
   "focusTransitionDurationMs": 600,
-  "focusTransitionStyle": "pebble-chain",
+  "focusTransitionStyle": "shard-tail",
   "focusTransitionIntensity": 100,
   "focusTransitionThickness": 2,
   "focusTransitionMarkerScale": 0.75,

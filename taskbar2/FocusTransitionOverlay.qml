@@ -95,6 +95,40 @@ Item {
             return Easing.InOutCubic;
         case "outBack":
             return Easing.OutBack;
+        case "inQuad":
+            return Easing.InQuad;
+        case "outQuad":
+            return Easing.OutQuad;
+        case "inOutQuad":
+            return Easing.InOutQuad;
+        case "inQuart":
+            return Easing.InQuart;
+        case "outQuart":
+            return Easing.OutQuart;
+        case "inOutQuart":
+            return Easing.InOutQuart;
+        case "inQuint":
+            return Easing.InQuint;
+        case "outQuint":
+            return Easing.OutQuint;
+        case "inOutQuint":
+            return Easing.InOutQuint;
+        case "inExpo":
+            return Easing.InExpo;
+        case "outExpo":
+            return Easing.OutExpo;
+        case "inOutExpo":
+            return Easing.InOutExpo;
+        case "inSine":
+            return Easing.InSine;
+        case "outSine":
+            return Easing.OutSine;
+        case "inOutSine":
+            return Easing.InOutSine;
+        case "outElastic":
+            return Easing.OutElastic;
+        case "outCirc":
+            return Easing.OutCirc;
         default:
             return Easing.Linear;
         }
@@ -104,6 +138,14 @@ Item {
         focusTravelAxisStep1.to = firstTo;
         focusTravelAxisStep1.duration = Math.max(0, Math.round(firstDuration));
         focusTravelAxisStep1.easing.type = resolveEasingType(firstEasing);
+
+        // Configure OutElastic-specific parameters
+        if (firstEasing === "outElastic") {
+            focusTravelAxisStep1.easing.amplitude = 1.0;  // Overshoot amount (try 0.8-1.2)
+            focusTravelAxisStep1.easing.period = 0.4;     // Bounce frequency (try 0.3-0.5, lower = fewer bounces)
+            focusTravelAxisStep1.easing.mode = Easing.EaseInOut;
+        }
+
         focusTravelAxisStep2.to = secondTo;
         focusTravelAxisStep2.duration = Math.max(0, Math.round(secondDuration));
         focusTravelAxisStep2.easing.type = resolveEasingType(secondEasing);
@@ -120,13 +162,15 @@ Item {
         focusTravelLengthSequence.restart();
     }
 
-    function configureOpacityAnimation(startOpacity, fadeInTo, fadeInDuration, holdDuration, fadeOutTo, fadeOutDuration) {
+    function configureOpacityAnimation(startOpacity, fadeInTo, fadeInDuration, holdDuration, fadeOutTo, fadeOutDuration, fadeInEasing, fadeOutEasing) {
         focusTravelOpacity = startOpacity;
         focusTravelOpacityStep1.to = fadeInTo;
         focusTravelOpacityStep1.duration = Math.max(0, Math.round(fadeInDuration));
+        focusTravelOpacityStep1.easing.type = resolveEasingType(fadeInEasing || "outCubic");
         focusTravelOpacityPause.duration = Math.max(0, Math.round(holdDuration));
         focusTravelOpacityStep2.to = fadeOutTo;
         focusTravelOpacityStep2.duration = Math.max(0, Math.round(fadeOutDuration));
+        focusTravelOpacityStep2.easing.type = resolveEasingType(fadeOutEasing || "inCubic");
         focusTravelOpacitySequence.restart();
     }
 
@@ -274,7 +318,7 @@ Item {
 
         configureAxisAnimation(spec.axis.firstTo, spec.axis.firstDuration, spec.axis.firstEasing, spec.axis.secondTo, spec.axis.secondDuration, spec.axis.secondEasing);
         configureLengthAnimation(spec.length.firstTo, spec.length.firstDuration, spec.length.firstEasing, spec.length.secondTo, spec.length.secondDuration, spec.length.secondEasing);
-        configureOpacityAnimation(spec.opacity.startOpacity, spec.opacity.fadeInTo, spec.opacity.fadeInDuration, spec.opacity.holdDuration, spec.opacity.fadeOutTo, spec.opacity.fadeOutDuration);
+        configureOpacityAnimation(spec.opacity.startOpacity, spec.opacity.fadeInTo, spec.opacity.fadeInDuration, spec.opacity.holdDuration, spec.opacity.fadeOutTo, spec.opacity.fadeOutDuration, spec.opacity.fadeInEasing, spec.opacity.fadeOutEasing);
         configureLayerOpacityAnimation(focusTravelLeadOpacitySequence, focusTravelLeadOpacityStep1, focusTravelLeadOpacityPause, focusTravelLeadOpacityStep2, "focusTravelLeadOpacity", spec.layers?.lead, "outCubic", "inCubic");
         configureLayerOpacityAnimation(focusTravelTrailOpacitySequence, focusTravelTrailOpacityStep1, focusTravelTrailOpacityPause, focusTravelTrailOpacityStep2, "focusTravelTrailOpacity", spec.layers?.trail, "outCubic", "inCubic");
         configureLayerOpacityAnimation(focusTravelGlowOpacitySequence, focusTravelGlowOpacityStep1, focusTravelGlowOpacityPause, focusTravelGlowOpacityStep2, "focusTravelGlowOpacity", spec.layers?.glow, "outCubic", "inCubic");

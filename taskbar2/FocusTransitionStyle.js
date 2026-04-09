@@ -16,36 +16,6 @@ function normalizedStyle(style) {
     }
 }
 
-function clamp01(value) {
-    return Math.max(0, Math.min(1, value));
-}
-
-function easingValue(name, progress) {
-    var t = clamp01(progress);
-    switch (name) {
-    case "inCubic":
-        return t * t * t;
-    case "outCubic":
-        t -= 1;
-        return t * t * t + 1;
-    case "inOutCubic":
-        if (t < 0.5)
-            return 4 * t * t * t;
-        t = 2 * t - 2;
-        return 0.5 * t * t * t + 1;
-    case "outBack":
-        var s = 1.70158;
-        t -= 1;
-        return t * t * ((s + 1) * t + s) + 1;
-    default:
-        return t;
-    }
-}
-
-function interpolate(fromValue, toValue, progress, easingName) {
-    return fromValue + (toValue - fromValue) * easingValue(easingName, progress);
-}
-
 function makeOpacitySpec(startOpacity, fadeInTo, fadeInDuration, holdDuration, fadeOutTo, fadeOutDuration) {
     return {
         startOpacity: startOpacity,
@@ -55,113 +25,6 @@ function makeOpacitySpec(startOpacity, fadeInTo, fadeInDuration, holdDuration, f
         fadeOutTo: fadeOutTo,
         fadeOutDuration: Math.max(0, fadeOutDuration || 0)
     };
-}
-
-function evaluateTwoStage(startValue, stage, time) {
-    var firstDuration = Math.max(0, stage.firstDuration || 0);
-    var secondDuration = Math.max(0, stage.secondDuration || 0);
-    var firstTo = stage.firstTo;
-    var secondTo = stage.secondTo;
-
-    if (time <= 0)
-        return startValue;
-
-    if (firstDuration > 0 && time < firstDuration)
-        return interpolate(startValue, firstTo, time / firstDuration, stage.firstEasing);
-
-    var afterFirst = firstDuration > 0 ? firstTo : startValue;
-    if (secondDuration > 0 && time < firstDuration + secondDuration)
-        return interpolate(afterFirst, secondTo, (time - firstDuration) / secondDuration, stage.secondEasing);
-
-    if (secondDuration > 0)
-        return secondTo;
-    if (firstDuration > 0)
-        return firstTo;
-    return startValue;
-}
-
-function evaluateOpacity(opacity, time) {
-    var fadeInDuration = Math.max(0, opacity.fadeInDuration || 0);
-    var holdDuration = Math.max(0, opacity.holdDuration || 0);
-    var fadeOutDuration = Math.max(0, opacity.fadeOutDuration || 0);
-
-    if (time <= 0)
-        return opacity.startOpacity;
-
-    if (fadeInDuration > 0 && time < fadeInDuration)
-        return interpolate(opacity.startOpacity, opacity.fadeInTo, time / fadeInDuration, "linear");
-
-    time -= fadeInDuration;
-    if (time < holdDuration)
-        return opacity.fadeInTo;
-
-    time -= holdDuration;
-    if (fadeOutDuration > 0 && time < fadeOutDuration)
-        return interpolate(opacity.fadeInTo, opacity.fadeOutTo, time / fadeOutDuration, "linear");
-
-    return opacity.fadeOutTo;
-}
-
-function evaluateBloom(bloom, time) {
-    var result = {
-        active: false,
-        opacity: 0,
-        scale: 1
-    };
-
-    if (!bloom)
-        return result;
-
-    var delayDuration = Math.max(0, bloom.delayDuration || 0);
-    var riseDuration = Math.max(0, bloom.riseDuration || 0);
-    var fallDuration = Math.max(0, bloom.fallDuration || 0);
-
-    if (time < delayDuration)
-        return result;
-
-    time -= delayDuration;
-
-    if (riseDuration > 0 && time < riseDuration) {
-        var riseProgress = time / riseDuration;
-        result.active = true;
-        result.opacity = interpolate(0, bloom.riseTo, riseProgress, "linear");
-        result.scale = interpolate(1, bloom.scaleTo, riseProgress, "linear");
-        return result;
-    }
-
-    time -= riseDuration;
-    if (fallDuration > 0 && time < fallDuration) {
-        var fallProgress = time / fallDuration;
-        result.active = true;
-        result.opacity = interpolate(bloom.riseTo, 0, fallProgress, "linear");
-        result.scale = interpolate(bloom.scaleTo, 1, fallProgress, "linear");
-        return result;
-    }
-
-    return result;
-}
-
-function totalDurationForSpec(spec) {
-    var axisDuration = Math.max(0, spec.axis.firstDuration || 0) + Math.max(0, spec.axis.secondDuration || 0);
-    var lengthDuration = Math.max(0, spec.length.firstDuration || 0) + Math.max(0, spec.length.secondDuration || 0);
-    var opacityDuration = Math.max(0, spec.opacity.fadeInDuration || 0) + Math.max(0, spec.opacity.holdDuration || 0) + Math.max(0, spec.opacity.fadeOutDuration || 0);
-    var bloomDuration = 0;
-    var layerDuration = 0;
-
-    if (spec.bloom)
-        bloomDuration = Math.max(0, spec.bloom.delayDuration || 0) + Math.max(0, spec.bloom.riseDuration || 0) + Math.max(0, spec.bloom.fallDuration || 0);
-
-    if (spec.layers) {
-        Object.keys(spec.layers).forEach(function (key) {
-            var layer = spec.layers[key];
-            if (!layer)
-                return;
-            var duration = Math.max(0, layer.fadeInDuration || 0) + Math.max(0, layer.holdDuration || 0) + Math.max(0, layer.fadeOutDuration || 0);
-            layerDuration = Math.max(layerDuration, duration);
-        });
-    }
-
-    return Math.max(1, axisDuration, lengthDuration, opacityDuration, bloomDuration, layerDuration);
 }
 
 function buildSpec(params) {
@@ -215,9 +78,11 @@ function buildSpec(params) {
             startOpacity: 0.94,
             fadeInTo: 0.94,
             fadeInDuration: 0,
+            fadeInEasing: "outCubic",
             holdDuration: duration,
             fadeOutTo: 0,
-            fadeOutDuration: fadeOutDuration
+            fadeOutDuration: fadeOutDuration,
+            fadeOutEasing: "inCubic"
         },
         bloom: null
     };
@@ -289,7 +154,7 @@ function buildSpec(params) {
         spec.trailingCrossRatio = 0.58;
         spec.trailingOpacityFalloff = 0.18;
         spec.trailingScaleFalloff = 0.11;
-        spec.axis.firstEasing = "inCubic";
+        spec.axis.firstEasing = "inQuint";  // Changed from "inCubic" - sharper acceleration
         spec.opacity.startOpacity = 0.92;
         spec.opacity.fadeInTo = 0.92;
         spec.colorMix.lead = 0;
@@ -304,10 +169,10 @@ function buildSpec(params) {
         spec.ribbonStrength = 0.18 + intensity * 0.08;
         spec.length.firstTo = Math.max(endLength * 1.4, endLength + distance * (0.4 + intensity * 0.25));
         spec.length.firstDuration = Math.max(60, Math.round(duration * 0.56));
-        spec.length.firstEasing = "outCubic";
+        spec.length.firstEasing = "outExpo";  // Changed from "outCubic" - dramatic stretch
         spec.length.secondTo = endLength;
         spec.length.secondDuration = Math.max(60, duration - spec.length.firstDuration);
-        spec.length.secondEasing = "inOutCubic";
+        spec.length.secondEasing = "inOutQuart";  // Changed from "inOutCubic" - smoother settle
         spec.colorMix.ribbon = 0.62;
         spec.colorMix.trail = 0.8;
         spec.layers.ribbon = makeOpacitySpec(0.18, 0.78, Math.max(18, Math.round(duration * 0.08)), Math.max(0, Math.round(duration * 0.5)), 0, Math.max(72, Math.round(duration * 0.34)));
@@ -324,12 +189,12 @@ function buildSpec(params) {
         spec.trailingCrossRatio = 0.72;
         spec.trailingOpacityFalloff = 0.22;
         spec.trailingScaleFalloff = 0.16;
-        spec.axis.firstTo = endAxis + direction * Math.max(4, Math.min(22, Math.round((6 + intensity * 14) * uiScaleRatio)));
-        spec.axis.firstDuration = primaryDuration;
-        spec.axis.firstEasing = "outCubic";
+        spec.axis.firstTo = endAxis;
+        spec.axis.firstDuration = duration;
+        spec.axis.firstEasing = "outElastic";  // Built-in bounce replaces manual overshoot
         spec.axis.secondTo = endAxis;
-        spec.axis.secondDuration = settleDuration;
-        spec.axis.secondEasing = "outBack";
+        spec.axis.secondDuration = 0;  // No second stage needed
+        spec.axis.secondEasing = "linear";
         spec.opacity.startOpacity = 0.96;
         spec.opacity.fadeInTo = 0.96;
         spec.colorMix.lead = 0.14;
@@ -351,7 +216,9 @@ function buildSpec(params) {
         spec.opacity.startOpacity = 0.1;
         spec.opacity.fadeInTo = 0.82;
         spec.opacity.fadeInDuration = Math.max(36, Math.round(duration * 0.18));
+        spec.opacity.fadeInEasing = "inOutSine";  // Smooth, slow fade-in
         spec.opacity.fadeOutDuration = Math.max(70, Math.round(duration * 0.26));
+        spec.opacity.fadeOutEasing = "outSine";   // Gentle fade-out
         spec.opacity.holdDuration = Math.max(0, duration - spec.opacity.fadeInDuration - spec.opacity.fadeOutDuration);
         spec.colorMix.trail = 0.9;
         spec.colorMix.halo = 1;
@@ -398,18 +265,25 @@ function buildSpec(params) {
     return spec;
 }
 
-function evaluateFrame(spec, progress, startAxis, startLength) {
-    var totalDuration = totalDurationForSpec(spec);
-    var time = clamp01(progress) * totalDuration;
-    var bloom = evaluateBloom(spec.bloom, time);
+function totalDurationForSpec(spec) {
+    var axisDuration = Math.max(0, spec.axis.firstDuration || 0) + Math.max(0, spec.axis.secondDuration || 0);
+    var lengthDuration = Math.max(0, spec.length.firstDuration || 0) + Math.max(0, spec.length.secondDuration || 0);
+    var opacityDuration = Math.max(0, spec.opacity.fadeInDuration || 0) + Math.max(0, spec.opacity.holdDuration || 0) + Math.max(0, spec.opacity.fadeOutDuration || 0);
+    var bloomDuration = 0;
+    var layerDuration = 0;
 
-    return {
-        axisPosition: evaluateTwoStage(startAxis, spec.axis, time),
-        length: evaluateTwoStage(startLength, spec.length, time),
-        opacity: evaluateOpacity(spec.opacity, time),
-        bloomActive: bloom.active,
-        bloomOpacity: bloom.opacity,
-        bloomScale: bloom.scale,
-        totalDuration: totalDuration
-    };
+    if (spec.bloom)
+        bloomDuration = Math.max(0, spec.bloom.delayDuration || 0) + Math.max(0, spec.bloom.riseDuration || 0) + Math.max(0, spec.bloom.fallDuration || 0);
+
+    if (spec.layers) {
+        Object.keys(spec.layers).forEach(function (key) {
+            var layer = spec.layers[key];
+            if (!layer)
+                return;
+            var duration = Math.max(0, layer.fadeInDuration || 0) + Math.max(0, layer.holdDuration || 0) + Math.max(0, layer.fadeOutDuration || 0);
+            layerDuration = Math.max(layerDuration, duration);
+        });
+    }
+
+    return Math.max(1, axisDuration, lengthDuration, opacityDuration, bloomDuration, layerDuration);
 }
