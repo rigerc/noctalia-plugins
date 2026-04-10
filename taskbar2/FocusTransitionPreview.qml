@@ -57,9 +57,32 @@ Item {
     readonly property real contentHeight: isVerticalBar ? (placeholderCount * previewItemHeight) + (Math.max(0, placeholderCount - 1) * itemGap) : previewItemHeight
 
     readonly property real stateLabelHeight: 18 * Style.uiScaleRatio
-
     implicitWidth: contentWidth
     implicitHeight: contentHeight + stateLabelHeight
+
+    function resolveStateDef(stateKey) {
+        for (let i = 0; i < stateDefs.length; i++) {
+            if (stateDefs[i].stateKey === stateKey)
+                return stateDefs[i];
+        }
+        return stateDefs[1];
+    }
+
+    function previewItemStateKey(index) {
+        if (index === focusedIndex)
+            return "focused";
+
+        const offset = (index - focusedIndex + placeholderCount) % placeholderCount;
+
+        switch (offset) {
+        case 1:
+            return "hovered";
+        case 2:
+            return "inactive";
+        default:
+            return "default";
+        }
+    }
 
     function resolveItemStateColor(stateKey, colorRole) {
         const stateColors = itemColors?.[stateKey];
@@ -191,15 +214,16 @@ Item {
 
                         required property int index
 
-                        readonly property var sd: root.stateDefs[index]
-                        readonly property string stateKey: sd.stateKey
+                        readonly property string effectiveStateKey: root.previewItemStateKey(index)
+                        readonly property var effectiveState: root.resolveStateDef(effectiveStateKey)
                         readonly property color itemBgColor: root.resolveItemStateColor(stateKey, "background")
                         readonly property color itemBorderColor: root.resolveItemStateColor(stateKey, "border")
                         readonly property color itemTextColor: root.resolveItemStateColor(stateKey, "text")
                         readonly property color accentColor: overlay.mixTransitionColors(0.18)
                         readonly property color secondaryColor: overlay.mixTransitionColors(0.9)
                         readonly property bool isAnimFocused: index === root.focusedIndex
-                        readonly property real effectiveItemScale: sd.itemMult
+                        readonly property real effectiveItemScale: effectiveState.itemMult
+                        readonly property string stateKey: effectiveStateKey
 
                         readonly property real entryContentWidth: root.itemSize + (root.showTitle && !root.isVerticalBar ? (Style.marginS + Math.round(root.titleWidth * 0.4)) : 0)
                         readonly property real contentPaddingH: (root.showTitle && !root.isVerticalBar) ? Style.marginM : Style.marginS
@@ -288,7 +312,7 @@ Item {
                                 anchors.margins: Math.max(1, Style.borderS)
                                 radius: Math.max(0, parent.radius - Style.borderS)
                                 color: "transparent"
-                                opacity: previewItem.sd.washOpacity
+                                opacity: previewItem.effectiveState.washOpacity
                                 gradient: Gradient {
                                     orientation: root.isVerticalBar ? Gradient.Vertical : Gradient.Horizontal
 
@@ -358,11 +382,11 @@ Item {
                                         anchors.bottom: parent.bottom
                                         anchors.bottomMargin: -2
                                         anchors.horizontalCenter: parent.horizontalCenter
-                                        width: Math.max(8, Math.round(root.itemSize * previewItem.sd.indicatorWidthFrac))
+                                        width: Math.max(8, Math.round(root.itemSize * previewItem.effectiveState.indicatorWidthFrac))
                                         height: 4
                                         radius: Math.min(Style.radiusXXS, width / 2)
-                                        color: previewItem.sd.stateKey === "focused" ? previewItem.accentColor : previewItem.secondaryColor
-                                        opacity: previewItem.sd.indicatorOpacity
+                                        color: previewItem.stateKey === "focused" ? previewItem.accentColor : previewItem.secondaryColor
+                                        opacity: previewItem.effectiveState.indicatorOpacity
 
                                         Behavior on width {
                                             NumberAnimation {
@@ -414,9 +438,9 @@ Item {
 
                                         Item {
                                             anchors.fill: parent
-                                            y: previewItem.sd.lift
-                                            scale: previewItem.sd.iconMult
-                                            opacity: previewItem.sd.dimIcon ? 0.45 : previewItem.sd.iconOpacity
+                                            y: previewItem.effectiveState.lift
+                                            scale: previewItem.effectiveState.iconMult
+                                            opacity: previewItem.effectiveState.dimIcon ? 0.45 : previewItem.effectiveState.iconOpacity
                                             transformOrigin: Item.Center
 
                                             Behavior on y {
@@ -446,8 +470,8 @@ Item {
                                                 height: Math.round(parent.height * 0.9)
                                                 radius: Math.max(width, height) / 2
                                                 color: Qt.rgba(previewItem.secondaryColor.r, previewItem.secondaryColor.g, previewItem.secondaryColor.b, 1)
-                                                opacity: previewItem.sd.glowOpacity
-                                                scale: 0.86 + (previewItem.sd.glowOpacity > 0 ? (previewItem.sd.stateKey === "focused" ? 0.28 : 0.14) : 0)
+                                                opacity: previewItem.effectiveState.glowOpacity
+                                                scale: 0.86 + (previewItem.effectiveState.glowOpacity > 0 ? (previewItem.stateKey === "focused" ? 0.28 : 0.14) : 0)
 
                                                 Behavior on opacity {
                                                     NumberAnimation {
@@ -469,7 +493,7 @@ Item {
                                                 width: Math.round(parent.width * 0.62)
                                                 height: Math.round(parent.height * 0.62)
                                                 radius: Math.max(width, height) / 2
-                                                color: previewItem.sd.dimIcon ? Qt.rgba(Color.mOnSurfaceVariant.r, Color.mOnSurfaceVariant.g, Color.mOnSurfaceVariant.b, 0.4) : (previewItem.sd.stateKey === "focused" ? previewItem.accentColor : Color.mOnSurfaceVariant)
+                                                color: previewItem.effectiveState.dimIcon ? Qt.rgba(Color.mOnSurfaceVariant.r, Color.mOnSurfaceVariant.g, Color.mOnSurfaceVariant.b, 0.4) : (previewItem.stateKey === "focused" ? previewItem.accentColor : Color.mOnSurfaceVariant)
                                             }
                                         }
                                     }
@@ -481,7 +505,7 @@ Item {
                                     Layout.preferredHeight: root.itemSize
                                     Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
                                     radius: 3
-                                    color: Qt.rgba(previewItem.itemTextColor.r, previewItem.itemTextColor.g, previewItem.itemTextColor.b, previewItem.sd.titleOpacity * 0.18)
+                                    color: Qt.rgba(previewItem.itemTextColor.r, previewItem.itemTextColor.g, previewItem.itemTextColor.b, previewItem.effectiveState.titleOpacity * 0.18)
                                 }
                             }
                         }
@@ -529,7 +553,7 @@ Item {
 
                 delegate: NText {
                     required property int index
-                    readonly property string stateKey: root.stateDefs[index].stateKey
+                    readonly property string stateKey: root.previewItemStateKey(index)
 
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignHCenter
