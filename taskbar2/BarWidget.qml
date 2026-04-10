@@ -39,6 +39,7 @@ Item {
     readonly property bool smartWidth: cfg.smartWidth ?? defaults.smartWidth ?? true
     readonly property int maxTaskbarWidthPercent: cfg.maxTaskbarWidth ?? defaults.maxTaskbarWidth ?? 40
     readonly property bool colorizeIcons: cfg.colorizeIcons ?? defaults.colorizeIcons ?? false
+    readonly property string iconColorKey: cfg.iconColor ?? defaults.iconColor ?? "primary"
     readonly property real iconScale: cfg.iconScale ?? defaults.iconScale ?? 0.8
     readonly property real hoverIconScaleMultiplier: cfg.hoverIconScaleMultiplier ?? defaults.hoverIconScaleMultiplier ?? 1.0
     readonly property real hoverItemScalePercent: cfg.hoverItemScalePercent ?? defaults.hoverItemScalePercent ?? 0
@@ -147,6 +148,10 @@ Item {
         default:
             return Style.fontWeightMedium;
         }
+    }
+
+    function resolvedIconTintColor() {
+        return (!iconColorKey || iconColorKey === "none") ? Color.mPrimary : Color.resolveColorKey(iconColorKey);
     }
 
     function fallbackItemStateColor(stateKey, colorRole) {
@@ -2177,7 +2182,7 @@ Item {
                                                 asynchronous: true
                                                 layer.enabled: root.colorizeIcons
                                                 layer.effect: ShaderEffect {
-                                                    property color targetColor: Settings.data.colorSchemes.darkMode ? Color.mOnSurface : Color.mSurfaceVariant
+                                                    property color targetColor: root.resolvedIconTintColor()
                                                     property real colorizeMode: 0.0
 
                                                     fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/appicon_colorize.frag.qsb")

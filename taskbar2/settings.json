@@ -2,7 +2,8 @@
   "onlySameOutput": true,
   "onlyActiveWorkspaces": false,
   "hideMode": "visible",
-  "colorizeIcons": false,
+  "colorizeIcons": true,
+  "iconColor": "primary",
   "showTitle": true,
   "titleWidth": 120,
   "showPinnedApps": false,
@@ -49,7 +50,7 @@
       "text": "none"
     }
   },
-  "groupApps": false,
+  "groupApps": true,
   "groupClickAction": "cycle",
   "groupContextMenuMode": "extended",
   "groupIndicatorStyle": "dots",

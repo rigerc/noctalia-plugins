@@ -30,6 +30,7 @@ Item {
     property real titleFontScale: 1.0
     property string titleFontWeight: "medium"
     property bool colorizeIcons: false
+    property string iconColorKey: "primary"
     property var itemColors: ({})
 
     property int focusedIndex: 0
@@ -97,6 +98,10 @@ Item {
         if (colorRole === "text")
             return Color.resolveColorKey(colorKey);
         return Color.resolveColorKeyOptional(colorKey);
+    }
+
+    function resolvedIconTintColor() {
+        return (!iconColorKey || iconColorKey === "none") ? Color.mPrimary : Color.resolveColorKey(iconColorKey);
     }
 
     function updateIndicatorRect(index, rect) {
@@ -493,7 +498,7 @@ Item {
                                                 width: Math.round(parent.width * 0.62)
                                                 height: Math.round(parent.height * 0.62)
                                                 radius: Math.max(width, height) / 2
-                                                color: previewItem.effectiveState.dimIcon ? Qt.rgba(Color.mOnSurfaceVariant.r, Color.mOnSurfaceVariant.g, Color.mOnSurfaceVariant.b, 0.4) : (previewItem.stateKey === "focused" ? previewItem.accentColor : Color.mOnSurfaceVariant)
+                                                color: previewItem.effectiveState.dimIcon ? Qt.rgba(Color.mOnSurfaceVariant.r, Color.mOnSurfaceVariant.g, Color.mOnSurfaceVariant.b, 0.4) : (root.colorizeIcons ? root.resolvedIconTintColor() : (previewItem.stateKey === "focused" ? previewItem.accentColor : Color.mOnSurfaceVariant))
                                             }
                                         }
                                     }

@@ -76,7 +76,11 @@
       },
       "colorizeIcons": {
         "label": "Colorize icons",
-        "desc": "Apply the themed icon tint to match the shell color scheme."
+        "desc": "Tint application icons instead of using their original colors."
+      },
+      "iconColor": {
+        "label": "Icon color",
+        "desc": "Choose the tint color used when icon colorization is enabled."
       },
     "showPinnedApps": {
       "label": "Show pinned apps",

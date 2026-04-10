@@ -24,6 +24,7 @@
       "onlyActiveWorkspaces": true,
       "hideMode": "hidden",
       "colorizeIcons": false,
+      "iconColor": "primary",
       "showTitle": false,
       "titleWidth": 120,
       "showPinnedApps": true,

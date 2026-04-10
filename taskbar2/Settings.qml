@@ -108,6 +108,7 @@ ColumnLayout {
     property bool valueOnlyActiveWorkspaces: cfg.onlyActiveWorkspaces ?? defaults.onlyActiveWorkspaces ?? true
     property bool valueOnlySameOutput: cfg.onlySameOutput ?? defaults.onlySameOutput ?? true
     property bool valueColorizeIcons: cfg.colorizeIcons ?? defaults.colorizeIcons ?? false
+    property string valueIconColor: cfg.iconColor ?? defaults.iconColor ?? "primary"
     property bool valueShowTitle: isVerticalBar ? false : (cfg.showTitle ?? defaults.showTitle ?? false)
     property bool valueSmartWidth: cfg.smartWidth ?? defaults.smartWidth ?? true
     property int valueMaxTaskbarWidth: cfg.maxTaskbarWidth ?? defaults.maxTaskbarWidth ?? 40
@@ -195,6 +196,7 @@ ColumnLayout {
         pluginApi.pluginSettings.onlySameOutput = root.valueOnlySameOutput;
         pluginApi.pluginSettings.onlyActiveWorkspaces = root.valueOnlyActiveWorkspaces;
         pluginApi.pluginSettings.colorizeIcons = root.valueColorizeIcons;
+        pluginApi.pluginSettings.iconColor = root.valueIconColor;
         pluginApi.pluginSettings.showTitle = root.valueShowTitle;
         pluginApi.pluginSettings.smartWidth = root.valueSmartWidth;
         pluginApi.pluginSettings.maxTaskbarWidth = root.valueMaxTaskbarWidth;
@@ -279,6 +281,7 @@ ColumnLayout {
                 titleFontScale: root.valueTitleFontScale
                 titleFontWeight: root.valueTitleFontWeight
                 colorizeIcons: root.valueColorizeIcons
+                iconColorKey: root.valueIconColor
                 itemColors: root.valueItemColors
             }
         }
@@ -687,6 +690,15 @@ ColumnLayout {
                 checked: root.valueColorizeIcons
                 onToggled: checked => root.valueColorizeIcons = checked
                 defaultValue: defaults.colorizeIcons ?? false
+            }
+
+            NColorChoice {
+                visible: root.valueColorizeIcons
+                label: pluginApi?.tr("settings.iconColor.label")
+                description: pluginApi?.tr("settings.iconColor.desc")
+                currentKey: root.valueIconColor
+                onSelected: key => root.valueIconColor = key
+                defaultValue: defaults.iconColor ?? "primary"
             }
 
             NDivider {
