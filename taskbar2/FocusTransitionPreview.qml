@@ -240,11 +240,27 @@ Item {
                         scale: effectiveItemScale
                         transformOrigin: Item.Center
 
-                        Component.onCompleted: syncIndicatorRect()
-                        onXChanged: syncIndicatorRect()
-                        onYChanged: syncIndicatorRect()
-                        onWidthChanged: syncIndicatorRect()
-                        onHeightChanged: syncIndicatorRect()
+                        Component.onCompleted: {
+                            syncIndicatorRect();
+                            iconForegroundProxy.syncPosition();
+                        }
+                        onXChanged: {
+                            syncIndicatorRect();
+                            iconForegroundProxy.syncPosition();
+                        }
+                        onYChanged: {
+                            syncIndicatorRect();
+                            iconForegroundProxy.syncPosition();
+                        }
+                        onWidthChanged: {
+                            syncIndicatorRect();
+                            iconForegroundProxy.syncPosition();
+                        }
+                        onHeightChanged: {
+                            syncIndicatorRect();
+                            iconForegroundProxy.syncPosition();
+                        }
+                        onScaleChanged: iconForegroundProxy.syncPosition()
 
                         Rectangle {
                             anchors.fill: parent
@@ -316,70 +332,25 @@ Item {
                                     Layout.preferredHeight: root.itemSize
                                     Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
 
-                                    onXChanged: previewItem.syncIndicatorRect()
-                                    onYChanged: previewItem.syncIndicatorRect()
-                                    onWidthChanged: previewItem.syncIndicatorRect()
-                                    onHeightChanged: previewItem.syncIndicatorRect()
+                                    onXChanged: {
+                                        previewItem.syncIndicatorRect();
+                                        iconForegroundProxy.syncPosition();
+                                    }
+                                    onYChanged: {
+                                        previewItem.syncIndicatorRect();
+                                        iconForegroundProxy.syncPosition();
+                                    }
+                                    onWidthChanged: {
+                                        previewItem.syncIndicatorRect();
+                                        iconForegroundProxy.syncPosition();
+                                    }
+                                    onHeightChanged: {
+                                        previewItem.syncIndicatorRect();
+                                        iconForegroundProxy.syncPosition();
+                                    }
 
                                     Item {
                                         anchors.fill: parent
-                                        y: previewItem.sd.lift
-                                        scale: previewItem.sd.iconMult
-                                        opacity: previewItem.sd.dimIcon ? 0.45 : previewItem.sd.iconOpacity
-                                        transformOrigin: Item.Center
-
-                                        Behavior on y {
-                                            NumberAnimation {
-                                                duration: Style.animationFast
-                                                easing.type: Easing.OutCubic
-                                            }
-                                        }
-
-                                        Behavior on scale {
-                                            NumberAnimation {
-                                                duration: Style.animationNormal
-                                                easing.type: Easing.OutQuad
-                                            }
-                                        }
-
-                                        Behavior on opacity {
-                                            NumberAnimation {
-                                                duration: Style.animationFast
-                                                easing.type: Easing.OutCubic
-                                            }
-                                        }
-
-                                        Rectangle {
-                                            anchors.centerIn: parent
-                                            width: Math.round(parent.width * 0.9)
-                                            height: Math.round(parent.height * 0.9)
-                                            radius: Math.max(width, height) / 2
-                                            color: Qt.rgba(previewItem.secondaryColor.r, previewItem.secondaryColor.g, previewItem.secondaryColor.b, 1)
-                                            opacity: previewItem.sd.glowOpacity
-                                            scale: 0.86 + (previewItem.sd.glowOpacity > 0 ? (previewItem.sd.stateKey === "focused" ? 0.28 : 0.14) : 0)
-
-                                            Behavior on opacity {
-                                                NumberAnimation {
-                                                    duration: Style.animationNormal
-                                                    easing.type: Easing.OutCubic
-                                                }
-                                            }
-
-                                            Behavior on scale {
-                                                NumberAnimation {
-                                                    duration: Style.animationNormal
-                                                    easing.type: Easing.OutCubic
-                                                }
-                                            }
-                                        }
-
-                                        Rectangle {
-                                            anchors.centerIn: parent
-                                            width: Math.round(parent.width * 0.62)
-                                            height: Math.round(parent.height * 0.62)
-                                            radius: Math.max(width, height) / 2
-                                            color: previewItem.sd.dimIcon ? Qt.rgba(Color.mOnSurfaceVariant.r, Color.mOnSurfaceVariant.g, Color.mOnSurfaceVariant.b, 0.4) : (previewItem.sd.stateKey === "focused" ? previewItem.accentColor : Color.mOnSurfaceVariant)
-                                        }
                                     }
 
                                     Rectangle {
@@ -404,6 +375,101 @@ Item {
                                             NumberAnimation {
                                                 duration: Style.animationFast
                                                 easing.type: Easing.OutCubic
+                                            }
+                                        }
+                                    }
+
+                                    Item {
+                                        id: iconForegroundProxy
+                                        parent: previewForegroundLayer
+                                        z: 1
+                                        visible: previewForegroundLayer.visible
+                                        enabled: false
+                                        property rect mappedRect: Qt.rect(0, 0, 0, 0)
+
+                                        function syncPosition() {
+                                            if (!previewForegroundLayer || !iconContainer) {
+                                                mappedRect = Qt.rect(0, 0, 0, 0);
+                                                return;
+                                            }
+
+                                            const topLeft = iconContainer.mapToItem(previewForegroundLayer, 0, 0);
+                                            const bottomRight = iconContainer.mapToItem(previewForegroundLayer, iconContainer.width, iconContainer.height);
+                                            const left = Math.min(topLeft.x, bottomRight.x);
+                                            const top = Math.min(topLeft.y, bottomRight.y);
+                                            const right = Math.max(topLeft.x, bottomRight.x);
+                                            const bottom = Math.max(topLeft.y, bottomRight.y);
+                                            mappedRect = Qt.rect(
+                                                Math.round(left),
+                                                Math.round(top),
+                                                Math.max(0, Math.round(right - left)),
+                                                Math.max(0, Math.round(bottom - top))
+                                            );
+                                        }
+
+                                        x: mappedRect.x
+                                        y: mappedRect.y
+                                        width: mappedRect.width
+                                        height: mappedRect.height
+
+                                        Item {
+                                            anchors.fill: parent
+                                            y: previewItem.sd.lift
+                                            scale: previewItem.sd.iconMult
+                                            opacity: previewItem.sd.dimIcon ? 0.45 : previewItem.sd.iconOpacity
+                                            transformOrigin: Item.Center
+
+                                            Behavior on y {
+                                                NumberAnimation {
+                                                    duration: Style.animationFast
+                                                    easing.type: Easing.OutCubic
+                                                }
+                                            }
+
+                                            Behavior on scale {
+                                                NumberAnimation {
+                                                    duration: Style.animationNormal
+                                                    easing.type: Easing.OutQuad
+                                                }
+                                            }
+
+                                            Behavior on opacity {
+                                                NumberAnimation {
+                                                    duration: Style.animationFast
+                                                    easing.type: Easing.OutCubic
+                                                }
+                                            }
+
+                                            Rectangle {
+                                                anchors.centerIn: parent
+                                                width: Math.round(parent.width * 0.9)
+                                                height: Math.round(parent.height * 0.9)
+                                                radius: Math.max(width, height) / 2
+                                                color: Qt.rgba(previewItem.secondaryColor.r, previewItem.secondaryColor.g, previewItem.secondaryColor.b, 1)
+                                                opacity: previewItem.sd.glowOpacity
+                                                scale: 0.86 + (previewItem.sd.glowOpacity > 0 ? (previewItem.sd.stateKey === "focused" ? 0.28 : 0.14) : 0)
+
+                                                Behavior on opacity {
+                                                    NumberAnimation {
+                                                        duration: Style.animationNormal
+                                                        easing.type: Easing.OutCubic
+                                                    }
+                                                }
+
+                                                Behavior on scale {
+                                                    NumberAnimation {
+                                                        duration: Style.animationNormal
+                                                        easing.type: Easing.OutCubic
+                                                    }
+                                                }
+                                            }
+
+                                            Rectangle {
+                                                anchors.centerIn: parent
+                                                width: Math.round(parent.width * 0.62)
+                                                height: Math.round(parent.height * 0.62)
+                                                radius: Math.max(width, height) / 2
+                                                color: previewItem.sd.dimIcon ? Qt.rgba(Color.mOnSurfaceVariant.r, Color.mOnSurfaceVariant.g, Color.mOnSurfaceVariant.b, 0.4) : (previewItem.sd.stateKey === "focused" ? previewItem.accentColor : Color.mOnSurfaceVariant)
                                             }
                                         }
                                     }
@@ -443,6 +509,12 @@ Item {
                         if (root.transitionEnabled)
                             settleTimer.restart();
                     }
+                }
+
+                Item {
+                    id: previewForegroundLayer
+                    anchors.fill: parent
+                    z: 20
                 }
             }
         }

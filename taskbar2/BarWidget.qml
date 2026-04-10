@@ -1551,12 +1551,27 @@ Item {
                     property int modelIndex: index
                     objectName: isSeparator ? "taskbarSeparatorItem" : "taskbarAppItem"
 
-                    Component.onCompleted: syncIndicatorRect()
+                    Component.onCompleted: {
+                        syncIndicatorRect();
+                        iconForegroundProxy.syncPosition();
+                    }
                     Component.onDestruction: root.clearEntryIndicatorRect(modelData.entryKey)
-                    onXChanged: syncIndicatorRect()
-                    onYChanged: syncIndicatorRect()
-                    onWidthChanged: syncIndicatorRect()
-                    onHeightChanged: syncIndicatorRect()
+                    onXChanged: {
+                        syncIndicatorRect();
+                        iconForegroundProxy.syncPosition();
+                    }
+                    onYChanged: {
+                        syncIndicatorRect();
+                        iconForegroundProxy.syncPosition();
+                    }
+                    onWidthChanged: {
+                        syncIndicatorRect();
+                        iconForegroundProxy.syncPosition();
+                    }
+                    onHeightChanged: {
+                        syncIndicatorRect();
+                        iconForegroundProxy.syncPosition();
+                    }
 
                     DropArea {
                         visible: !taskbarItem.isSeparator
@@ -1761,6 +1776,7 @@ Item {
                                     }
                                 });
                             }
+                            iconForegroundProxy.syncPosition();
                         }
 
                         Drag.active: dragging
@@ -1770,6 +1786,12 @@ Item {
                         Drag.keys: ["taskbar-app"]
                         z: dragging ? 1000 : 0
                         scale: (dragging ? 1.05 : 1.0) * (taskbarItem.isHovered ? taskbarItem.hoverItemScale : 1.0)
+                        onXChanged: iconForegroundProxy.syncPosition()
+                        onYChanged: iconForegroundProxy.syncPosition()
+                        onWidthChanged: iconForegroundProxy.syncPosition()
+                        onHeightChanged: iconForegroundProxy.syncPosition()
+                        onScaleChanged: iconForegroundProxy.syncPosition()
+                        onShiftOffsetChanged: iconForegroundProxy.syncPosition()
 
                         Behavior on scale {
                             NumberAnimation {
@@ -1846,76 +1868,25 @@ Item {
                                     Layout.preferredWidth: root.itemSize
                                     Layout.preferredHeight: root.itemSize
                                     Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
-                                    onXChanged: taskbarItem.syncIndicatorRect()
-                                    onYChanged: taskbarItem.syncIndicatorRect()
-                                    onWidthChanged: taskbarItem.syncIndicatorRect()
-                                    onHeightChanged: taskbarItem.syncIndicatorRect()
+                                    onXChanged: {
+                                        taskbarItem.syncIndicatorRect();
+                                        iconForegroundProxy.syncPosition();
+                                    }
+                                    onYChanged: {
+                                        taskbarItem.syncIndicatorRect();
+                                        iconForegroundProxy.syncPosition();
+                                    }
+                                    onWidthChanged: {
+                                        taskbarItem.syncIndicatorRect();
+                                        iconForegroundProxy.syncPosition();
+                                    }
+                                    onHeightChanged: {
+                                        taskbarItem.syncIndicatorRect();
+                                        iconForegroundProxy.syncPosition();
+                                    }
 
                                     Item {
                                         anchors.fill: parent
-                                        y: taskbarItem.iconFocusLift
-                                        scale: taskbarItem.iconFocusScale
-                                        opacity: 0.78 + taskbarItem.focusVisualStrength * 0.22
-                                        transformOrigin: Item.Center
-
-                                        Behavior on y {
-                                            NumberAnimation {
-                                                duration: Style.animationFast
-                                                easing.type: Easing.OutCubic
-                                            }
-                                        }
-
-                                        Behavior on scale {
-                                            NumberAnimation {
-                                                duration: Style.animationNormal
-                                                easing.type: Easing.OutQuad
-                                            }
-                                        }
-
-                                        Behavior on opacity {
-                                            NumberAnimation {
-                                                duration: Style.animationFast
-                                                easing.type: Easing.OutCubic
-                                            }
-                                        }
-
-                                        Rectangle {
-                                            anchors.centerIn: parent
-                                            width: Math.round(parent.width * 0.9)
-                                            height: Math.round(parent.height * 0.9)
-                                            radius: Math.max(width, height) / 2
-                                            color: Qt.rgba(taskbarItem.focusSecondaryColor.r, taskbarItem.focusSecondaryColor.g, taskbarItem.focusSecondaryColor.b, 1)
-                                            opacity: taskbarItem.iconGlowOpacity
-                                            scale: 0.86 + taskbarItem.focusVisualStrength * 0.28
-
-                                            Behavior on opacity {
-                                                NumberAnimation {
-                                                    duration: Style.animationNormal
-                                                    easing.type: Easing.OutCubic
-                                                }
-                                            }
-
-                                            Behavior on scale {
-                                                NumberAnimation {
-                                                    duration: Style.animationNormal
-                                                    easing.type: Easing.OutCubic
-                                                }
-                                            }
-                                        }
-
-                                        IconImage {
-                                            anchors.fill: parent
-                                            source: ThemeIcons.iconForAppId(taskbarItem.modelData.appId)
-                                            smooth: true
-                                            asynchronous: true
-                                            layer.enabled: root.colorizeIcons
-                                            layer.effect: ShaderEffect {
-                                                property color targetColor: Settings.data.colorSchemes.darkMode ? Color.mOnSurface : Color.mSurfaceVariant
-                                                property real colorizeMode: 0.0
-
-                                                fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/appicon_colorize.frag.qsb")
-                                            }
-                                        }
                                     }
 
                                     Rectangle {
@@ -2085,6 +2056,107 @@ Item {
                                             }
                                         }
                                     }
+
+                                    Item {
+                                        id: iconForegroundProxy
+                                        parent: taskbarForegroundLayer
+                                        z: 1
+                                        visible: taskbarForegroundLayer.visible && taskbarItem.visible && !taskbarItem.isSeparator
+                                        enabled: false
+                                        property rect mappedRect: Qt.rect(0, 0, 0, 0)
+
+                                        function syncPosition() {
+                                            if (!taskbarForegroundLayer || !iconContainer) {
+                                                mappedRect = Qt.rect(0, 0, 0, 0);
+                                                return;
+                                            }
+
+                                            const topLeft = iconContainer.mapToItem(taskbarForegroundLayer, 0, 0);
+                                            const bottomRight = iconContainer.mapToItem(taskbarForegroundLayer, iconContainer.width, iconContainer.height);
+                                            const left = Math.min(topLeft.x, bottomRight.x);
+                                            const top = Math.min(topLeft.y, bottomRight.y);
+                                            const right = Math.max(topLeft.x, bottomRight.x);
+                                            const bottom = Math.max(topLeft.y, bottomRight.y);
+                                            mappedRect = Qt.rect(
+                                                Math.round(left),
+                                                Math.round(top),
+                                                Math.max(0, Math.round(right - left)),
+                                                Math.max(0, Math.round(bottom - top))
+                                            );
+                                        }
+
+                                        x: mappedRect.x
+                                        y: mappedRect.y
+                                        width: mappedRect.width
+                                        height: mappedRect.height
+
+                                        Item {
+                                            anchors.fill: parent
+                                            y: taskbarItem.iconFocusLift
+                                            scale: taskbarItem.iconFocusScale
+                                            opacity: 0.78 + taskbarItem.focusVisualStrength * 0.22
+                                            transformOrigin: Item.Center
+
+                                            Behavior on y {
+                                                NumberAnimation {
+                                                    duration: Style.animationFast
+                                                    easing.type: Easing.OutCubic
+                                                }
+                                            }
+
+                                            Behavior on scale {
+                                                NumberAnimation {
+                                                    duration: Style.animationNormal
+                                                    easing.type: Easing.OutQuad
+                                                }
+                                            }
+
+                                            Behavior on opacity {
+                                                NumberAnimation {
+                                                    duration: Style.animationFast
+                                                    easing.type: Easing.OutCubic
+                                                }
+                                            }
+
+                                            Rectangle {
+                                                anchors.centerIn: parent
+                                                width: Math.round(parent.width * 0.9)
+                                                height: Math.round(parent.height * 0.9)
+                                                radius: Math.max(width, height) / 2
+                                                color: Qt.rgba(taskbarItem.focusSecondaryColor.r, taskbarItem.focusSecondaryColor.g, taskbarItem.focusSecondaryColor.b, 1)
+                                                opacity: taskbarItem.iconGlowOpacity
+                                                scale: 0.86 + taskbarItem.focusVisualStrength * 0.28
+
+                                                Behavior on opacity {
+                                                    NumberAnimation {
+                                                        duration: Style.animationNormal
+                                                        easing.type: Easing.OutCubic
+                                                    }
+                                                }
+
+                                                Behavior on scale {
+                                                    NumberAnimation {
+                                                        duration: Style.animationNormal
+                                                        easing.type: Easing.OutCubic
+                                                    }
+                                                }
+                                            }
+
+                                            IconImage {
+                                                anchors.fill: parent
+                                                source: ThemeIcons.iconForAppId(taskbarItem.modelData.appId)
+                                                smooth: true
+                                                asynchronous: true
+                                                layer.enabled: root.colorizeIcons
+                                                layer.effect: ShaderEffect {
+                                                    property color targetColor: Settings.data.colorSchemes.darkMode ? Color.mOnSurface : Color.mSurfaceVariant
+                                                    property real colorizeMode: 0.0
+
+                                                    fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/appicon_colorize.frag.qsb")
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
 
                                 NText {
@@ -2202,6 +2274,12 @@ Item {
             verticalPosition: root.focusTransitionVerticalPosition
             blurRadius: root.focusTransitionBlur * root.focusTransitionScale
             opacityRatio: root.focusTransitionOpacityRatio
+        }
+
+        Item {
+            id: taskbarForegroundLayer
+            anchors.fill: parent
+            z: 30
         }
     }
 }
