@@ -717,7 +717,7 @@ ColumnLayout {
                 label: pluginApi?.tr("settings.itemGapUnits.label")
                 description: pluginApi?.tr("settings.itemGapUnits.desc")
                 from: 0
-                to: 12
+                to: 20
                 stepSize: 1
                 showReset: true
                 value: root.valueItemGapUnits
