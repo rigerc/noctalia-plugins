@@ -109,6 +109,7 @@ ColumnLayout {
     property bool valueOnlySameOutput: cfg.onlySameOutput ?? defaults.onlySameOutput ?? true
     property bool valueColorizeIcons: cfg.colorizeIcons ?? defaults.colorizeIcons ?? false
     property string valueIconColor: cfg.iconColor ?? defaults.iconColor ?? "primary"
+    property int valueIconColorOpacity: cfg.iconColorOpacity ?? defaults.iconColorOpacity ?? 100
     property bool valueShowTitle: isVerticalBar ? false : (cfg.showTitle ?? defaults.showTitle ?? false)
     property bool valueSmartWidth: cfg.smartWidth ?? defaults.smartWidth ?? true
     property int valueMaxTaskbarWidth: cfg.maxTaskbarWidth ?? defaults.maxTaskbarWidth ?? 40
@@ -197,6 +198,7 @@ ColumnLayout {
         pluginApi.pluginSettings.onlyActiveWorkspaces = root.valueOnlyActiveWorkspaces;
         pluginApi.pluginSettings.colorizeIcons = root.valueColorizeIcons;
         pluginApi.pluginSettings.iconColor = root.valueIconColor;
+        pluginApi.pluginSettings.iconColorOpacity = root.valueIconColorOpacity;
         pluginApi.pluginSettings.showTitle = root.valueShowTitle;
         pluginApi.pluginSettings.smartWidth = root.valueSmartWidth;
         pluginApi.pluginSettings.maxTaskbarWidth = root.valueMaxTaskbarWidth;
@@ -282,6 +284,7 @@ ColumnLayout {
                 titleFontWeight: root.valueTitleFontWeight
                 colorizeIcons: root.valueColorizeIcons
                 iconColorKey: root.valueIconColor
+                iconColorOpacity: root.valueIconColorOpacity
                 itemColors: root.valueItemColors
             }
         }
@@ -699,6 +702,21 @@ ColumnLayout {
                 currentKey: root.valueIconColor
                 onSelected: key => root.valueIconColor = key
                 defaultValue: defaults.iconColor ?? "primary"
+            }
+
+            NValueSlider {
+                visible: root.valueColorizeIcons
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.iconColorOpacity.label")
+                description: pluginApi?.tr("settings.iconColorOpacity.desc")
+                from: 0
+                to: 100
+                stepSize: 5
+                showReset: true
+                value: root.valueIconColorOpacity
+                defaultValue: defaults.iconColorOpacity ?? 100
+                onMoved: value => root.valueIconColorOpacity = Math.round(value)
+                text: Math.round(root.valueIconColorOpacity) + "%"
             }
 
             NDivider {

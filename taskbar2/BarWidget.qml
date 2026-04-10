@@ -40,6 +40,7 @@ Item {
     readonly property int maxTaskbarWidthPercent: cfg.maxTaskbarWidth ?? defaults.maxTaskbarWidth ?? 40
     readonly property bool colorizeIcons: cfg.colorizeIcons ?? defaults.colorizeIcons ?? false
     readonly property string iconColorKey: cfg.iconColor ?? defaults.iconColor ?? "primary"
+    readonly property int iconColorOpacity: cfg.iconColorOpacity ?? defaults.iconColorOpacity ?? 100
     readonly property real iconScale: cfg.iconScale ?? defaults.iconScale ?? 0.8
     readonly property real hoverIconScaleMultiplier: cfg.hoverIconScaleMultiplier ?? defaults.hoverIconScaleMultiplier ?? 1.0
     readonly property real hoverItemScalePercent: cfg.hoverItemScalePercent ?? defaults.hoverItemScalePercent ?? 0
@@ -151,7 +152,9 @@ Item {
     }
 
     function resolvedIconTintColor() {
-        return (!iconColorKey || iconColorKey === "none") ? Color.mPrimary : Color.resolveColorKey(iconColorKey);
+        const baseColor = (!iconColorKey || iconColorKey === "none") ? Color.mPrimary : Color.resolveColorKey(iconColorKey);
+        const alpha = Math.max(0, Math.min(100, iconColorOpacity)) / 100;
+        return Qt.rgba(baseColor.r, baseColor.g, baseColor.b, alpha);
     }
 
     function fallbackItemStateColor(stateKey, colorRole) {

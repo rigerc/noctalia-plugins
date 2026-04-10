@@ -4,6 +4,8 @@
   "hideMode": "visible",
   "colorizeIcons": true,
   "iconColor": "primary",
+  "iconColorOpacity": 100,
+  "iconCornerRadius": 7,
   "showTitle": true,
   "titleWidth": 120,
   "showPinnedApps": false,

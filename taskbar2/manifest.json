@@ -25,6 +25,7 @@
       "hideMode": "hidden",
       "colorizeIcons": false,
       "iconColor": "primary",
+      "iconColorOpacity": 100,
       "showTitle": false,
       "titleWidth": 120,
       "showPinnedApps": true,

@@ -31,6 +31,7 @@ Item {
     property string titleFontWeight: "medium"
     property bool colorizeIcons: false
     property string iconColorKey: "primary"
+    property int iconColorOpacity: 100
     property var itemColors: ({})
 
     property int focusedIndex: 0
@@ -101,7 +102,9 @@ Item {
     }
 
     function resolvedIconTintColor() {
-        return (!iconColorKey || iconColorKey === "none") ? Color.mPrimary : Color.resolveColorKey(iconColorKey);
+        const baseColor = (!iconColorKey || iconColorKey === "none") ? Color.mPrimary : Color.resolveColorKey(iconColorKey);
+        const alpha = Math.max(0, Math.min(100, iconColorOpacity)) / 100;
+        return Qt.rgba(baseColor.r, baseColor.g, baseColor.b, alpha);
     }
 
     function updateIndicatorRect(index, rect) {

@@ -82,6 +82,10 @@
         "label": "Icon color",
         "desc": "Choose the tint color used when icon colorization is enabled."
       },
+      "iconColorOpacity": {
+        "label": "Icon color opacity",
+        "desc": "Adjust how strongly the selected icon tint is applied."
+      },
     "showPinnedApps": {
       "label": "Show pinned apps",
       "desc": "Keep pinned applications visible even when they are not running."
