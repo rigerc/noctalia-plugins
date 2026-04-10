@@ -9,6 +9,7 @@ import qs.Services.Compositor
 import qs.Services.System
 import qs.Services.UI
 import qs.Widgets
+import "FocusTransitionMetrics.js" as FocusTransitionMetrics
 
 Item {
     id: root
@@ -1527,8 +1528,9 @@ Item {
                     readonly property bool showGroupedIndicator: root.groupApps && groupedCount > 1 && isRunning
                     readonly property real titlePointSize: Math.max(Style.fontSizeXS, root.barFontSize * root.titleFontScale)
                     readonly property real hoverItemScale: 1 + (root.hoverItemScalePercent / 100.0)
-                    readonly property color focusAccentColor: root.mixTransitionColors(0.18)
-                    readonly property color focusSecondaryColor: root.mixTransitionColors(0.9)
+                    readonly property color focusAccentColor: root.mixTransitionColors(0.1, 0.04)
+                    readonly property color focusSecondaryColor: root.mixTransitionColors(0.58, 0.08)
+                    readonly property color focusTertiaryColor: root.mixTransitionColors(0.82, 0.44)
                     readonly property real focusVisualStrength: isFocused ? 1.0 : (isHovered ? 0.4 : 0.0)
                     readonly property real focusWashOpacity: isFocused ? 0.22 : (isHovered ? 0.1 : 0.0)
                     readonly property real iconGlowOpacity: isFocused ? 0.32 : (isHovered ? 0.12 : 0.0)
@@ -1553,28 +1555,24 @@ Item {
 
                         const iconPoint = iconContainer.mapToItem(visualCapsule, 0, 0);
                         const itemPoint = taskbarItem.mapToItem(visualCapsule, 0, 0);
-                        const availableMainSpace = root.isVerticalBar ? iconContainer.height : iconContainer.width;
-                        const availableCrossSpace = (root.isVerticalBar ? taskbarItem.width - 4 : taskbarItem.height - 4) * 1.5;
-                        const markerLength = Math.min(availableMainSpace, Math.max(6, Math.round(root.itemSize * 0.25 * root.focusTransitionScale)));
-                        const markerThickness = Math.min(Math.max(2, availableCrossSpace), Math.round(6 * root.focusTransitionScale));
-                        let markerY;
-                        if (root.focusTransitionVerticalPosition === "top")
-                            markerY = Math.round(itemPoint.y + 2);
-                        else if (root.focusTransitionVerticalPosition === "middle")
-                            markerY = Math.round(itemPoint.y + (taskbarItem.height - markerThickness) / 2);
-                        else
-                            markerY = Math.round(itemPoint.y + taskbarItem.height - markerThickness - 2);
-                        const rect = root.isVerticalBar ? {
-                            "x": Math.round(itemPoint.x + taskbarItem.width - markerThickness - 2),
-                            "y": Math.round(iconPoint.y + (iconContainer.height - markerLength) / 2),
-                            "width": markerThickness,
-                            "height": markerLength
-                        } : {
-                            "x": Math.round(iconPoint.x + (iconContainer.width - markerLength) / 2),
-                            "y": markerY,
-                            "width": markerLength,
-                            "height": markerThickness
-                        };
+                        const rect = FocusTransitionMetrics.buildIndicatorRect({
+                            "isVerticalBar": root.isVerticalBar,
+                            "itemSize": root.itemSize,
+                            "scale": root.focusTransitionScale,
+                            "verticalPosition": root.focusTransitionVerticalPosition,
+                            "itemRect": {
+                                "x": itemPoint.x,
+                                "y": itemPoint.y,
+                                "width": taskbarItem.width,
+                                "height": taskbarItem.height
+                            },
+                            "iconRect": {
+                                "x": iconPoint.x,
+                                "y": iconPoint.y,
+                                "width": iconContainer.width,
+                                "height": iconContainer.height
+                            }
+                        });
 
                         root.updateEntryIndicatorRect(modelData.entryKey, rect);
                     }
@@ -1873,11 +1871,11 @@ Item {
                                     }
                                     GradientStop {
                                         position: 0.55
-                                        color: Qt.rgba(taskbarItem.focusSecondaryColor.r, taskbarItem.focusSecondaryColor.g, taskbarItem.focusSecondaryColor.b, 0.55)
+                                        color: Qt.rgba(taskbarItem.focusSecondaryColor.r, taskbarItem.focusSecondaryColor.g, taskbarItem.focusSecondaryColor.b, 0.68)
                                     }
                                     GradientStop {
                                         position: 1.0
-                                        color: Qt.rgba(taskbarItem.focusAccentColor.r, taskbarItem.focusAccentColor.g, taskbarItem.focusAccentColor.b, 0.18)
+                                        color: Qt.rgba(taskbarItem.focusTertiaryColor.r, taskbarItem.focusTertiaryColor.g, taskbarItem.focusTertiaryColor.b, 0.22)
                                     }
                                 }
 
@@ -1988,8 +1986,8 @@ Item {
                                             height: badgeHeight
                                             scale: taskbarItem.badgeFocusScale
                                             radius: height / 2
-                                            color: taskbarItem.focusedWindowIndex >= 0 ? taskbarItem.focusAccentColor : Qt.alpha(taskbarItem.focusSecondaryColor, 0.28)
-                                            border.color: taskbarItem.focusedWindowIndex >= 0 ? Qt.alpha(Color.mSurface, 0.92) : Qt.alpha(taskbarItem.focusSecondaryColor, 0.58)
+                                            color: taskbarItem.focusedWindowIndex >= 0 ? taskbarItem.focusAccentColor : Qt.alpha(taskbarItem.focusTertiaryColor, 0.3)
+                                            border.color: taskbarItem.focusedWindowIndex >= 0 ? Qt.alpha(taskbarItem.focusSecondaryColor, 0.9) : Qt.alpha(taskbarItem.focusSecondaryColor, 0.58)
                                             border.width: Style.borderS
 
                                             Behavior on scale {
@@ -2065,7 +2063,7 @@ Item {
                                                     radius: width / 2
                                                     x: root.isVerticalBar ? 0 : index * (parent.dotSize + parent.dotSpacing)
                                                     y: root.isVerticalBar ? index * (parent.dotSize + parent.dotSpacing) : 0
-                                                    color: actualIndex === taskbarItem.focusedWindowIndex ? taskbarItem.focusAccentColor : taskbarItem.focusSecondaryColor
+                                                    color: actualIndex === taskbarItem.focusedWindowIndex ? taskbarItem.focusAccentColor : taskbarItem.focusTertiaryColor
                                                     opacity: actualIndex === taskbarItem.focusedWindowIndex ? 1.0 : 0.56
 
                                                     Behavior on scale {
@@ -2159,7 +2157,7 @@ Item {
                                                 width: Math.round(parent.width * 0.9)
                                                 height: Math.round(parent.height * 0.9)
                                                 radius: Math.max(width, height) / 2
-                                                color: Qt.rgba(taskbarItem.focusSecondaryColor.r, taskbarItem.focusSecondaryColor.g, taskbarItem.focusSecondaryColor.b, 1)
+                                                color: Qt.rgba(taskbarItem.focusTertiaryColor.r, taskbarItem.focusTertiaryColor.g, taskbarItem.focusTertiaryColor.b, 1)
                                                 opacity: taskbarItem.iconGlowOpacity
                                                 scale: 0.86 + taskbarItem.focusVisualStrength * 0.28
 

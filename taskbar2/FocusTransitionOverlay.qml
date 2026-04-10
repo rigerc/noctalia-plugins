@@ -50,6 +50,8 @@ Item {
     property real focusTravelBloomEffectMix: 0.2
     property real focusTravelDirectionSign: 1
     property string focusTravelLeadShape: "pill"
+    property real focusTravelLeadMainScale: 1
+    property real focusTravelLeadCrossScale: 1
     property string focusTravelTrailShape: "none"
     property int focusTravelTrailingPieces: 0
     property real focusTravelTrailingGap: 0
@@ -59,6 +61,12 @@ Item {
     property real focusTravelTrailingScaleFalloff: 0.14
     property real focusTravelRibbonStrength: 0
     property real focusTravelHaloStrength: 0
+    property string focusTravelLeadRole: "lead"
+    property string focusTravelTrailRole: "glow"
+    property string focusTravelGlowRole: "glow"
+    property string focusTravelHaloRole: "effect"
+    property string focusTravelRibbonRole: "effect"
+    property string focusTravelBloomRole: "glow"
     property var focusTravelStartRect: null
     property var focusTravelEndRect: null
     property var pendingStartRect: null
@@ -68,6 +76,33 @@ Item {
     readonly property real focusTravelMarkerCenterAxis: focusTravelAxisPosition + (focusTravelLength / 2)
     readonly property real focusTravelTrailStartAxis: Math.min(focusTravelStartCenterAxis, focusTravelMarkerCenterAxis)
     readonly property real focusTravelTrailExtent: Math.max(0, Math.abs(focusTravelMarkerCenterAxis - focusTravelStartCenterAxis))
+    readonly property real focusTravelLeadMainSize: {
+        const baseSize = root.isVerticalBar ? root.focusTravelLength : root.focusTravelLength;
+        const crossAnchor = Math.max(1, root.focusTravelThickness);
+        switch (root.focusTravelLeadShape) {
+        case "dot":
+            return Math.max(crossAnchor * 1.35, Math.min(baseSize, crossAnchor * 1.9));
+        case "diamond":
+            return Math.max(crossAnchor * 1.4, Math.min(baseSize, crossAnchor * 2.2));
+        case "ring":
+            return Math.max(crossAnchor * 1.55, Math.min(baseSize, crossAnchor * 2.4));
+        default:
+            return Math.max(1, baseSize * root.focusTravelLeadMainScale);
+        }
+    }
+    readonly property real focusTravelLeadCrossSize: {
+        const crossAnchor = Math.max(1, root.focusTravelThickness);
+        switch (root.focusTravelLeadShape) {
+        case "dot":
+        case "diamond":
+        case "ring":
+            return crossAnchor * root.focusTravelLeadCrossScale * 1.15;
+        default:
+            return Math.max(1, crossAnchor * root.focusTravelLeadCrossScale);
+        }
+    }
+    readonly property real focusTravelLeadX: root.isVerticalBar ? (root.focusTravelCrossPosition + (root.focusTravelThickness - root.focusTravelLeadCrossSize) / 2) : (root.focusTravelAxisPosition + (root.focusTravelLength - root.focusTravelLeadMainSize) / 2)
+    readonly property real focusTravelLeadY: root.isVerticalBar ? (root.focusTravelAxisPosition + (root.focusTravelLength - root.focusTravelLeadMainSize) / 2) : (root.focusTravelCrossPosition + (root.focusTravelThickness - root.focusTravelLeadCrossSize) / 2)
 
     signal transitionFinished()
 
@@ -78,9 +113,25 @@ Item {
     }
 
     function mixTransitionColors(mixRatio, effectRatio) {
-        const baseColor = resolveFocusTransitionColor(leadColorKey, Color.mPrimary);
-        const glowColor = resolveFocusTransitionColor(glowColorKey, Color.mPrimary);
-        const effColor = resolveFocusTransitionColor(effectColorKey, Color.mTertiary);
+        return mixTransitionColorRoles(mixRatio, effectRatio, "lead", "glow", "effect");
+    }
+
+    function resolveRoleColor(role) {
+        switch (role) {
+        case "glow":
+            return resolveFocusTransitionColor(glowColorKey, Color.mSecondary);
+        case "effect":
+            return resolveFocusTransitionColor(effectColorKey, Color.mTertiary);
+        case "lead":
+        default:
+            return resolveFocusTransitionColor(leadColorKey, Color.mPrimary);
+        }
+    }
+
+    function mixTransitionColorRoles(mixRatio, effectRatio, fromRole, toRole, effectRole) {
+        const baseColor = resolveRoleColor(fromRole || "lead");
+        const glowColor = resolveRoleColor(toRole || "glow");
+        const effColor = resolveRoleColor(effectRole || "effect");
         const ratio = Math.max(0, Math.min(1, mixRatio));
         const eRatio = Math.max(0, Math.min(1, effectRatio || 0));
         const r1 = baseColor.r + (glowColor.r - baseColor.r) * ratio;
@@ -234,6 +285,23 @@ Item {
         focusTravelTrailingScaleFalloff = scaleFalloff;
     }
 
+    function currentTravelRect() {
+        if (!focusTravelActive)
+            return null;
+
+        return root.isVerticalBar ? {
+            "x": Math.round(root.focusTravelCrossPosition),
+            "y": Math.round(root.focusTravelAxisPosition),
+            "width": Math.max(1, Math.round(root.focusTravelThickness)),
+            "height": Math.max(1, Math.round(root.focusTravelLength))
+        } : {
+            "x": Math.round(root.focusTravelAxisPosition),
+            "y": Math.round(root.focusTravelCrossPosition),
+            "width": Math.max(1, Math.round(root.focusTravelLength)),
+            "height": Math.max(1, Math.round(root.focusTravelThickness))
+        };
+    }
+
     function cancelTransition() {
         completionSignalPending = false;
         focusTravelActive = false;
@@ -261,6 +329,8 @@ Item {
         focusTravelBloomEffectMix = 0.2;
         focusTravelDirectionSign = 1;
         focusTravelLeadShape = "pill";
+        focusTravelLeadMainScale = 1;
+        focusTravelLeadCrossScale = 1;
         focusTravelTrailShape = "none";
         focusTravelTrailingPieces = 0;
         focusTravelTrailingGap = 0;
@@ -270,6 +340,12 @@ Item {
         focusTravelTrailingScaleFalloff = 0.14;
         focusTravelRibbonStrength = 0;
         focusTravelHaloStrength = 0;
+        focusTravelLeadRole = "lead";
+        focusTravelTrailRole = "glow";
+        focusTravelGlowRole = "glow";
+        focusTravelHaloRole = "effect";
+        focusTravelRibbonRole = "effect";
+        focusTravelBloomRole = "glow";
         focusTravelStartRect = null;
         focusTravelEndRect = null;
         pendingStartRect = null;
@@ -308,6 +384,10 @@ Item {
             "intensityRatio": intensityRatio,
             "uiScaleRatio": Style.uiScaleRatio
         });
+        const colorMix = spec.colorMix || ({});
+        const effectMix = spec.effectMix || ({});
+        const layerRoles = spec.layerRoles || ({});
+        const layers = spec.layers || ({});
 
         totalDurationMs = FocusTransitionStyle.totalDurationForSpec(spec);
         focusTravelStartRect = startRect;
@@ -321,22 +401,30 @@ Item {
         focusTravelGlowStrength = spec.glowStrength;
         focusTravelBloomOpacity = 0;
         focusTravelBloomScale = 1;
-        focusTravelLeadColorMix = spec.colorMix?.lead ?? 0.08;
-        focusTravelTrailColorMix = spec.colorMix?.trail ?? 0.72;
-        focusTravelGlowColorMix = spec.colorMix?.glow ?? 1;
-        focusTravelHaloColorMix = spec.colorMix?.halo ?? 0.86;
-        focusTravelRibbonColorMix = spec.colorMix?.ribbon ?? 0.56;
-        focusTravelBloomColorMix = spec.colorMix?.bloom ?? 0.94;
-        focusTravelLeadEffectMix = spec.effectMix?.lead ?? 0.15;
-        focusTravelTrailEffectMix = spec.effectMix?.trail ?? 0.25;
-        focusTravelGlowEffectMix = spec.effectMix?.glow ?? 0.18;
-        focusTravelHaloEffectMix = spec.effectMix?.halo ?? 0.22;
-        focusTravelRibbonEffectMix = spec.effectMix?.ribbon ?? 0.3;
-        focusTravelBloomEffectMix = spec.effectMix?.bloom ?? 0.2;
+        focusTravelLeadColorMix = colorMix.lead !== undefined ? colorMix.lead : 0.08;
+        focusTravelTrailColorMix = colorMix.trail !== undefined ? colorMix.trail : 0.72;
+        focusTravelGlowColorMix = colorMix.glow !== undefined ? colorMix.glow : 1;
+        focusTravelHaloColorMix = colorMix.halo !== undefined ? colorMix.halo : 0.86;
+        focusTravelRibbonColorMix = colorMix.ribbon !== undefined ? colorMix.ribbon : 0.56;
+        focusTravelBloomColorMix = colorMix.bloom !== undefined ? colorMix.bloom : 0.94;
+        focusTravelLeadEffectMix = effectMix.lead !== undefined ? effectMix.lead : 0.15;
+        focusTravelTrailEffectMix = effectMix.trail !== undefined ? effectMix.trail : 0.25;
+        focusTravelGlowEffectMix = effectMix.glow !== undefined ? effectMix.glow : 0.18;
+        focusTravelHaloEffectMix = effectMix.halo !== undefined ? effectMix.halo : 0.22;
+        focusTravelRibbonEffectMix = effectMix.ribbon !== undefined ? effectMix.ribbon : 0.3;
+        focusTravelBloomEffectMix = effectMix.bloom !== undefined ? effectMix.bloom : 0.2;
         focusTravelDirectionSign = direction;
         focusTravelLeadShape = spec.leadShape;
+        focusTravelLeadMainScale = spec.leadMainScale !== undefined ? spec.leadMainScale : 1;
+        focusTravelLeadCrossScale = spec.leadCrossScale !== undefined ? spec.leadCrossScale : 1;
         focusTravelRibbonStrength = spec.ribbonStrength;
         focusTravelHaloStrength = spec.haloStrength;
+        focusTravelLeadRole = layerRoles.lead !== undefined ? layerRoles.lead : "lead";
+        focusTravelTrailRole = layerRoles.trail !== undefined ? layerRoles.trail : "glow";
+        focusTravelGlowRole = layerRoles.glow !== undefined ? layerRoles.glow : "glow";
+        focusTravelHaloRole = layerRoles.halo !== undefined ? layerRoles.halo : "effect";
+        focusTravelRibbonRole = layerRoles.ribbon !== undefined ? layerRoles.ribbon : "effect";
+        focusTravelBloomRole = layerRoles.bloom !== undefined ? layerRoles.bloom : "glow";
         setFocusTransitionPieces(spec.trailShape, spec.trailingPieces, spec.trailingGap, spec.trailingMainRatio, spec.trailingCrossRatio, spec.trailingOpacityFalloff, spec.trailingScaleFalloff);
         focusTravelActive = true;
         completionSignalPending = true;
@@ -344,11 +432,11 @@ Item {
         configureAxisAnimation(spec.axis.firstTo, spec.axis.firstDuration, spec.axis.firstEasing, spec.axis.secondTo, spec.axis.secondDuration, spec.axis.secondEasing);
         configureLengthAnimation(spec.length.firstTo, spec.length.firstDuration, spec.length.firstEasing, spec.length.secondTo, spec.length.secondDuration, spec.length.secondEasing);
         configureOpacityAnimation(spec.opacity.startOpacity, spec.opacity.fadeInTo, spec.opacity.fadeInDuration, spec.opacity.holdDuration, spec.opacity.fadeOutTo, spec.opacity.fadeOutDuration, spec.opacity.fadeInEasing, spec.opacity.fadeOutEasing);
-        configureLayerOpacityAnimation(focusTravelLeadOpacitySequence, focusTravelLeadOpacityStep1, focusTravelLeadOpacityPause, focusTravelLeadOpacityStep2, "focusTravelLeadOpacity", spec.layers?.lead, "outCubic", "inCubic");
-        configureLayerOpacityAnimation(focusTravelTrailOpacitySequence, focusTravelTrailOpacityStep1, focusTravelTrailOpacityPause, focusTravelTrailOpacityStep2, "focusTravelTrailOpacity", spec.layers?.trail, "outCubic", "inCubic");
-        configureLayerOpacityAnimation(focusTravelGlowOpacitySequence, focusTravelGlowOpacityStep1, focusTravelGlowOpacityPause, focusTravelGlowOpacityStep2, "focusTravelGlowOpacity", spec.layers?.glow, "outCubic", "inCubic");
-        configureLayerOpacityAnimation(focusTravelHaloOpacitySequence, focusTravelHaloOpacityStep1, focusTravelHaloOpacityPause, focusTravelHaloOpacityStep2, "focusTravelHaloOpacity", spec.layers?.halo, "outCubic", "inCubic");
-        configureLayerOpacityAnimation(focusTravelRibbonOpacitySequence, focusTravelRibbonOpacityStep1, focusTravelRibbonOpacityPause, focusTravelRibbonOpacityStep2, "focusTravelRibbonOpacity", spec.layers?.ribbon, "outCubic", "inCubic");
+        configureLayerOpacityAnimation(focusTravelLeadOpacitySequence, focusTravelLeadOpacityStep1, focusTravelLeadOpacityPause, focusTravelLeadOpacityStep2, "focusTravelLeadOpacity", layers.lead, "outCubic", "inCubic");
+        configureLayerOpacityAnimation(focusTravelTrailOpacitySequence, focusTravelTrailOpacityStep1, focusTravelTrailOpacityPause, focusTravelTrailOpacityStep2, "focusTravelTrailOpacity", layers.trail, "outCubic", "inCubic");
+        configureLayerOpacityAnimation(focusTravelGlowOpacitySequence, focusTravelGlowOpacityStep1, focusTravelGlowOpacityPause, focusTravelGlowOpacityStep2, "focusTravelGlowOpacity", layers.glow, "outCubic", "inCubic");
+        configureLayerOpacityAnimation(focusTravelHaloOpacitySequence, focusTravelHaloOpacityStep1, focusTravelHaloOpacityPause, focusTravelHaloOpacityStep2, "focusTravelHaloOpacity", layers.halo, "outCubic", "inCubic");
+        configureLayerOpacityAnimation(focusTravelRibbonOpacitySequence, focusTravelRibbonOpacityStep1, focusTravelRibbonOpacityPause, focusTravelRibbonOpacityStep2, "focusTravelRibbonOpacity", layers.ribbon, "outCubic", "inCubic");
 
         if (spec.bloom) {
             configureBloomAnimation(spec.bloom.delayDuration, spec.bloom.riseTo, spec.bloom.riseDuration, spec.bloom.fallDuration, spec.bloom.scaleTo);
@@ -361,11 +449,12 @@ Item {
     }
 
     function scheduleTransition(startRect, endRect) {
+        const liveStartRect = currentTravelRect();
         cancelTransition();
-        if (!transitionEnabled || !startRect || !endRect)
+        if (!transitionEnabled || !endRect)
             return;
 
-        pendingStartRect = startRect;
+        pendingStartRect = liveStartRect || startRect;
         pendingEndRect = endRect;
         focusTransitionDelayTimer.interval = Math.max(0, delayMs);
         focusTransitionDelayTimer.restart();
@@ -605,12 +694,12 @@ Item {
 
     visible: focusTravelActive && focusTravelOpacity > 0
 
-    readonly property color ribbonColor: mixTransitionColors(focusTravelRibbonColorMix, focusTravelRibbonEffectMix)
-    readonly property color trailColor: mixTransitionColors(focusTravelTrailColorMix, focusTravelTrailEffectMix)
-    readonly property color glowColor: mixTransitionColors(focusTravelGlowColorMix, focusTravelGlowEffectMix)
-    readonly property color haloColor: mixTransitionColors(focusTravelHaloColorMix, focusTravelHaloEffectMix)
-    readonly property color leadColor: mixTransitionColors(focusTravelLeadColorMix, focusTravelLeadEffectMix)
-    readonly property color bloomColor: mixTransitionColors(focusTravelBloomColorMix, focusTravelBloomEffectMix)
+    readonly property color ribbonColor: mixTransitionColorRoles(focusTravelRibbonColorMix, focusTravelRibbonEffectMix, focusTravelLeadRole, focusTravelRibbonRole, "effect")
+    readonly property color trailColor: mixTransitionColorRoles(focusTravelTrailColorMix, focusTravelTrailEffectMix, focusTravelLeadRole, focusTravelTrailRole, "effect")
+    readonly property color glowColor: mixTransitionColorRoles(focusTravelGlowColorMix, focusTravelGlowEffectMix, focusTravelLeadRole, focusTravelGlowRole, "effect")
+    readonly property color haloColor: mixTransitionColorRoles(focusTravelHaloColorMix, focusTravelHaloEffectMix, focusTravelLeadRole, focusTravelHaloRole, "effect")
+    readonly property color leadColor: mixTransitionColorRoles(focusTravelLeadColorMix, focusTravelLeadEffectMix, focusTravelLeadRole, focusTravelGlowRole, "effect")
+    readonly property color bloomColor: mixTransitionColorRoles(focusTravelBloomColorMix, focusTravelBloomEffectMix, focusTravelLeadRole, focusTravelBloomRole, "effect")
 
     Rectangle {
         visible: root.focusTravelRibbonStrength > 0 && root.focusTravelTrailExtent > 0 && root.focusTravelRibbonOpacity > 0
@@ -668,11 +757,15 @@ Item {
             readonly property real pieceMain: {
                 if (root.focusTravelTrailShape === "dot")
                     return Math.max(3, Math.min(baseMain, baseCross) * scaleFactor);
+                if (root.focusTravelTrailShape === "pebble")
+                    return Math.max(4, baseMain * scaleFactor * 0.86);
                 return Math.max(3, baseMain * scaleFactor);
             }
             readonly property real pieceCross: {
                 if (root.focusTravelTrailShape === "dot")
                     return pieceMain;
+                if (root.focusTravelTrailShape === "pebble")
+                    return Math.max(4, baseCross * scaleFactor * 1.08);
                 return Math.max(3, baseCross * scaleFactor);
             }
             readonly property real pieceOpacity: Math.max(0, root.focusTravelOpacity * root.focusTravelTrailOpacity * root.opacityRatio * (1 - index * root.focusTravelTrailingOpacityFalloff))
@@ -680,12 +773,21 @@ Item {
             readonly property real pieceY: root.isVerticalBar ? (centerAxis - pieceMain / 2) : (root.focusTravelCrossPosition + (root.focusTravelThickness - pieceCross) / 2)
             readonly property real pieceWidth: root.isVerticalBar ? pieceCross : pieceMain
             readonly property real pieceHeight: root.isVerticalBar ? pieceMain : pieceCross
+            readonly property real pieceRotation: {
+                if (root.focusTravelTrailShape === "shard")
+                    return root.focusTravelDirectionSign * (root.isVerticalBar ? -26 : 26);
+                if (root.focusTravelTrailShape === "pebble")
+                    return root.focusTravelDirectionSign * (index % 2 === 0 ? 10 : -10);
+                return 0;
+            }
 
             visible: enabledPiece
             x: pieceX
             y: pieceY
             width: pieceWidth
             height: pieceHeight
+            rotation: pieceRotation
+            transformOrigin: Item.Center
             radius: {
                 switch (root.focusTravelTrailShape) {
                 case "shard":
@@ -702,15 +804,72 @@ Item {
         }
     }
 
-    Rectangle {
-        x: root.isVerticalBar ? root.focusTravelCrossPosition : root.focusTravelAxisPosition
-        y: root.isVerticalBar ? root.focusTravelAxisPosition : root.focusTravelCrossPosition
-        width: root.isVerticalBar ? root.focusTravelThickness : root.focusTravelLength
-        height: root.isVerticalBar ? root.focusTravelLength : root.focusTravelThickness
-        radius: root.focusTravelLeadShape === "rect" ? Math.min(Style.radiusXS, Math.min(width, height) / 3) : Math.max(width, height) / 2
-        border.width: root.focusTravelLeadShape === "rect" ? Math.max(1, Style.borderS) : 0
-        border.color: root.focusTravelLeadShape === "rect" ? root.applyTransitionAlpha(root.leadColor, 0.65 * root.focusTravelOpacity * root.opacityRatio * root.focusTravelLeadOpacity) : "transparent"
-        color: root.applyTransitionAlpha(root.leadColor, root.focusTravelOpacity * root.opacityRatio * root.focusTravelLeadOpacity)
+    Item {
+        x: root.focusTravelLeadX
+        y: root.focusTravelLeadY
+        width: root.isVerticalBar ? root.focusTravelLeadCrossSize : root.focusTravelLeadMainSize
+        height: root.isVerticalBar ? root.focusTravelLeadMainSize : root.focusTravelLeadCrossSize
+
+        Rectangle {
+            anchors.fill: parent
+            visible: root.focusTravelLeadShape !== "bracket" && root.focusTravelLeadShape !== "ring"
+            radius: root.focusTravelLeadShape === "diamond" ? Math.min(Style.radiusXS, Math.min(width, height) / 3) : Math.max(width, height) / 2
+            rotation: root.focusTravelLeadShape === "diamond" ? root.focusTravelDirectionSign * (root.isVerticalBar ? -45 : 45) : 0
+            transformOrigin: Item.Center
+            border.width: root.focusTravelLeadShape === "diamond" ? Math.max(1, Style.borderS) : 0
+            border.color: root.focusTravelLeadShape === "diamond" ? root.applyTransitionAlpha(root.leadColor, 0.65 * root.focusTravelOpacity * root.opacityRatio * root.focusTravelLeadOpacity) : "transparent"
+            color: root.applyTransitionAlpha(root.leadColor, root.focusTravelOpacity * root.opacityRatio * root.focusTravelLeadOpacity)
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            visible: root.focusTravelLeadShape === "ring"
+            radius: Math.max(width, height) / 2
+            color: "transparent"
+            border.width: Math.max(1, Math.round(Math.min(width, height) * 0.18))
+            border.color: root.applyTransitionAlpha(root.leadColor, root.focusTravelOpacity * root.opacityRatio * root.focusTravelLeadOpacity)
+        }
+
+        Item {
+            anchors.fill: parent
+            visible: root.focusTravelLeadShape === "bracket"
+
+            Rectangle {
+                anchors.left: parent.left
+                anchors.top: parent.top
+                width: root.isVerticalBar ? Math.max(1, parent.width * 0.7) : Math.max(1, parent.width * 0.16)
+                height: root.isVerticalBar ? Math.max(1, parent.height * 0.16) : Math.max(1, parent.height * 0.72)
+                radius: Math.min(width, height) / 2
+                color: root.applyTransitionAlpha(root.leadColor, root.focusTravelOpacity * root.opacityRatio * root.focusTravelLeadOpacity)
+            }
+
+            Rectangle {
+                anchors.left: parent.left
+                anchors.bottom: parent.bottom
+                width: root.isVerticalBar ? Math.max(1, parent.width * 0.7) : Math.max(1, parent.width * 0.16)
+                height: root.isVerticalBar ? Math.max(1, parent.height * 0.16) : Math.max(1, parent.height * 0.72)
+                radius: Math.min(width, height) / 2
+                color: root.applyTransitionAlpha(root.leadColor, root.focusTravelOpacity * root.opacityRatio * root.focusTravelLeadOpacity)
+            }
+
+            Rectangle {
+                anchors.right: parent.right
+                anchors.top: parent.top
+                width: root.isVerticalBar ? Math.max(1, parent.width * 0.7) : Math.max(1, parent.width * 0.16)
+                height: root.isVerticalBar ? Math.max(1, parent.height * 0.16) : Math.max(1, parent.height * 0.72)
+                radius: Math.min(width, height) / 2
+                color: root.applyTransitionAlpha(root.leadColor, root.focusTravelOpacity * root.opacityRatio * root.focusTravelLeadOpacity)
+            }
+
+            Rectangle {
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                width: root.isVerticalBar ? Math.max(1, parent.width * 0.7) : Math.max(1, parent.width * 0.16)
+                height: root.isVerticalBar ? Math.max(1, parent.height * 0.16) : Math.max(1, parent.height * 0.72)
+                radius: Math.min(width, height) / 2
+                color: root.applyTransitionAlpha(root.leadColor, root.focusTravelOpacity * root.opacityRatio * root.focusTravelLeadOpacity)
+            }
+        }
     }
 
     Rectangle {

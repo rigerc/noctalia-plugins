@@ -45,7 +45,7 @@
       "focusTransitionIntensity": 60,
       "focusTransitionScale": 1.0,
       "focusTransitionLeadColor": "primary",
-      "focusTransitionGlowColor": "primary",
+      "focusTransitionGlowColor": "secondary",
       "focusTransitionBlur": 6,
       "focusTransitionTransparency": 15,
       "focusTransitionEffectColor": "tertiary",

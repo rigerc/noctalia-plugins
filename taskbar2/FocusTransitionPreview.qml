@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.Commons
 import qs.Widgets
+import "FocusTransitionMetrics.js" as FocusTransitionMetrics
 
 Item {
     id: root
@@ -227,8 +228,9 @@ Item {
                         readonly property color itemBgColor: root.resolveItemStateColor(stateKey, "background")
                         readonly property color itemBorderColor: root.resolveItemStateColor(stateKey, "border")
                         readonly property color itemTextColor: root.resolveItemStateColor(stateKey, "text")
-                        readonly property color accentColor: overlay.mixTransitionColors(0.18)
-                        readonly property color secondaryColor: overlay.mixTransitionColors(0.9)
+                        readonly property color accentColor: overlay.mixTransitionColors(0.1, 0.04)
+                        readonly property color secondaryColor: overlay.mixTransitionColors(0.58, 0.08)
+                        readonly property color tertiaryColor: overlay.mixTransitionColors(0.82, 0.44)
                         readonly property bool isAnimFocused: index === root.focusedIndex
                         readonly property real effectiveItemScale: effectiveState.itemMult
                         readonly property string stateKey: effectiveStateKey
@@ -240,28 +242,24 @@ Item {
                         function syncIndicatorRect() {
                             const iconPoint = iconContainer.mapToItem(previewSurface, 0, 0);
                             const itemPoint = previewItem.mapToItem(previewSurface, 0, 0);
-                            const availableMainSpace = root.isVerticalBar ? iconContainer.height : iconContainer.width;
-                            const availableCrossSpace = (root.isVerticalBar ? previewItem.width - 4 : previewItem.height - 4) * 1.5;
-                            const markerLength = Math.min(availableMainSpace, Math.max(6, Math.round(root.itemSize * 0.25 * root.scale)));
-                            const markerThickness = Math.min(Math.max(2, availableCrossSpace), Math.round(6 * root.scale));
-                            let markerY;
-                            if (root.verticalPosition === "top")
-                                markerY = Math.round(itemPoint.y + 2);
-                            else if (root.verticalPosition === "middle")
-                                markerY = Math.round(itemPoint.y + (previewItem.height - markerThickness) / 2);
-                            else
-                                markerY = Math.round(itemPoint.y + previewItem.height - markerThickness - 2);
-                            const rect = root.isVerticalBar ? {
-                                "x": Math.round(itemPoint.x + previewItem.width - markerThickness - 2),
-                                "y": Math.round(iconPoint.y + (iconContainer.height - markerLength) / 2),
-                                "width": markerThickness,
-                                "height": markerLength
-                            } : {
-                                "x": Math.round(iconPoint.x + (iconContainer.width - markerLength) / 2),
-                                "y": markerY,
-                                "width": markerLength,
-                                "height": markerThickness
-                            };
+                            const rect = FocusTransitionMetrics.buildIndicatorRect({
+                                "isVerticalBar": root.isVerticalBar,
+                                "itemSize": root.itemSize,
+                                "scale": root.scale,
+                                "verticalPosition": root.verticalPosition,
+                                "itemRect": {
+                                    "x": itemPoint.x,
+                                    "y": itemPoint.y,
+                                    "width": previewItem.width,
+                                    "height": previewItem.height
+                                },
+                                "iconRect": {
+                                    "x": iconPoint.x,
+                                    "y": iconPoint.y,
+                                    "width": iconContainer.width,
+                                    "height": iconContainer.height
+                                }
+                            });
                             root.updateIndicatorRect(index, rect);
                         }
 
@@ -331,12 +329,12 @@ Item {
 
                                     GradientStop {
                                         position: 0.55
-                                        color: Qt.rgba(previewItem.secondaryColor.r, previewItem.secondaryColor.g, previewItem.secondaryColor.b, 0.55)
+                                        color: Qt.rgba(previewItem.secondaryColor.r, previewItem.secondaryColor.g, previewItem.secondaryColor.b, 0.68)
                                     }
 
                                     GradientStop {
                                         position: 1.0
-                                        color: Qt.rgba(previewItem.accentColor.r, previewItem.accentColor.g, previewItem.accentColor.b, 0.18)
+                                        color: Qt.rgba(previewItem.tertiaryColor.r, previewItem.tertiaryColor.g, previewItem.tertiaryColor.b, 0.22)
                                     }
                                 }
 
@@ -477,7 +475,7 @@ Item {
                                                 width: Math.round(parent.width * 0.9)
                                                 height: Math.round(parent.height * 0.9)
                                                 radius: Math.max(width, height) / 2
-                                                color: Qt.rgba(previewItem.secondaryColor.r, previewItem.secondaryColor.g, previewItem.secondaryColor.b, 1)
+                                                color: Qt.rgba(previewItem.tertiaryColor.r, previewItem.tertiaryColor.g, previewItem.tertiaryColor.b, 1)
                                                 opacity: previewItem.effectiveState.glowOpacity
                                                 scale: 0.86 + (previewItem.effectiveState.glowOpacity > 0 ? (previewItem.stateKey === "focused" ? 0.28 : 0.14) : 0)
 
