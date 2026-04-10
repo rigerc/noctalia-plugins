@@ -12,6 +12,7 @@ ColumnLayout {
     property var cfg: pluginApi?.pluginSettings || ({})
     property var defaults: pluginApi?.manifest?.metadata?.defaultSettings || ({})
     property real preferredWidth: 760 * Style.uiScaleRatio
+    property real tabViewportHeight: 440 * Style.uiScaleRatio
 
     readonly property bool isVerticalBar: Settings.data.bar.position === "left" || Settings.data.bar.position === "right"
     readonly property var itemColorStates: [
@@ -310,87 +311,99 @@ ColumnLayout {
     NTabView {
         id: tabView
         Layout.fillWidth: true
-        Layout.fillHeight: true
+        Layout.preferredHeight: root.tabViewportHeight
+        Layout.minimumHeight: Math.round(260 * Style.uiScaleRatio)
         currentIndex: tabBar.currentIndex
 
-        NScrollView {
-            id: generalScrollView
-            clip: true
-            horizontalPolicy: ScrollBar.AlwaysOff
-            reserveScrollbarSpace: false
-            gradientColor: Color.mSurface
+        Item {
+            width: tabView.width
+            height: tabView.height
 
-            ColumnLayout {
-                width: generalScrollView.availableWidth
-                spacing: Style.marginM
+            NScrollView {
+                id: generalScrollView
+                anchors.fill: parent
+                clip: true
+                horizontalPolicy: ScrollBar.AlwaysOff
+                reserveScrollbarSpace: false
+                gradientColor: Color.mSurface
 
-                NComboBox {
-                    Layout.fillWidth: true
-                    label: pluginApi?.tr("settings.hideMode.label")
-                    description: pluginApi?.tr("settings.hideMode.desc")
-                    model: [
-                        {
-                            "key": "visible",
-                            "name": pluginApi?.tr("options.visible")
-                        },
-                        {
-                            "key": "hidden",
-                            "name": pluginApi?.tr("options.hidden")
-                        },
-                        {
-                            "key": "transparent",
-                            "name": pluginApi?.tr("options.transparent")
-                        }
-                    ]
-                    currentKey: root.valueHideMode
-                    onSelected: key => root.valueHideMode = key
-                    defaultValue: defaults.hideMode ?? "hidden"
-                }
+                ColumnLayout {
+                    width: generalScrollView.availableWidth
+                    spacing: Style.marginM
 
-                NToggle {
-                    Layout.fillWidth: true
-                    label: pluginApi?.tr("settings.onlySameOutput.label")
-                    description: pluginApi?.tr("settings.onlySameOutput.desc")
-                    checked: root.valueOnlySameOutput
-                    onToggled: checked => root.valueOnlySameOutput = checked
-                    defaultValue: defaults.onlySameOutput ?? true
-                }
+                    NComboBox {
+                        Layout.fillWidth: true
+                        label: pluginApi?.tr("settings.hideMode.label")
+                        description: pluginApi?.tr("settings.hideMode.desc")
+                        model: [
+                            {
+                                "key": "visible",
+                                "name": pluginApi?.tr("options.visible")
+                            },
+                            {
+                                "key": "hidden",
+                                "name": pluginApi?.tr("options.hidden")
+                            },
+                            {
+                                "key": "transparent",
+                                "name": pluginApi?.tr("options.transparent")
+                            }
+                        ]
+                        currentKey: root.valueHideMode
+                        onSelected: key => root.valueHideMode = key
+                        defaultValue: defaults.hideMode ?? "hidden"
+                    }
 
-                NToggle {
-                    Layout.fillWidth: true
-                    label: pluginApi?.tr("settings.onlyActiveWorkspaces.label")
-                    description: pluginApi?.tr("settings.onlyActiveWorkspaces.desc")
-                    checked: root.valueOnlyActiveWorkspaces
-                    onToggled: checked => root.valueOnlyActiveWorkspaces = checked
-                    defaultValue: defaults.onlyActiveWorkspaces ?? true
-                }
+                    NToggle {
+                        Layout.fillWidth: true
+                        label: pluginApi?.tr("settings.onlySameOutput.label")
+                        description: pluginApi?.tr("settings.onlySameOutput.desc")
+                        checked: root.valueOnlySameOutput
+                        onToggled: checked => root.valueOnlySameOutput = checked
+                        defaultValue: defaults.onlySameOutput ?? true
+                    }
 
-                NToggle {
-                    Layout.fillWidth: true
-                    label: pluginApi?.tr("settings.showPinnedApps.label")
-                    description: pluginApi?.tr("settings.showPinnedApps.desc")
-                    checked: root.valueShowPinnedApps
-                    onToggled: checked => root.valueShowPinnedApps = checked
-                    defaultValue: defaults.showPinnedApps ?? true
+                    NToggle {
+                        Layout.fillWidth: true
+                        label: pluginApi?.tr("settings.onlyActiveWorkspaces.label")
+                        description: pluginApi?.tr("settings.onlyActiveWorkspaces.desc")
+                        checked: root.valueOnlyActiveWorkspaces
+                        onToggled: checked => root.valueOnlyActiveWorkspaces = checked
+                        defaultValue: defaults.onlyActiveWorkspaces ?? true
+                    }
+
+                    NToggle {
+                        Layout.fillWidth: true
+                        label: pluginApi?.tr("settings.showPinnedApps.label")
+                        description: pluginApi?.tr("settings.showPinnedApps.desc")
+                        checked: root.valueShowPinnedApps
+                        onToggled: checked => root.valueShowPinnedApps = checked
+                        defaultValue: defaults.showPinnedApps ?? true
+                    }
                 }
             }
         }
 
-        NScrollView {
-            id: organizationScrollView
-            clip: true
-            horizontalPolicy: ScrollBar.AlwaysOff
-            reserveScrollbarSpace: false
-            gradientColor: Color.mSurface
+        Item {
+            width: tabView.width
+            height: tabView.height
 
-            ColumnLayout {
-                width: organizationScrollView.availableWidth
-                spacing: Style.marginM
+            NScrollView {
+                id: organizationScrollView
+                anchors.fill: parent
+                clip: true
+                horizontalPolicy: ScrollBar.AlwaysOff
+                reserveScrollbarSpace: false
+                gradientColor: Color.mSurface
 
-                NHeader {
-                    label: pluginApi?.tr("settings.sections.workspaceContainers.label")
-                    description: pluginApi?.tr("settings.sections.workspaceContainers.desc")
-                }
+                ColumnLayout {
+                    width: organizationScrollView.availableWidth
+                    spacing: Style.marginM
+
+                    NHeader {
+                        label: pluginApi?.tr("settings.sections.workspaceContainers.label")
+                        description: pluginApi?.tr("settings.sections.workspaceContainers.desc")
+                    }
 
             NToggle {
                 Layout.fillWidth: true
@@ -615,15 +628,29 @@ ColumnLayout {
                     defaultValue: defaults.groupIndicatorStyle ?? "number"
                 }
             }
+            }
         }
 
-        ColumnLayout {
-            spacing: Style.marginM
+        Item {
+            width: tabView.width
+            height: tabView.height
 
-            NHeader {
-                label: pluginApi?.tr("settings.sections.icon.label")
-                description: pluginApi?.tr("settings.sections.icon.desc")
-            }
+            NScrollView {
+                id: layoutTabScrollView
+                anchors.fill: parent
+                clip: true
+                horizontalPolicy: ScrollBar.AlwaysOff
+                reserveScrollbarSpace: false
+                gradientColor: Color.mSurface
+
+                ColumnLayout {
+                    width: layoutTabScrollView.availableWidth
+                    spacing: Style.marginM
+
+                    NHeader {
+                        label: pluginApi?.tr("settings.sections.icon.label")
+                        description: pluginApi?.tr("settings.sections.icon.desc")
+                    }
 
             NValueSlider {
                 Layout.fillWidth: true
@@ -993,33 +1020,40 @@ ColumnLayout {
                 text: Math.round(root.valueTitleFontScale * 100) + "%"
             }
 
-            NComboBox {
-                visible: !root.isVerticalBar
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.titleFontWeight.label")
-                description: pluginApi?.tr("settings.titleFontWeight.desc")
-                model: root.titleFontWeightOptions
-                currentKey: root.valueTitleFontWeight
-                onSelected: key => root.valueTitleFontWeight = key
-                defaultValue: defaults.titleFontWeight ?? "medium"
+                    NComboBox {
+                        visible: !root.isVerticalBar
+                        Layout.fillWidth: true
+                        label: pluginApi?.tr("settings.titleFontWeight.label")
+                        description: pluginApi?.tr("settings.titleFontWeight.desc")
+                        model: root.titleFontWeightOptions
+                        currentKey: root.valueTitleFontWeight
+                        onSelected: key => root.valueTitleFontWeight = key
+                        defaultValue: defaults.titleFontWeight ?? "medium"
+                    }
+                }
             }
         }
 
-        NScrollView {
-            id: colorsScrollView
-            clip: true
-            horizontalPolicy: ScrollBar.AlwaysOff
-            reserveScrollbarSpace: false
-            gradientColor: Color.mSurface
+        Item {
+            width: tabView.width
+            height: tabView.height
 
-            ColumnLayout {
-                width: colorsScrollView.availableWidth
-                spacing: Style.marginM
+            NScrollView {
+                id: colorsScrollView
+                anchors.fill: parent
+                clip: true
+                horizontalPolicy: ScrollBar.AlwaysOff
+                reserveScrollbarSpace: false
+                gradientColor: Color.mSurface
 
-                NHeader {
-                    label: pluginApi?.tr("settings.sections.itemColors.label")
-                    description: pluginApi?.tr("settings.sections.itemColors.desc")
-                }
+                ColumnLayout {
+                    width: colorsScrollView.availableWidth
+                    spacing: Style.marginM
+
+                    NHeader {
+                        label: pluginApi?.tr("settings.sections.itemColors.label")
+                        description: pluginApi?.tr("settings.sections.itemColors.desc")
+                    }
 
                 Repeater {
                     model: root.itemColorStates
@@ -1060,8 +1094,8 @@ ColumnLayout {
                         }
                     }
                 }
+                }
             }
-
         }
     }
 
