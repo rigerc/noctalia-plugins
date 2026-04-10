@@ -316,7 +316,7 @@ Item {
     }
 
     function isAppEntry(entry) {
-        return !!entry && entry.type !== "separator";
+        return !!entry && entry.type !== "workspace-target";
     }
 
     function getAppEntries(entries) {
@@ -377,12 +377,10 @@ Item {
 
         const fromItem = combinedModel[fromIndex];
         const toItem = combinedModel[toIndex];
-        if (!isAppEntry(fromItem) || !isAppEntry(toItem))
-            return;
-        if (workspaceGroupingActive && fromItem.workspaceId !== toItem.workspaceId)
+        if (!isAppEntry(fromItem))
             return;
 
-        if (fromItem.type === "pinned" && toItem.type === "pinned") {
+        if (isAppEntry(toItem) && fromItem.type === "pinned" && toItem.type === "pinned") {
             reorderPinnedApps(fromItem.appId, toItem.appId);
             return;
         }
@@ -748,9 +746,17 @@ Item {
 
             if (showWorkspaceSeparators && (index > 0 || workspaceSeparatorShowForFirst)) {
                 renderEntries.push({
-                    "type": "separator",
+                    "type": "workspace-target",
                     "workspaceId": workspaceGroup.workspaceId,
-                    "workspaceIndex": workspaceGroup.workspaceIndex
+                    "workspaceIndex": workspaceGroup.workspaceIndex,
+                    "showSeparator": true
+                });
+            } else if (!showWorkspaceSeparators) {
+                renderEntries.push({
+                    "type": "workspace-target",
+                    "workspaceId": workspaceGroup.workspaceId,
+                    "workspaceIndex": workspaceGroup.workspaceIndex,
+                    "showSeparator": false
                 });
             }
 
@@ -1206,13 +1212,22 @@ Item {
                 return true;
             }
             if (CompositorService.isHyprland) {
-                Hyprland.dispatch("focuswindow address:0x" + String(window.id));
+                Hyprland.dispatch("focuswindow " + getHyprlandAddressSelector(window));
                 return true;
             }
         } catch (error) {
             Logger.e("Taskbar2", "Failed backend focus: " + error);
         }
         return false;
+    }
+
+    function getHyprlandAddressSelector(window) {
+        if (!window || window.id === undefined || window.id === null)
+            return "";
+        const rawId = String(window.id).trim();
+        if (rawId.length === 0)
+            return "";
+        return rawId.startsWith("0x") ? ("address:" + rawId) : ("address:0x" + rawId);
     }
 
     function moveWindowToWorkspace(window, workspaceId) {
@@ -1226,7 +1241,10 @@ Item {
             if (CompositorService.isNiri) {
                 Niri.dispatch(["move-window-to-workspace", "--window-id", String(window.id), "--focus", "false", workspaceRef]);
             } else if (CompositorService.isHyprland) {
-                Hyprland.dispatch("movetoworkspacesilent " + workspaceRef + ",address:" + String(window.id));
+                const selector = getHyprlandAddressSelector(window);
+                if (!selector)
+                    return;
+                Hyprland.dispatch("movetoworkspacesilent " + workspaceRef + "," + selector);
             }
         } catch (error) {
             Logger.e("Taskbar2", "Failed workspace move: " + error);
@@ -1238,11 +1256,13 @@ Item {
 
     function moveLiveEntry(fromItem, toItem) {
         const sourceWindow = getAnchorWindowForEntry(fromItem);
-        const targetWindow = getAnchorWindowForEntry(toItem);
         if (!sourceWindow)
             return;
 
-        if ((toItem.workspaceId ?? -1) !== -1 && sourceWindow.workspaceId !== (toItem.workspaceId ?? -1)) {
+        const targetWorkspaceId = toItem ? (toItem.workspaceId ?? -1) : -1;
+        const targetWindow = toItem && isAppEntry(toItem) ? getAnchorWindowForEntry(toItem) : null;
+
+        if (targetWorkspaceId !== -1 && sourceWindow.workspaceId !== targetWorkspaceId) {
             moveWindowToWorkspace(sourceWindow, toItem.workspaceId);
             return;
         }
@@ -1263,7 +1283,10 @@ Item {
                 }
                 Niri.dispatch(["move-column-to-index", String(targetIndex)]);
             } else if (CompositorService.isHyprland && targetWindow) {
-                Hyprland.dispatch("swapwindow address:0x" + String(targetWindow.id));
+                const selector = getHyprlandAddressSelector(targetWindow);
+                if (!selector)
+                    return;
+                Hyprland.dispatch("swapwindow " + selector);
             }
         } catch (error) {
             Logger.e("Taskbar2", "Failed live reorder: " + error);
@@ -1647,6 +1670,7 @@ Item {
                     id: taskbarItem
                     required property var modelData
                     required property int index
+                    readonly property var barRoot: root
 
                     readonly property int liveRevision: root.liveDataRevision
                     readonly property var liveEntry: {
@@ -1688,7 +1712,8 @@ Item {
                     readonly property real titleFocusOffset: isFocused ? -2 : (isHovered ? -1 : 0)
                     readonly property real badgeFocusScale: isFocused ? 1.08 : 1.0
                     readonly property real indicatorOpacity: isFocused ? 1.0 : (isHovered ? 0.72 : 0.0)
-                    readonly property bool isSeparator: modelData.type === "separator"
+                    readonly property bool isSeparator: modelData.type === "workspace-target"
+                    readonly property bool showSeparatorVisual: modelData.showSeparator ?? false
                     readonly property string separatorLabel: root.getWorkspaceLabel(modelData.workspaceIndex ?? 0)
                     readonly property real separatorLabelWidth: root.workspaceSeparatorShowLabel ? Math.max(0, Math.round(separatorLabel.length * root.barFontSize * 0.62)) : 0
                     readonly property real separatorLineLength: Math.max(Math.round(root.itemSize * 0.9), Style.marginL * 2)
@@ -1776,25 +1801,31 @@ Item {
                     }
 
                     DropArea {
-                        visible: !taskbarItem.isSeparator
-                        enabled: !taskbarItem.isRunning || root.supportsLiveReorder
+                        visible: true
+                        enabled: taskbarItem.isSeparator ? taskbarItem.barRoot.supportsLiveReorder : (!taskbarItem.isRunning || taskbarItem.barRoot.supportsLiveReorder)
                         anchors.fill: parent
                         keys: ["taskbar-app"]
                         onEntered: function (drag) {
                             if (drag.source && drag.source.objectName === "taskbarAppItem") {
-                                root.dragTargetIndex = taskbarItem.modelIndex;
+                                taskbarItem.barRoot.dragTargetIndex = taskbarItem.modelIndex;
                             }
                         }
                         onExited: function () {
-                            if (root.dragTargetIndex === taskbarItem.modelIndex) {
-                                root.dragTargetIndex = -1;
+                            if (taskbarItem.barRoot.dragTargetIndex === taskbarItem.modelIndex) {
+                                taskbarItem.barRoot.dragTargetIndex = -1;
                             }
                         }
                         onDropped: function (drop) {
-                            root.dragSourceIndex = -1;
-                            root.dragTargetIndex = -1;
+                            taskbarItem.barRoot.dragSourceIndex = -1;
+                            taskbarItem.barRoot.dragTargetIndex = -1;
                             if (drop.source && drop.source.objectName === "taskbarAppItem" && drop.source !== taskbarItem) {
-                                root.reorderApps(drop.source.modelIndex, taskbarItem.modelIndex);
+                                if (taskbarItem.isSeparator) {
+                                    const fromItem = taskbarItem.barRoot.combinedModel[drop.source.modelIndex];
+                                    if (fromItem && taskbarItem.barRoot.supportsLiveReorder)
+                                        taskbarItem.barRoot.moveLiveEntry(fromItem, taskbarItem.modelData);
+                                } else {
+                                    taskbarItem.barRoot.reorderApps(drop.source.modelIndex, taskbarItem.modelIndex);
+                                }
                             }
                         }
                     }
@@ -1810,52 +1841,54 @@ Item {
 
                         Item {
                             anchors.fill: parent
+                            visible: taskbarItem.showSeparatorVisual || taskbarItem.barRoot.dragSourceIndex !== -1
 
                             Item {
                                 anchors.centerIn: parent
-                                width: root.isVerticalBar ? root.barHeight : taskbarItem.separatorVisualWidth
-                                height: root.isVerticalBar ? taskbarItem.separatorVisualHeight : root.barHeight
+                                width: taskbarItem.barRoot.isVerticalBar ? taskbarItem.barRoot.barHeight : taskbarItem.separatorVisualWidth
+                                height: taskbarItem.barRoot.isVerticalBar ? taskbarItem.separatorVisualHeight : taskbarItem.barRoot.barHeight
+                                opacity: taskbarItem.showSeparatorVisual ? 1 : (taskbarItem.barRoot.dragTargetIndex === taskbarItem.modelIndex ? 0.9 : 0.22)
 
                                 RowLayout {
-                                    visible: !root.isVerticalBar
+                                    visible: !taskbarItem.barRoot.isVerticalBar
                                     anchors.centerIn: parent
                                     spacing: Style.marginS
 
                                     NText {
-                                        visible: root.workspaceSeparatorShowLabel && taskbarItem.separatorLabel.length > 0
+                                        visible: taskbarItem.showSeparatorVisual && taskbarItem.barRoot.workspaceSeparatorShowLabel && taskbarItem.separatorLabel.length > 0
                                         text: taskbarItem.separatorLabel
-                                        pointSize: Math.max(Style.fontSizeXS, root.barFontSize * 0.9)
+                                        pointSize: Math.max(Style.fontSizeXS, taskbarItem.barRoot.barFontSize * 0.9)
                                         color: Color.mOnSurfaceVariant
                                         font.weight: Style.fontWeightSemiBold
                                     }
 
                                     Loader {
-                                        visible: root.workspaceSeparatorShowDivider
-                                        Layout.preferredWidth: root.workspaceSeparatorDividerMode === "line" ? taskbarItem.separatorLineLength : (root.workspaceSeparatorDividerMode === "icon" ? taskbarItem.separatorLineLength : taskbarItem.separatorLineLength)
+                                        visible: taskbarItem.showSeparatorVisual && taskbarItem.barRoot.workspaceSeparatorShowDivider
+                                        Layout.preferredWidth: taskbarItem.barRoot.workspaceSeparatorDividerMode === "line" ? taskbarItem.separatorLineLength : (taskbarItem.barRoot.workspaceSeparatorDividerMode === "icon" ? taskbarItem.separatorLineLength : taskbarItem.separatorLineLength)
                                         Layout.preferredHeight: Math.max(1, Style.borderS)
-                                        sourceComponent: root.workspaceSeparatorDividerMode === "line" ? lineDividerComponent : (root.workspaceSeparatorDividerMode === "character" ? charDividerComponent : iconDividerComponent)
+                                        sourceComponent: taskbarItem.barRoot.workspaceSeparatorDividerMode === "line" ? lineDividerComponent : (taskbarItem.barRoot.workspaceSeparatorDividerMode === "character" ? charDividerComponent : iconDividerComponent)
                                     }
                                 }
 
                                 ColumnLayout {
-                                    visible: root.isVerticalBar
+                                    visible: taskbarItem.barRoot.isVerticalBar
                                     anchors.centerIn: parent
                                     spacing: Style.marginS
 
                                     NText {
-                                        visible: root.workspaceSeparatorShowLabel && taskbarItem.separatorLabel.length > 0
+                                        visible: taskbarItem.showSeparatorVisual && taskbarItem.barRoot.workspaceSeparatorShowLabel && taskbarItem.separatorLabel.length > 0
                                         text: taskbarItem.separatorLabel
-                                        pointSize: Math.max(Style.fontSizeXS, root.barFontSize * 0.9)
+                                        pointSize: Math.max(Style.fontSizeXS, taskbarItem.barRoot.barFontSize * 0.9)
                                         color: Color.mOnSurfaceVariant
                                         font.weight: Style.fontWeightSemiBold
                                         rotation: -90
                                     }
 
                                     Loader {
-                                        visible: root.workspaceSeparatorShowDivider
+                                        visible: taskbarItem.showSeparatorVisual && taskbarItem.barRoot.workspaceSeparatorShowDivider
                                         Layout.preferredWidth: Math.max(1, Style.borderS)
-                                        Layout.preferredHeight: root.workspaceSeparatorDividerMode === "line" ? taskbarItem.separatorLineLength : taskbarItem.separatorLineLength
-                                        sourceComponent: root.workspaceSeparatorDividerMode === "line" ? lineDividerComponentVertical : (root.workspaceSeparatorDividerMode === "character" ? charDividerComponentVertical : iconDividerComponentVertical)
+                                        Layout.preferredHeight: taskbarItem.barRoot.workspaceSeparatorDividerMode === "line" ? taskbarItem.separatorLineLength : taskbarItem.separatorLineLength
+                                        sourceComponent: taskbarItem.barRoot.workspaceSeparatorDividerMode === "line" ? lineDividerComponentVertical : (taskbarItem.barRoot.workspaceSeparatorDividerMode === "character" ? charDividerComponentVertical : iconDividerComponentVertical)
                                     }
                                 }
                             }
@@ -1883,8 +1916,8 @@ Item {
                             Component {
                                 id: charDividerComponent
                                 NText {
-                                    text: root.workspaceSeparatorDividerChar || "|"
-                                    pointSize: Math.max(Style.fontSizeXS, root.barFontSize * 0.9)
+                                    text: taskbarItem.barRoot.workspaceSeparatorDividerChar || "|"
+                                    pointSize: Math.max(Style.fontSizeXS, taskbarItem.barRoot.barFontSize * 0.9)
                                     color: Color.mOnSurfaceVariant
                                     font.weight: Style.fontWeightSemiBold
                                 }
@@ -1893,8 +1926,8 @@ Item {
                             Component {
                                 id: charDividerComponentVertical
                                 NText {
-                                    text: root.workspaceSeparatorDividerChar || "|"
-                                    pointSize: Math.max(Style.fontSizeXS, root.barFontSize * 0.9)
+                                    text: taskbarItem.barRoot.workspaceSeparatorDividerChar || "|"
+                                    pointSize: Math.max(Style.fontSizeXS, taskbarItem.barRoot.barFontSize * 0.9)
                                     color: Color.mOnSurfaceVariant
                                     font.weight: Style.fontWeightSemiBold
                                     rotation: -90
@@ -1904,8 +1937,8 @@ Item {
                             Component {
                                 id: iconDividerComponent
                                 NIcon {
-                                    icon: root.workspaceSeparatorDividerIcon || "minus"
-                                    pointSize: Math.max(Style.fontSizeXS, root.barFontSize)
+                                    icon: taskbarItem.barRoot.workspaceSeparatorDividerIcon || "minus"
+                                    pointSize: Math.max(Style.fontSizeXS, taskbarItem.barRoot.barFontSize)
                                     color: Color.mOnSurfaceVariant
                                 }
                             }
@@ -1913,8 +1946,8 @@ Item {
                             Component {
                                 id: iconDividerComponentVertical
                                 NIcon {
-                                    icon: root.workspaceSeparatorDividerIcon || "minus"
-                                    pointSize: Math.max(Style.fontSizeXS, root.barFontSize)
+                                    icon: taskbarItem.barRoot.workspaceSeparatorDividerIcon || "minus"
+                                    pointSize: Math.max(Style.fontSizeXS, taskbarItem.barRoot.barFontSize)
                                     color: Color.mOnSurfaceVariant
                                     rotation: -90
                                 }
@@ -1929,20 +1962,20 @@ Item {
                         height: parent.height
                         anchors.centerIn: dragging ? undefined : parent
 
-                        readonly property bool isDragged: root.dragSourceIndex === index
+                        readonly property bool isDragged: taskbarItem.barRoot.dragSourceIndex === index
                         property real shiftOffset: 0
                         property bool dragging: taskbarMouseArea.drag.active
 
                         Binding on shiftOffset {
                             value: {
-                                if (root.dragSourceIndex !== -1 && root.dragTargetIndex !== -1 && !draggableContent.isDragged) {
-                                    if (root.dragSourceIndex < root.dragTargetIndex) {
-                                        if (index > root.dragSourceIndex && index <= root.dragTargetIndex) {
-                                            return -1 * (root.isVerticalBar ? draggableContent.height : draggableContent.width);
+                                if (taskbarItem.barRoot.dragSourceIndex !== -1 && taskbarItem.barRoot.dragTargetIndex !== -1 && !draggableContent.isDragged) {
+                                    if (taskbarItem.barRoot.dragSourceIndex < taskbarItem.barRoot.dragTargetIndex) {
+                                        if (index > taskbarItem.barRoot.dragSourceIndex && index <= taskbarItem.barRoot.dragTargetIndex) {
+                                            return -1 * (taskbarItem.barRoot.isVerticalBar ? draggableContent.height : draggableContent.width);
                                         }
-                                    } else if (root.dragSourceIndex > root.dragTargetIndex) {
-                                        if (index >= root.dragTargetIndex && index < root.dragSourceIndex) {
-                                            return root.isVerticalBar ? draggableContent.height : draggableContent.width;
+                                    } else if (taskbarItem.barRoot.dragSourceIndex > taskbarItem.barRoot.dragTargetIndex) {
+                                        if (index >= taskbarItem.barRoot.dragTargetIndex && index < taskbarItem.barRoot.dragSourceIndex) {
+                                            return taskbarItem.barRoot.isVerticalBar ? draggableContent.height : draggableContent.width;
                                         }
                                     }
                                 }
@@ -1951,8 +1984,8 @@ Item {
                         }
 
                         transform: Translate {
-                            x: !root.isVerticalBar ? draggableContent.shiftOffset : 0
-                            y: root.isVerticalBar ? draggableContent.shiftOffset : 0
+                            x: !taskbarItem.barRoot.isVerticalBar ? draggableContent.shiftOffset : 0
+                            y: taskbarItem.barRoot.isVerticalBar ? draggableContent.shiftOffset : 0
 
                             Behavior on x {
                                 NumberAnimation {
@@ -1970,12 +2003,12 @@ Item {
 
                         onDraggingChanged: {
                             if (dragging) {
-                                root.dragSourceIndex = index;
-                            } else if (root.dragSourceIndex === index) {
+                                taskbarItem.barRoot.dragSourceIndex = index;
+                            } else if (taskbarItem.barRoot.dragSourceIndex === index) {
                                 Qt.callLater(() => {
-                                    if (!taskbarMouseArea.drag.active && root.dragSourceIndex === index) {
-                                        root.dragSourceIndex = -1;
-                                        root.dragTargetIndex = -1;
+                                    if (!taskbarMouseArea.drag.active && taskbarItem.barRoot.dragSourceIndex === index) {
+                                        taskbarItem.barRoot.dragSourceIndex = -1;
+                                        taskbarItem.barRoot.dragTargetIndex = -1;
                                     }
                                 });
                             }

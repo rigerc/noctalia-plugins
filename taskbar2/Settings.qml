@@ -149,8 +149,8 @@ ColumnLayout {
     property string valueWorkspaceSeparatorDividerChar: cfg.workspaceSeparatorDividerChar ?? defaults.workspaceSeparatorDividerChar ?? "|"
     property string valueWorkspaceSeparatorDividerIcon: cfg.workspaceSeparatorDividerIcon ?? defaults.workspaceSeparatorDividerIcon ?? "minus"
     property bool valueWorkspaceSeparatorShowForFirst: cfg.workspaceSeparatorShowForFirst ?? defaults.workspaceSeparatorShowForFirst ?? false
-    property var valueIgnoredWorkspaceIds: Array.isArray(cfg.ignoredWorkspaceIds ?? defaults.ignoredWorkspaceIds) ? (cfg.ignoredWorkspaceIds ?? defaults.ignoredWorkspaceIds).slice() : []
-    property var valueIgnoredWorkspaceNames: Array.isArray(cfg.ignoredWorkspaceNames ?? defaults.ignoredWorkspaceNames) ? (cfg.ignoredWorkspaceNames ?? defaults.ignoredWorkspaceNames).slice() : []
+    property var valueIgnoredWorkspaceIds: normalizeEditableRows(cfg.ignoredWorkspaceIds ?? defaults.ignoredWorkspaceIds)
+    property var valueIgnoredWorkspaceNames: normalizeEditableRows(cfg.ignoredWorkspaceNames ?? defaults.ignoredWorkspaceNames)
     spacing: Style.marginM
     implicitWidth: preferredWidth
 
@@ -193,13 +193,46 @@ ColumnLayout {
         const normalized = [];
         const seen = {};
         (values || []).forEach(value => {
-            const text = String(value || "").trim();
+            const text = String(value?.value ?? value ?? "").trim();
             if (text.length === 0 || seen[text])
                 return;
             seen[text] = true;
             normalized.push(text);
         });
         return normalized;
+    }
+
+    function normalizeEditableRows(values) {
+        const rows = [];
+        (values || []).forEach(value => {
+            rows.push({ "value": String(value || "") });
+        });
+        return rows;
+    }
+
+    function updateEditableRow(listProp, index, text) {
+        const current = root[listProp] || [];
+        if (index < 0 || index >= current.length)
+            return;
+        if (String(current[index]?.value || "") === text)
+            return;
+        const next = current.slice();
+        next[index] = { "value": text };
+        root[listProp] = next;
+    }
+
+    function removeEditableRow(listProp, index) {
+        const current = root[listProp] || [];
+        if (index < 0 || index >= current.length)
+            return;
+        const next = current.slice();
+        next.splice(index, 1);
+        root[listProp] = next;
+    }
+
+    function appendEditableRow(listProp) {
+        const current = root[listProp] || [];
+        root[listProp] = current.concat([{ "value": "" }]);
     }
 
     function saveSettings() {
@@ -446,28 +479,20 @@ ColumnLayout {
                         Layout.fillWidth: true
                         label: index === 0 ? pluginApi?.tr("settings.ignoredWorkspaceIds.label") : ""
                         description: index === 0 ? pluginApi?.tr("settings.ignoredWorkspaceIds.desc") : ""
-                        text: String(modelData || "")
-                        onTextChanged: {
-                            const next = root.valueIgnoredWorkspaceIds.slice();
-                            next[index] = text;
-                            root.valueIgnoredWorkspaceIds = next;
-                        }
+                        text: String(modelData?.value || "")
+                        onTextChanged: root.updateEditableRow("valueIgnoredWorkspaceIds", index, text)
                     }
 
                     NButton {
                         text: pluginApi?.tr("settings.ignoredWorkspaces.remove")
-                        onClicked: {
-                            const next = root.valueIgnoredWorkspaceIds.slice();
-                            next.splice(index, 1);
-                            root.valueIgnoredWorkspaceIds = next;
-                        }
+                        onClicked: root.removeEditableRow("valueIgnoredWorkspaceIds", index)
                     }
                 }
             }
 
             NButton {
                 text: pluginApi?.tr("settings.ignoredWorkspaceIds.add")
-                onClicked: root.valueIgnoredWorkspaceIds = root.valueIgnoredWorkspaceIds.concat([""])
+                onClicked: root.appendEditableRow("valueIgnoredWorkspaceIds")
             }
 
             Repeater {
@@ -483,28 +508,20 @@ ColumnLayout {
                         Layout.fillWidth: true
                         label: index === 0 ? pluginApi?.tr("settings.ignoredWorkspaceNames.label") : ""
                         description: index === 0 ? pluginApi?.tr("settings.ignoredWorkspaceNames.desc") : ""
-                        text: String(modelData || "")
-                        onTextChanged: {
-                            const next = root.valueIgnoredWorkspaceNames.slice();
-                            next[index] = text;
-                            root.valueIgnoredWorkspaceNames = next;
-                        }
+                        text: String(modelData?.value || "")
+                        onTextChanged: root.updateEditableRow("valueIgnoredWorkspaceNames", index, text)
                     }
 
                     NButton {
                         text: pluginApi?.tr("settings.ignoredWorkspaces.remove")
-                        onClicked: {
-                            const next = root.valueIgnoredWorkspaceNames.slice();
-                            next.splice(index, 1);
-                            root.valueIgnoredWorkspaceNames = next;
-                        }
+                        onClicked: root.removeEditableRow("valueIgnoredWorkspaceNames", index)
                     }
                 }
             }
 
             NButton {
                 text: pluginApi?.tr("settings.ignoredWorkspaceNames.add")
-                onClicked: root.valueIgnoredWorkspaceNames = root.valueIgnoredWorkspaceNames.concat([""])
+                onClicked: root.appendEditableRow("valueIgnoredWorkspaceNames")
             }
 
             NDivider {
