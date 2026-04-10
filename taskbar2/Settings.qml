@@ -570,63 +570,55 @@ ColumnLayout {
             }
         }
 
-        NScrollView {
-            id: layoutScrollView
-            clip: true
-            horizontalPolicy: ScrollBar.AlwaysOff
-            reserveScrollbarSpace: false
-            gradientColor: Color.mSurface
+        ColumnLayout {
+            spacing: Style.marginM
 
-            ColumnLayout {
-                width: layoutScrollView.availableWidth
-                spacing: Style.marginM
+            NBox {
+                Layout.fillWidth: true
+                implicitHeight: previewColumn.implicitHeight + Style.marginM * 2
+                color: Color.mSurfaceVariant
 
-                NBox {
-                    Layout.fillWidth: true
-                    implicitHeight: previewColumn.implicitHeight + Style.marginM * 2
-                    color: Color.mSurfaceVariant
+                ColumnLayout {
+                    id: previewColumn
+                    anchors.fill: parent
+                    anchors.margins: Style.marginM
+                    spacing: Style.marginS
 
-                    ColumnLayout {
-                        id: previewColumn
-                        anchors.fill: parent
-                        anchors.margins: Style.marginM
-                        spacing: Style.marginS
+                    NLabel {
+                        Layout.fillWidth: true
+                        label: pluginApi?.tr("settings.focusTransitionPreview.label")
+                        description: pluginApi?.tr("settings.focusTransitionPreview.desc")
+                    }
 
-                        NLabel {
-                            Layout.fillWidth: true
-                            label: pluginApi?.tr("settings.focusTransitionPreview.label")
-                            description: pluginApi?.tr("settings.focusTransitionPreview.desc")
-                        }
-
-                        FocusTransitionPreview {
-                            Layout.alignment: Qt.AlignHCenter
-                            isVerticalBar: root.isVerticalBar
-                            transitionEnabled: root.valueFocusTransitionEnabled
-                            delayMs: root.valueFocusTransitionDelayMs
-                            durationMs: root.valueFocusTransitionDurationMs
-                            styleKey: root.valueFocusTransitionStyle
-                            intensity: root.valueFocusTransitionIntensity
-                            scale: root.valueFocusTransitionScale
-                            leadColorKey: root.valueFocusTransitionLeadColor
-                            glowColorKey: root.valueFocusTransitionGlowColor
-                            blurRadius: root.valueFocusTransitionBlur
-                            transparency: root.valueFocusTransitionTransparency
-                            effectColorKey: root.valueFocusTransitionEffectColor
-                            verticalPosition: root.valueFocusTransitionVerticalPosition
-                            iconScale: root.valueIconScale
-                            itemGapUnits: root.valueItemGapUnits
-                            showTitle: root.valueShowTitle && !root.isVerticalBar
-                            titleWidth: root.valueTitleWidth
-                            hoverIconScaleMultiplier: root.valueHoverIconScaleMultiplier
-                            hoverItemScalePercent: root.valueHoverItemScalePercent
-                            titleFontFamily: root.valueTitleFontFamily
-                            titleFontScale: root.valueTitleFontScale
-                            titleFontWeight: root.valueTitleFontWeight
-                            colorizeIcons: root.valueColorizeIcons
-                            itemColors: root.valueItemColors
-                        }
+                    FocusTransitionPreview {
+                        Layout.alignment: Qt.AlignHCenter
+                        isVerticalBar: root.isVerticalBar
+                        transitionEnabled: root.valueFocusTransitionEnabled
+                        delayMs: root.valueFocusTransitionDelayMs
+                        durationMs: root.valueFocusTransitionDurationMs
+                        styleKey: root.valueFocusTransitionStyle
+                        intensity: root.valueFocusTransitionIntensity
+                        scale: root.valueFocusTransitionScale
+                        leadColorKey: root.valueFocusTransitionLeadColor
+                        glowColorKey: root.valueFocusTransitionGlowColor
+                        blurRadius: root.valueFocusTransitionBlur
+                        transparency: root.valueFocusTransitionTransparency
+                        effectColorKey: root.valueFocusTransitionEffectColor
+                        verticalPosition: root.valueFocusTransitionVerticalPosition
+                        iconScale: root.valueIconScale
+                        itemGapUnits: root.valueItemGapUnits
+                        showTitle: root.valueShowTitle && !root.isVerticalBar
+                        titleWidth: root.valueTitleWidth
+                        hoverIconScaleMultiplier: root.valueHoverIconScaleMultiplier
+                        hoverItemScalePercent: root.valueHoverItemScalePercent
+                        titleFontFamily: root.valueTitleFontFamily
+                        titleFontScale: root.valueTitleFontScale
+                        titleFontWeight: root.valueTitleFontWeight
+                        colorizeIcons: root.valueColorizeIcons
+                        itemColors: root.valueItemColors
                     }
                 }
+            }
 
             NHeader {
                 label: pluginApi?.tr("settings.sections.icon.label")
@@ -757,7 +749,7 @@ ColumnLayout {
                 label: pluginApi?.tr("settings.focusTransitionDurationMs.label")
                 description: pluginApi?.tr("settings.focusTransitionDurationMs.desc")
                 from: 80
-                to: 600
+                to: 2000
                 stepSize: 10
                 showReset: true
                 value: root.valueFocusTransitionDurationMs
@@ -1011,7 +1003,6 @@ ColumnLayout {
                 onSelected: key => root.valueTitleFontWeight = key
                 defaultValue: defaults.titleFontWeight ?? "medium"
             }
-            }
         }
 
         NScrollView {
@@ -1070,6 +1061,7 @@ ColumnLayout {
                     }
                 }
             }
+
         }
     }
 
