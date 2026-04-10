@@ -1012,6 +1012,25 @@ Item {
         return entryIndicatorRectsByKey[entryKey] || null;
     }
 
+    function getFocusedWorkspaceIdForEntry(entryKey) {
+        const liveEntry = getLiveEntry(entryKey);
+        if (!liveEntry)
+            return -1;
+
+        const windows = liveEntry.windows || [];
+        for (let i = 0; i < windows.length; i++) {
+            const window = windows[i];
+            if (window && window.isFocused)
+                return window.workspaceId ?? -1;
+        }
+
+        const primaryWindow = liveEntry.primaryWindow;
+        if (primaryWindow)
+            return primaryWindow.workspaceId ?? -1;
+
+        return -1;
+    }
+
     function scheduleFocusTransition(startEntryKey, endEntryKey) {
         focusTransitionOverlay.cancelTransition();
         if (!focusTransitionEnabled || !startEntryKey || !endEntryKey)
@@ -1041,10 +1060,19 @@ Item {
         lastFocusedEntryKey = previousFocusedEntryKey;
         currentFocusedEntryKey = nextFocusedEntryKey;
 
-        if (previousFocusedEntryKey && nextFocusedEntryKey)
+        if (previousFocusedEntryKey && nextFocusedEntryKey) {
+            const previousWorkspaceId = getFocusedWorkspaceIdForEntry(previousFocusedEntryKey);
+            const nextWorkspaceId = getFocusedWorkspaceIdForEntry(nextFocusedEntryKey);
+
+            if (previousWorkspaceId === -1 || nextWorkspaceId === -1 || previousWorkspaceId !== nextWorkspaceId) {
+                focusTransitionOverlay.cancelTransition();
+                return;
+            }
+
             scheduleFocusTransition(previousFocusedEntryKey, nextFocusedEntryKey);
-        else
+        } else {
             focusTransitionOverlay.cancelTransition();
+        }
     }
 
     function getEntryForAppId(appId) {
