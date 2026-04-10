@@ -819,6 +819,7 @@ Item {
         liveDataRevision++;
         updateFocusedEntryTracking(getFocusedEntryKey(liveEntriesByKey));
         updateHasWindow();
+        scheduleProxyRefresh();
     }
 
     function reconcileSessionOrder() {
@@ -954,6 +955,29 @@ Item {
 
     function refreshLiveData() {
         applySnapshot(buildStructuralEntries(), false);
+    }
+
+    function refreshAllIndicatorRects() {
+        for (let i = 0; i < entryRepeater.count; i++) {
+            const item = entryRepeater.itemAt(i);
+            if (item && item.syncIndicatorRect)
+                item.syncIndicatorRect();
+        }
+    }
+
+    function refreshAllIconProxyPositions() {
+        for (let i = 0; i < entryRepeater.count; i++) {
+            const item = entryRepeater.itemAt(i);
+            if (item && item.syncProxyPosition)
+                item.syncProxyPosition();
+        }
+    }
+
+    function scheduleProxyRefresh() {
+        Qt.callLater(function () {
+            root.refreshAllIndicatorRects();
+            root.refreshAllIconProxyPositions();
+        });
     }
 
     function isInteractionActive() {
@@ -1363,15 +1387,13 @@ Item {
     onFocusTransitionEnabledChanged: if (!focusTransitionEnabled) focusTransitionOverlay.cancelTransition()
     onFocusTransitionStyleChanged: focusTransitionOverlay.cancelTransition()
     onFocusTransitionIntensityChanged: focusTransitionOverlay.cancelTransition()
-    onFocusTransitionVerticalPositionChanged: {
-        for (let i = 0; i < entryRepeater.count; i++) {
-            const item = entryRepeater.itemAt(i);
-            if (item && item.syncIndicatorRect)
-                item.syncIndicatorRect();
-        }
-    }
+    onFocusTransitionVerticalPositionChanged: scheduleProxyRefresh()
+    onItemGapChanged: scheduleProxyRefresh()
 
-    Component.onCompleted: updateCombinedModel(true)
+    Component.onCompleted: {
+        updateCombinedModel(true);
+        scheduleProxyRefresh();
+    }
     onScreenChanged: scheduleModelRefresh(true)
 
     Timer {
@@ -1488,6 +1510,8 @@ Item {
 
             x: isVerticalBar ? Style.pixelAlignCenter(parent.width, width) : (root.showTitle ? Style.pixelAlignCenter(parent.width, width) : Style.marginM)
             y: Style.pixelAlignCenter(parent.height, height)
+            columnSpacing: root.itemGap
+            rowSpacing: root.itemGap
 
             rows: isVerticalBar ? -1 : 1
             columns: isVerticalBar ? 1 : -1
@@ -1585,26 +1609,30 @@ Item {
                     property int modelIndex: index
                     objectName: isSeparator ? "taskbarSeparatorItem" : "taskbarAppItem"
 
+                    function syncProxyPosition() {
+                        iconForegroundProxy.syncPosition();
+                    }
+
                     Component.onCompleted: {
                         syncIndicatorRect();
-                        iconForegroundProxy.syncPosition();
+                        syncProxyPosition();
                     }
                     Component.onDestruction: root.clearEntryIndicatorRect(modelData.entryKey)
                     onXChanged: {
                         syncIndicatorRect();
-                        iconForegroundProxy.syncPosition();
+                        syncProxyPosition();
                     }
                     onYChanged: {
                         syncIndicatorRect();
-                        iconForegroundProxy.syncPosition();
+                        syncProxyPosition();
                     }
                     onWidthChanged: {
                         syncIndicatorRect();
-                        iconForegroundProxy.syncPosition();
+                        syncProxyPosition();
                     }
                     onHeightChanged: {
                         syncIndicatorRect();
-                        iconForegroundProxy.syncPosition();
+                        syncProxyPosition();
                     }
 
                     DropArea {
@@ -1810,7 +1838,7 @@ Item {
                                     }
                                 });
                             }
-                            iconForegroundProxy.syncPosition();
+                            syncProxyPosition();
                         }
 
                         Drag.active: dragging
@@ -1820,12 +1848,12 @@ Item {
                         Drag.keys: ["taskbar-app"]
                         z: dragging ? 1000 : 0
                         scale: (dragging ? 1.05 : 1.0) * (taskbarItem.isHovered ? taskbarItem.hoverItemScale : 1.0)
-                        onXChanged: iconForegroundProxy.syncPosition()
-                        onYChanged: iconForegroundProxy.syncPosition()
-                        onWidthChanged: iconForegroundProxy.syncPosition()
-                        onHeightChanged: iconForegroundProxy.syncPosition()
-                        onScaleChanged: iconForegroundProxy.syncPosition()
-                        onShiftOffsetChanged: iconForegroundProxy.syncPosition()
+                        onXChanged: syncProxyPosition()
+                        onYChanged: syncProxyPosition()
+                        onWidthChanged: syncProxyPosition()
+                        onHeightChanged: syncProxyPosition()
+                        onScaleChanged: syncProxyPosition()
+                        onShiftOffsetChanged: syncProxyPosition()
 
                         Behavior on scale {
                             NumberAnimation {
@@ -1904,19 +1932,19 @@ Item {
                                     Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
                                     onXChanged: {
                                         taskbarItem.syncIndicatorRect();
-                                        iconForegroundProxy.syncPosition();
+                                        taskbarItem.syncProxyPosition();
                                     }
                                     onYChanged: {
                                         taskbarItem.syncIndicatorRect();
-                                        iconForegroundProxy.syncPosition();
+                                        taskbarItem.syncProxyPosition();
                                     }
                                     onWidthChanged: {
                                         taskbarItem.syncIndicatorRect();
-                                        iconForegroundProxy.syncPosition();
+                                        taskbarItem.syncProxyPosition();
                                     }
                                     onHeightChanged: {
                                         taskbarItem.syncIndicatorRect();
-                                        iconForegroundProxy.syncPosition();
+                                        taskbarItem.syncProxyPosition();
                                     }
 
                                     Item {
@@ -2314,6 +2342,10 @@ Item {
             id: taskbarForegroundLayer
             anchors.fill: parent
             z: 30
+            onXChanged: root.scheduleProxyRefresh()
+            onYChanged: root.scheduleProxyRefresh()
+            onWidthChanged: root.scheduleProxyRefresh()
+            onHeightChanged: root.scheduleProxyRefresh()
         }
     }
 }
