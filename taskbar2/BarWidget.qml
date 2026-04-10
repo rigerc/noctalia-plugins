@@ -2,6 +2,8 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Hyprland
+import Quickshell.Niri
 import Quickshell.Wayland
 import Quickshell.Widgets
 import qs.Commons
@@ -56,6 +58,8 @@ Item {
     readonly property string groupClickAction: cfg.groupClickAction ?? defaults.groupClickAction ?? "cycle"
     readonly property string groupContextMenuMode: cfg.groupContextMenuMode ?? defaults.groupContextMenuMode ?? "extended"
     readonly property string groupIndicatorStyle: cfg.groupIndicatorStyle ?? defaults.groupIndicatorStyle ?? "number"
+    readonly property var ignoredWorkspaceIds: cfg.ignoredWorkspaceIds ?? defaults.ignoredWorkspaceIds ?? []
+    readonly property var ignoredWorkspaceNames: cfg.ignoredWorkspaceNames ?? defaults.ignoredWorkspaceNames ?? []
     readonly property bool groupByWorkspaceIndex: cfg.groupByWorkspaceIndex ?? defaults.groupByWorkspaceIndex ?? false
     readonly property bool showWorkspaceSeparators: cfg.showWorkspaceSeparators ?? defaults.showWorkspaceSeparators ?? true
     readonly property bool workspaceSeparatorShowLabel: cfg.workspaceSeparatorShowLabel ?? defaults.workspaceSeparatorShowLabel ?? true
@@ -84,6 +88,7 @@ Item {
     readonly property bool workspaceGroupingActive: groupByWorkspaceIndex && !onlyActiveWorkspaces
     readonly property int itemSize: Style.toOdd(capsuleHeight * Math.max(0.1, iconScale))
     readonly property int appEntryCount: getAppEntries(combinedModel).length
+    readonly property bool supportsLiveReorder: CompositorService.isNiri || CompositorService.isHyprland
 
     readonly property real maxTaskbarWidth: {
         if (!screen || isVerticalBar || !smartWidth || maxTaskbarWidthPercent <= 0)
@@ -112,7 +117,6 @@ Item {
 
     property var hoveredEntryKey: ""
     property var combinedModel: []
-    property var sessionAppOrder: []
     property var groupCycleIndices: ({})
     property var liveEntriesByKey: ({})
     property var stableWindowKeyEntries: []
@@ -348,46 +352,22 @@ Item {
         return (workspaceSeparatorPrefix || "") + workspaceIndex + (workspaceSeparatorSuffix || "");
     }
 
-    function sortApps(apps) {
-        // Sort by compositor spatial order: workspace ID, then X position, then Y position
-        return apps.slice().sort((a, b) => {
-            // Pinned apps without windows go to the end
-            const aHasWindow = a.window !== null && a.window !== undefined;
-            const bHasWindow = b.window !== null && b.window !== undefined;
-            if (aHasWindow !== bHasWindow) {
-                return aHasWindow ? -1 : 1;
-            }
+    function isWorkspaceIgnored(workspaceId) {
+        const workspaceInfo = getWorkspaceInfo(workspaceId);
+        const idString = String(workspaceInfo.id ?? workspaceId ?? "").trim();
+        const nameString = String(workspaceInfo.name || "").trim();
+        if ((ignoredWorkspaceIds || []).some(id => String(id).trim() === idString))
+            return true;
+        if (nameString.length > 0 && (ignoredWorkspaceNames || []).some(name => String(name).trim() === nameString))
+            return true;
+        return false;
+    }
 
-            // If neither has a window, sort by appId
-            if (!aHasWindow && !bHasWindow) {
-                return (a.appId || "").localeCompare(b.appId || "");
-            }
-
-            // Both have windows - sort by compositor spatial order
-            // 1. Sort by workspace ID
-            const aWs = a.workspaceId ?? -1;
-            const bWs = b.workspaceId ?? -1;
-            if (aWs !== bWs) {
-                return aWs - bWs;
-            }
-
-            // 2. Sort by X position (left to right)
-            const aX = (a.window && typeof a.window.x === "number") ? a.window.x : 0;
-            const bX = (b.window && typeof b.window.x === "number") ? b.window.x : 0;
-            if (aX !== bX) {
-                return aX - bX;
-            }
-
-            // 3. Sort by Y position (top to bottom)
-            const aY = (a.window && typeof a.window.y === "number") ? a.window.y : 0;
-            const bY = (b.window && typeof b.window.y === "number") ? b.window.y : 0;
-            if (aY !== bY) {
-                return aY - bY;
-            }
-
-            // Fallback to appId for stable sort
-            return (a.appId || "").localeCompare(b.appId || "");
-        });
+    function getWorkspaceReference(workspaceId) {
+        const workspaceInfo = getWorkspaceInfo(workspaceId);
+        if (workspaceInfo.name && String(workspaceInfo.name).trim().length > 0)
+            return String(workspaceInfo.name);
+        return String(workspaceInfo.index);
     }
 
     function reorderApps(fromIndex, toIndex) {
@@ -402,21 +382,27 @@ Item {
         if (workspaceGroupingActive && fromItem.workspaceId !== toItem.workspaceId)
             return;
 
-        const orderedKeys = getAppEntries(combinedModel).map(getAppKey).filter(key => key !== null);
-        const sourceKey = getAppKey(fromItem);
-        const targetKey = getAppKey(toItem);
-        const sourceIndex = orderedKeys.indexOf(sourceKey);
-        const targetIndex = orderedKeys.indexOf(targetKey);
+        if (fromItem.type === "pinned" && toItem.type === "pinned") {
+            reorderPinnedApps(fromItem.appId, toItem.appId);
+            return;
+        }
 
-        if (sourceIndex === -1 || targetIndex === -1)
+        if (!supportsLiveReorder)
             return;
 
-        const movedKey = orderedKeys.splice(sourceIndex, 1)[0];
-        orderedKeys.splice(targetIndex, 0, movedKey);
+        moveLiveEntry(fromItem, toItem);
+    }
 
-        sessionAppOrder = orderedKeys;
-        updateCombinedModel(true);
-        savePinnedOrder();
+    function reorderPinnedApps(sourceAppId, targetAppId) {
+        const currentPinned = (Settings.data.dock.pinnedApps || []).slice();
+        const sourceIndex = currentPinned.findIndex(appId => normalizeAppId(appId) === normalizeAppId(sourceAppId));
+        const targetIndex = currentPinned.findIndex(appId => normalizeAppId(appId) === normalizeAppId(targetAppId));
+        if (sourceIndex === -1 || targetIndex === -1 || sourceIndex === targetIndex)
+            return;
+
+        const moved = currentPinned.splice(sourceIndex, 1)[0];
+        currentPinned.splice(targetIndex, 0, moved);
+        Settings.data.dock.pinnedApps = currentPinned;
     }
 
     function savePinnedOrder() {
@@ -578,7 +564,7 @@ Item {
             const total = CompositorService.windows.count || 0;
             for (let i = 0; i < total; i++) {
                 const window = CompositorService.windows.get(i);
-                if (window)
+                if (window && !isWorkspaceIgnored(window.workspaceId))
                     windows.push(window);
             }
         } catch (e) {}
@@ -594,7 +580,7 @@ Item {
         if (!window)
             return false;
         const passOutput = (!root.onlySameOutput) || (window.output === root.screen?.name);
-        const passWorkspace = (!root.onlyActiveWorkspaces) || activeIds.includes(window.workspaceId);
+        const passWorkspace = ((!root.onlyActiveWorkspaces) || activeIds.includes(window.workspaceId)) && !isWorkspaceIgnored(window.workspaceId);
         return passOutput && passWorkspace;
     }
 
@@ -617,11 +603,17 @@ Item {
 
         const grouped = [];
         const groupedById = new Map();
+        const orderByStableKey = {};
 
-        apps.forEach(app => {
+        apps.forEach((app, appIndex) => {
             const appId = app.appId;
             const windows = app.window ? [app.window] : [];
             const existing = groupedById.get(appId);
+            windows.forEach(window => {
+                const stableKey = getStableWindowKey(window);
+                if (stableKey && orderByStableKey[stableKey] === undefined)
+                    orderByStableKey[stableKey] = appIndex;
+            });
 
             if (existing) {
                 windows.forEach(window => {
@@ -644,7 +636,9 @@ Item {
                     "isPinned": app.type === "pinned" || app.type === "pinned-running",
                     "orderKey": appId,
                     "workspaceId": app.workspaceId ?? -1,
-                    "workspaceIndex": app.workspaceIndex ?? -1
+                    "workspaceIndex": app.workspaceIndex ?? -1,
+                    "anchorWindowStableKey": windows.length > 0 ? getStableWindowKey(windows[0]) : "",
+                    "anchorOrder": appIndex
                 };
                 grouped.push(entry);
                 groupedById.set(appId, entry);
@@ -661,6 +655,27 @@ Item {
             }
         });
 
+        grouped.forEach(entry => {
+            if (!entry.windowStableKeys || entry.windowStableKeys.length === 0) {
+                entry.anchorWindowStableKey = "";
+                return;
+            }
+
+            entry.anchorWindowStableKey = entry.windowStableKeys[0];
+            const liveWindows = collectVisibleWindows();
+            for (let i = 0; i < entry.windowStableKeys.length; i++) {
+                const candidate = liveWindows.find(window => getStableWindowKey(window) === entry.windowStableKeys[i]);
+                if (candidate && candidate.isFocused) {
+                    entry.anchorWindowStableKey = entry.windowStableKeys[i];
+                    entry.workspaceId = candidate.workspaceId ?? entry.workspaceId;
+                    entry.workspaceIndex = getWorkspaceInfo(candidate.workspaceId).index;
+                    break;
+                }
+            }
+            entry.anchorOrder = orderByStableKey[entry.anchorWindowStableKey] ?? entry.anchorOrder ?? 0;
+        });
+
+        grouped.sort((a, b) => (a.anchorOrder ?? 0) - (b.anchorOrder ?? 0));
         return grouped;
     }
 
@@ -698,10 +713,37 @@ Item {
         });
 
         const renderEntries = [];
+        const workspaces = CompositorService.workspaces;
+        if (workspaces && workspaces.count !== undefined && workspaces.get) {
+            for (let i = 0; i < workspaces.count; i++) {
+                const workspace = workspaces.get(i);
+                if (!workspace || isWorkspaceIgnored(workspace.id))
+                    continue;
+                const key = String(workspace.id);
+                if (groupedByWorkspace.has(key))
+                    continue;
+                groupedByWorkspace.set(key, {
+                    "workspaceId": workspace.id,
+                    "workspaceIndex": workspace.idx ?? 0,
+                    "entries": []
+                });
+                workspaceOrder.push(key);
+            }
+        }
+
+        workspaceOrder.sort((a, b) => {
+            const groupA = groupedByWorkspace.get(a);
+            const groupB = groupedByWorkspace.get(b);
+            const indexA = groupA ? groupA.workspaceIndex : 0;
+            const indexB = groupB ? groupB.workspaceIndex : 0;
+            if (indexA !== indexB)
+                return indexA - indexB;
+            return String(a).localeCompare(String(b));
+        });
 
         workspaceOrder.forEach((key, index) => {
             const workspaceGroup = groupedByWorkspace.get(key);
-            if (!workspaceGroup || workspaceGroup.entries.length === 0)
+            if (!workspaceGroup)
                 return;
 
             if (showWorkspaceSeparators && (index > 0 || workspaceSeparatorShowForFirst)) {
@@ -712,7 +754,7 @@ Item {
                 });
             }
 
-            buildGroupedModel(workspaceGroup.entries).forEach(entry => renderEntries.push(entry));
+            buildGroupedModel(workspaceGroup.entries || []).forEach(entry => renderEntries.push(entry));
         });
 
         if (unassignedEntries.length > 0) {
@@ -751,6 +793,9 @@ Item {
             }
 
             const primaryWindow = getPrimaryWindow(windows);
+            let anchorWindow = primaryWindow;
+            if (groupApps && entry.anchorWindowStableKey)
+                anchorWindow = windowsByStableKey[entry.anchorWindowStableKey] || primaryWindow;
             let focusedWindowIndex = -1;
             for (let i = 0; i < windows.length; i++) {
                 if (windows[i] && windows[i].isFocused) {
@@ -763,6 +808,7 @@ Item {
                 "windows": windows,
                 "windowIds": windowIds,
                 "primaryWindow": primaryWindow,
+                "anchorWindow": anchorWindow,
                 "title": (primaryWindow && primaryWindow.title) ? primaryWindow.title : entry.fallbackTitle,
                 "isFocused": focusedWindowIndex >= 0,
                 "focusedWindowIndex": focusedWindowIndex,
@@ -823,34 +869,7 @@ Item {
     }
 
     function reconcileSessionOrder() {
-        if (!sessionAppOrder || sessionAppOrder.length === 0) {
-            sessionAppOrder = getAppEntries(combinedModel).map(getAppKey);
-            return;
-        }
-
-        const appEntries = getAppEntries(combinedModel);
-        const currentKeys = new Set(appEntries.map(getAppKey));
-        const existingKeys = new Set();
-        const newOrder = [];
-
-        sessionAppOrder.forEach(key => {
-            if (currentKeys.has(key)) {
-                newOrder.push(key);
-                existingKeys.add(key);
-            }
-        });
-
-        appEntries.forEach(app => {
-            const key = getAppKey(app);
-            if (!existingKeys.has(key)) {
-                newOrder.push(key);
-                existingKeys.add(key);
-            }
-        });
-
-        if (JSON.stringify(newOrder) !== JSON.stringify(sessionAppOrder)) {
-            sessionAppOrder = newOrder;
-        }
+        return;
     }
 
     function reconcileGroupCycleIndices() {
@@ -943,7 +962,22 @@ Item {
         pushRunning(true);
         pushPinned();
 
-        const orderedEntries = sortApps(combined);
+        const runningEntries = combined.filter(entry => entry.window);
+        const pinnedEntries = combined.filter(entry => !entry.window);
+        const pinnedLookup = new Map();
+        pinnedEntries.forEach(entry => pinnedLookup.set(normalizeAppId(entry.appId), entry));
+        const orderedPinnedEntries = [];
+        pinnedApps.forEach(appId => {
+            const pinnedEntry = pinnedLookup.get(normalizeAppId(appId));
+            if (pinnedEntry)
+                orderedPinnedEntries.push(pinnedEntry);
+        });
+        pinnedEntries.forEach(entry => {
+            if (orderedPinnedEntries.indexOf(entry) === -1)
+                orderedPinnedEntries.push(entry);
+        });
+
+        const orderedEntries = runningEntries.concat(orderedPinnedEntries);
         if (workspaceGroupingActive)
             return buildWorkspaceGroupedModel(orderedEntries);
         return buildGroupedModel(orderedEntries);
@@ -1154,6 +1188,91 @@ Item {
         return getPrimaryWindow(getLiveWindowsForEntryKey(entryKey));
     }
 
+    function getAnchorWindowForEntry(entry) {
+        if (!entry)
+            return null;
+        const liveEntry = getLiveEntry(entry.entryKey);
+        if (!liveEntry)
+            return null;
+        return liveEntry.anchorWindow || liveEntry.primaryWindow || null;
+    }
+
+    function focusWindowByBackend(window) {
+        if (!window)
+            return false;
+        try {
+            if (CompositorService.isNiri) {
+                Niri.dispatch(["focus-window", "--id", String(window.id)]);
+                return true;
+            }
+            if (CompositorService.isHyprland) {
+                Hyprland.dispatch("focuswindow address:0x" + String(window.id));
+                return true;
+            }
+        } catch (error) {
+            Logger.e("Taskbar2", "Failed backend focus: " + error);
+        }
+        return false;
+    }
+
+    function moveWindowToWorkspace(window, workspaceId) {
+        if (!window || workspaceId === undefined || workspaceId === null || workspaceId === -1 || isWorkspaceIgnored(workspaceId))
+            return;
+
+        const previousFocused = CompositorService.getFocusedWindow ? CompositorService.getFocusedWindow() : null;
+        const workspaceRef = getWorkspaceReference(workspaceId);
+
+        try {
+            if (CompositorService.isNiri) {
+                Niri.dispatch(["move-window-to-workspace", "--window-id", String(window.id), "--focus", "false", workspaceRef]);
+            } else if (CompositorService.isHyprland) {
+                Hyprland.dispatch("movetoworkspacesilent " + workspaceRef + ",address:" + String(window.id));
+            }
+        } catch (error) {
+            Logger.e("Taskbar2", "Failed workspace move: " + error);
+        }
+
+        if (previousFocused && previousFocused.id != window.id)
+            Qt.callLater(function() { root.focusWindowByBackend(previousFocused); });
+    }
+
+    function moveLiveEntry(fromItem, toItem) {
+        const sourceWindow = getAnchorWindowForEntry(fromItem);
+        const targetWindow = getAnchorWindowForEntry(toItem);
+        if (!sourceWindow)
+            return;
+
+        if ((toItem.workspaceId ?? -1) !== -1 && sourceWindow.workspaceId !== (toItem.workspaceId ?? -1)) {
+            moveWindowToWorkspace(sourceWindow, toItem.workspaceId);
+            return;
+        }
+
+        const previousFocused = CompositorService.getFocusedWindow ? CompositorService.getFocusedWindow() : null;
+        if (!focusWindowByBackend(sourceWindow))
+            return;
+
+        try {
+            if (CompositorService.isNiri) {
+                const sameWorkspaceEntries = getAppEntries(combinedModel).filter(entry => (entry.workspaceId ?? -1) === (fromItem.workspaceId ?? -1));
+                let targetIndex = 1;
+                for (let i = 0; i < sameWorkspaceEntries.length; i++) {
+                    if (sameWorkspaceEntries[i].entryKey === toItem.entryKey) {
+                        targetIndex = i + 1;
+                        break;
+                    }
+                }
+                Niri.dispatch(["move-column-to-index", String(targetIndex)]);
+            } else if (CompositorService.isHyprland && targetWindow) {
+                Hyprland.dispatch("swapwindow address:0x" + String(targetWindow.id));
+            }
+        } catch (error) {
+            Logger.e("Taskbar2", "Failed live reorder: " + error);
+        }
+
+        if (previousFocused && previousFocused.id != sourceWindow.id)
+            Qt.callLater(function() { root.focusWindowByBackend(previousFocused); });
+    }
+
     function focusWindow(window) {
         if (!window)
             return;
@@ -1359,7 +1478,10 @@ Item {
     Connections {
         target: CompositorService
         function onActiveWindowChanged() {
-            refreshLiveData();
+            if (groupApps)
+                scheduleModelRefresh(true);
+            else
+                refreshLiveData();
         }
         function onWindowListChanged() {
             scheduleModelRefresh(false);
@@ -1380,6 +1502,8 @@ Item {
     onOnlyActiveWorkspacesChanged: scheduleModelRefresh(true)
     onShowPinnedAppsChanged: scheduleModelRefresh(true)
     onGroupAppsChanged: scheduleModelRefresh(true)
+    onIgnoredWorkspaceIdsChanged: scheduleModelRefresh(true)
+    onIgnoredWorkspaceNamesChanged: scheduleModelRefresh(true)
     onGroupByWorkspaceIndexChanged: scheduleModelRefresh(true)
     onShowWorkspaceSeparatorsChanged: scheduleModelRefresh(true)
     onHoveredEntryKeyChanged: flushPendingModelRefresh()
@@ -1609,6 +1733,22 @@ Item {
                     property int modelIndex: index
                     objectName: isSeparator ? "taskbarSeparatorItem" : "taskbarAppItem"
 
+                    Behavior on x {
+                        enabled: !taskbarItem.isSeparator && root.dragSourceIndex !== index
+                        NumberAnimation {
+                            duration: Style.animationNormal
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+
+                    Behavior on y {
+                        enabled: !taskbarItem.isSeparator && root.dragSourceIndex !== index
+                        NumberAnimation {
+                            duration: Style.animationNormal
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+
                     function syncProxyPosition() {
                         iconForegroundProxy.syncPosition();
                     }
@@ -1637,6 +1777,7 @@ Item {
 
                     DropArea {
                         visible: !taskbarItem.isSeparator
+                        enabled: !taskbarItem.isRunning || root.supportsLiveReorder
                         anchors.fill: parent
                         keys: ["taskbar-app"]
                         onEntered: function (drag) {
@@ -2260,13 +2401,14 @@ Item {
                         id: taskbarMouseArea
                         objectName: "taskbarMouseArea"
                         visible: !taskbarItem.isSeparator
-                        enabled: !taskbarItem.isSeparator
+                        enabled: !taskbarItem.isSeparator && (!taskbarItem.isRunning || root.supportsLiveReorder)
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
                         drag.target: draggableContent
                         drag.axis: root.isVerticalBar ? Drag.YAxis : Drag.XAxis
+                        drag.threshold: 8
                         preventStealing: true
 
                         onReleased: {

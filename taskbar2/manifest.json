@@ -76,6 +76,8 @@
       "groupClickAction": "cycle",
       "groupContextMenuMode": "extended",
       "groupIndicatorStyle": "number",
+      "ignoredWorkspaceIds": [],
+      "ignoredWorkspaceNames": [],
       "groupByWorkspaceIndex": false,
       "showWorkspaceSeparators": true,
       "workspaceSeparatorShowLabel": true,

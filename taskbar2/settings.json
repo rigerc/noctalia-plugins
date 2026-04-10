@@ -55,6 +55,10 @@
   "groupClickAction": "cycle",
   "groupContextMenuMode": "extended",
   "groupIndicatorStyle": "dots",
+  "ignoredWorkspaceIds": [
+    "-98"
+  ],
+  "ignoredWorkspaceNames": [],
   "groupByWorkspaceIndex": true,
   "showWorkspaceSeparators": true,
   "workspaceSeparatorShowLabel": true,

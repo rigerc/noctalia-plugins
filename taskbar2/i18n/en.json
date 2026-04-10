@@ -241,6 +241,21 @@
         "label": "Group all activity by workspace",
         "desc": "When showing all workspaces, sort entries into sections by workspace index."
       },
+      "ignoredWorkspaces": {
+        "label": "Ignored workspaces",
+        "desc": "Exclude exact workspace IDs or exact workspace names from rendering, grouping, and drag targets.",
+        "remove": "Remove"
+      },
+      "ignoredWorkspaceIds": {
+        "label": "Ignored workspace IDs",
+        "desc": "Hide workspaces whose ID exactly matches one of these values.",
+        "add": "Add ignored ID"
+      },
+      "ignoredWorkspaceNames": {
+        "label": "Ignored workspace names",
+        "desc": "Hide workspaces whose name exactly matches one of these values.",
+        "add": "Add ignored name"
+      },
       "showWorkspaceSeparators": {
         "label": "Show workspace separators",
         "desc": "Insert visual separators between workspace groups in the all-activity view."

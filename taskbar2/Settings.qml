@@ -149,6 +149,8 @@ ColumnLayout {
     property string valueWorkspaceSeparatorDividerChar: cfg.workspaceSeparatorDividerChar ?? defaults.workspaceSeparatorDividerChar ?? "|"
     property string valueWorkspaceSeparatorDividerIcon: cfg.workspaceSeparatorDividerIcon ?? defaults.workspaceSeparatorDividerIcon ?? "minus"
     property bool valueWorkspaceSeparatorShowForFirst: cfg.workspaceSeparatorShowForFirst ?? defaults.workspaceSeparatorShowForFirst ?? false
+    property var valueIgnoredWorkspaceIds: Array.isArray(cfg.ignoredWorkspaceIds ?? defaults.ignoredWorkspaceIds) ? (cfg.ignoredWorkspaceIds ?? defaults.ignoredWorkspaceIds).slice() : []
+    property var valueIgnoredWorkspaceNames: Array.isArray(cfg.ignoredWorkspaceNames ?? defaults.ignoredWorkspaceNames) ? (cfg.ignoredWorkspaceNames ?? defaults.ignoredWorkspaceNames).slice() : []
     spacing: Style.marginM
     implicitWidth: preferredWidth
 
@@ -185,6 +187,19 @@ ColumnLayout {
     function getDefaultItemColor(stateKey, colorRole) {
         const fallbackColors = normalizeItemColors(defaults.itemColors || ({}));
         return fallbackColors[stateKey][colorRole];
+    }
+
+    function normalizeStringList(values) {
+        const normalized = [];
+        const seen = {};
+        (values || []).forEach(value => {
+            const text = String(value || "").trim();
+            if (text.length === 0 || seen[text])
+                return;
+            seen[text] = true;
+            normalized.push(text);
+        });
+        return normalized;
     }
 
     function saveSettings() {
@@ -229,6 +244,8 @@ ColumnLayout {
         pluginApi.pluginSettings.groupContextMenuMode = root.valueGroupContextMenuMode;
         pluginApi.pluginSettings.groupIndicatorStyle = root.valueGroupIndicatorStyle;
         pluginApi.pluginSettings.groupByWorkspaceIndex = root.valueGroupByWorkspaceIndex;
+        pluginApi.pluginSettings.ignoredWorkspaceIds = normalizeStringList(root.valueIgnoredWorkspaceIds);
+        pluginApi.pluginSettings.ignoredWorkspaceNames = normalizeStringList(root.valueIgnoredWorkspaceNames);
         pluginApi.pluginSettings.showWorkspaceSeparators = root.valueShowWorkspaceSeparators;
         pluginApi.pluginSettings.workspaceSeparatorShowLabel = root.valueWorkspaceSeparatorShowLabel;
         pluginApi.pluginSettings.workspaceSeparatorShowDivider = root.valueWorkspaceSeparatorShowDivider;
@@ -410,6 +427,89 @@ ColumnLayout {
                         label: pluginApi?.tr("settings.sections.workspaceContainers.label")
                         description: pluginApi?.tr("settings.sections.workspaceContainers.desc")
                     }
+
+            NHeader {
+                label: pluginApi?.tr("settings.ignoredWorkspaces.label")
+                description: pluginApi?.tr("settings.ignoredWorkspaces.desc")
+            }
+
+            Repeater {
+                model: root.valueIgnoredWorkspaceIds
+
+                delegate: RowLayout {
+                    required property int index
+                    required property var modelData
+                    Layout.fillWidth: true
+                    spacing: Style.marginS
+
+                    NTextInput {
+                        Layout.fillWidth: true
+                        label: index === 0 ? pluginApi?.tr("settings.ignoredWorkspaceIds.label") : ""
+                        description: index === 0 ? pluginApi?.tr("settings.ignoredWorkspaceIds.desc") : ""
+                        text: String(modelData || "")
+                        onTextChanged: {
+                            const next = root.valueIgnoredWorkspaceIds.slice();
+                            next[index] = text;
+                            root.valueIgnoredWorkspaceIds = next;
+                        }
+                    }
+
+                    NButton {
+                        text: pluginApi?.tr("settings.ignoredWorkspaces.remove")
+                        onClicked: {
+                            const next = root.valueIgnoredWorkspaceIds.slice();
+                            next.splice(index, 1);
+                            root.valueIgnoredWorkspaceIds = next;
+                        }
+                    }
+                }
+            }
+
+            NButton {
+                text: pluginApi?.tr("settings.ignoredWorkspaceIds.add")
+                onClicked: root.valueIgnoredWorkspaceIds = root.valueIgnoredWorkspaceIds.concat([""])
+            }
+
+            Repeater {
+                model: root.valueIgnoredWorkspaceNames
+
+                delegate: RowLayout {
+                    required property int index
+                    required property var modelData
+                    Layout.fillWidth: true
+                    spacing: Style.marginS
+
+                    NTextInput {
+                        Layout.fillWidth: true
+                        label: index === 0 ? pluginApi?.tr("settings.ignoredWorkspaceNames.label") : ""
+                        description: index === 0 ? pluginApi?.tr("settings.ignoredWorkspaceNames.desc") : ""
+                        text: String(modelData || "")
+                        onTextChanged: {
+                            const next = root.valueIgnoredWorkspaceNames.slice();
+                            next[index] = text;
+                            root.valueIgnoredWorkspaceNames = next;
+                        }
+                    }
+
+                    NButton {
+                        text: pluginApi?.tr("settings.ignoredWorkspaces.remove")
+                        onClicked: {
+                            const next = root.valueIgnoredWorkspaceNames.slice();
+                            next.splice(index, 1);
+                            root.valueIgnoredWorkspaceNames = next;
+                        }
+                    }
+                }
+            }
+
+            NButton {
+                text: pluginApi?.tr("settings.ignoredWorkspaceNames.add")
+                onClicked: root.valueIgnoredWorkspaceNames = root.valueIgnoredWorkspaceNames.concat([""])
+            }
+
+            NDivider {
+                Layout.fillWidth: true
+            }
 
             NToggle {
                 Layout.fillWidth: true
