@@ -8,14 +8,14 @@
       "official": false,
       "author": "OpenAI",
       "description": "A standalone taskbar bar widget ported from Noctalia Shell, with improvements.",
-      "repository": "https://github.com/rigerc/noctalia-plugins",
+      "repository": "https://github.com/noctalia-dev/noctalia-plugins",
       "minNoctaliaVersion": "4.6.6",
       "license": "MIT",
       "tags": [
         "Bar",
         "Utility"
       ],
-      "lastUpdated": "2026-04-05T22:30:44+02:00"
+      "lastUpdated": "2026-04-11T18:53:47+02:00"
     }
   ]
 }
