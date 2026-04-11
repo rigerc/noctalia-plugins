@@ -33,22 +33,58 @@
     "default": {
       "background": "none",
       "border": "none",
-      "text": "none"
+      "text": "none",
+      "backgroundOpacity": 100,
+      "borderOpacity": 100,
+      "textOpacity": 100,
+      "backgroundGradientEnabled": false,
+      "backgroundGradientDirection": "horizontal",
+      "backgroundGradientStart": "none",
+      "backgroundGradientEnd": "none",
+      "backgroundGradientStartOpacity": 100,
+      "backgroundGradientEndOpacity": 100
     },
     "hovered": {
       "background": "none",
       "border": "none",
-      "text": "none"
+      "text": "none",
+      "backgroundOpacity": 100,
+      "borderOpacity": 100,
+      "textOpacity": 100,
+      "backgroundGradientEnabled": true,
+      "backgroundGradientDirection": "horizontal",
+      "backgroundGradientStart": "primary",
+      "backgroundGradientEnd": "error",
+      "backgroundGradientStartOpacity": 40,
+      "backgroundGradientEndOpacity": 20
     },
     "focused": {
       "background": "none",
       "border": "none",
-      "text": "none"
+      "text": "none",
+      "backgroundOpacity": 55,
+      "borderOpacity": 100,
+      "textOpacity": 100,
+      "backgroundGradientEnabled": true,
+      "backgroundGradientDirection": "horizontal",
+      "backgroundGradientStart": "secondary",
+      "backgroundGradientEnd": "none",
+      "backgroundGradientStartOpacity": 0,
+      "backgroundGradientEndOpacity": 20
     },
     "inactive": {
       "background": "none",
       "border": "none",
-      "text": "none"
+      "text": "none",
+      "backgroundOpacity": 100,
+      "borderOpacity": 100,
+      "textOpacity": 100,
+      "backgroundGradientEnabled": false,
+      "backgroundGradientDirection": "horizontal",
+      "backgroundGradientStart": "none",
+      "backgroundGradientEnd": "none",
+      "backgroundGradientStartOpacity": 100,
+      "backgroundGradientEndOpacity": 100
     }
   },
   "groupApps": true,

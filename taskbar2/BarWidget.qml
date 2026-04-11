@@ -126,6 +126,7 @@ Item {
     property bool wheelCooldown: false
     property int dragSourceIndex: -1
     property int dragTargetIndex: -1
+    property int pendingDragCommitSourceIndex: -1
 
     property string selectedAppId: ""
     property string selectedEntryKey: ""
@@ -138,6 +139,10 @@ Item {
     property bool focusTrackingInitialized: false
     property string lastFocusedEntryKey: ""
     property string currentFocusedEntryKey: ""
+
+    ItemStateColors {
+        id: itemStateColors
+    }
 
     function titleFontFamilyValue() {
         return titleFontFamily && titleFontFamily.length > 0 ? titleFontFamily : Settings.data.ui.fontDefault;
@@ -162,24 +167,12 @@ Item {
         return Qt.rgba(baseColor.r, baseColor.g, baseColor.b, alpha);
     }
 
-    function fallbackItemStateColor(stateKey, colorRole) {
-        if (colorRole === "border")
-            return "transparent";
-
-        if (colorRole === "text")
-            return (stateKey === "hovered" || stateKey === "focused") ? Color.mOnHover : Color.mOnSurface;
-
-        return (stateKey === "hovered" || stateKey === "focused") ? Color.mHover : Style.capsuleColor;
+    function resolveItemStateColor(stateKey, colorRole) {
+        return itemStateColors.resolveItemStateColor(itemColors, stateKey, colorRole);
     }
 
-    function resolveItemStateColor(stateKey, colorRole) {
-        const stateColors = itemColors?.[stateKey];
-        const colorKey = stateColors ? stateColors[colorRole] : "none";
-        if (!colorKey || colorKey === "none")
-            return fallbackItemStateColor(stateKey, colorRole);
-        if (colorRole === "text")
-            return Color.resolveColorKey(colorKey);
-        return Color.resolveColorKeyOptional(colorKey);
+    function resolveItemStateColorWithOpacity(stateKey, colorRole) {
+        return itemStateColors.resolveItemStateColorWithOpacity(itemColors, stateKey, colorRole);
     }
 
     function resolveFocusTransitionColor(colorKeyValue, fallbackColor) {
@@ -197,12 +190,7 @@ Item {
         const r1 = baseColor.r + (glowColor.r - baseColor.r) * ratio;
         const g1 = baseColor.g + (glowColor.g - baseColor.g) * ratio;
         const b1 = baseColor.b + (glowColor.b - baseColor.b) * ratio;
-        return Qt.rgba(
-            r1 + (effColor.r - r1) * eRatio,
-            g1 + (effColor.g - g1) * eRatio,
-            b1 + (effColor.b - b1) * eRatio,
-            1
-        );
+        return Qt.rgba(r1 + (effColor.r - r1) * eRatio, g1 + (effColor.g - g1) * eRatio, b1 + (effColor.b - b1) * eRatio, 1);
     }
 
     function normalizeAppId(appId) {
@@ -238,10 +226,12 @@ Item {
 
             stableWindowKeyCounter += 1;
             const key = "window:" + stableWindowKeyCounter;
-            stableWindowKeyEntries = stableWindowKeyEntries.concat([{
-                "handle": handle,
-                "key": key
-            }]);
+            stableWindowKeyEntries = stableWindowKeyEntries.concat([
+                {
+                    "handle": handle,
+                    "key": key
+                }
+            ]);
             return key;
         }
 
@@ -389,6 +379,71 @@ Item {
             return;
 
         moveLiveEntry(fromItem, toItem);
+    }
+
+    function updateDragTargetForItem(sourceIndex, dragItem) {
+        if (!dragItem || sourceIndex < 0 || sourceIndex >= combinedModel.length) {
+            dragTargetIndex = -1;
+            return;
+        }
+
+        const dragCenter = dragItem.mapToItem(visualCapsule, dragItem.width / 2, dragItem.height / 2);
+        const dragAxis = isVerticalBar ? dragCenter.y : dragCenter.x;
+        let nextTargetIndex = -1;
+        let closestDistance = Number.POSITIVE_INFINITY;
+
+        for (let i = 0; i < entryRepeater.count; i++) {
+            if (i === sourceIndex)
+                continue;
+
+            const candidateItem = entryRepeater.itemAt(i);
+            if (!candidateItem || !candidateItem.visible || !candidateItem.reorderDropEnabled)
+                continue;
+
+            const candidateCenter = candidateItem.mapToItem(visualCapsule, candidateItem.width / 2, candidateItem.height / 2);
+            const candidateAxis = isVerticalBar ? candidateCenter.y : candidateCenter.x;
+            const distance = Math.abs(candidateAxis - dragAxis);
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                nextTargetIndex = i;
+            }
+        }
+
+        dragTargetIndex = nextTargetIndex;
+    }
+
+    function completeDragReorder(fromIndex, toIndex) {
+        pendingDragCommitSourceIndex = -1;
+        dragSourceIndex = -1;
+        dragTargetIndex = -1;
+
+        if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= combinedModel.length || toIndex >= combinedModel.length)
+            return;
+
+        const targetItem = combinedModel[toIndex];
+        if (!targetItem)
+            return;
+
+        if (targetItem.type === "workspace-target") {
+            const fromItem = combinedModel[fromIndex];
+            if (fromItem && supportsLiveReorder)
+                moveLiveEntry(fromItem, targetItem);
+            return;
+        }
+
+        reorderApps(fromIndex, toIndex);
+    }
+
+    function queueDragCommit(fromIndex, toIndex) {
+        if (fromIndex < 0)
+            return;
+
+        pendingDragCommitSourceIndex = fromIndex;
+        Qt.callLater(function () {
+            if (pendingDragCommitSourceIndex !== fromIndex)
+                return;
+            completeDragReorder(fromIndex, toIndex);
+        });
     }
 
     function reorderPinnedApps(sourceAppId, targetAppId) {
@@ -871,7 +926,6 @@ Item {
         liveDataRevision++;
         updateFocusedEntryTracking(getFocusedEntryKey(liveEntriesByKey));
         updateHasWindow();
-        scheduleProxyRefresh();
     }
 
     function reconcileSessionOrder() {
@@ -983,10 +1037,9 @@ Item {
                 orderedPinnedEntries.push(entry);
         });
 
-        const orderedEntries = runningEntries.concat(orderedPinnedEntries);
         if (workspaceGroupingActive)
-            return buildWorkspaceGroupedModel(orderedEntries);
-        return buildGroupedModel(orderedEntries);
+            return orderedPinnedEntries.concat(buildWorkspaceGroupedModel(runningEntries));
+        return orderedPinnedEntries.concat(buildGroupedModel(runningEntries));
     }
 
     function updateCombinedModel(forceStructural) {
@@ -1003,21 +1056,6 @@ Item {
             if (item && item.syncIndicatorRect)
                 item.syncIndicatorRect();
         }
-    }
-
-    function refreshAllIconProxyPositions() {
-        for (let i = 0; i < entryRepeater.count; i++) {
-            const item = entryRepeater.itemAt(i);
-            if (item && item.syncProxyPosition)
-                item.syncProxyPosition();
-        }
-    }
-
-    function scheduleProxyRefresh() {
-        Qt.callLater(function () {
-            root.refreshAllIndicatorRects();
-            root.refreshAllIconProxyPositions();
-        });
     }
 
     function isInteractionActive() {
@@ -1251,7 +1289,9 @@ Item {
         }
 
         if (previousFocused && previousFocused.id != window.id)
-            Qt.callLater(function() { root.focusWindowByBackend(previousFocused); });
+            Qt.callLater(function () {
+                root.focusWindowByBackend(previousFocused);
+            });
     }
 
     function moveLiveEntry(fromItem, toItem) {
@@ -1293,7 +1333,9 @@ Item {
         }
 
         if (previousFocused && previousFocused.id != sourceWindow.id)
-            Qt.callLater(function() { root.focusWindowByBackend(previousFocused); });
+            Qt.callLater(function () {
+                root.focusWindowByBackend(previousFocused);
+            });
     }
 
     function focusWindow(window) {
@@ -1466,7 +1508,7 @@ Item {
                 root.flushPendingModelRefresh();
         }
 
-        onTriggered: function(action, item) {
+        onTriggered: function (action, item) {
             contextMenu.close();
             PanelService.closeContextMenu(root.screen);
 
@@ -1531,15 +1573,12 @@ Item {
     onShowWorkspaceSeparatorsChanged: scheduleModelRefresh(true)
     onHoveredEntryKeyChanged: flushPendingModelRefresh()
     onDragSourceIndexChanged: flushPendingModelRefresh()
-    onFocusTransitionEnabledChanged: if (!focusTransitionEnabled) focusTransitionOverlay.cancelTransition()
+    onFocusTransitionEnabledChanged: if (!focusTransitionEnabled)
+        focusTransitionOverlay.cancelTransition()
     onFocusTransitionStyleChanged: focusTransitionOverlay.cancelTransition()
     onFocusTransitionIntensityChanged: focusTransitionOverlay.cancelTransition()
-    onFocusTransitionVerticalPositionChanged: scheduleProxyRefresh()
-    onItemGapChanged: scheduleProxyRefresh()
-
     Component.onCompleted: {
         updateCombinedModel(true);
-        scheduleProxyRefresh();
     }
     onScreenChanged: scheduleModelRefresh(true)
 
@@ -1690,10 +1729,14 @@ Item {
                     readonly property real visualWidth: root.isVerticalBar ? root.barHeight : Math.round(entryContentWidth + contentPaddingHorizontal * 2)
                     readonly property string title: (liveEntry && liveEntry.title) ? liveEntry.title : (modelData.fallbackTitle || modelData.appId || "Unknown application")
                     readonly property string effectiveItemState: isFocused ? "focused" : (isHovered ? "hovered" : (isInactive ? "inactive" : "default"))
-                    readonly property color itemBackgroundColor: root.resolveItemStateColor(effectiveItemState, "background")
-                    readonly property color itemBorderColor: root.resolveItemStateColor(effectiveItemState, "border")
+                    readonly property color itemBackgroundColor: root.resolveItemStateColorWithOpacity(effectiveItemState, "background")
+                    readonly property color itemBorderColor: root.resolveItemStateColorWithOpacity(effectiveItemState, "border")
                     readonly property real itemBorderWidth: itemBorderColor.a > 0 ? Style.borderS : 0
-                    readonly property color itemTextColor: root.resolveItemStateColor(effectiveItemState, "text")
+                    readonly property color itemTextColor: root.resolveItemStateColorWithOpacity(effectiveItemState, "text")
+                    readonly property bool useBackgroundGradient: itemStateColors.backgroundGradientEnabled(root.itemColors, effectiveItemState)
+                    readonly property color backgroundGradientStartColor: itemStateColors.resolveGradientStopColor(root.itemColors, effectiveItemState, "backgroundGradientStart", "backgroundGradientStartOpacity", "background")
+                    readonly property color backgroundGradientEndColor: itemStateColors.resolveGradientStopColor(root.itemColors, effectiveItemState, "backgroundGradientEnd", "backgroundGradientEndOpacity", "background")
+                    readonly property int backgroundGradientOrientation: itemStateColors.backgroundGradientOrientation(root.itemColors, effectiveItemState, root.isVerticalBar)
                     readonly property int groupedCount: liveEntry ? liveEntry.groupedCount : windows.length
                     readonly property int focusedWindowIndex: liveEntry ? liveEntry.focusedWindowIndex : -1
                     readonly property string groupedIndicatorText: focusedWindowIndex >= 0 ? ((focusedWindowIndex + 1) + "/" + groupedCount) : groupedCount.toString()
@@ -1713,12 +1756,14 @@ Item {
                     readonly property real badgeFocusScale: isFocused ? 1.08 : 1.0
                     readonly property real indicatorOpacity: isFocused ? 1.0 : (isHovered ? 0.72 : 0.0)
                     readonly property bool isSeparator: modelData.type === "workspace-target"
+                    readonly property bool reorderDropEnabled: isSeparator ? barRoot.supportsLiveReorder : (!isRunning || barRoot.supportsLiveReorder)
                     readonly property bool showSeparatorVisual: modelData.showSeparator ?? false
                     readonly property string separatorLabel: root.getWorkspaceLabel(modelData.workspaceIndex ?? 0)
                     readonly property real separatorLabelWidth: root.workspaceSeparatorShowLabel ? Math.max(0, Math.round(separatorLabel.length * root.barFontSize * 0.62)) : 0
                     readonly property real separatorLineLength: Math.max(Math.round(root.itemSize * 0.9), Style.marginL * 2)
                     readonly property real separatorVisualWidth: root.isVerticalBar ? root.barHeight : Math.round(Style.marginM * 2 + separatorLabelWidth + ((root.workspaceSeparatorShowLabel && root.workspaceSeparatorShowDivider && separatorLabelWidth > 0) ? Style.marginS : 0) + (root.workspaceSeparatorShowDivider ? separatorLineLength : 0))
                     readonly property real separatorVisualHeight: root.isVerticalBar ? Math.round(Style.marginM * 2 + separatorLabelWidth + ((root.workspaceSeparatorShowLabel && root.workspaceSeparatorShowDivider && separatorLabelWidth > 0) ? Style.marginS : 0) + (root.workspaceSeparatorShowDivider ? separatorLineLength : 0)) : root.barHeight
+                    property real stateFadeOpacity: 1.0
 
                     function syncIndicatorRect() {
                         if (isSeparator)
@@ -1774,60 +1819,32 @@ Item {
                         }
                     }
 
-                    function syncProxyPosition() {
-                        iconForegroundProxy.syncPosition();
-                    }
-
                     Component.onCompleted: {
                         syncIndicatorRect();
-                        syncProxyPosition();
+                    }
+                    onEffectiveItemStateChanged: {
+                        if (!isSeparator)
+                            stateFadeAnimation.restart();
                     }
                     Component.onDestruction: root.clearEntryIndicatorRect(modelData.entryKey)
                     onXChanged: {
                         syncIndicatorRect();
-                        syncProxyPosition();
                     }
                     onYChanged: {
                         syncIndicatorRect();
-                        syncProxyPosition();
                     }
                     onWidthChanged: {
                         syncIndicatorRect();
-                        syncProxyPosition();
                     }
                     onHeightChanged: {
                         syncIndicatorRect();
-                        syncProxyPosition();
                     }
 
                     DropArea {
                         visible: true
-                        enabled: taskbarItem.isSeparator ? taskbarItem.barRoot.supportsLiveReorder : (!taskbarItem.isRunning || taskbarItem.barRoot.supportsLiveReorder)
+                        enabled: taskbarItem.reorderDropEnabled
                         anchors.fill: parent
                         keys: ["taskbar-app"]
-                        onEntered: function (drag) {
-                            if (drag.source && drag.source.objectName === "taskbarAppItem") {
-                                taskbarItem.barRoot.dragTargetIndex = taskbarItem.modelIndex;
-                            }
-                        }
-                        onExited: function () {
-                            if (taskbarItem.barRoot.dragTargetIndex === taskbarItem.modelIndex) {
-                                taskbarItem.barRoot.dragTargetIndex = -1;
-                            }
-                        }
-                        onDropped: function (drop) {
-                            taskbarItem.barRoot.dragSourceIndex = -1;
-                            taskbarItem.barRoot.dragTargetIndex = -1;
-                            if (drop.source && drop.source.objectName === "taskbarAppItem" && drop.source !== taskbarItem) {
-                                if (taskbarItem.isSeparator) {
-                                    const fromItem = taskbarItem.barRoot.combinedModel[drop.source.modelIndex];
-                                    if (fromItem && taskbarItem.barRoot.supportsLiveReorder)
-                                        taskbarItem.barRoot.moveLiveEntry(fromItem, taskbarItem.modelData);
-                                } else {
-                                    taskbarItem.barRoot.reorderApps(drop.source.modelIndex, taskbarItem.modelIndex);
-                                }
-                            }
-                        }
                     }
 
                     Loader {
@@ -1961,6 +1978,7 @@ Item {
                         width: parent.width
                         height: parent.height
                         anchors.centerIn: dragging ? undefined : parent
+                        opacity: taskbarItem.stateFadeOpacity
 
                         readonly property bool isDragged: taskbarItem.barRoot.dragSourceIndex === index
                         property real shiftOffset: 0
@@ -2004,15 +2022,17 @@ Item {
                         onDraggingChanged: {
                             if (dragging) {
                                 taskbarItem.barRoot.dragSourceIndex = index;
+                                taskbarItem.barRoot.updateDragTargetForItem(index, draggableContent);
                             } else if (taskbarItem.barRoot.dragSourceIndex === index) {
                                 Qt.callLater(() => {
+                                    if (taskbarItem.barRoot.pendingDragCommitSourceIndex === index)
+                                        return;
                                     if (!taskbarMouseArea.drag.active && taskbarItem.barRoot.dragSourceIndex === index) {
                                         taskbarItem.barRoot.dragSourceIndex = -1;
                                         taskbarItem.barRoot.dragTargetIndex = -1;
                                     }
                                 });
                             }
-                            syncProxyPosition();
                         }
 
                         Drag.active: dragging
@@ -2022,16 +2042,55 @@ Item {
                         Drag.keys: ["taskbar-app"]
                         z: dragging ? 1000 : 0
                         scale: (dragging ? 1.05 : 1.0) * (taskbarItem.isHovered ? taskbarItem.hoverItemScale : 1.0)
-                        onXChanged: syncProxyPosition()
-                        onYChanged: syncProxyPosition()
-                        onWidthChanged: syncProxyPosition()
-                        onHeightChanged: syncProxyPosition()
-                        onScaleChanged: syncProxyPosition()
-                        onShiftOffsetChanged: syncProxyPosition()
+                        onXChanged: {
+                            if (dragging)
+                                taskbarItem.barRoot.updateDragTargetForItem(index, draggableContent);
+                        }
+                        onYChanged: {
+                            if (dragging)
+                                taskbarItem.barRoot.updateDragTargetForItem(index, draggableContent);
+                        }
+                        onWidthChanged: {
+                            if (dragging)
+                                taskbarItem.barRoot.updateDragTargetForItem(index, draggableContent);
+                        }
+                        onHeightChanged: {
+                            if (dragging)
+                                taskbarItem.barRoot.updateDragTargetForItem(index, draggableContent);
+                        }
+                        onScaleChanged: {
+                            if (dragging)
+                                taskbarItem.barRoot.updateDragTargetForItem(index, draggableContent);
+                        }
+                        onShiftOffsetChanged: {
+                            if (dragging)
+                                taskbarItem.barRoot.updateDragTargetForItem(index, draggableContent);
+                        }
 
                         Behavior on scale {
                             NumberAnimation {
                                 duration: Style.animationFast
+                            }
+                        }
+
+                        SequentialAnimation {
+                            id: stateFadeAnimation
+                            running: false
+
+                            NumberAnimation {
+                                target: taskbarItem
+                                property: "stateFadeOpacity"
+                                to: 0.88
+                                duration: 55
+                                easing.type: Easing.OutQuad
+                            }
+
+                            NumberAnimation {
+                                target: taskbarItem
+                                property: "stateFadeOpacity"
+                                to: 1.0
+                                duration: 90
+                                easing.type: Easing.OutQuad
                             }
                         }
 
@@ -2040,7 +2099,7 @@ Item {
                             anchors.centerIn: parent
                             width: root.isVerticalBar ? root.capsuleHeight : taskbarItem.visualWidth
                             height: root.capsuleHeight
-                            color: taskbarItem.itemBackgroundColor
+                            color: taskbarItem.useBackgroundGradient ? "transparent" : taskbarItem.itemBackgroundColor
                             radius: Style.radiusM
                             border.color: taskbarItem.itemBorderColor
                             border.width: taskbarItem.itemBorderWidth
@@ -2056,6 +2115,26 @@ Item {
                                 ColorAnimation {
                                     duration: Style.animationFast
                                     easing.type: Easing.InOutQuad
+                                }
+                            }
+
+                            Rectangle {
+                                id: taskbarItemGradientBackground
+                                visible: taskbarItem.useBackgroundGradient
+                                anchors.fill: parent
+                                radius: capsuleBackground.radius
+                                color: "transparent"
+                                gradient: Gradient {
+                                    id: backgroundGradientComponent
+                                    orientation: taskbarItem.backgroundGradientOrientation
+                                    GradientStop {
+                                        position: 0.0
+                                        color: taskbarItem.backgroundGradientStartColor
+                                    }
+                                    GradientStop {
+                                        position: 1.0
+                                        color: taskbarItem.backgroundGradientEndColor
+                                    }
                                 }
                             }
 
@@ -2106,19 +2185,15 @@ Item {
                                     Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
                                     onXChanged: {
                                         taskbarItem.syncIndicatorRect();
-                                        taskbarItem.syncProxyPosition();
                                     }
                                     onYChanged: {
                                         taskbarItem.syncIndicatorRect();
-                                        taskbarItem.syncProxyPosition();
                                     }
                                     onWidthChanged: {
                                         taskbarItem.syncIndicatorRect();
-                                        taskbarItem.syncProxyPosition();
                                     }
                                     onHeightChanged: {
                                         taskbarItem.syncIndicatorRect();
-                                        taskbarItem.syncProxyPosition();
                                     }
 
                                     Item {
@@ -2294,48 +2369,45 @@ Item {
                                     }
 
                                     Item {
-                                        id: iconForegroundProxy
-                                        parent: taskbarForegroundLayer
-                                        z: 1
-                                        visible: taskbarForegroundLayer.visible && taskbarItem.visible && !taskbarItem.isSeparator
-                                        enabled: false
-                                        property rect mappedRect: Qt.rect(0, 0, 0, 0)
+                                        anchors.fill: parent
+                                        y: taskbarItem.iconFocusLift
+                                        scale: taskbarItem.iconFocusScale
+                                        opacity: 0.78 + taskbarItem.focusVisualStrength * 0.22
+                                        transformOrigin: Item.Center
 
-                                        function syncPosition() {
-                                            if (!taskbarForegroundLayer || !iconContainer) {
-                                                mappedRect = Qt.rect(0, 0, 0, 0);
-                                                return;
+                                        Behavior on y {
+                                            NumberAnimation {
+                                                duration: Style.animationFast
+                                                easing.type: Easing.OutCubic
                                             }
-
-                                            const topLeft = iconContainer.mapToItem(taskbarForegroundLayer, 0, 0);
-                                            const bottomRight = iconContainer.mapToItem(taskbarForegroundLayer, iconContainer.width, iconContainer.height);
-                                            const left = Math.min(topLeft.x, bottomRight.x);
-                                            const top = Math.min(topLeft.y, bottomRight.y);
-                                            const right = Math.max(topLeft.x, bottomRight.x);
-                                            const bottom = Math.max(topLeft.y, bottomRight.y);
-                                            mappedRect = Qt.rect(
-                                                Math.round(left),
-                                                Math.round(top),
-                                                Math.max(0, Math.round(right - left)),
-                                                Math.max(0, Math.round(bottom - top))
-                                            );
                                         }
 
-                                        x: mappedRect.x
-                                        y: mappedRect.y
-                                        width: mappedRect.width
-                                        height: mappedRect.height
+                                        Behavior on scale {
+                                            NumberAnimation {
+                                                duration: Style.animationNormal
+                                                easing.type: Easing.OutQuad
+                                            }
+                                        }
 
-                                        Item {
-                                            anchors.fill: parent
-                                            y: taskbarItem.iconFocusLift
-                                            scale: taskbarItem.iconFocusScale
-                                            opacity: 0.78 + taskbarItem.focusVisualStrength * 0.22
-                                            transformOrigin: Item.Center
+                                        Behavior on opacity {
+                                            NumberAnimation {
+                                                duration: Style.animationFast
+                                                easing.type: Easing.OutCubic
+                                            }
+                                        }
 
-                                            Behavior on y {
+                                        Rectangle {
+                                            anchors.centerIn: parent
+                                            width: Math.round(parent.width * 0.9)
+                                            height: Math.round(parent.height * 0.9)
+                                            radius: Math.max(width, height) / 2
+                                            color: Qt.rgba(taskbarItem.focusTertiaryColor.r, taskbarItem.focusTertiaryColor.g, taskbarItem.focusTertiaryColor.b, 1)
+                                            opacity: taskbarItem.iconGlowOpacity
+                                            scale: 0.86 + taskbarItem.focusVisualStrength * 0.28
+
+                                            Behavior on opacity {
                                                 NumberAnimation {
-                                                    duration: Style.animationFast
+                                                    duration: Style.animationNormal
                                                     easing.type: Easing.OutCubic
                                                 }
                                             }
@@ -2343,53 +2415,22 @@ Item {
                                             Behavior on scale {
                                                 NumberAnimation {
                                                     duration: Style.animationNormal
-                                                    easing.type: Easing.OutQuad
-                                                }
-                                            }
-
-                                            Behavior on opacity {
-                                                NumberAnimation {
-                                                    duration: Style.animationFast
                                                     easing.type: Easing.OutCubic
                                                 }
                                             }
+                                        }
 
-                                            Rectangle {
-                                                anchors.centerIn: parent
-                                                width: Math.round(parent.width * 0.9)
-                                                height: Math.round(parent.height * 0.9)
-                                                radius: Math.max(width, height) / 2
-                                                color: Qt.rgba(taskbarItem.focusTertiaryColor.r, taskbarItem.focusTertiaryColor.g, taskbarItem.focusTertiaryColor.b, 1)
-                                                opacity: taskbarItem.iconGlowOpacity
-                                                scale: 0.86 + taskbarItem.focusVisualStrength * 0.28
+                                        IconImage {
+                                            anchors.fill: parent
+                                            source: ThemeIcons.iconForAppId(taskbarItem.modelData.appId)
+                                            smooth: true
+                                            asynchronous: true
+                                            layer.enabled: root.colorizeIcons
+                                            layer.effect: ShaderEffect {
+                                                property color targetColor: root.resolvedIconTintColor()
+                                                property real colorizeMode: 0.0
 
-                                                Behavior on opacity {
-                                                    NumberAnimation {
-                                                        duration: Style.animationNormal
-                                                        easing.type: Easing.OutCubic
-                                                    }
-                                                }
-
-                                                Behavior on scale {
-                                                    NumberAnimation {
-                                                        duration: Style.animationNormal
-                                                        easing.type: Easing.OutCubic
-                                                    }
-                                                }
-                                            }
-
-                                            IconImage {
-                                                anchors.fill: parent
-                                                source: ThemeIcons.iconForAppId(taskbarItem.modelData.appId)
-                                                smooth: true
-                                                asynchronous: true
-                                                layer.enabled: root.colorizeIcons
-                                                layer.effect: ShaderEffect {
-                                                    property color targetColor: root.resolvedIconTintColor()
-                                                    property real colorizeMode: 0.0
-
-                                                    fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/appicon_colorize.frag.qsb")
-                                                }
+                                                fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/appicon_colorize.frag.qsb")
                                             }
                                         }
                                     }
@@ -2445,9 +2486,8 @@ Item {
                         preventStealing: true
 
                         onReleased: {
-                            if (draggableContent.Drag.active) {
-                                draggableContent.Drag.drop();
-                            }
+                            if (draggableContent.dragging)
+                                root.queueDragCommit(index, root.dragTargetIndex);
                         }
 
                         onClicked: mouse => {
@@ -2511,16 +2551,6 @@ Item {
             verticalPosition: root.focusTransitionVerticalPosition
             blurRadius: root.focusTransitionBlur * root.focusTransitionScale
             opacityRatio: root.focusTransitionOpacityRatio
-        }
-
-        Item {
-            id: taskbarForegroundLayer
-            anchors.fill: parent
-            z: 30
-            onXChanged: root.scheduleProxyRefresh()
-            onYChanged: root.scheduleProxyRefresh()
-            onWidthChanged: root.scheduleProxyRefresh()
-            onHeightChanged: root.scheduleProxyRefresh()
         }
     }
 }

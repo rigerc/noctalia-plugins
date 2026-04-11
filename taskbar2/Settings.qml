@@ -103,6 +103,16 @@ ColumnLayout {
             "name": pluginApi?.tr("options.focusTransitionPositionTop")
         }
     ]
+    readonly property var gradientDirectionOptions: [
+        {
+            "key": "horizontal",
+            "name": pluginApi?.tr("options.gradientHorizontal")
+        },
+        {
+            "key": "vertical",
+            "name": pluginApi?.tr("options.gradientVertical")
+        }
+    ]
 
     property string valueHideMode: cfg.hideMode ?? defaults.hideMode ?? "hidden"
     property bool valueOnlyActiveWorkspaces: cfg.onlyActiveWorkspaces ?? defaults.onlyActiveWorkspaces ?? true
@@ -158,7 +168,16 @@ ColumnLayout {
         return {
             "background": sourceState?.background ?? fallbackState?.background ?? "none",
             "border": sourceState?.border ?? fallbackState?.border ?? "none",
-            "text": sourceState?.text ?? fallbackState?.text ?? "none"
+            "text": sourceState?.text ?? fallbackState?.text ?? "none",
+            "backgroundOpacity": sourceState?.backgroundOpacity ?? fallbackState?.backgroundOpacity ?? 100,
+            "borderOpacity": sourceState?.borderOpacity ?? fallbackState?.borderOpacity ?? 100,
+            "textOpacity": sourceState?.textOpacity ?? fallbackState?.textOpacity ?? 100,
+            "backgroundGradientEnabled": sourceState?.backgroundGradientEnabled ?? fallbackState?.backgroundGradientEnabled ?? false,
+            "backgroundGradientDirection": sourceState?.backgroundGradientDirection ?? fallbackState?.backgroundGradientDirection ?? "horizontal",
+            "backgroundGradientStart": sourceState?.backgroundGradientStart ?? fallbackState?.backgroundGradientStart ?? "none",
+            "backgroundGradientEnd": sourceState?.backgroundGradientEnd ?? fallbackState?.backgroundGradientEnd ?? "none",
+            "backgroundGradientStartOpacity": sourceState?.backgroundGradientStartOpacity ?? fallbackState?.backgroundGradientStartOpacity ?? 100,
+            "backgroundGradientEndOpacity": sourceState?.backgroundGradientEndOpacity ?? fallbackState?.backgroundGradientEndOpacity ?? 100
         };
     }
 
@@ -178,15 +197,31 @@ ColumnLayout {
         root.valueItemColors = nextColors;
     }
 
+    function setItemStateValue(stateKey, fieldKey, value) {
+        const nextColors = normalizeItemColors(root.valueItemColors);
+        nextColors[stateKey][fieldKey] = value;
+        root.valueItemColors = nextColors;
+    }
+
     function getItemColor(stateKey, colorRole) {
         const colors = root.valueItemColors || ({});
         const state = colors[stateKey] || ({});
         return state[colorRole] ?? "none";
     }
 
+    function getItemStateValue(stateKey, fieldKey) {
+        const colors = normalizeItemColors(root.valueItemColors);
+        return colors[stateKey]?.[fieldKey];
+    }
+
     function getDefaultItemColor(stateKey, colorRole) {
         const fallbackColors = normalizeItemColors(defaults.itemColors || ({}));
         return fallbackColors[stateKey][colorRole];
+    }
+
+    function getDefaultItemStateValue(stateKey, fieldKey) {
+        const fallbackColors = normalizeItemColors(defaults.itemColors || ({}));
+        return fallbackColors[stateKey]?.[fieldKey];
     }
 
     function normalizeStringList(values) {
@@ -456,12 +491,12 @@ ColumnLayout {
                     width: organizationScrollView.availableWidth
                     spacing: Style.marginM
 
-                    NHeader {
+                    NHeading {
                         label: pluginApi?.tr("settings.sections.workspaceContainers.label")
                         description: pluginApi?.tr("settings.sections.workspaceContainers.desc")
                     }
 
-            NHeader {
+            SectionHeader {
                 label: pluginApi?.tr("settings.ignoredWorkspaces.label")
                 description: pluginApi?.tr("settings.ignoredWorkspaces.desc")
             }
@@ -677,7 +712,7 @@ ColumnLayout {
                 Layout.fillWidth: true
             }
 
-            NHeader {
+            NHeading {
                 label: pluginApi?.tr("settings.sections.applicationGrouping.label")
                 description: pluginApi?.tr("settings.sections.applicationGrouping.desc")
             }
@@ -770,7 +805,7 @@ ColumnLayout {
                     width: layoutTabScrollView.availableWidth
                     spacing: Style.marginM
 
-                    NHeader {
+                    NHeading {
                         label: pluginApi?.tr("settings.sections.icon.label")
                         description: pluginApi?.tr("settings.sections.icon.desc")
                     }
@@ -840,7 +875,7 @@ ColumnLayout {
                 Layout.fillWidth: true
             }
 
-            NHeader {
+            NHeading {
                 label: pluginApi?.tr("settings.sections.geometry.label")
                 description: pluginApi?.tr("settings.sections.geometry.desc")
             }
@@ -877,7 +912,7 @@ ColumnLayout {
                 Layout.fillWidth: true
             }
 
-            NHeader {
+            NHeading {
                 label: pluginApi?.tr("settings.sections.animation.label")
                 description: pluginApi?.tr("settings.sections.animation.desc")
             }
@@ -896,7 +931,7 @@ ColumnLayout {
                 Layout.fillWidth: true
             }
 
-            NHeader {
+            SectionHeader {
                 visible: root.valueFocusTransitionEnabled
                 label: pluginApi?.tr("settings.sections.animationTiming.label")
                 description: pluginApi?.tr("settings.sections.animationTiming.desc")
@@ -937,7 +972,7 @@ ColumnLayout {
                 Layout.fillWidth: true
             }
 
-            NHeader {
+            SectionHeader {
                 visible: root.valueFocusTransitionEnabled
                 label: pluginApi?.tr("settings.sections.animationStyle.label")
                 description: pluginApi?.tr("settings.sections.animationStyle.desc")
@@ -1000,7 +1035,7 @@ ColumnLayout {
                 Layout.fillWidth: true
             }
 
-            NHeader {
+            SectionHeader {
                 visible: root.valueFocusTransitionEnabled
                 label: pluginApi?.tr("settings.sections.animationColors.label")
                 description: pluginApi?.tr("settings.sections.animationColors.desc")
@@ -1038,7 +1073,7 @@ ColumnLayout {
                 Layout.fillWidth: true
             }
 
-            NHeader {
+            SectionHeader {
                 visible: root.valueFocusTransitionEnabled
                 label: pluginApi?.tr("settings.sections.animationEffects.label")
                 description: pluginApi?.tr("settings.sections.animationEffects.desc")
@@ -1078,7 +1113,7 @@ ColumnLayout {
                 Layout.fillWidth: true
             }
 
-            NHeader {
+            NHeading {
                 label: pluginApi?.tr("settings.sections.title.label")
                 description: pluginApi?.tr("settings.sections.title.desc")
             }
@@ -1133,7 +1168,7 @@ ColumnLayout {
                 Layout.fillWidth: true
             }
 
-            NHeader {
+            NHeading {
                 label: pluginApi?.tr("settings.sections.typography.label")
                 description: pluginApi?.tr("settings.sections.typography.desc")
             }
@@ -1197,7 +1232,7 @@ ColumnLayout {
                     width: colorsScrollView.availableWidth
                     spacing: Style.marginM
 
-                    NHeader {
+                    NHeading {
                         label: pluginApi?.tr("settings.sections.itemColors.label")
                         description: pluginApi?.tr("settings.sections.itemColors.desc")
                     }
@@ -1206,12 +1241,13 @@ ColumnLayout {
                     model: root.itemColorStates
 
                     delegate: ColumnLayout {
+                        required property int index
                         required property var modelData
 
                         Layout.fillWidth: true
                         spacing: Style.marginS
 
-                        NHeader {
+                        SectionHeader {
                             label: modelData.label
                             description: modelData.description
                         }
@@ -1224,6 +1260,20 @@ ColumnLayout {
                             defaultValue: root.getDefaultItemColor(modelData.key, "background")
                         }
 
+                        NValueSlider {
+                            Layout.fillWidth: true
+                            label: pluginApi?.tr("settings.itemColors.backgroundOpacity.label")
+                            description: pluginApi?.tr("settings.itemColors.backgroundOpacity.desc")
+                            from: 0
+                            to: 100
+                            stepSize: 5
+                            showReset: true
+                            value: root.getItemStateValue(modelData.key, "backgroundOpacity")
+                            defaultValue: root.getDefaultItemStateValue(modelData.key, "backgroundOpacity")
+                            onMoved: value => root.setItemStateValue(modelData.key, "backgroundOpacity", Math.round(value))
+                            text: Math.round(root.getItemStateValue(modelData.key, "backgroundOpacity")) + "%"
+                        }
+
                         NColorChoice {
                             label: pluginApi?.tr("settings.itemColors.border.label")
                             description: pluginApi?.tr("settings.itemColors.border.desc")
@@ -1232,12 +1282,113 @@ ColumnLayout {
                             defaultValue: root.getDefaultItemColor(modelData.key, "border")
                         }
 
+                        NValueSlider {
+                            Layout.fillWidth: true
+                            label: pluginApi?.tr("settings.itemColors.borderOpacity.label")
+                            description: pluginApi?.tr("settings.itemColors.borderOpacity.desc")
+                            from: 0
+                            to: 100
+                            stepSize: 5
+                            showReset: true
+                            value: root.getItemStateValue(modelData.key, "borderOpacity")
+                            defaultValue: root.getDefaultItemStateValue(modelData.key, "borderOpacity")
+                            onMoved: value => root.setItemStateValue(modelData.key, "borderOpacity", Math.round(value))
+                            text: Math.round(root.getItemStateValue(modelData.key, "borderOpacity")) + "%"
+                        }
+
                         NColorChoice {
                             label: pluginApi?.tr("settings.itemColors.text.label")
                             description: pluginApi?.tr("settings.itemColors.text.desc")
                             currentKey: root.getItemColor(modelData.key, "text")
                             onSelected: key => root.setItemColor(modelData.key, "text", key)
                             defaultValue: root.getDefaultItemColor(modelData.key, "text")
+                        }
+
+                        NValueSlider {
+                            Layout.fillWidth: true
+                            label: pluginApi?.tr("settings.itemColors.textOpacity.label")
+                            description: pluginApi?.tr("settings.itemColors.textOpacity.desc")
+                            from: 0
+                            to: 100
+                            stepSize: 5
+                            showReset: true
+                            value: root.getItemStateValue(modelData.key, "textOpacity")
+                            defaultValue: root.getDefaultItemStateValue(modelData.key, "textOpacity")
+                            onMoved: value => root.setItemStateValue(modelData.key, "textOpacity", Math.round(value))
+                            text: Math.round(root.getItemStateValue(modelData.key, "textOpacity")) + "%"
+                        }
+
+                        NToggle {
+                            Layout.fillWidth: true
+                            label: pluginApi?.tr("settings.itemColors.backgroundGradientEnabled.label")
+                            description: pluginApi?.tr("settings.itemColors.backgroundGradientEnabled.desc")
+                            checked: root.getItemStateValue(modelData.key, "backgroundGradientEnabled")
+                            onToggled: checked => root.setItemStateValue(modelData.key, "backgroundGradientEnabled", checked)
+                            defaultValue: root.getDefaultItemStateValue(modelData.key, "backgroundGradientEnabled")
+                        }
+
+                        NComboBox {
+                            visible: root.getItemStateValue(modelData.key, "backgroundGradientEnabled")
+                            Layout.fillWidth: true
+                            label: pluginApi?.tr("settings.itemColors.backgroundGradientDirection.label")
+                            description: pluginApi?.tr("settings.itemColors.backgroundGradientDirection.desc")
+                            model: root.gradientDirectionOptions
+                            currentKey: root.getItemStateValue(modelData.key, "backgroundGradientDirection")
+                            onSelected: key => root.setItemStateValue(modelData.key, "backgroundGradientDirection", key)
+                            defaultValue: root.getDefaultItemStateValue(modelData.key, "backgroundGradientDirection")
+                        }
+
+                        NColorChoice {
+                            visible: root.getItemStateValue(modelData.key, "backgroundGradientEnabled")
+                            label: pluginApi?.tr("settings.itemColors.backgroundGradientStart.label")
+                            description: pluginApi?.tr("settings.itemColors.backgroundGradientStart.desc")
+                            currentKey: root.getItemStateValue(modelData.key, "backgroundGradientStart")
+                            onSelected: key => root.setItemStateValue(modelData.key, "backgroundGradientStart", key)
+                            defaultValue: root.getDefaultItemStateValue(modelData.key, "backgroundGradientStart")
+                        }
+
+                        NValueSlider {
+                            visible: root.getItemStateValue(modelData.key, "backgroundGradientEnabled")
+                            Layout.fillWidth: true
+                            label: pluginApi?.tr("settings.itemColors.backgroundGradientStartOpacity.label")
+                            description: pluginApi?.tr("settings.itemColors.backgroundGradientStartOpacity.desc")
+                            from: 0
+                            to: 100
+                            stepSize: 5
+                            showReset: true
+                            value: root.getItemStateValue(modelData.key, "backgroundGradientStartOpacity")
+                            defaultValue: root.getDefaultItemStateValue(modelData.key, "backgroundGradientStartOpacity")
+                            onMoved: value => root.setItemStateValue(modelData.key, "backgroundGradientStartOpacity", Math.round(value))
+                            text: Math.round(root.getItemStateValue(modelData.key, "backgroundGradientStartOpacity")) + "%"
+                        }
+
+                        NColorChoice {
+                            visible: root.getItemStateValue(modelData.key, "backgroundGradientEnabled")
+                            label: pluginApi?.tr("settings.itemColors.backgroundGradientEnd.label")
+                            description: pluginApi?.tr("settings.itemColors.backgroundGradientEnd.desc")
+                            currentKey: root.getItemStateValue(modelData.key, "backgroundGradientEnd")
+                            onSelected: key => root.setItemStateValue(modelData.key, "backgroundGradientEnd", key)
+                            defaultValue: root.getDefaultItemStateValue(modelData.key, "backgroundGradientEnd")
+                        }
+
+                        NValueSlider {
+                            visible: root.getItemStateValue(modelData.key, "backgroundGradientEnabled")
+                            Layout.fillWidth: true
+                            label: pluginApi?.tr("settings.itemColors.backgroundGradientEndOpacity.label")
+                            description: pluginApi?.tr("settings.itemColors.backgroundGradientEndOpacity.desc")
+                            from: 0
+                            to: 100
+                            stepSize: 5
+                            showReset: true
+                            value: root.getItemStateValue(modelData.key, "backgroundGradientEndOpacity")
+                            defaultValue: root.getDefaultItemStateValue(modelData.key, "backgroundGradientEndOpacity")
+                            onMoved: value => root.setItemStateValue(modelData.key, "backgroundGradientEndOpacity", Math.round(value))
+                            text: Math.round(root.getItemStateValue(modelData.key, "backgroundGradientEndOpacity")) + "%"
+                        }
+
+                        NDivider {
+                            visible: index < root.itemColorStates.length - 1
+                            Layout.fillWidth: true
                         }
                     }
                 }

@@ -194,13 +194,49 @@
         "label": "Background color",
         "desc": "Select the background color for this taskbar item state."
       },
+      "backgroundOpacity": {
+        "label": "Background transparency",
+        "desc": "Reduce the intensity of the state background color."
+      },
+      "backgroundGradientEnabled": {
+        "label": "Use background gradient",
+        "desc": "Blend two background colors for this taskbar item state."
+      },
+      "backgroundGradientDirection": {
+        "label": "Background gradient direction",
+        "desc": "Choose whether the gradient runs horizontally or vertically."
+      },
+      "backgroundGradientStart": {
+        "label": "Gradient start color",
+        "desc": "Select the first background gradient color for this state."
+      },
+      "backgroundGradientStartOpacity": {
+        "label": "Gradient start transparency",
+        "desc": "Reduce the intensity of the gradient start color."
+      },
+      "backgroundGradientEnd": {
+        "label": "Gradient end color",
+        "desc": "Select the second background gradient color for this state."
+      },
+      "backgroundGradientEndOpacity": {
+        "label": "Gradient end transparency",
+        "desc": "Reduce the intensity of the gradient end color."
+      },
       "border": {
         "label": "Border color",
         "desc": "Select the border color for this taskbar item state."
       },
+      "borderOpacity": {
+        "label": "Border transparency",
+        "desc": "Reduce the intensity of the state border color."
+      },
       "text": {
         "label": "Text color",
         "desc": "Select the title text color for this taskbar item state."
+      },
+      "textOpacity": {
+        "label": "Text transparency",
+        "desc": "Reduce the intensity of the state text color."
       },
       "states": {
         "default": {
@@ -324,7 +360,9 @@
     "separatorModeIcon": "Custom icon",
     "focusTransitionPositionBottom": "Bottom",
     "focusTransitionPositionMiddle": "Middle",
-    "focusTransitionPositionTop": "Top"
+    "focusTransitionPositionTop": "Top",
+    "gradientHorizontal": "Horizontal",
+    "gradientVertical": "Vertical"
   },
   "placeholders": {
     "enterWidthPixels": "Enter width in pixels"

@@ -54,22 +54,58 @@
         "default": {
           "background": "none",
           "border": "none",
-          "text": "none"
+          "text": "none",
+          "backgroundOpacity": 100,
+          "borderOpacity": 100,
+          "textOpacity": 100,
+          "backgroundGradientEnabled": false,
+          "backgroundGradientDirection": "horizontal",
+          "backgroundGradientStart": "none",
+          "backgroundGradientEnd": "none",
+          "backgroundGradientStartOpacity": 100,
+          "backgroundGradientEndOpacity": 100
         },
         "hovered": {
           "background": "none",
           "border": "none",
-          "text": "none"
+          "text": "none",
+          "backgroundOpacity": 100,
+          "borderOpacity": 100,
+          "textOpacity": 100,
+          "backgroundGradientEnabled": false,
+          "backgroundGradientDirection": "horizontal",
+          "backgroundGradientStart": "none",
+          "backgroundGradientEnd": "none",
+          "backgroundGradientStartOpacity": 100,
+          "backgroundGradientEndOpacity": 100
         },
         "focused": {
           "background": "none",
           "border": "none",
-          "text": "none"
+          "text": "none",
+          "backgroundOpacity": 100,
+          "borderOpacity": 100,
+          "textOpacity": 100,
+          "backgroundGradientEnabled": false,
+          "backgroundGradientDirection": "horizontal",
+          "backgroundGradientStart": "none",
+          "backgroundGradientEnd": "none",
+          "backgroundGradientStartOpacity": 100,
+          "backgroundGradientEndOpacity": 100
         },
         "inactive": {
           "background": "none",
           "border": "none",
-          "text": "none"
+          "text": "none",
+          "backgroundOpacity": 100,
+          "borderOpacity": 100,
+          "textOpacity": 100,
+          "backgroundGradientEnabled": false,
+          "backgroundGradientDirection": "horizontal",
+          "backgroundGradientStart": "none",
+          "backgroundGradientEnd": "none",
+          "backgroundGradientStartOpacity": 100,
+          "backgroundGradientEndOpacity": 100
         }
       },
       "groupApps": false,
