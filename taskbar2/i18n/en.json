@@ -39,7 +39,15 @@
       },
       "animation": {
         "label": "Animation",
-        "desc": "Tune the delayed focus-travel marker that slides between focused taskbar entries."
+        "desc": "Tune both the taskbar item pulse and the delayed focus-travel marker animations."
+      },
+      "itemPulse": {
+        "label": "Item Pulse",
+        "desc": "Control the opacity pulse that plays when a taskbar item's state changes."
+      },
+      "itemAnimationTiming": {
+        "label": "Item Timing",
+        "desc": "Control the hover and focus transition speeds used by taskbar item visuals."
       },
       "animationTiming": {
         "label": "Timing",
@@ -126,6 +134,38 @@
       "focusTransitionEnabled": {
         "label": "Directional focus animation",
         "desc": "Slide a compact accent marker from the previously focused entry to the newly focused one."
+      },
+      "itemStateFadeEnabled": {
+        "label": "State change pulse",
+        "desc": "Pulse taskbar item opacity when entries change between inactive, default, hovered, and focused states."
+      },
+      "itemStateFadeMinOpacity": {
+        "label": "Pulse minimum opacity",
+        "desc": "How dim the item becomes at the lowest point of the pulse."
+      },
+      "itemStateFadeOutDurationMs": {
+        "label": "Pulse fade-out duration",
+        "desc": "Time spent fading down to the pulse minimum opacity."
+      },
+      "itemStateFadeInDurationMs": {
+        "label": "Pulse fade-in duration",
+        "desc": "Time spent returning from the pulse minimum opacity to full opacity."
+      },
+      "itemPositionAnimationDurationMs": {
+        "label": "Position transition duration",
+        "desc": "Timing used for item movement and lift transitions."
+      },
+      "itemScaleAnimationDurationMs": {
+        "label": "Scale transition duration",
+        "desc": "Timing used for item resizing, indicator width changes, and glow scaling."
+      },
+      "itemOpacityAnimationDurationMs": {
+        "label": "Opacity transition duration",
+        "desc": "Timing used for hover, focus, indicator, title, and glow opacity changes."
+      },
+      "itemColorAnimationDurationMs": {
+        "label": "Color transition duration",
+        "desc": "Timing used for background, border, indicator, badge, and title color changes."
       },
       "focusTransitionPreview": {
         "label": "Live preview",

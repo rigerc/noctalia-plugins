@@ -29,6 +29,14 @@ Item {
     property string titleFontFamily: ""
     property real titleFontScale: 1
     property string titleFontWeight: "medium"
+    property bool itemStateFadeEnabled: true
+    property int itemStateFadeMinOpacity: 88
+    property int itemStateFadeOutDurationMs: 55
+    property int itemStateFadeInDurationMs: 90
+    property int itemPositionAnimationDurationMs: 120
+    property int itemScaleAnimationDurationMs: 180
+    property int itemOpacityAnimationDurationMs: 120
+    property int itemColorAnimationDurationMs: 120
     property bool colorizeIcons: false
     property string iconColorKey: "primary"
     property int iconColorOpacity: 100
@@ -320,7 +328,25 @@ Item {
                             syncIndicatorRect();
                             iconForegroundProxy.syncPosition();
                         }
-                        onStateKeyChanged: stateFadeAnimation.restart()
+                        Connections {
+                            target: root
+
+                            function onItemStateFadeEnabledChanged() {
+                                if (!root.itemStateFadeEnabled) {
+                                    previewItem.stateFadeAnimation.stop();
+                                    previewItem.stateFadeOpacity = 1.0;
+                                }
+                            }
+                        }
+                        onStateKeyChanged: {
+                            if (root.itemStateFadeEnabled) {
+                                stateFadeOpacity = 1.0;
+                                stateFadeAnimation.restart();
+                            } else {
+                                stateFadeAnimation.stop();
+                                stateFadeOpacity = 1.0;
+                            }
+                        }
                         onXChanged: {
                             syncIndicatorRect();
                             iconForegroundProxy.syncPosition();
@@ -347,8 +373,8 @@ Item {
                             NumberAnimation {
                                 target: previewItem
                                 property: "stateFadeOpacity"
-                                to: 0.88
-                                duration: 55
+                                to: Math.max(0, Math.min(100, root.itemStateFadeMinOpacity)) / 100
+                                duration: Math.max(0, root.itemStateFadeOutDurationMs)
                                 easing.type: Easing.OutQuad
                             }
 
@@ -356,7 +382,7 @@ Item {
                                 target: previewItem
                                 property: "stateFadeOpacity"
                                 to: 1.0
-                                duration: 90
+                                duration: Math.max(0, root.itemStateFadeInDurationMs)
                                 easing.type: Easing.OutQuad
                             }
                         }
@@ -415,7 +441,7 @@ Item {
 
                                 Behavior on opacity {
                                     NumberAnimation {
-                                        duration: Style.animationNormal
+                                        duration: root.itemOpacityAnimationDurationMs
                                         easing.type: Easing.OutCubic
                                     }
 
@@ -425,7 +451,7 @@ Item {
 
                             Behavior on color {
                                 ColorAnimation {
-                                    duration: Style.animationFast
+                                    duration: root.itemColorAnimationDurationMs
                                     easing.type: Easing.InOutQuad
                                 }
 
@@ -433,7 +459,7 @@ Item {
 
                             Behavior on border.color {
                                 ColorAnimation {
-                                    duration: Style.animationFast
+                                    duration: root.itemColorAnimationDurationMs
                                     easing.type: Easing.InOutQuad
                                 }
 
@@ -490,7 +516,15 @@ Item {
 
                                         Behavior on width {
                                             NumberAnimation {
-                                                duration: Style.animationNormal
+                                                duration: root.itemScaleAnimationDurationMs
+                                                easing.type: Easing.OutCubic
+                                            }
+
+                                        }
+
+                                        Behavior on color {
+                                            ColorAnimation {
+                                                duration: root.itemColorAnimationDurationMs
                                                 easing.type: Easing.OutCubic
                                             }
 
@@ -498,7 +532,7 @@ Item {
 
                                         Behavior on opacity {
                                             NumberAnimation {
-                                                duration: Style.animationFast
+                                                duration: root.itemOpacityAnimationDurationMs
                                                 easing.type: Easing.OutCubic
                                             }
 
@@ -552,7 +586,7 @@ Item {
 
                                                 Behavior on opacity {
                                                     NumberAnimation {
-                                                        duration: Style.animationNormal
+                                                        duration: root.itemOpacityAnimationDurationMs
                                                         easing.type: Easing.OutCubic
                                                     }
 
@@ -560,7 +594,7 @@ Item {
 
                                                 Behavior on scale {
                                                     NumberAnimation {
-                                                        duration: Style.animationNormal
+                                                        duration: root.itemScaleAnimationDurationMs
                                                         easing.type: Easing.OutCubic
                                                     }
 
@@ -574,11 +608,19 @@ Item {
                                                 height: Math.round(parent.height * 0.62)
                                                 radius: Math.max(width, height) / 2
                                                 color: previewItem.effectiveState.dimIcon ? Qt.rgba(Color.mOnSurfaceVariant.r, Color.mOnSurfaceVariant.g, Color.mOnSurfaceVariant.b, 0.4) : (root.colorizeIcons ? root.resolvedIconTintColor() : (previewItem.stateKey === "focused" ? previewItem.accentColor : Color.mOnSurfaceVariant))
+
+                                                Behavior on color {
+                                                    ColorAnimation {
+                                                        duration: root.itemColorAnimationDurationMs
+                                                        easing.type: Easing.OutCubic
+                                                    }
+
+                                                }
                                             }
 
                                             Behavior on y {
                                                 NumberAnimation {
-                                                    duration: Style.animationFast
+                                                    duration: root.itemPositionAnimationDurationMs
                                                     easing.type: Easing.OutCubic
                                                 }
 
@@ -586,7 +628,7 @@ Item {
 
                                             Behavior on scale {
                                                 NumberAnimation {
-                                                    duration: Style.animationNormal
+                                                    duration: root.itemScaleAnimationDurationMs
                                                     easing.type: Easing.OutQuad
                                                 }
 
@@ -594,7 +636,7 @@ Item {
 
                                             Behavior on opacity {
                                                 NumberAnimation {
-                                                    duration: Style.animationFast
+                                                    duration: root.itemOpacityAnimationDurationMs
                                                     easing.type: Easing.OutCubic
                                                 }
 
@@ -613,6 +655,14 @@ Item {
                                     Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
                                     radius: 3
                                     color: Qt.rgba(previewItem.itemTextColor.r, previewItem.itemTextColor.g, previewItem.itemTextColor.b, previewItem.effectiveState.titleOpacity * 0.18)
+
+                                    Behavior on color {
+                                        ColorAnimation {
+                                            duration: root.itemColorAnimationDurationMs
+                                            easing.type: Easing.OutCubic
+                                        }
+
+                                    }
                                 }
 
                             }

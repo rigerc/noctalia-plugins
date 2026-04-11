@@ -52,6 +52,14 @@ Item {
     readonly property string titleFontFamily: cfg.titleFontFamily ?? defaults.titleFontFamily ?? ""
     readonly property real titleFontScale: cfg.titleFontScale ?? defaults.titleFontScale ?? 1.0
     readonly property string titleFontWeight: cfg.titleFontWeight ?? defaults.titleFontWeight ?? "medium"
+    readonly property bool itemStateFadeEnabled: cfg.itemStateFadeEnabled ?? defaults.itemStateFadeEnabled ?? true
+    readonly property real itemStateFadeMinOpacity: Math.max(0, Math.min(100, cfg.itemStateFadeMinOpacity ?? defaults.itemStateFadeMinOpacity ?? 88)) / 100
+    readonly property int itemStateFadeOutDurationMs: Math.max(0, cfg.itemStateFadeOutDurationMs ?? defaults.itemStateFadeOutDurationMs ?? 55)
+    readonly property int itemStateFadeInDurationMs: Math.max(0, cfg.itemStateFadeInDurationMs ?? defaults.itemStateFadeInDurationMs ?? 90)
+    readonly property int itemPositionAnimationDurationMs: Math.max(0, cfg.itemPositionAnimationDurationMs ?? defaults.itemPositionAnimationDurationMs ?? Style.animationFast)
+    readonly property int itemScaleAnimationDurationMs: Math.max(0, cfg.itemScaleAnimationDurationMs ?? defaults.itemScaleAnimationDurationMs ?? Style.animationNormal)
+    readonly property int itemOpacityAnimationDurationMs: Math.max(0, cfg.itemOpacityAnimationDurationMs ?? defaults.itemOpacityAnimationDurationMs ?? Style.animationFast)
+    readonly property int itemColorAnimationDurationMs: Math.max(0, cfg.itemColorAnimationDurationMs ?? defaults.itemColorAnimationDurationMs ?? Style.animationFast)
     readonly property var itemColors: cfg.itemColors ?? defaults.itemColors ?? ({})
     readonly property bool showPinnedApps: cfg.showPinnedApps ?? defaults.showPinnedApps ?? true
     readonly property bool groupApps: cfg.groupApps ?? defaults.groupApps ?? false
@@ -1822,9 +1830,24 @@ Item {
                     Component.onCompleted: {
                         syncIndicatorRect();
                     }
+                    Connections {
+                        target: root
+
+                        function onItemStateFadeEnabledChanged() {
+                            if (!root.itemStateFadeEnabled) {
+                                taskbarItem.stateFadeAnimation.stop();
+                                taskbarItem.stateFadeOpacity = 1.0;
+                            }
+                        }
+                    }
                     onEffectiveItemStateChanged: {
-                        if (!isSeparator)
+                        if (!isSeparator && root.itemStateFadeEnabled) {
+                            stateFadeOpacity = 1.0;
                             stateFadeAnimation.restart();
+                        } else {
+                            stateFadeAnimation.stop();
+                            stateFadeOpacity = 1.0;
+                        }
                     }
                     Component.onDestruction: root.clearEntryIndicatorRect(modelData.entryKey)
                     onXChanged: {
@@ -2007,13 +2030,13 @@ Item {
 
                             Behavior on x {
                                 NumberAnimation {
-                                    duration: Style.animationFast
+                                    duration: root.itemPositionAnimationDurationMs
                                     easing.type: Easing.OutQuad
                                 }
                             }
                             Behavior on y {
                                 NumberAnimation {
-                                    duration: Style.animationFast
+                                    duration: root.itemPositionAnimationDurationMs
                                     easing.type: Easing.OutQuad
                                 }
                             }
@@ -2069,7 +2092,7 @@ Item {
 
                         Behavior on scale {
                             NumberAnimation {
-                                duration: Style.animationFast
+                                duration: root.itemScaleAnimationDurationMs
                             }
                         }
 
@@ -2080,8 +2103,8 @@ Item {
                             NumberAnimation {
                                 target: taskbarItem
                                 property: "stateFadeOpacity"
-                                to: 0.88
-                                duration: 55
+                                to: root.itemStateFadeMinOpacity
+                                duration: root.itemStateFadeOutDurationMs
                                 easing.type: Easing.OutQuad
                             }
 
@@ -2089,7 +2112,7 @@ Item {
                                 target: taskbarItem
                                 property: "stateFadeOpacity"
                                 to: 1.0
-                                duration: 90
+                                duration: root.itemStateFadeInDurationMs
                                 easing.type: Easing.OutQuad
                             }
                         }
@@ -2106,14 +2129,14 @@ Item {
 
                             Behavior on color {
                                 ColorAnimation {
-                                    duration: Style.animationFast
+                                    duration: root.itemColorAnimationDurationMs
                                     easing.type: Easing.InOutQuad
                                 }
                             }
 
                             Behavior on border.color {
                                 ColorAnimation {
-                                    duration: Style.animationFast
+                                    duration: root.itemColorAnimationDurationMs
                                     easing.type: Easing.InOutQuad
                                 }
                             }
@@ -2130,10 +2153,24 @@ Item {
                                     GradientStop {
                                         position: 0.0
                                         color: taskbarItem.backgroundGradientStartColor
+
+                                        Behavior on color {
+                                            ColorAnimation {
+                                                duration: root.itemColorAnimationDurationMs
+                                                easing.type: Easing.InOutQuad
+                                            }
+                                        }
                                     }
                                     GradientStop {
                                         position: 1.0
                                         color: taskbarItem.backgroundGradientEndColor
+
+                                        Behavior on color {
+                                            ColorAnimation {
+                                                duration: root.itemColorAnimationDurationMs
+                                                easing.type: Easing.InOutQuad
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -2149,20 +2186,41 @@ Item {
                                     GradientStop {
                                         position: 0.0
                                         color: Qt.rgba(taskbarItem.focusAccentColor.r, taskbarItem.focusAccentColor.g, taskbarItem.focusAccentColor.b, 0.95)
+
+                                        Behavior on color {
+                                            ColorAnimation {
+                                                duration: root.itemColorAnimationDurationMs
+                                                easing.type: Easing.OutCubic
+                                            }
+                                        }
                                     }
                                     GradientStop {
                                         position: 0.55
                                         color: Qt.rgba(taskbarItem.focusSecondaryColor.r, taskbarItem.focusSecondaryColor.g, taskbarItem.focusSecondaryColor.b, 0.68)
+
+                                        Behavior on color {
+                                            ColorAnimation {
+                                                duration: root.itemColorAnimationDurationMs
+                                                easing.type: Easing.OutCubic
+                                            }
+                                        }
                                     }
                                     GradientStop {
                                         position: 1.0
                                         color: Qt.rgba(taskbarItem.focusTertiaryColor.r, taskbarItem.focusTertiaryColor.g, taskbarItem.focusTertiaryColor.b, 0.22)
+
+                                        Behavior on color {
+                                            ColorAnimation {
+                                                duration: root.itemColorAnimationDurationMs
+                                                easing.type: Easing.OutCubic
+                                            }
+                                        }
                                     }
                                 }
 
                                 Behavior on opacity {
                                     NumberAnimation {
-                                        duration: Style.animationNormal
+                                        duration: root.itemOpacityAnimationDurationMs
                                         easing.type: Easing.OutCubic
                                     }
                                 }
@@ -2213,21 +2271,21 @@ Item {
 
                                         Behavior on width {
                                             NumberAnimation {
-                                                duration: Style.animationNormal
+                                                duration: root.itemScaleAnimationDurationMs
                                                 easing.type: Easing.OutCubic
                                             }
                                         }
 
                                         Behavior on color {
                                             ColorAnimation {
-                                                duration: Style.animationFast
+                                                duration: root.itemColorAnimationDurationMs
                                                 easing.type: Easing.OutCubic
                                             }
                                         }
 
                                         Behavior on opacity {
                                             NumberAnimation {
-                                                duration: Style.animationFast
+                                                duration: root.itemOpacityAnimationDurationMs
                                                 easing.type: Easing.OutCubic
                                             }
                                         }
@@ -2269,21 +2327,21 @@ Item {
 
                                             Behavior on scale {
                                                 NumberAnimation {
-                                                    duration: Style.animationFast
+                                                    duration: root.itemScaleAnimationDurationMs
                                                     easing.type: Easing.OutBack
                                                 }
                                             }
 
                                             Behavior on color {
                                                 ColorAnimation {
-                                                    duration: Style.animationFast
+                                                    duration: root.itemColorAnimationDurationMs
                                                     easing.type: Easing.OutCubic
                                                 }
                                             }
 
                                             Behavior on border.color {
                                                 ColorAnimation {
-                                                    duration: Style.animationFast
+                                                    duration: root.itemColorAnimationDurationMs
                                                     easing.type: Easing.OutCubic
                                                 }
                                             }
@@ -2300,7 +2358,7 @@ Item {
 
                                                 Behavior on color {
                                                     ColorAnimation {
-                                                        duration: Style.animationFast
+                                                        duration: root.itemColorAnimationDurationMs
                                                         easing.type: Easing.OutCubic
                                                     }
                                                 }
@@ -2345,21 +2403,21 @@ Item {
 
                                                     Behavior on scale {
                                                         NumberAnimation {
-                                                            duration: Style.animationFast
+                                                            duration: root.itemScaleAnimationDurationMs
                                                             easing.type: Easing.OutBack
                                                         }
                                                     }
 
                                                     Behavior on color {
                                                         ColorAnimation {
-                                                            duration: Style.animationFast
+                                                            duration: root.itemColorAnimationDurationMs
                                                             easing.type: Easing.OutCubic
                                                         }
                                                     }
 
                                                     Behavior on opacity {
                                                         NumberAnimation {
-                                                            duration: Style.animationFast
+                                                            duration: root.itemOpacityAnimationDurationMs
                                                             easing.type: Easing.OutCubic
                                                         }
                                                     }
@@ -2377,21 +2435,21 @@ Item {
 
                                         Behavior on y {
                                             NumberAnimation {
-                                                duration: Style.animationFast
+                                                duration: root.itemPositionAnimationDurationMs
                                                 easing.type: Easing.OutCubic
                                             }
                                         }
 
                                         Behavior on scale {
                                             NumberAnimation {
-                                                duration: Style.animationNormal
+                                                duration: root.itemScaleAnimationDurationMs
                                                 easing.type: Easing.OutQuad
                                             }
                                         }
 
                                         Behavior on opacity {
                                             NumberAnimation {
-                                                duration: Style.animationFast
+                                                duration: root.itemOpacityAnimationDurationMs
                                                 easing.type: Easing.OutCubic
                                             }
                                         }
@@ -2405,16 +2463,23 @@ Item {
                                             opacity: taskbarItem.iconGlowOpacity
                                             scale: 0.86 + taskbarItem.focusVisualStrength * 0.28
 
+                                            Behavior on color {
+                                                ColorAnimation {
+                                                    duration: root.itemColorAnimationDurationMs
+                                                    easing.type: Easing.OutCubic
+                                                }
+                                            }
+
                                             Behavior on opacity {
                                                 NumberAnimation {
-                                                    duration: Style.animationNormal
+                                                    duration: root.itemOpacityAnimationDurationMs
                                                     easing.type: Easing.OutCubic
                                                 }
                                             }
 
                                             Behavior on scale {
                                                 NumberAnimation {
-                                                    duration: Style.animationNormal
+                                                    duration: root.itemScaleAnimationDurationMs
                                                     easing.type: Easing.OutCubic
                                                 }
                                             }
@@ -2455,14 +2520,14 @@ Item {
 
                                     Behavior on opacity {
                                         NumberAnimation {
-                                            duration: Style.animationFast
+                                            duration: root.itemOpacityAnimationDurationMs
                                             easing.type: Easing.OutCubic
                                         }
                                     }
 
                                     Behavior on color {
                                         ColorAnimation {
-                                            duration: Style.animationFast
+                                            duration: root.itemColorAnimationDurationMs
                                             easing.type: Easing.OutCubic
                                         }
                                     }

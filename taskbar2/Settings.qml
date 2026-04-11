@@ -132,6 +132,14 @@ ColumnLayout {
     property string valueTitleFontFamily: cfg.titleFontFamily ?? defaults.titleFontFamily ?? ""
     property real valueTitleFontScale: cfg.titleFontScale ?? defaults.titleFontScale ?? 1.0
     property string valueTitleFontWeight: cfg.titleFontWeight ?? defaults.titleFontWeight ?? "medium"
+    property bool valueItemStateFadeEnabled: cfg.itemStateFadeEnabled ?? defaults.itemStateFadeEnabled ?? true
+    property int valueItemStateFadeMinOpacity: cfg.itemStateFadeMinOpacity ?? defaults.itemStateFadeMinOpacity ?? 88
+    property int valueItemStateFadeOutDurationMs: cfg.itemStateFadeOutDurationMs ?? defaults.itemStateFadeOutDurationMs ?? 55
+    property int valueItemStateFadeInDurationMs: cfg.itemStateFadeInDurationMs ?? defaults.itemStateFadeInDurationMs ?? 90
+    property int valueItemPositionAnimationDurationMs: cfg.itemPositionAnimationDurationMs ?? defaults.itemPositionAnimationDurationMs ?? Style.animationFast
+    property int valueItemScaleAnimationDurationMs: cfg.itemScaleAnimationDurationMs ?? defaults.itemScaleAnimationDurationMs ?? Style.animationNormal
+    property int valueItemOpacityAnimationDurationMs: cfg.itemOpacityAnimationDurationMs ?? defaults.itemOpacityAnimationDurationMs ?? Style.animationFast
+    property int valueItemColorAnimationDurationMs: cfg.itemColorAnimationDurationMs ?? defaults.itemColorAnimationDurationMs ?? Style.animationFast
     property var valueItemColors: normalizeItemColors(cfg.itemColors ?? defaults.itemColors ?? ({}))
     property bool valueFocusTransitionEnabled: cfg.focusTransitionEnabled ?? defaults.focusTransitionEnabled ?? true
     property int valueFocusTransitionDelayMs: cfg.focusTransitionDelayMs ?? defaults.focusTransitionDelayMs ?? 120
@@ -294,6 +302,14 @@ ColumnLayout {
         pluginApi.pluginSettings.titleFontFamily = root.valueTitleFontFamily;
         pluginApi.pluginSettings.titleFontScale = root.valueTitleFontScale;
         pluginApi.pluginSettings.titleFontWeight = root.valueTitleFontWeight;
+        pluginApi.pluginSettings.itemStateFadeEnabled = root.valueItemStateFadeEnabled;
+        pluginApi.pluginSettings.itemStateFadeMinOpacity = root.valueItemStateFadeMinOpacity;
+        pluginApi.pluginSettings.itemStateFadeOutDurationMs = root.valueItemStateFadeOutDurationMs;
+        pluginApi.pluginSettings.itemStateFadeInDurationMs = root.valueItemStateFadeInDurationMs;
+        pluginApi.pluginSettings.itemPositionAnimationDurationMs = root.valueItemPositionAnimationDurationMs;
+        pluginApi.pluginSettings.itemScaleAnimationDurationMs = root.valueItemScaleAnimationDurationMs;
+        pluginApi.pluginSettings.itemOpacityAnimationDurationMs = root.valueItemOpacityAnimationDurationMs;
+        pluginApi.pluginSettings.itemColorAnimationDurationMs = root.valueItemColorAnimationDurationMs;
         pluginApi.pluginSettings.itemColors = normalizeItemColors(root.valueItemColors);
         pluginApi.pluginSettings.focusTransitionEnabled = root.valueFocusTransitionEnabled;
         pluginApi.pluginSettings.focusTransitionDelayMs = root.valueFocusTransitionDelayMs;
@@ -367,6 +383,14 @@ ColumnLayout {
                 titleFontFamily: root.valueTitleFontFamily
                 titleFontScale: root.valueTitleFontScale
                 titleFontWeight: root.valueTitleFontWeight
+                itemStateFadeEnabled: root.valueItemStateFadeEnabled
+                itemStateFadeMinOpacity: root.valueItemStateFadeMinOpacity
+                itemStateFadeOutDurationMs: root.valueItemStateFadeOutDurationMs
+                itemStateFadeInDurationMs: root.valueItemStateFadeInDurationMs
+                itemPositionAnimationDurationMs: root.valueItemPositionAnimationDurationMs
+                itemScaleAnimationDurationMs: root.valueItemScaleAnimationDurationMs
+                itemOpacityAnimationDurationMs: root.valueItemOpacityAnimationDurationMs
+                itemColorAnimationDurationMs: root.valueItemColorAnimationDurationMs
                 colorizeIcons: root.valueColorizeIcons
                 iconColorKey: root.valueIconColor
                 iconColorOpacity: root.valueIconColorOpacity
@@ -915,6 +939,134 @@ ColumnLayout {
             NHeading {
                 label: pluginApi?.tr("settings.sections.animation.label")
                 description: pluginApi?.tr("settings.sections.animation.desc")
+            }
+
+            SectionHeader {
+                label: pluginApi?.tr("settings.sections.itemPulse.label")
+                description: pluginApi?.tr("settings.sections.itemPulse.desc")
+            }
+
+            NToggle {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.itemStateFadeEnabled.label")
+                description: pluginApi?.tr("settings.itemStateFadeEnabled.desc")
+                checked: root.valueItemStateFadeEnabled
+                onToggled: checked => root.valueItemStateFadeEnabled = checked
+                defaultValue: defaults.itemStateFadeEnabled ?? true
+            }
+
+            NValueSlider {
+                visible: root.valueItemStateFadeEnabled
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.itemStateFadeMinOpacity.label")
+                description: pluginApi?.tr("settings.itemStateFadeMinOpacity.desc")
+                from: 0
+                to: 100
+                stepSize: 1
+                showReset: true
+                value: root.valueItemStateFadeMinOpacity
+                defaultValue: defaults.itemStateFadeMinOpacity ?? 88
+                onMoved: value => root.valueItemStateFadeMinOpacity = Math.round(value)
+                text: Math.round(root.valueItemStateFadeMinOpacity) + "%"
+            }
+
+            NValueSlider {
+                visible: root.valueItemStateFadeEnabled
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.itemStateFadeOutDurationMs.label")
+                description: pluginApi?.tr("settings.itemStateFadeOutDurationMs.desc")
+                from: 0
+                to: 400
+                stepSize: 5
+                showReset: true
+                value: root.valueItemStateFadeOutDurationMs
+                defaultValue: defaults.itemStateFadeOutDurationMs ?? 55
+                onMoved: value => root.valueItemStateFadeOutDurationMs = Math.round(value)
+                text: Math.round(root.valueItemStateFadeOutDurationMs) + " ms"
+            }
+
+            NValueSlider {
+                visible: root.valueItemStateFadeEnabled
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.itemStateFadeInDurationMs.label")
+                description: pluginApi?.tr("settings.itemStateFadeInDurationMs.desc")
+                from: 0
+                to: 400
+                stepSize: 5
+                showReset: true
+                value: root.valueItemStateFadeInDurationMs
+                defaultValue: defaults.itemStateFadeInDurationMs ?? 90
+                onMoved: value => root.valueItemStateFadeInDurationMs = Math.round(value)
+                text: Math.round(root.valueItemStateFadeInDurationMs) + " ms"
+            }
+
+            NDivider {
+                Layout.fillWidth: true
+            }
+
+            SectionHeader {
+                label: pluginApi?.tr("settings.sections.itemAnimationTiming.label")
+                description: pluginApi?.tr("settings.sections.itemAnimationTiming.desc")
+            }
+
+            NValueSlider {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.itemPositionAnimationDurationMs.label")
+                description: pluginApi?.tr("settings.itemPositionAnimationDurationMs.desc")
+                from: 0
+                to: 400
+                stepSize: 5
+                showReset: true
+                value: root.valueItemPositionAnimationDurationMs
+                defaultValue: defaults.itemPositionAnimationDurationMs ?? Style.animationFast
+                onMoved: value => root.valueItemPositionAnimationDurationMs = Math.round(value)
+                text: Math.round(root.valueItemPositionAnimationDurationMs) + " ms"
+            }
+
+            NValueSlider {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.itemScaleAnimationDurationMs.label")
+                description: pluginApi?.tr("settings.itemScaleAnimationDurationMs.desc")
+                from: 0
+                to: 500
+                stepSize: 5
+                showReset: true
+                value: root.valueItemScaleAnimationDurationMs
+                defaultValue: defaults.itemScaleAnimationDurationMs ?? Style.animationNormal
+                onMoved: value => root.valueItemScaleAnimationDurationMs = Math.round(value)
+                text: Math.round(root.valueItemScaleAnimationDurationMs) + " ms"
+            }
+
+            NValueSlider {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.itemOpacityAnimationDurationMs.label")
+                description: pluginApi?.tr("settings.itemOpacityAnimationDurationMs.desc")
+                from: 0
+                to: 400
+                stepSize: 5
+                showReset: true
+                value: root.valueItemOpacityAnimationDurationMs
+                defaultValue: defaults.itemOpacityAnimationDurationMs ?? Style.animationFast
+                onMoved: value => root.valueItemOpacityAnimationDurationMs = Math.round(value)
+                text: Math.round(root.valueItemOpacityAnimationDurationMs) + " ms"
+            }
+
+            NValueSlider {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.itemColorAnimationDurationMs.label")
+                description: pluginApi?.tr("settings.itemColorAnimationDurationMs.desc")
+                from: 0
+                to: 400
+                stepSize: 5
+                showReset: true
+                value: root.valueItemColorAnimationDurationMs
+                defaultValue: defaults.itemColorAnimationDurationMs ?? Style.animationFast
+                onMoved: value => root.valueItemColorAnimationDurationMs = Math.round(value)
+                text: Math.round(root.valueItemColorAnimationDurationMs) + " ms"
+            }
+
+            NDivider {
+                Layout.fillWidth: true
             }
 
             NToggle {
