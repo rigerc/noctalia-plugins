@@ -11,7 +11,8 @@ import qs.Services.Compositor
 import qs.Services.System
 import qs.Services.UI
 import qs.Widgets
-import "FocusTransitionMetrics.js" as FocusTransitionMetrics
+import "./components"
+import "./common/TaskbarModel.js" as TaskbarModel
 
 Item {
     id: root
@@ -152,6 +153,36 @@ Item {
         id: itemStateColors
     }
 
+    function modelContext() {
+        return {
+            "CompositorService": CompositorService,
+            "Settings": Settings,
+            "screen": screen,
+            "onlySameOutput": onlySameOutput,
+            "onlyActiveWorkspaces": onlyActiveWorkspaces,
+            "groupApps": groupApps,
+            "workspaceGroupingActive": workspaceGroupingActive,
+            "showWorkspaceSeparators": showWorkspaceSeparators,
+            "workspaceSeparatorShowForFirst": workspaceSeparatorShowForFirst,
+            "workspaceSeparatorPrefix": workspaceSeparatorPrefix,
+            "workspaceSeparatorSuffix": workspaceSeparatorSuffix,
+            "ignoredWorkspaceIds": ignoredWorkspaceIds,
+            "ignoredWorkspaceNames": ignoredWorkspaceNames,
+            "showPinnedApps": showPinnedApps,
+            "stableWindowKeyEntries": stableWindowKeyEntries,
+            "stableWindowKeyCounter": stableWindowKeyCounter,
+            "getAppNameFromDesktopEntry": getAppNameFromDesktopEntry,
+            "resolveToDesktopEntryId": resolveToDesktopEntryId,
+            "isAppIdPinned": isAppIdPinned,
+            "getPrimaryWindow": getPrimaryWindow
+        };
+    }
+
+    function syncModelContext(context) {
+        stableWindowKeyEntries = context.stableWindowKeyEntries;
+        stableWindowKeyCounter = context.stableWindowKeyCounter;
+    }
+
     function titleFontFamilyValue() {
         return titleFontFamily && titleFontFamily.length > 0 ? titleFontFamily : Settings.data.ui.fontDefault;
     }
@@ -202,170 +233,59 @@ Item {
     }
 
     function normalizeAppId(appId) {
-        if (!appId || typeof appId !== "string")
-            return "";
-        let id = appId.toLowerCase().trim();
-        if (id.endsWith(".desktop"))
-            id = id.substring(0, id.length - 8);
-        return id;
+        return TaskbarModel.normalizeAppId(appId);
     }
 
     function getWindowHandle(window) {
-        if (!window)
-            return null;
-        if (window.handle)
-            return window.handle;
-        if (window.toplevel)
-            return window.toplevel;
-        return null;
+        return TaskbarModel.getWindowHandle(window);
     }
 
     function getStableWindowKey(window) {
-        if (!window)
-            return "";
-
-        const handle = getWindowHandle(window);
-        if (handle) {
-            for (let i = 0; i < stableWindowKeyEntries.length; i++) {
-                const entry = stableWindowKeyEntries[i];
-                if (entry && entry.handle === handle)
-                    return entry.key;
-            }
-
-            stableWindowKeyCounter += 1;
-            const key = "window:" + stableWindowKeyCounter;
-            stableWindowKeyEntries = stableWindowKeyEntries.concat([
-                {
-                    "handle": handle,
-                    "key": key
-                }
-            ]);
-            return key;
-        }
-
-        if (window.id !== undefined && window.id !== null)
-            return "backend:" + String(window.id);
-
-        return "fallback:" + normalizeAppId(window.appId) + ":" + String(window.workspaceId ?? "") + ":" + String(window.output ?? "");
+        const context = modelContext();
+        const key = TaskbarModel.getStableWindowKey(context, window);
+        syncModelContext(context);
+        return key;
     }
 
     function pruneStableWindowKeys(activeWindows) {
-        if (!stableWindowKeyEntries || stableWindowKeyEntries.length === 0)
-            return;
-
-        const activeHandles = [];
-        (activeWindows || []).forEach(window => {
-            const handle = getWindowHandle(window);
-            if (handle)
-                activeHandles.push(handle);
-        });
-
-        if (activeHandles.length === 0)
-            return;
-
-        const nextEntries = stableWindowKeyEntries.filter(entry => {
-            return activeHandles.some(handle => handle === entry.handle);
-        });
-
-        if (nextEntries.length !== stableWindowKeyEntries.length)
-            stableWindowKeyEntries = nextEntries;
+        const context = modelContext();
+        TaskbarModel.pruneStableWindowKeys(context, activeWindows);
+        syncModelContext(context);
     }
 
     function getAppKey(appData) {
-        if (!appData)
-            return null;
-        if (appData.type === "separator")
-            return null;
-
-        if (appData.orderKey !== undefined)
-            return appData.orderKey;
-
-        if (groupApps)
-            return appData.appId;
-
-        if (appData.type === "pinned" || appData.type === "pinned-running")
-            return appData.appId;
-
-        if (appData.windowStableKey)
-            return appData.windowStableKey;
-
-        if (appData.window)
-            return appData.window;
-
-        return appData.appId;
+        return TaskbarModel.getAppKey(modelContext(), appData);
     }
 
     function getEntryKey(appData) {
-        if (!appData)
-            return "";
-        if (appData.type === "separator")
-            return "";
-
-        if (groupApps)
-            return "app:" + appData.appId;
-
-        if (appData.windowStableKey)
-            return appData.windowStableKey;
-
-        if (appData.window)
-            return getStableWindowKey(appData.window);
-
-        return "pinned:" + appData.appId;
+        const context = modelContext();
+        const key = TaskbarModel.getEntryKey(context, appData);
+        syncModelContext(context);
+        return key;
     }
 
     function isAppEntry(entry) {
-        return !!entry && entry.type !== "workspace-target";
+        return TaskbarModel.isAppEntry(entry);
     }
 
     function getAppEntries(entries) {
-        const sourceEntries = entries || [];
-        return sourceEntries.filter(entry => isAppEntry(entry));
+        return TaskbarModel.getAppEntries(entries);
     }
 
     function getWorkspaceInfo(workspaceId) {
-        const fallbackIndex = (typeof workspaceId === "number" && !isNaN(workspaceId)) ? workspaceId : 0;
-        const workspaces = CompositorService.workspaces;
-
-        if (workspaces && workspaces.count !== undefined && workspaces.get) {
-            for (let i = 0; i < workspaces.count; i++) {
-                const workspace = workspaces.get(i);
-                if (workspace && workspace.id === workspaceId) {
-                    return {
-                        "id": workspace.id,
-                        "index": workspace.idx !== undefined ? workspace.idx : fallbackIndex,
-                        "name": workspace.name || ""
-                    };
-                }
-            }
-        }
-
-        return {
-            "id": workspaceId,
-            "index": fallbackIndex,
-            "name": ""
-        };
+        return TaskbarModel.getWorkspaceInfo(modelContext(), workspaceId);
     }
 
     function getWorkspaceLabel(workspaceIndex) {
-        return (workspaceSeparatorPrefix || "") + workspaceIndex + (workspaceSeparatorSuffix || "");
+        return TaskbarModel.getWorkspaceLabel(modelContext(), workspaceIndex);
     }
 
     function isWorkspaceIgnored(workspaceId) {
-        const workspaceInfo = getWorkspaceInfo(workspaceId);
-        const idString = String(workspaceInfo.id ?? workspaceId ?? "").trim();
-        const nameString = String(workspaceInfo.name || "").trim();
-        if ((ignoredWorkspaceIds || []).some(id => String(id).trim() === idString))
-            return true;
-        if (nameString.length > 0 && (ignoredWorkspaceNames || []).some(name => String(name).trim() === nameString))
-            return true;
-        return false;
+        return TaskbarModel.isWorkspaceIgnored(modelContext(), workspaceId);
     }
 
     function getWorkspaceReference(workspaceId) {
-        const workspaceInfo = getWorkspaceInfo(workspaceId);
-        if (workspaceInfo.name && String(workspaceInfo.name).trim().length > 0)
-            return String(workspaceInfo.name);
-        return String(workspaceInfo.index);
+        return TaskbarModel.getWorkspaceReference(modelContext(), workspaceId);
     }
 
     function reorderApps(fromIndex, toIndex) {
@@ -620,292 +540,41 @@ Item {
     }
 
     function collectVisibleWindows() {
-        const windows = [];
-        try {
-            const total = CompositorService.windows.count || 0;
-            for (let i = 0; i < total; i++) {
-                const window = CompositorService.windows.get(i);
-                if (window && !isWorkspaceIgnored(window.workspaceId))
-                    windows.push(window);
-            }
-        } catch (e) {}
-        return windows;
+        return TaskbarModel.collectVisibleWindows(modelContext());
     }
 
     function getActiveWorkspaceIds() {
-        const activeWorkspaces = CompositorService.getActiveWorkspaces ? CompositorService.getActiveWorkspaces() : [];
-        return activeWorkspaces.map(ws => ws.id);
+        return TaskbarModel.getActiveWorkspaceIds(modelContext());
     }
 
     function windowPasses(window, activeIds) {
-        if (!window)
-            return false;
-        const passOutput = (!root.onlySameOutput) || (window.output === root.screen?.name);
-        const passWorkspace = ((!root.onlyActiveWorkspaces) || activeIds.includes(window.workspaceId)) && !isWorkspaceIgnored(window.workspaceId);
-        return passOutput && passWorkspace;
+        return TaskbarModel.windowPasses(modelContext(), window, activeIds);
     }
 
     function buildGroupedModel(apps) {
-        if (!groupApps) {
-            return apps.map(app => {
-                return {
-                    "entryKey": getEntryKey(app),
-                    "appId": app.appId,
-                    "type": app.type,
-                    "fallbackTitle": app.title || getAppNameFromDesktopEntry(app.appId),
-                    "isPinned": app.type === "pinned" || app.type === "pinned-running",
-                    "orderKey": getAppKey(app),
-                    "windowStableKey": app.windowStableKey || "",
-                    "workspaceId": app.workspaceId ?? -1,
-                    "workspaceIndex": app.workspaceIndex ?? -1
-                };
-            });
-        }
-
-        const grouped = [];
-        const groupedById = new Map();
-        const orderByStableKey = {};
-
-        apps.forEach((app, appIndex) => {
-            const appId = app.appId;
-            const windows = app.window ? [app.window] : [];
-            const existing = groupedById.get(appId);
-            windows.forEach(window => {
-                const stableKey = getStableWindowKey(window);
-                if (stableKey && orderByStableKey[stableKey] === undefined)
-                    orderByStableKey[stableKey] = appIndex;
-            });
-
-            if (existing) {
-                windows.forEach(window => {
-                    const stableKey = getStableWindowKey(window);
-                    if (window && stableKey && existing.windowStableKeys.indexOf(stableKey) === -1) {
-                        existing.windowStableKeys.push(stableKey);
-                    }
-                });
-                if (app.type === "pinned" || app.type === "pinned-running") {
-                    existing.isPinned = true;
-                }
-            } else {
-                const wsId = app.workspaceId ?? -1;
-                const entry = {
-                    "entryKey": workspaceGroupingActive ? ("app:" + appId + ":ws" + wsId) : ("app:" + appId),
-                    "appId": appId,
-                    "type": app.type,
-                    "fallbackTitle": app.title || getAppNameFromDesktopEntry(appId),
-                    "windowStableKeys": windows.map(window => getStableWindowKey(window)).filter(windowKey => windowKey !== ""),
-                    "isPinned": app.type === "pinned" || app.type === "pinned-running",
-                    "orderKey": appId,
-                    "workspaceId": app.workspaceId ?? -1,
-                    "workspaceIndex": app.workspaceIndex ?? -1,
-                    "anchorWindowStableKey": windows.length > 0 ? getStableWindowKey(windows[0]) : "",
-                    "anchorOrder": appIndex
-                };
-                grouped.push(entry);
-                groupedById.set(appId, entry);
-            }
-        });
-
-        grouped.forEach(entry => {
-            if (entry.windowStableKeys.length > 0 && entry.isPinned) {
-                entry.type = "pinned-running";
-            } else if (entry.windowStableKeys.length > 0) {
-                entry.type = "running";
-            } else {
-                entry.type = "pinned";
-            }
-        });
-
-        grouped.forEach(entry => {
-            if (!entry.windowStableKeys || entry.windowStableKeys.length === 0) {
-                entry.anchorWindowStableKey = "";
-                return;
-            }
-
-            entry.anchorWindowStableKey = entry.windowStableKeys[0];
-            const liveWindows = collectVisibleWindows();
-            for (let i = 0; i < entry.windowStableKeys.length; i++) {
-                const candidate = liveWindows.find(window => getStableWindowKey(window) === entry.windowStableKeys[i]);
-                if (candidate && candidate.isFocused) {
-                    entry.anchorWindowStableKey = entry.windowStableKeys[i];
-                    entry.workspaceId = candidate.workspaceId ?? entry.workspaceId;
-                    entry.workspaceIndex = getWorkspaceInfo(candidate.workspaceId).index;
-                    break;
-                }
-            }
-            entry.anchorOrder = orderByStableKey[entry.anchorWindowStableKey] ?? entry.anchorOrder ?? 0;
-        });
-
-        grouped.sort((a, b) => (a.anchorOrder ?? 0) - (b.anchorOrder ?? 0));
+        const context = modelContext();
+        const grouped = TaskbarModel.buildGroupedModel(context, apps);
+        syncModelContext(context);
         return grouped;
     }
 
     function buildWorkspaceGroupedModel(apps) {
-        const groupedByWorkspace = new Map();
-        const workspaceOrder = [];
-        const unassignedEntries = [];
-
-        apps.forEach(app => {
-            if (app.workspaceId === undefined || app.workspaceId === null || app.workspaceId === "" || app.workspaceId === -1) {
-                unassignedEntries.push(app);
-                return;
-            }
-
-            const key = String(app.workspaceId);
-            if (!groupedByWorkspace.has(key)) {
-                groupedByWorkspace.set(key, {
-                    "workspaceId": app.workspaceId,
-                    "workspaceIndex": app.workspaceIndex ?? app.workspaceId,
-                    "entries": []
-                });
-                workspaceOrder.push(key);
-            }
-            groupedByWorkspace.get(key).entries.push(app);
-        });
-
-        workspaceOrder.sort((a, b) => {
-            const groupA = groupedByWorkspace.get(a);
-            const groupB = groupedByWorkspace.get(b);
-            const indexA = groupA ? groupA.workspaceIndex : 0;
-            const indexB = groupB ? groupB.workspaceIndex : 0;
-            if (indexA !== indexB)
-                return indexA - indexB;
-            return String(a).localeCompare(String(b));
-        });
-
-        const renderEntries = [];
-        const workspaces = CompositorService.workspaces;
-        if (workspaces && workspaces.count !== undefined && workspaces.get) {
-            for (let i = 0; i < workspaces.count; i++) {
-                const workspace = workspaces.get(i);
-                if (!workspace || isWorkspaceIgnored(workspace.id))
-                    continue;
-                const key = String(workspace.id);
-                if (groupedByWorkspace.has(key))
-                    continue;
-                groupedByWorkspace.set(key, {
-                    "workspaceId": workspace.id,
-                    "workspaceIndex": workspace.idx ?? 0,
-                    "entries": []
-                });
-                workspaceOrder.push(key);
-            }
-        }
-
-        workspaceOrder.sort((a, b) => {
-            const groupA = groupedByWorkspace.get(a);
-            const groupB = groupedByWorkspace.get(b);
-            const indexA = groupA ? groupA.workspaceIndex : 0;
-            const indexB = groupB ? groupB.workspaceIndex : 0;
-            if (indexA !== indexB)
-                return indexA - indexB;
-            return String(a).localeCompare(String(b));
-        });
-
-        workspaceOrder.forEach((key, index) => {
-            const workspaceGroup = groupedByWorkspace.get(key);
-            if (!workspaceGroup)
-                return;
-
-            if (showWorkspaceSeparators && (index > 0 || workspaceSeparatorShowForFirst)) {
-                renderEntries.push({
-                    "type": "workspace-target",
-                    "workspaceId": workspaceGroup.workspaceId,
-                    "workspaceIndex": workspaceGroup.workspaceIndex,
-                    "showSeparator": true
-                });
-            } else if (!showWorkspaceSeparators) {
-                renderEntries.push({
-                    "type": "workspace-target",
-                    "workspaceId": workspaceGroup.workspaceId,
-                    "workspaceIndex": workspaceGroup.workspaceIndex,
-                    "showSeparator": false
-                });
-            }
-
-            buildGroupedModel(workspaceGroup.entries || []).forEach(entry => renderEntries.push(entry));
-        });
-
-        if (unassignedEntries.length > 0) {
-            buildGroupedModel(unassignedEntries).forEach(entry => renderEntries.push(entry));
-        }
-
-        return renderEntries;
+        const context = modelContext();
+        const grouped = TaskbarModel.buildWorkspaceGroupedModel(context, apps);
+        syncModelContext(context);
+        return grouped;
     }
 
     function buildLiveEntries(structuralEntries, windowsById, windowsByStableKey) {
-        const liveEntries = {};
-
-        structuralEntries.forEach(entry => {
-            if (!isAppEntry(entry) || !entry.entryKey)
-                return;
-
-            const windowIds = [];
-            const windows = [];
-
-            if (groupApps) {
-                if (entry.windowStableKeys) {
-                    entry.windowStableKeys.forEach(windowKey => {
-                        const liveWindow = windowsByStableKey[windowKey];
-                        if (liveWindow) {
-                            windowIds.push(String(liveWindow.id));
-                            windows.push(liveWindow);
-                        }
-                    });
-                }
-            } else if (entry.windowStableKey) {
-                const liveWindow = windowsByStableKey[entry.windowStableKey];
-                if (liveWindow) {
-                    windowIds.push(String(liveWindow.id));
-                    windows.push(liveWindow);
-                }
-            }
-
-            const primaryWindow = getPrimaryWindow(windows);
-            let anchorWindow = primaryWindow;
-            if (groupApps && entry.anchorWindowStableKey)
-                anchorWindow = windowsByStableKey[entry.anchorWindowStableKey] || primaryWindow;
-            let focusedWindowIndex = -1;
-            for (let i = 0; i < windows.length; i++) {
-                if (windows[i] && windows[i].isFocused) {
-                    focusedWindowIndex = i;
-                    break;
-                }
-            }
-
-            liveEntries[entry.entryKey] = {
-                "windows": windows,
-                "windowIds": windowIds,
-                "primaryWindow": primaryWindow,
-                "anchorWindow": anchorWindow,
-                "title": (primaryWindow && primaryWindow.title) ? primaryWindow.title : entry.fallbackTitle,
-                "isFocused": focusedWindowIndex >= 0,
-                "focusedWindowIndex": focusedWindowIndex,
-                "groupedCount": windows.length
-            };
-        });
-
-        return liveEntries;
+        return TaskbarModel.buildLiveEntries(modelContext(), structuralEntries, windowsById, windowsByStableKey);
     }
 
     function getStructuralSignature(entry) {
-        if (!isAppEntry(entry)) {
-            return ["separator", entry.workspaceId, entry.workspaceIndex, entry.label || ""].join("|");
-        }
-        const ids = entry.windowStableKeys ? entry.windowStableKeys.join(",") : (entry.windowStableKey || "");
-        return [entry.entryKey, entry.appId, entry.type, entry.isPinned ? "1" : "0", ids].join("|");
+        return TaskbarModel.getStructuralSignature(modelContext(), entry);
     }
 
     function hasStructuralChange(nextEntries) {
-        if (combinedModel.length !== nextEntries.length)
-            return true;
-
-        for (let i = 0; i < nextEntries.length; i++) {
-            if (getStructuralSignature(combinedModel[i]) !== getStructuralSignature(nextEntries[i]))
-                return true;
-        }
-
-        return false;
+        return TaskbarModel.hasStructuralChange(modelContext(), combinedModel, nextEntries);
     }
 
     function applySnapshot(nextEntries, forceStructural) {
@@ -952,102 +621,10 @@ Item {
     }
 
     function buildStructuralEntries() {
-        const pinnedApps = Settings.data.dock.pinnedApps || [];
-        const combined = [];
-        const processedWindows = new Set();
-        const processedPinnedAppIds = new Set();
-        const runningWindows = collectVisibleWindows();
-        const activeIds = getActiveWorkspaceIds();
-
-        function pushEntry(entryType, window, appId, title) {
-            const canonicalId = isAppIdPinned(appId, pinnedApps) ? (pinnedApps.find(p => normalizeAppId(p) === normalizeAppId(appId)) || appId) : appId;
-            const workspaceInfo = window ? getWorkspaceInfo(window.workspaceId) : null;
-
-            if (window) {
-                if (processedWindows.has(window))
-                    return;
-                if (!windowPasses(window, activeIds))
-                    return;
-                combined.push({
-                    "type": entryType,
-                    "window": window,
-                    "windowStableKey": getStableWindowKey(window),
-                    "appId": canonicalId,
-                    "title": title || window.title || getAppNameFromDesktopEntry(appId),
-                    "workspaceId": workspaceInfo ? workspaceInfo.id : -1,
-                    "workspaceIndex": workspaceInfo ? workspaceInfo.index : -1
-                });
-                processedWindows.add(window);
-            } else {
-                if (processedPinnedAppIds.has(canonicalId))
-                    return;
-                combined.push({
-                    "id": canonicalId,
-                    "type": entryType,
-                    "window": null,
-                    "appId": canonicalId,
-                    "title": title || getAppNameFromDesktopEntry(canonicalId),
-                    "workspaceId": -1,
-                    "workspaceIndex": -1
-                });
-                processedPinnedAppIds.add(canonicalId);
-            }
-        }
-
-        function pushRunning(firstPass) {
-            runningWindows.forEach(window => {
-                if (!window)
-                    return;
-                const isPinned = isAppIdPinned(window.appId, pinnedApps);
-                if (!firstPass && isPinned && processedWindows.has(window))
-                    return;
-                pushEntry((firstPass && isPinned) ? "pinned-running" : "running", window, window.appId, window.title);
-            });
-        }
-
-        function pushPinned() {
-            pinnedApps.forEach(pinnedAppId => {
-                const normalizedPinnedId = normalizeAppId(pinnedAppId);
-                const matchingWindows = runningWindows.filter(window => {
-                    if (!window || !windowPasses(window, activeIds))
-                        return false;
-                    if (normalizeAppId(window.appId) === normalizedPinnedId)
-                        return true;
-                    const resolved = resolveToDesktopEntryId(window.appId);
-                    return resolved !== window.appId && normalizeAppId(resolved) === normalizedPinnedId;
-                });
-
-                if (matchingWindows.length > 0) {
-                    matchingWindows.forEach(window => {
-                        pushEntry("pinned-running", window, pinnedAppId, window.title);
-                    });
-                } else if (showPinnedApps) {
-                    pushEntry("pinned", null, pinnedAppId, getAppNameFromDesktopEntry(pinnedAppId));
-                }
-            });
-        }
-
-        pushRunning(true);
-        pushPinned();
-
-        const runningEntries = combined.filter(entry => entry.window);
-        const pinnedEntries = combined.filter(entry => !entry.window);
-        const pinnedLookup = new Map();
-        pinnedEntries.forEach(entry => pinnedLookup.set(normalizeAppId(entry.appId), entry));
-        const orderedPinnedEntries = [];
-        pinnedApps.forEach(appId => {
-            const pinnedEntry = pinnedLookup.get(normalizeAppId(appId));
-            if (pinnedEntry)
-                orderedPinnedEntries.push(pinnedEntry);
-        });
-        pinnedEntries.forEach(entry => {
-            if (orderedPinnedEntries.indexOf(entry) === -1)
-                orderedPinnedEntries.push(entry);
-        });
-
-        if (workspaceGroupingActive)
-            return orderedPinnedEntries.concat(buildWorkspaceGroupedModel(runningEntries));
-        return orderedPinnedEntries.concat(buildGroupedModel(runningEntries));
+        const context = modelContext();
+        const entries = TaskbarModel.buildStructuralEntries(context);
+        syncModelContext(context);
+        return entries;
     }
 
     function updateCombinedModel(forceStructural) {
@@ -1101,12 +678,7 @@ Item {
     }
 
     function getFocusedEntryKey(liveEntries) {
-        const entries = liveEntries || ({});
-        for (var entryKey in entries) {
-            if (entries[entryKey] && entries[entryKey].isFocused)
-                return entryKey;
-        }
-        return "";
+        return TaskbarModel.getFocusedEntryKey(liveEntries);
     }
 
     function updateEntryIndicatorRect(entryKey, rect) {
@@ -1371,96 +943,6 @@ Item {
         windows.forEach(window => closeWindow(window));
     }
 
-    function buildContextMenuModel(menuModeOverride) {
-        const appId = selectedAppId;
-        const windows = getLiveWindowsForEntryKey(selectedEntryKey);
-        const primaryWindow = getPrimaryWindow(windows);
-        const isRunning = windows.length > 0;
-        const isPinned = isAppPinned(appId);
-        const grouped = groupApps && windows.length > 1;
-        const rawMode = menuModeOverride || groupContextMenuMode || "extended";
-        const menuMode = grouped ? ((rawMode === "list" || rawMode === "extended") ? rawMode : "extended") : "single";
-        const items = [];
-
-        if (!grouped || menuMode === "single") {
-            if (isRunning) {
-                items.push({
-                    "label": I18n.tr("common.focus"),
-                    "action": "focus",
-                    "icon": "eye"
-                });
-            }
-
-            items.push({
-                "label": !isPinned ? I18n.tr("common.pin") : I18n.tr("common.unpin"),
-                "action": "pin",
-                "icon": !isPinned ? "pin" : "unpin"
-            });
-
-            if (isRunning) {
-                items.push({
-                    "label": I18n.tr("common.close"),
-                    "action": "close",
-                    "icon": "x"
-                });
-            }
-        } else {
-            windows.forEach((window, index) => {
-                const windowTitle = (window.title && window.title.trim() !== "") ? window.title : (appId || ("Window " + (index + 1)));
-                items.push({
-                    "label": windowTitle,
-                    "action": "focus-window",
-                    "icon": window.isFocused ? "circle-filled" : "square-rounded",
-                    "windowId": window.id
-                });
-            });
-
-            if (menuMode === "extended") {
-                items.push({
-                    "action": "_separator",
-                    "enabled": false
-                });
-                items.push({
-                    "label": I18n.tr("common.focus"),
-                    "action": "focus",
-                    "icon": "eye"
-                });
-                items.push({
-                    "label": !isPinned ? I18n.tr("common.pin") : I18n.tr("common.unpin"),
-                    "action": "pin",
-                    "icon": !isPinned ? "pin" : "unpin"
-                });
-                items.push({
-                    "label": pluginApi?.tr("menu.closeAll"),
-                    "action": "close-all",
-                    "icon": "x"
-                });
-            }
-        }
-
-        if ((!grouped || menuMode === "extended") && typeof DesktopEntries !== "undefined" && DesktopEntries.byId && appId) {
-            const entry = (DesktopEntries.heuristicLookup) ? DesktopEntries.heuristicLookup(appId) : DesktopEntries.byId(appId);
-            if (entry != null && entry.actions) {
-                entry.actions.forEach(action => {
-                    items.push({
-                        "label": action.name,
-                        "action": "desktop-action",
-                        "icon": "chevron-right",
-                        "desktopAction": action
-                    });
-                });
-            }
-        }
-
-        items.push({
-            "label": pluginApi?.tr("menu.settings"),
-            "action": "widget-settings",
-            "icon": "settings"
-        });
-
-        return items;
-    }
-
     function launchPinnedApp(appId) {
         if (!appId)
             return;
@@ -1501,51 +983,13 @@ Item {
     }
 
     function openTaskbarContextMenu(item, menuModeOverride) {
-        selectedAppId = item && item.modelData ? item.modelData.appId : "";
-        selectedEntryKey = item && item.modelData ? item.modelData.entryKey : "";
-        selectedMenuMode = menuModeOverride || "";
-        contextMenu.model = buildContextMenuModel(selectedMenuMode);
-        PanelService.showContextMenu(contextMenu, root, screen, item);
+        contextMenu.openForItem(item, menuModeOverride);
     }
 
-    NPopupContextMenu {
+    TaskbarContextMenu {
         id: contextMenu
-
-        onVisibleChanged: {
-            if (!visible)
-                root.flushPendingModelRefresh();
-        }
-
-        onTriggered: function (action, item) {
-            contextMenu.close();
-            PanelService.closeContextMenu(root.screen);
-
-            const primaryWindow = root.getPrimaryWindowForEntryKey(root.selectedEntryKey);
-
-            if (action === "focus") {
-                root.focusWindow(primaryWindow);
-            } else if (action === "focus-window" && item && item.windowId !== undefined) {
-                root.focusWindow(root.getWindowById(item.windowId));
-            } else if (action === "pin" && root.selectedAppId) {
-                root.toggleAppPin(root.selectedAppId);
-            } else if (action === "close") {
-                root.closeWindow(primaryWindow);
-            } else if (action === "close-all" && root.selectedAppId) {
-                root.closeAllWindows(root.selectedAppId);
-            } else if (action === "widget-settings") {
-                BarService.openPluginSettings(root.screen, pluginApi.manifest);
-            } else if (action === "desktop-action" && item && item.desktopAction) {
-                if (item.desktopAction.command && item.desktopAction.command.length > 0) {
-                    Quickshell.execDetached(item.desktopAction.command);
-                } else if (item.desktopAction.execute) {
-                    item.desktopAction.execute();
-                }
-            }
-
-            root.selectedAppId = "";
-            root.selectedEntryKey = "";
-            root.selectedMenuMode = "";
-        }
+        barRoot: root
+        onRequestFlushPendingModelRefresh: root.flushPendingModelRefresh()
     }
 
     Connections {
@@ -1713,888 +1157,10 @@ Item {
             Repeater {
                 id: entryRepeater
                 model: root.combinedModel
-                delegate: Item {
-                    id: taskbarItem
-                    required property var modelData
-                    required property int index
-                    readonly property var barRoot: root
-
-                    readonly property int liveRevision: root.liveDataRevision
-                    readonly property var liveEntry: {
-                        const _ = liveRevision;
-                        return root.getLiveEntry(modelData.entryKey);
-                    }
-                    readonly property var windows: liveEntry && liveEntry.windows ? liveEntry.windows : []
-                    readonly property bool isRunning: windows.length > 0
-                    readonly property bool isPinned: modelData.type === "pinned" || modelData.type === "pinned-running"
-                    readonly property bool isFocused: liveEntry ? liveEntry.isFocused : false
-                    readonly property bool isHovered: root.hoveredEntryKey === modelData.entryKey
-                    readonly property bool isInactive: isPinned && !isRunning
-                    readonly property bool shouldShowTitle: root.showTitle && modelData.type !== "pinned"
-                    readonly property real itemSpacing: Style.marginS
-                    readonly property real contentPaddingHorizontal: shouldShowTitle ? Style.marginM : Style.marginS
-                    readonly property real entryContentWidth: root.itemSize + (shouldShowTitle ? (itemSpacing + root.titleWidth) : 0)
-                    readonly property real visualWidth: root.isVerticalBar ? root.barHeight : Math.round(entryContentWidth + contentPaddingHorizontal * 2)
-                    readonly property string title: (liveEntry && liveEntry.title) ? liveEntry.title : (modelData.fallbackTitle || modelData.appId || "Unknown application")
-                    readonly property string effectiveItemState: isFocused ? "focused" : (isHovered ? "hovered" : (isInactive ? "inactive" : "default"))
-                    readonly property color itemBackgroundColor: root.resolveItemStateColorWithOpacity(effectiveItemState, "background")
-                    readonly property color itemBorderColor: root.resolveItemStateColorWithOpacity(effectiveItemState, "border")
-                    readonly property real itemBorderWidth: itemBorderColor.a > 0 ? Style.borderS : 0
-                    readonly property color itemTextColor: root.resolveItemStateColorWithOpacity(effectiveItemState, "text")
-                    readonly property bool useBackgroundGradient: itemStateColors.backgroundGradientEnabled(root.itemColors, effectiveItemState)
-                    readonly property color backgroundGradientStartColor: itemStateColors.resolveGradientStopColor(root.itemColors, effectiveItemState, "backgroundGradientStart", "backgroundGradientStartOpacity", "background")
-                    readonly property color backgroundGradientEndColor: itemStateColors.resolveGradientStopColor(root.itemColors, effectiveItemState, "backgroundGradientEnd", "backgroundGradientEndOpacity", "background")
-                    readonly property int backgroundGradientOrientation: itemStateColors.backgroundGradientOrientation(root.itemColors, effectiveItemState, root.isVerticalBar)
-                    readonly property int groupedCount: liveEntry ? liveEntry.groupedCount : windows.length
-                    readonly property int focusedWindowIndex: liveEntry ? liveEntry.focusedWindowIndex : -1
-                    readonly property string groupedIndicatorText: focusedWindowIndex >= 0 ? ((focusedWindowIndex + 1) + "/" + groupedCount) : groupedCount.toString()
-                    readonly property bool showGroupedIndicator: root.groupApps && groupedCount > 1 && isRunning
-                    readonly property real titlePointSize: Math.max(Style.fontSizeXS, root.barFontSize * root.titleFontScale)
-                    readonly property real hoverItemScale: 1 + (root.hoverItemScalePercent / 100.0)
-                    readonly property color focusAccentColor: root.mixTransitionColors(0.1, 0.04)
-                    readonly property color focusSecondaryColor: root.mixTransitionColors(0.58, 0.08)
-                    readonly property color focusTertiaryColor: root.mixTransitionColors(0.82, 0.44)
-                    readonly property real focusVisualStrength: isFocused ? 1.0 : (isHovered ? 0.4 : 0.0)
-                    readonly property real focusWashOpacity: isFocused ? 0.22 : (isHovered ? 0.1 : 0.0)
-                    readonly property real iconGlowOpacity: isFocused ? 0.32 : (isHovered ? 0.12 : 0.0)
-                    readonly property real iconFocusScale: isFocused ? 1.18 : (isHovered ? Math.max(root.hoverIconScaleMultiplier, 1.05) : 1.0)
-                    readonly property real iconFocusLift: isFocused ? -1 : 0
-                    readonly property real titleFocusOpacity: isFocused ? 1.0 : (isHovered ? 0.94 : 0.84)
-                    readonly property real titleFocusOffset: isFocused ? -2 : (isHovered ? -1 : 0)
-                    readonly property real badgeFocusScale: isFocused ? 1.08 : 1.0
-                    readonly property real indicatorOpacity: isFocused ? 1.0 : (isHovered ? 0.72 : 0.0)
-                    readonly property bool isSeparator: modelData.type === "workspace-target"
-                    readonly property bool reorderDropEnabled: isSeparator ? barRoot.supportsLiveReorder : (!isRunning || barRoot.supportsLiveReorder)
-                    readonly property bool showSeparatorVisual: modelData.showSeparator ?? false
-                    readonly property string separatorLabel: root.getWorkspaceLabel(modelData.workspaceIndex ?? 0)
-                    readonly property real separatorLabelWidth: root.workspaceSeparatorShowLabel ? Math.max(0, Math.round(separatorLabel.length * root.barFontSize * 0.62)) : 0
-                    readonly property real separatorLineLength: Math.max(Math.round(root.itemSize * 0.9), Style.marginL * 2)
-                    readonly property real separatorVisualWidth: root.isVerticalBar ? root.barHeight : Math.round(Style.marginM * 2 + separatorLabelWidth + ((root.workspaceSeparatorShowLabel && root.workspaceSeparatorShowDivider && separatorLabelWidth > 0) ? Style.marginS : 0) + (root.workspaceSeparatorShowDivider ? separatorLineLength : 0))
-                    readonly property real separatorVisualHeight: root.isVerticalBar ? Math.round(Style.marginM * 2 + separatorLabelWidth + ((root.workspaceSeparatorShowLabel && root.workspaceSeparatorShowDivider && separatorLabelWidth > 0) ? Style.marginS : 0) + (root.workspaceSeparatorShowDivider ? separatorLineLength : 0)) : root.barHeight
-                    property real stateFadeOpacity: 1.0
-
-                    function syncIndicatorRect() {
-                        if (isSeparator)
-                            return;
-                        if (!visualCapsule || !iconContainer)
-                            return;
-
-                        const iconPoint = iconContainer.mapToItem(visualCapsule, 0, 0);
-                        const itemPoint = taskbarItem.mapToItem(visualCapsule, 0, 0);
-                        const rect = FocusTransitionMetrics.buildIndicatorRect({
-                            "isVerticalBar": root.isVerticalBar,
-                            "itemSize": root.itemSize,
-                            "scale": root.focusTransitionScale,
-                            "verticalPosition": root.focusTransitionVerticalPosition,
-                            "itemRect": {
-                                "x": itemPoint.x,
-                                "y": itemPoint.y,
-                                "width": taskbarItem.width,
-                                "height": taskbarItem.height
-                            },
-                            "iconRect": {
-                                "x": iconPoint.x,
-                                "y": iconPoint.y,
-                                "width": iconContainer.width,
-                                "height": iconContainer.height
-                            }
-                        });
-
-                        root.updateEntryIndicatorRect(modelData.entryKey, rect);
-                    }
-
-                    Layout.preferredWidth: isSeparator ? (root.isVerticalBar ? root.barHeight : separatorVisualWidth) : (root.isVerticalBar ? root.barHeight : visualWidth)
-                    Layout.preferredHeight: isSeparator ? (root.isVerticalBar ? separatorVisualHeight : root.barHeight) : (root.isVerticalBar ? root.capsuleHeight : root.barHeight)
-                    Layout.alignment: Qt.AlignCenter
-
-                    z: (root.dragSourceIndex === index) ? 1000 : 1
-                    property int modelIndex: index
-                    objectName: isSeparator ? "taskbarSeparatorItem" : "taskbarAppItem"
-
-                    Behavior on x {
-                        enabled: !taskbarItem.isSeparator && root.dragSourceIndex !== index
-                        NumberAnimation {
-                            duration: Style.animationNormal
-                            easing.type: Easing.OutCubic
-                        }
-                    }
-
-                    Behavior on y {
-                        enabled: !taskbarItem.isSeparator && root.dragSourceIndex !== index
-                        NumberAnimation {
-                            duration: Style.animationNormal
-                            easing.type: Easing.OutCubic
-                        }
-                    }
-
-                    Component.onCompleted: {
-                        syncIndicatorRect();
-                    }
-                    Connections {
-                        target: root
-
-                        function onItemStateFadeEnabledChanged() {
-                            if (!root.itemStateFadeEnabled) {
-                                taskbarItem.stateFadeAnimation.stop();
-                                taskbarItem.stateFadeOpacity = 1.0;
-                            }
-                        }
-                    }
-                    onEffectiveItemStateChanged: {
-                        if (!isSeparator && root.itemStateFadeEnabled) {
-                            stateFadeOpacity = 1.0;
-                            stateFadeAnimation.restart();
-                        } else {
-                            stateFadeAnimation.stop();
-                            stateFadeOpacity = 1.0;
-                        }
-                    }
-                    Component.onDestruction: root.clearEntryIndicatorRect(modelData.entryKey)
-                    onXChanged: {
-                        syncIndicatorRect();
-                    }
-                    onYChanged: {
-                        syncIndicatorRect();
-                    }
-                    onWidthChanged: {
-                        syncIndicatorRect();
-                    }
-                    onHeightChanged: {
-                        syncIndicatorRect();
-                    }
-
-                    DropArea {
-                        visible: true
-                        enabled: taskbarItem.reorderDropEnabled
-                        anchors.fill: parent
-                        keys: ["taskbar-app"]
-                    }
-
-                    Loader {
-                        anchors.fill: parent
-                        active: taskbarItem.isSeparator
-                        sourceComponent: workspaceSeparatorComponent
-                    }
-
-                    Component {
-                        id: workspaceSeparatorComponent
-
-                        Item {
-                            anchors.fill: parent
-                            visible: taskbarItem.showSeparatorVisual || taskbarItem.barRoot.dragSourceIndex !== -1
-
-                            Item {
-                                anchors.centerIn: parent
-                                width: taskbarItem.barRoot.isVerticalBar ? taskbarItem.barRoot.barHeight : taskbarItem.separatorVisualWidth
-                                height: taskbarItem.barRoot.isVerticalBar ? taskbarItem.separatorVisualHeight : taskbarItem.barRoot.barHeight
-                                opacity: taskbarItem.showSeparatorVisual ? 1 : (taskbarItem.barRoot.dragTargetIndex === taskbarItem.modelIndex ? 0.9 : 0.22)
-
-                                RowLayout {
-                                    visible: !taskbarItem.barRoot.isVerticalBar
-                                    anchors.centerIn: parent
-                                    spacing: Style.marginS
-
-                                    NText {
-                                        visible: taskbarItem.showSeparatorVisual && taskbarItem.barRoot.workspaceSeparatorShowLabel && taskbarItem.separatorLabel.length > 0
-                                        text: taskbarItem.separatorLabel
-                                        pointSize: Math.max(Style.fontSizeXS, taskbarItem.barRoot.barFontSize * 0.9)
-                                        color: Color.mOnSurfaceVariant
-                                        font.weight: Style.fontWeightSemiBold
-                                    }
-
-                                    Loader {
-                                        visible: taskbarItem.showSeparatorVisual && taskbarItem.barRoot.workspaceSeparatorShowDivider
-                                        Layout.preferredWidth: taskbarItem.barRoot.workspaceSeparatorDividerMode === "line" ? taskbarItem.separatorLineLength : (taskbarItem.barRoot.workspaceSeparatorDividerMode === "icon" ? taskbarItem.separatorLineLength : taskbarItem.separatorLineLength)
-                                        Layout.preferredHeight: Math.max(1, Style.borderS)
-                                        sourceComponent: taskbarItem.barRoot.workspaceSeparatorDividerMode === "line" ? lineDividerComponent : (taskbarItem.barRoot.workspaceSeparatorDividerMode === "character" ? charDividerComponent : iconDividerComponent)
-                                    }
-                                }
-
-                                ColumnLayout {
-                                    visible: taskbarItem.barRoot.isVerticalBar
-                                    anchors.centerIn: parent
-                                    spacing: Style.marginS
-
-                                    NText {
-                                        visible: taskbarItem.showSeparatorVisual && taskbarItem.barRoot.workspaceSeparatorShowLabel && taskbarItem.separatorLabel.length > 0
-                                        text: taskbarItem.separatorLabel
-                                        pointSize: Math.max(Style.fontSizeXS, taskbarItem.barRoot.barFontSize * 0.9)
-                                        color: Color.mOnSurfaceVariant
-                                        font.weight: Style.fontWeightSemiBold
-                                        rotation: -90
-                                    }
-
-                                    Loader {
-                                        visible: taskbarItem.showSeparatorVisual && taskbarItem.barRoot.workspaceSeparatorShowDivider
-                                        Layout.preferredWidth: Math.max(1, Style.borderS)
-                                        Layout.preferredHeight: taskbarItem.barRoot.workspaceSeparatorDividerMode === "line" ? taskbarItem.separatorLineLength : taskbarItem.separatorLineLength
-                                        sourceComponent: taskbarItem.barRoot.workspaceSeparatorDividerMode === "line" ? lineDividerComponentVertical : (taskbarItem.barRoot.workspaceSeparatorDividerMode === "character" ? charDividerComponentVertical : iconDividerComponentVertical)
-                                    }
-                                }
-                            }
-
-                            Component {
-                                id: lineDividerComponent
-                                Rectangle {
-                                    Layout.preferredWidth: taskbarItem.separatorLineLength
-                                    Layout.preferredHeight: Math.max(1, Style.borderS)
-                                    radius: height / 2
-                                    color: Qt.alpha(Color.mOutline, 0.7)
-                                }
-                            }
-
-                            Component {
-                                id: lineDividerComponentVertical
-                                Rectangle {
-                                    Layout.preferredWidth: Math.max(1, Style.borderS)
-                                    Layout.preferredHeight: taskbarItem.separatorLineLength
-                                    radius: width / 2
-                                    color: Qt.alpha(Color.mOutline, 0.7)
-                                }
-                            }
-
-                            Component {
-                                id: charDividerComponent
-                                NText {
-                                    text: taskbarItem.barRoot.workspaceSeparatorDividerChar || "|"
-                                    pointSize: Math.max(Style.fontSizeXS, taskbarItem.barRoot.barFontSize * 0.9)
-                                    color: Color.mOnSurfaceVariant
-                                    font.weight: Style.fontWeightSemiBold
-                                }
-                            }
-
-                            Component {
-                                id: charDividerComponentVertical
-                                NText {
-                                    text: taskbarItem.barRoot.workspaceSeparatorDividerChar || "|"
-                                    pointSize: Math.max(Style.fontSizeXS, taskbarItem.barRoot.barFontSize * 0.9)
-                                    color: Color.mOnSurfaceVariant
-                                    font.weight: Style.fontWeightSemiBold
-                                    rotation: -90
-                                }
-                            }
-
-                            Component {
-                                id: iconDividerComponent
-                                NIcon {
-                                    icon: taskbarItem.barRoot.workspaceSeparatorDividerIcon || "minus"
-                                    pointSize: Math.max(Style.fontSizeXS, taskbarItem.barRoot.barFontSize)
-                                    color: Color.mOnSurfaceVariant
-                                }
-                            }
-
-                            Component {
-                                id: iconDividerComponentVertical
-                                NIcon {
-                                    icon: taskbarItem.barRoot.workspaceSeparatorDividerIcon || "minus"
-                                    pointSize: Math.max(Style.fontSizeXS, taskbarItem.barRoot.barFontSize)
-                                    color: Color.mOnSurfaceVariant
-                                    rotation: -90
-                                }
-                            }
-                        }
-                    }
-
-                    Item {
-                        id: draggableContent
-                        visible: !taskbarItem.isSeparator
-                        width: parent.width
-                        height: parent.height
-                        anchors.centerIn: dragging ? undefined : parent
-                        opacity: taskbarItem.stateFadeOpacity
-
-                        readonly property bool isDragged: taskbarItem.barRoot.dragSourceIndex === index
-                        property real shiftOffset: 0
-                        property bool dragging: taskbarMouseArea.drag.active
-
-                        Binding on shiftOffset {
-                            value: {
-                                if (taskbarItem.barRoot.dragSourceIndex !== -1 && taskbarItem.barRoot.dragTargetIndex !== -1 && !draggableContent.isDragged) {
-                                    if (taskbarItem.barRoot.dragSourceIndex < taskbarItem.barRoot.dragTargetIndex) {
-                                        if (index > taskbarItem.barRoot.dragSourceIndex && index <= taskbarItem.barRoot.dragTargetIndex) {
-                                            return -1 * (taskbarItem.barRoot.isVerticalBar ? draggableContent.height : draggableContent.width);
-                                        }
-                                    } else if (taskbarItem.barRoot.dragSourceIndex > taskbarItem.barRoot.dragTargetIndex) {
-                                        if (index >= taskbarItem.barRoot.dragTargetIndex && index < taskbarItem.barRoot.dragSourceIndex) {
-                                            return taskbarItem.barRoot.isVerticalBar ? draggableContent.height : draggableContent.width;
-                                        }
-                                    }
-                                }
-                                return 0;
-                            }
-                        }
-
-                        transform: Translate {
-                            x: !taskbarItem.barRoot.isVerticalBar ? draggableContent.shiftOffset : 0
-                            y: taskbarItem.barRoot.isVerticalBar ? draggableContent.shiftOffset : 0
-
-                            Behavior on x {
-                                NumberAnimation {
-                                    duration: root.itemPositionAnimationDurationMs
-                                    easing.type: Easing.OutQuad
-                                }
-                            }
-                            Behavior on y {
-                                NumberAnimation {
-                                    duration: root.itemPositionAnimationDurationMs
-                                    easing.type: Easing.OutQuad
-                                }
-                            }
-                        }
-
-                        onDraggingChanged: {
-                            if (dragging) {
-                                taskbarItem.barRoot.dragSourceIndex = index;
-                                taskbarItem.barRoot.updateDragTargetForItem(index, draggableContent);
-                            } else if (taskbarItem.barRoot.dragSourceIndex === index) {
-                                Qt.callLater(() => {
-                                    if (taskbarItem.barRoot.pendingDragCommitSourceIndex === index)
-                                        return;
-                                    if (!taskbarMouseArea.drag.active && taskbarItem.barRoot.dragSourceIndex === index) {
-                                        taskbarItem.barRoot.dragSourceIndex = -1;
-                                        taskbarItem.barRoot.dragTargetIndex = -1;
-                                    }
-                                });
-                            }
-                        }
-
-                        Drag.active: dragging
-                        Drag.source: taskbarItem
-                        Drag.hotSpot.x: width / 2
-                        Drag.hotSpot.y: height / 2
-                        Drag.keys: ["taskbar-app"]
-                        z: dragging ? 1000 : 0
-                        scale: (dragging ? 1.05 : 1.0) * (taskbarItem.isHovered ? taskbarItem.hoverItemScale : 1.0)
-                        onXChanged: {
-                            if (dragging)
-                                taskbarItem.barRoot.updateDragTargetForItem(index, draggableContent);
-                        }
-                        onYChanged: {
-                            if (dragging)
-                                taskbarItem.barRoot.updateDragTargetForItem(index, draggableContent);
-                        }
-                        onWidthChanged: {
-                            if (dragging)
-                                taskbarItem.barRoot.updateDragTargetForItem(index, draggableContent);
-                        }
-                        onHeightChanged: {
-                            if (dragging)
-                                taskbarItem.barRoot.updateDragTargetForItem(index, draggableContent);
-                        }
-                        onScaleChanged: {
-                            if (dragging)
-                                taskbarItem.barRoot.updateDragTargetForItem(index, draggableContent);
-                        }
-                        onShiftOffsetChanged: {
-                            if (dragging)
-                                taskbarItem.barRoot.updateDragTargetForItem(index, draggableContent);
-                        }
-
-                        Behavior on scale {
-                            NumberAnimation {
-                                duration: root.itemScaleAnimationDurationMs
-                            }
-                        }
-
-                        SequentialAnimation {
-                            id: stateFadeAnimation
-                            running: false
-
-                            NumberAnimation {
-                                target: taskbarItem
-                                property: "stateFadeOpacity"
-                                to: root.itemStateFadeMinOpacity
-                                duration: root.itemStateFadeOutDurationMs
-                                easing.type: Easing.OutQuad
-                            }
-
-                            NumberAnimation {
-                                target: taskbarItem
-                                property: "stateFadeOpacity"
-                                to: 1.0
-                                duration: root.itemStateFadeInDurationMs
-                                easing.type: Easing.OutQuad
-                            }
-                        }
-
-                        Rectangle {
-                            id: capsuleBackground
-                            anchors.centerIn: parent
-                            width: root.isVerticalBar ? root.capsuleHeight : taskbarItem.visualWidth
-                            height: root.capsuleHeight
-                            color: taskbarItem.useBackgroundGradient ? "transparent" : taskbarItem.itemBackgroundColor
-                            radius: Style.radiusM
-                            border.color: taskbarItem.itemBorderColor
-                            border.width: taskbarItem.itemBorderWidth
-
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: root.itemColorAnimationDurationMs
-                                    easing.type: Easing.InOutQuad
-                                }
-                            }
-
-                            Behavior on border.color {
-                                ColorAnimation {
-                                    duration: root.itemColorAnimationDurationMs
-                                    easing.type: Easing.InOutQuad
-                                }
-                            }
-
-                            Rectangle {
-                                id: taskbarItemGradientBackground
-                                visible: taskbarItem.useBackgroundGradient
-                                anchors.fill: parent
-                                radius: capsuleBackground.radius
-                                color: "transparent"
-                                gradient: Gradient {
-                                    id: backgroundGradientComponent
-                                    orientation: taskbarItem.backgroundGradientOrientation
-                                    GradientStop {
-                                        position: 0.0
-                                        color: taskbarItem.backgroundGradientStartColor
-
-                                        Behavior on color {
-                                            ColorAnimation {
-                                                duration: root.itemColorAnimationDurationMs
-                                                easing.type: Easing.InOutQuad
-                                            }
-                                        }
-                                    }
-                                    GradientStop {
-                                        position: 1.0
-                                        color: taskbarItem.backgroundGradientEndColor
-
-                                        Behavior on color {
-                                            ColorAnimation {
-                                                duration: root.itemColorAnimationDurationMs
-                                                easing.type: Easing.InOutQuad
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            Rectangle {
-                                anchors.fill: parent
-                                anchors.margins: Math.max(1, Style.borderS)
-                                radius: Math.max(0, capsuleBackground.radius - Style.borderS)
-                                color: "transparent"
-                                opacity: taskbarItem.focusWashOpacity
-                                gradient: Gradient {
-                                    orientation: root.isVerticalBar ? Gradient.Vertical : Gradient.Horizontal
-                                    GradientStop {
-                                        position: 0.0
-                                        color: Qt.rgba(taskbarItem.focusAccentColor.r, taskbarItem.focusAccentColor.g, taskbarItem.focusAccentColor.b, 0.95)
-
-                                        Behavior on color {
-                                            ColorAnimation {
-                                                duration: root.itemColorAnimationDurationMs
-                                                easing.type: Easing.OutCubic
-                                            }
-                                        }
-                                    }
-                                    GradientStop {
-                                        position: 0.55
-                                        color: Qt.rgba(taskbarItem.focusSecondaryColor.r, taskbarItem.focusSecondaryColor.g, taskbarItem.focusSecondaryColor.b, 0.68)
-
-                                        Behavior on color {
-                                            ColorAnimation {
-                                                duration: root.itemColorAnimationDurationMs
-                                                easing.type: Easing.OutCubic
-                                            }
-                                        }
-                                    }
-                                    GradientStop {
-                                        position: 1.0
-                                        color: Qt.rgba(taskbarItem.focusTertiaryColor.r, taskbarItem.focusTertiaryColor.g, taskbarItem.focusTertiaryColor.b, 0.22)
-
-                                        Behavior on color {
-                                            ColorAnimation {
-                                                duration: root.itemColorAnimationDurationMs
-                                                easing.type: Easing.OutCubic
-                                            }
-                                        }
-                                    }
-                                }
-
-                                Behavior on opacity {
-                                    NumberAnimation {
-                                        duration: root.itemOpacityAnimationDurationMs
-                                        easing.type: Easing.OutCubic
-                                    }
-                                }
-                            }
-                        }
-
-                        Item {
-                            anchors.centerIn: parent
-                            width: taskbarItem.entryContentWidth
-                            height: root.itemSize
-
-                            RowLayout {
-                                anchors.fill: parent
-                                spacing: taskbarItem.itemSpacing
-
-                                Item {
-                                    id: iconContainer
-                                    Layout.preferredWidth: root.itemSize
-                                    Layout.preferredHeight: root.itemSize
-                                    Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
-                                    onXChanged: {
-                                        taskbarItem.syncIndicatorRect();
-                                    }
-                                    onYChanged: {
-                                        taskbarItem.syncIndicatorRect();
-                                    }
-                                    onWidthChanged: {
-                                        taskbarItem.syncIndicatorRect();
-                                    }
-                                    onHeightChanged: {
-                                        taskbarItem.syncIndicatorRect();
-                                    }
-
-                                    Item {
-                                        anchors.fill: parent
-                                    }
-
-                                    Rectangle {
-                                        visible: !taskbarItem.shouldShowTitle && !taskbarItem.showGroupedIndicator
-                                        anchors.bottom: parent.bottom
-                                        anchors.bottomMargin: -2
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                        width: Style.toOdd(root.itemSize * (0.22 + taskbarItem.focusVisualStrength * 0.18))
-                                        height: 4
-                                        color: taskbarItem.isFocused ? taskbarItem.focusAccentColor : taskbarItem.focusSecondaryColor
-                                        opacity: taskbarItem.indicatorOpacity
-                                        radius: Math.min(Style.radiusXXS, width / 2)
-
-                                        Behavior on width {
-                                            NumberAnimation {
-                                                duration: root.itemScaleAnimationDurationMs
-                                                easing.type: Easing.OutCubic
-                                            }
-                                        }
-
-                                        Behavior on color {
-                                            ColorAnimation {
-                                                duration: root.itemColorAnimationDurationMs
-                                                easing.type: Easing.OutCubic
-                                            }
-                                        }
-
-                                        Behavior on opacity {
-                                            NumberAnimation {
-                                                duration: root.itemOpacityAnimationDurationMs
-                                                easing.type: Easing.OutCubic
-                                            }
-                                        }
-                                    }
-
-                                    Loader {
-                                        active: taskbarItem.showGroupedIndicator && root.groupIndicatorStyle === "number"
-                                        anchors.top: parent.top
-                                        anchors.right: parent.right
-                                        anchors.topMargin: Math.round(-root.itemSize * 0.08)
-                                        anchors.rightMargin: Math.round(-root.itemSize * 0.08)
-                                        z: 2
-                                        sourceComponent: groupNumberIndicatorComponent
-                                    }
-
-                                    Loader {
-                                        active: taskbarItem.showGroupedIndicator && root.groupIndicatorStyle === "dots"
-                                        anchors.bottom: parent.bottom
-                                        anchors.horizontalCenter: parent.horizontalCenter
-                                        anchors.bottomMargin: -2
-                                        z: 1
-                                        sourceComponent: groupDotsIndicatorComponent
-                                    }
-
-                                    Component {
-                                        id: groupNumberIndicatorComponent
-
-                                        Rectangle {
-                                            readonly property real badgeHeight: Math.max(12, Math.round(root.itemSize * 0.48))
-                                            readonly property real horizontalPadding: Math.max(3, Math.round(root.itemSize * 0.10))
-
-                                            width: Math.max(badgeHeight, Math.round(numberLabel.implicitWidth + horizontalPadding * 2))
-                                            height: badgeHeight
-                                            scale: taskbarItem.badgeFocusScale
-                                            radius: height / 2
-                                            color: taskbarItem.focusedWindowIndex >= 0 ? taskbarItem.focusAccentColor : Qt.alpha(taskbarItem.focusTertiaryColor, 0.3)
-                                            border.color: taskbarItem.focusedWindowIndex >= 0 ? Qt.alpha(taskbarItem.focusSecondaryColor, 0.9) : Qt.alpha(taskbarItem.focusSecondaryColor, 0.58)
-                                            border.width: Style.borderS
-
-                                            Behavior on scale {
-                                                NumberAnimation {
-                                                    duration: root.itemScaleAnimationDurationMs
-                                                    easing.type: Easing.OutBack
-                                                }
-                                            }
-
-                                            Behavior on color {
-                                                ColorAnimation {
-                                                    duration: root.itemColorAnimationDurationMs
-                                                    easing.type: Easing.OutCubic
-                                                }
-                                            }
-
-                                            Behavior on border.color {
-                                                ColorAnimation {
-                                                    duration: root.itemColorAnimationDurationMs
-                                                    easing.type: Easing.OutCubic
-                                                }
-                                            }
-
-                                            NText {
-                                                id: numberLabel
-                                                anchors.centerIn: parent
-                                                text: taskbarItem.groupedIndicatorText
-                                                family: Settings.data.ui.fontFixed
-                                                pointSize: Math.max(Style.fontSizeXS, Math.min(root.barFontSize * 0.8, Style.fontSizeS))
-                                                applyUiScale: false
-                                                font.weight: Style.fontWeightBold
-                                                color: taskbarItem.focusedWindowIndex >= 0 ? Color.mOnPrimary : taskbarItem.itemTextColor
-
-                                                Behavior on color {
-                                                    ColorAnimation {
-                                                        duration: root.itemColorAnimationDurationMs
-                                                        easing.type: Easing.OutCubic
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    Component {
-                                        id: groupDotsIndicatorComponent
-
-                                        Item {
-                                            readonly property int maxVisibleDots: 5
-                                            readonly property int totalCount: Math.max(0, taskbarItem.groupedCount)
-                                            readonly property int focusedIndex: taskbarItem.focusedWindowIndex >= 0 ? taskbarItem.focusedWindowIndex : 0
-                                            readonly property int visibleCount: Math.min(totalCount, maxVisibleDots)
-                                            readonly property int dotSize: Math.max(2, Math.round(root.itemSize * 0.1))
-                                            readonly property int dotSpacing: Math.max(1, Math.round(dotSize * 0.7))
-                                            readonly property int windowStart: {
-                                                if (totalCount <= maxVisibleDots)
-                                                    return 0;
-                                                const centeredStart = focusedIndex - Math.floor(maxVisibleDots / 2);
-                                                const maxStart = totalCount - maxVisibleDots;
-                                                return Math.max(0, Math.min(maxStart, centeredStart));
-                                            }
-
-                                            width: root.isVerticalBar ? dotSize : (visibleCount * dotSize + Math.max(0, visibleCount - 1) * dotSpacing)
-                                            height: root.isVerticalBar ? (visibleCount * dotSize + Math.max(0, visibleCount - 1) * dotSpacing) : dotSize
-
-                                            Repeater {
-                                                model: parent.visibleCount
-                                                delegate: Rectangle {
-                                                    required property int index
-                                                    readonly property int actualIndex: parent.windowStart + index
-                                                    width: parent.dotSize
-                                                    height: parent.dotSize
-                                                    scale: actualIndex === taskbarItem.focusedWindowIndex ? 1.35 : 1.0
-                                                    radius: width / 2
-                                                    x: root.isVerticalBar ? 0 : index * (parent.dotSize + parent.dotSpacing)
-                                                    y: root.isVerticalBar ? index * (parent.dotSize + parent.dotSpacing) : 0
-                                                    color: actualIndex === taskbarItem.focusedWindowIndex ? taskbarItem.focusAccentColor : taskbarItem.focusTertiaryColor
-                                                    opacity: actualIndex === taskbarItem.focusedWindowIndex ? 1.0 : 0.56
-
-                                                    Behavior on scale {
-                                                        NumberAnimation {
-                                                            duration: root.itemScaleAnimationDurationMs
-                                                            easing.type: Easing.OutBack
-                                                        }
-                                                    }
-
-                                                    Behavior on color {
-                                                        ColorAnimation {
-                                                            duration: root.itemColorAnimationDurationMs
-                                                            easing.type: Easing.OutCubic
-                                                        }
-                                                    }
-
-                                                    Behavior on opacity {
-                                                        NumberAnimation {
-                                                            duration: root.itemOpacityAnimationDurationMs
-                                                            easing.type: Easing.OutCubic
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    Item {
-                                        anchors.fill: parent
-                                        y: taskbarItem.iconFocusLift
-                                        scale: taskbarItem.iconFocusScale
-                                        opacity: 0.78 + taskbarItem.focusVisualStrength * 0.22
-                                        transformOrigin: Item.Center
-
-                                        Behavior on y {
-                                            NumberAnimation {
-                                                duration: root.itemPositionAnimationDurationMs
-                                                easing.type: Easing.OutCubic
-                                            }
-                                        }
-
-                                        Behavior on scale {
-                                            NumberAnimation {
-                                                duration: root.itemScaleAnimationDurationMs
-                                                easing.type: Easing.OutQuad
-                                            }
-                                        }
-
-                                        Behavior on opacity {
-                                            NumberAnimation {
-                                                duration: root.itemOpacityAnimationDurationMs
-                                                easing.type: Easing.OutCubic
-                                            }
-                                        }
-
-                                        Rectangle {
-                                            anchors.centerIn: parent
-                                            width: Math.round(parent.width * 0.9)
-                                            height: Math.round(parent.height * 0.9)
-                                            radius: Math.max(width, height) / 2
-                                            color: Qt.rgba(taskbarItem.focusTertiaryColor.r, taskbarItem.focusTertiaryColor.g, taskbarItem.focusTertiaryColor.b, 1)
-                                            opacity: taskbarItem.iconGlowOpacity
-                                            scale: 0.86 + taskbarItem.focusVisualStrength * 0.28
-
-                                            Behavior on color {
-                                                ColorAnimation {
-                                                    duration: root.itemColorAnimationDurationMs
-                                                    easing.type: Easing.OutCubic
-                                                }
-                                            }
-
-                                            Behavior on opacity {
-                                                NumberAnimation {
-                                                    duration: root.itemOpacityAnimationDurationMs
-                                                    easing.type: Easing.OutCubic
-                                                }
-                                            }
-
-                                            Behavior on scale {
-                                                NumberAnimation {
-                                                    duration: root.itemScaleAnimationDurationMs
-                                                    easing.type: Easing.OutCubic
-                                                }
-                                            }
-                                        }
-
-                                        IconImage {
-                                            anchors.fill: parent
-                                            source: ThemeIcons.iconForAppId(taskbarItem.modelData.appId)
-                                            smooth: true
-                                            asynchronous: true
-                                            layer.enabled: root.colorizeIcons
-                                            layer.effect: ShaderEffect {
-                                                property color targetColor: root.resolvedIconTintColor()
-                                                property real colorizeMode: 0.0
-
-                                                fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/appicon_colorize.frag.qsb")
-                                            }
-                                        }
-                                    }
-                                }
-
-                                NText {
-                                    visible: taskbarItem.shouldShowTitle
-                                    Layout.preferredWidth: root.titleWidth
-                                    Layout.preferredHeight: root.itemSize
-                                    Layout.alignment: Qt.AlignVCenter | Qt.AlignLeft
-                                    Layout.fillWidth: false
-                                    Layout.leftMargin: taskbarItem.titleFocusOffset
-                                    text: taskbarItem.title
-                                    family: root.titleFontFamilyValue()
-                                    elide: Text.ElideRight
-                                    verticalAlignment: Text.AlignVCenter
-                                    horizontalAlignment: Text.AlignLeft
-                                    pointSize: taskbarItem.titlePointSize
-                                    color: taskbarItem.itemTextColor
-                                    opacity: taskbarItem.titleFocusOpacity
-                                    font.weight: root.titleFontWeightValue()
-
-                                    Behavior on opacity {
-                                        NumberAnimation {
-                                            duration: root.itemOpacityAnimationDurationMs
-                                            easing.type: Easing.OutCubic
-                                        }
-                                    }
-
-                                    Behavior on color {
-                                        ColorAnimation {
-                                            duration: root.itemColorAnimationDurationMs
-                                            easing.type: Easing.OutCubic
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    MouseArea {
-                        id: taskbarMouseArea
-                        objectName: "taskbarMouseArea"
-                        visible: !taskbarItem.isSeparator
-                        enabled: !taskbarItem.isSeparator && (!taskbarItem.isRunning || root.supportsLiveReorder)
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        acceptedButtons: Qt.LeftButton | Qt.RightButton
-                        drag.target: draggableContent
-                        drag.axis: root.isVerticalBar ? Drag.YAxis : Drag.XAxis
-                        drag.threshold: 8
-                        preventStealing: true
-
-                        onReleased: {
-                            if (draggableContent.dragging)
-                                root.queueDragCommit(index, root.dragTargetIndex);
-                        }
-
-                        onClicked: mouse => {
-                            if (!modelData)
-                                return;
-
-                            const runningWindows = taskbarItem.windows;
-                            const primaryWindow = root.getPrimaryWindowForEntryKey(modelData.entryKey);
-
-                            if (mouse.button === Qt.LeftButton) {
-                                if (runningWindows.length === 0) {
-                                    root.launchPinnedApp(modelData.appId);
-                                } else if (!root.groupApps || runningWindows.length <= 1) {
-                                    root.focusWindow(primaryWindow);
-                                } else if (root.groupClickAction === "list") {
-                                    TooltipService.hideImmediately();
-                                    root.openTaskbarContextMenu(taskbarItem, "list");
-                                } else {
-                                    const appKey = modelData.appId || "";
-                                    const state = root.groupCycleIndices || {};
-                                    const nextIndex = (state[appKey] || 0) % runningWindows.length;
-                                    const nextWindow = runningWindows[nextIndex];
-                                    root.focusWindow(nextWindow);
-                                    state[appKey] = (nextIndex + 1) % runningWindows.length;
-                                    root.groupCycleIndices = Object.assign({}, state);
-                                }
-                            } else if (mouse.button === Qt.RightButton) {
-                                TooltipService.hide();
-                                root.openTaskbarContextMenu(taskbarItem, "");
-                            }
-                        }
-
-                        onEntered: {
-                            root.hoveredEntryKey = taskbarItem.modelData.entryKey;
-                            TooltipService.show(taskbarItem, taskbarItem.title, BarService.getTooltipDirection(root.screen?.name));
-                        }
-
-                        onExited: {
-                            root.hoveredEntryKey = "";
-                            TooltipService.hide();
-                        }
-                    }
+                delegate: TaskbarEntryDelegate {
+                    barWidgetRoot: root
+                    stateColors: itemStateColors
+                    capsuleItem: visualCapsule
                 }
             }
         }
