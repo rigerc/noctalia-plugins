@@ -16,8 +16,11 @@ Item {
   readonly property var visibleResults: (mainInstance?.managerResults || []).filter(function(manager) {
     return (manager.packageCount || 0) > 0 || (manager.errorCount || 0) > 0;
   })
+  readonly property int summaryColumns: summaryGrid.width >= Math.round(420 * Style.uiScaleRatio)
+    ? 3
+    : (summaryGrid.width >= Math.round(280 * Style.uiScaleRatio) ? 2 : 1)
 
-  property real contentPreferredWidth: 540 * Style.uiScaleRatio
+  property real contentPreferredWidth: 460 * Style.uiScaleRatio
   property real contentPreferredHeight: 600 * Style.uiScaleRatio
 
   anchors.fill: parent
@@ -70,6 +73,24 @@ Item {
               }
             }
 
+            NIconButton {
+              Layout.alignment: Qt.AlignTop
+              icon: "settings"
+              onClicked: {
+                BarService.openPluginSettings(pluginApi.panelOpenScreen, pluginApi.manifest);
+                pluginApi.closePanel(pluginApi.panelOpenScreen);
+              }
+            }
+          }
+
+          RowLayout {
+            Layout.fillWidth: true
+            spacing: Style.marginS
+
+            Item {
+              Layout.fillWidth: true
+            }
+
             NButton {
               text: pluginApi?.tr("panel.refresh")
               onClicked: mainInstance?.manualRefresh()
@@ -80,19 +101,12 @@ Item {
               enabled: mainInstance?.canRunUpgrade ?? false
               onClicked: mainInstance?.upgrade()
             }
-
-            NIconButton {
-              icon: "settings"
-              onClicked: {
-                BarService.openPluginSettings(pluginApi.panelOpenScreen, pluginApi.manifest);
-                pluginApi.closePanel(pluginApi.panelOpenScreen);
-              }
-            }
           }
 
           GridLayout {
+            id: summaryGrid
             Layout.fillWidth: true
-            columns: 3
+            columns: root.summaryColumns
             columnSpacing: Style.marginS
             rowSpacing: Style.marginS
 
@@ -118,6 +132,7 @@ Item {
               delegate: Rectangle {
                 required property var modelData
                 Layout.fillWidth: true
+                Layout.preferredWidth: (summaryGrid.width - summaryGrid.columnSpacing * (summaryGrid.columns - 1)) / summaryGrid.columns
                 implicitHeight: Math.round(62 * Style.uiScaleRatio)
                 radius: Style.radiusL
                 color: Color.mSurfaceVariant
@@ -248,10 +263,11 @@ Item {
                     pointSize: Style.fontSizeL
                     font.weight: Style.fontWeightSemiBold
                     color: Color.mOnSurface
-                    elide: Text.ElideRight
+                    wrapMode: Text.WordWrap
                   }
 
                   Rectangle {
+                    Layout.alignment: Qt.AlignTop
                     implicitWidth: badgeLabel.implicitWidth + Math.round(18 * Style.uiScaleRatio)
                     implicitHeight: Math.round(26 * Style.uiScaleRatio)
                     radius: implicitHeight / 2
@@ -262,9 +278,7 @@ Item {
                     NText {
                       id: badgeLabel
                       anchors.centerIn: parent
-                      text: pluginApi?.tr("panel.managerSummary", {
-                        "count": modelData.packageCount
-                      })
+                      text: String(modelData.packageCount)
                       color: modelData.errorCount > 0 ? Color.resolveColorKey("destructive") : Color.mSecondary
                       font.weight: Style.fontWeightSemiBold
                       pointSize: Style.fontSizeS

@@ -101,9 +101,36 @@
       "label": "Icon color",
       "desc": "Color used for the bar icon in normal state."
     },
+    "showCountText": {
+      "label": "Show update count",
+      "desc": "Display the numeric update count next to the bar icon."
+    },
     "countColor": {
       "label": "Count color",
       "desc": "Color used for the update count in normal state."
+    },
+    "countTextPosition": {
+      "label": "Count position",
+      "desc": "Choose whether the count appears before or after the icon.",
+      "left": "Left of icon",
+      "right": "Right of icon"
+    },
+    "countTextFontFamily": {
+      "label": "Count font family",
+      "desc": "Optional font family for the update count. Leave empty to use the shell default.",
+      "placeholder": "Default shell font"
+    },
+    "countTextFontWeight": {
+      "label": "Count font weight",
+      "desc": "Choose the text weight used for the update count.",
+      "regular": "Regular",
+      "medium": "Medium",
+      "semibold": "Semibold",
+      "bold": "Bold"
+    },
+    "countTextScale": {
+      "label": "Count size",
+      "desc": "Scale the update count relative to the normal bar text size."
     },
     "errorColor": {
       "label": "Error color",

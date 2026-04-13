@@ -1,15 +1,21 @@
 {
   "enabledManagerIds": [
-    "pacman",
-    "paru",
+    "cargo",
     "flatpak",
     "npm",
-    "cargo",
-    "uv"
+    "pacman",
+    "paru",
+    "uv",
+    "uvx"
   ],
-  "refreshIntervalMinutes": 120,
+  "refreshIntervalMinutes": 15,
   "iconName": "package",
   "iconColor": "primary",
+  "showCountText": true,
+  "countTextPosition": "right",
+  "countTextFontFamily": "",
+  "countTextFontWeight": "regular",
+  "countTextScale": 1,
   "countColor": "secondary",
   "errorColor": "error",
   "enableNotifications": true,

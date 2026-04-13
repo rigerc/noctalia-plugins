@@ -13,25 +13,41 @@ ColumnLayout {
   readonly property var mainInstance: pluginApi?.mainInstance
 
   property var editEnabledManagerIds: JSON.parse(JSON.stringify(cfg.enabledManagerIds ?? defaults.enabledManagerIds ?? []))
-  property int editRefreshIntervalMinutes: cfg.refreshIntervalMinutes ?? defaults.refreshIntervalMinutes ?? 30
+  property int editRefreshIntervalMinutes: normalizeRefreshInterval(cfg.refreshIntervalMinutes ?? defaults.refreshIntervalMinutes ?? 30)
   property string editIconName: cfg.iconName ?? defaults.iconName ?? "package"
   property string editIconColor: cfg.iconColor ?? defaults.iconColor ?? "primary"
+  property bool editShowCountText: cfg.showCountText ?? defaults.showCountText ?? true
+  property string editCountTextPosition: normalizeCountTextPosition(cfg.countTextPosition ?? defaults.countTextPosition ?? "right")
+  property string editCountTextFontFamily: cfg.countTextFontFamily ?? defaults.countTextFontFamily ?? ""
+  property string editCountTextFontWeight: normalizeCountTextFontWeight(cfg.countTextFontWeight ?? defaults.countTextFontWeight ?? "bold")
+  property real editCountTextScale: normalizeCountTextScale(cfg.countTextScale ?? defaults.countTextScale ?? 1.0)
   property string editCountColor: cfg.countColor ?? defaults.countColor ?? "secondary"
   property string editErrorColor: cfg.errorColor ?? defaults.errorColor ?? "destructive"
   property bool editEnableNotifications: cfg.enableNotifications ?? defaults.enableNotifications ?? false
   property string editTerminalCommand: cfg.terminalCommand ?? defaults.terminalCommand ?? ""
 
   readonly property var refreshIntervalOptions: [
-    { "key": 5, "name": pluginApi?.tr("settings.interval.5m") },
-    { "key": 15, "name": pluginApi?.tr("settings.interval.15m") },
-    { "key": 30, "name": pluginApi?.tr("settings.interval.30m") },
-    { "key": 60, "name": pluginApi?.tr("settings.interval.60m") },
-    { "key": 120, "name": pluginApi?.tr("settings.interval.120m") }
+    { "key": "5", "name": pluginApi?.tr("settings.interval.5m") },
+    { "key": "15", "name": pluginApi?.tr("settings.interval.15m") },
+    { "key": "30", "name": pluginApi?.tr("settings.interval.30m") },
+    { "key": "60", "name": pluginApi?.tr("settings.interval.60m") },
+    { "key": "120", "name": pluginApi?.tr("settings.interval.120m") }
+  ]
+  readonly property var countTextPositionOptions: [
+    { "key": "left", "name": pluginApi?.tr("settings.countTextPosition.left") },
+    { "key": "right", "name": pluginApi?.tr("settings.countTextPosition.right") }
+  ]
+  readonly property var countTextFontWeightOptions: [
+    { "key": "regular", "name": pluginApi?.tr("settings.countTextFontWeight.regular") },
+    { "key": "medium", "name": pluginApi?.tr("settings.countTextFontWeight.medium") },
+    { "key": "semibold", "name": pluginApi?.tr("settings.countTextFontWeight.semibold") },
+    { "key": "bold", "name": pluginApi?.tr("settings.countTextFontWeight.bold") }
   ]
 
   readonly property var availableManagerOptions: buildManagerOptions(true)
   readonly property var unavailableManagerOptions: buildManagerOptions(false)
   readonly property int selectedManagerCount: root.editEnabledManagerIds.length
+  readonly property string previewCountText: root.editShowCountText ? "12" : ""
 
   spacing: Style.marginL
 
@@ -170,7 +186,7 @@ ColumnLayout {
                 id: chipLabel
                 text: modelData.name
                 color: selected ? Color.mPrimary : Color.mOnSurface
-                font.weight: selected ? Style.fontWeightSemiBold : Style.fontWeightNormal
+                font.weight: selected ? Style.fontWeightSemiBold : Style.fontWeightRegular
               }
             }
 
@@ -272,40 +288,70 @@ ColumnLayout {
         Layout.fillWidth: true
         spacing: Style.marginM
 
-        NLabel {
+        ColumnLayout {
           Layout.fillWidth: true
-          label: pluginApi?.tr("settings.icon.label")
-          description: pluginApi?.tr("settings.icon.desc")
-        }
+          spacing: Style.marginS
 
-        Rectangle {
-          Layout.preferredWidth: Math.round(116 * Style.uiScaleRatio)
-          Layout.preferredHeight: Math.round(40 * Style.uiScaleRatio)
-          radius: Style.radiusL
-          color: Style.capsuleColor
-          border.color: Style.capsuleBorderColor
-          border.width: Style.capsuleBorderWidth
+          NLabel {
+            Layout.fillWidth: true
+            label: pluginApi?.tr("settings.icon.label")
+            description: pluginApi?.tr("settings.icon.desc")
+          }
 
-          RowLayout {
-            anchors.centerIn: parent
-            spacing: Style.marginXS
-
-            NIcon {
-              icon: root.editIconName
-              color: resolveColor(root.editIconColor, Color.mPrimary)
-            }
-
-            NText {
-              text: "12"
-              color: resolveColor(root.editCountColor, Color.mOnSurface)
-              font.weight: Style.fontWeightSemiBold
-            }
+          NToggle {
+            Layout.fillWidth: true
+            label: pluginApi?.tr("settings.showCountText.label")
+            description: pluginApi?.tr("settings.showCountText.desc")
+            checked: root.editShowCountText
+            onToggled: checked => root.editShowCountText = checked
           }
         }
 
-        NButton {
-          text: pluginApi?.tr("settings.icon.pick")
-          onClicked: iconPicker.open()
+        ColumnLayout {
+          spacing: Style.marginS
+
+          Rectangle {
+            Layout.alignment: Qt.AlignRight | Qt.AlignTop
+            Layout.preferredWidth: Math.round(140 * Style.uiScaleRatio)
+            Layout.preferredHeight: Math.round(42 * Style.uiScaleRatio)
+            radius: Style.radiusL
+            color: Style.capsuleColor
+            border.color: Style.capsuleBorderColor
+            border.width: Style.capsuleBorderWidth
+
+            RowLayout {
+              anchors.centerIn: parent
+              spacing: Style.marginXS
+
+              NText {
+                visible: root.editShowCountText && root.editCountTextPosition === "left"
+                text: root.previewCountText
+                color: resolveColor(root.editCountColor, Color.mOnSurface)
+                pointSize: Style.fontSizeM * root.editCountTextScale
+                font.family: root.editCountTextFontFamily !== "" ? root.editCountTextFontFamily : Qt.application.font.family
+                font.weight: root.fontWeightForKey(root.editCountTextFontWeight)
+              }
+
+              NIcon {
+                icon: root.editIconName
+                color: resolveColor(root.editIconColor, Color.mPrimary)
+              }
+
+              NText {
+                visible: root.editShowCountText && root.editCountTextPosition === "right"
+                text: root.previewCountText
+                color: resolveColor(root.editCountColor, Color.mOnSurface)
+                pointSize: Style.fontSizeM * root.editCountTextScale
+                font.family: root.editCountTextFontFamily !== "" ? root.editCountTextFontFamily : Qt.application.font.family
+                font.weight: root.fontWeightForKey(root.editCountTextFontWeight)
+              }
+            }
+          }
+
+          NButton {
+            text: pluginApi?.tr("settings.icon.pick")
+            onClicked: iconPicker.open()
+          }
         }
       }
 
@@ -323,10 +369,62 @@ ColumnLayout {
       }
 
       NColorChoice {
+        enabled: root.editShowCountText
         label: pluginApi?.tr("settings.countColor.label")
         description: pluginApi?.tr("settings.countColor.desc")
         currentKey: root.editCountColor
         onSelected: key => root.editCountColor = key
+      }
+
+      NComboBox {
+        Layout.fillWidth: true
+        enabled: root.editShowCountText
+        label: pluginApi?.tr("settings.countTextPosition.label")
+        description: pluginApi?.tr("settings.countTextPosition.desc")
+        model: root.countTextPositionOptions
+        currentKey: root.editCountTextPosition
+        onSelected: key => root.editCountTextPosition = key
+      }
+
+      NTextInput {
+        Layout.fillWidth: true
+        enabled: root.editShowCountText
+        label: pluginApi?.tr("settings.countTextFontFamily.label")
+        description: pluginApi?.tr("settings.countTextFontFamily.desc")
+        placeholderText: pluginApi?.tr("settings.countTextFontFamily.placeholder")
+        text: root.editCountTextFontFamily
+        onTextChanged: root.editCountTextFontFamily = text
+      }
+
+      NComboBox {
+        Layout.fillWidth: true
+        enabled: root.editShowCountText
+        label: pluginApi?.tr("settings.countTextFontWeight.label")
+        description: pluginApi?.tr("settings.countTextFontWeight.desc")
+        model: root.countTextFontWeightOptions
+        currentKey: root.editCountTextFontWeight
+        onSelected: key => root.editCountTextFontWeight = key
+      }
+
+      ColumnLayout {
+        Layout.fillWidth: true
+        spacing: Style.marginS
+        enabled: root.editShowCountText
+
+        NLabel {
+          Layout.fillWidth: true
+          label: pluginApi?.tr("settings.countTextScale.label") + ": " + root.formatScalePercent(root.editCountTextScale)
+          description: pluginApi?.tr("settings.countTextScale.desc")
+        }
+
+        NSlider {
+          Layout.fillWidth: true
+          from: 0.8
+          to: 1.6
+          stepSize: 0.05
+          value: root.editCountTextScale
+          onValueChanged: root.editCountTextScale = Math.round(value * 20) / 20
+        }
       }
 
       NColorChoice {
@@ -369,8 +467,8 @@ ColumnLayout {
         label: pluginApi?.tr("settings.refreshInterval.label")
         description: pluginApi?.tr("settings.refreshInterval.desc")
         model: root.refreshIntervalOptions
-        currentKey: root.editRefreshIntervalMinutes
-        onSelected: key => root.editRefreshIntervalMinutes = Number(key)
+        currentKey: String(root.editRefreshIntervalMinutes)
+        onSelected: key => root.editRefreshIntervalMinutes = root.normalizeRefreshInterval(parseInt(key, 10))
       }
 
       NToggle {
@@ -395,16 +493,28 @@ ColumnLayout {
   function saveSettings() {
     if (!pluginApi) return;
 
-    pluginApi.pluginSettings.enabledManagerIds = JSON.parse(JSON.stringify(root.editEnabledManagerIds));
-    pluginApi.pluginSettings.refreshIntervalMinutes = root.editRefreshIntervalMinutes;
+    var nextEnabledManagerIds = JSON.parse(JSON.stringify(root.editEnabledManagerIds));
+    var nextRefreshIntervalMinutes = root.normalizeRefreshInterval(root.editRefreshIntervalMinutes);
+    var shouldRefresh = root.shouldRefreshAfterSave(nextEnabledManagerIds, nextRefreshIntervalMinutes);
+
+    pluginApi.pluginSettings.enabledManagerIds = nextEnabledManagerIds;
+    pluginApi.pluginSettings.refreshIntervalMinutes = nextRefreshIntervalMinutes;
     pluginApi.pluginSettings.iconName = root.editIconName;
     pluginApi.pluginSettings.iconColor = root.editIconColor;
+    pluginApi.pluginSettings.showCountText = root.editShowCountText;
+    pluginApi.pluginSettings.countTextPosition = root.normalizeCountTextPosition(root.editCountTextPosition);
+    pluginApi.pluginSettings.countTextFontFamily = root.editCountTextFontFamily.trim();
+    pluginApi.pluginSettings.countTextFontWeight = root.normalizeCountTextFontWeight(root.editCountTextFontWeight);
+    pluginApi.pluginSettings.countTextScale = root.normalizeCountTextScale(root.editCountTextScale);
     pluginApi.pluginSettings.countColor = root.editCountColor;
     pluginApi.pluginSettings.errorColor = root.editErrorColor;
     pluginApi.pluginSettings.enableNotifications = root.editEnableNotifications;
     pluginApi.pluginSettings.terminalCommand = root.editTerminalCommand;
     pluginApi.saveSettings();
-    pluginApi.mainInstance?.refresh(false, "settings");
+
+    if (shouldRefresh) {
+      pluginApi.mainInstance?.refresh(false, "settings");
+    }
   }
 
   function setManagerEnabled(id, enabled) {
@@ -458,5 +568,68 @@ ColumnLayout {
   function resolveColor(key, fallbackColor) {
     if (!key || key === "none") return fallbackColor;
     return Color.resolveColorKey(key);
+  }
+
+  function normalizeRefreshInterval(value) {
+    var numericValue = parseInt(value, 10);
+    var validValues = [5, 15, 30, 60, 120];
+
+    if (validValues.indexOf(numericValue) !== -1) return numericValue;
+    return defaults.refreshIntervalMinutes ?? 30;
+  }
+
+  function fontWeightForKey(key) {
+    switch (key) {
+    case "regular":
+      return Style.fontWeightRegular;
+    case "medium":
+      return Style.fontWeightMedium;
+    case "semibold":
+      return Style.fontWeightSemiBold;
+    case "bold":
+    default:
+      return Style.fontWeightBold;
+    }
+  }
+
+  function formatScalePercent(value) {
+    return Math.round(value * 100) + "%";
+  }
+
+  function shouldRefreshAfterSave(nextEnabledManagerIds, nextRefreshIntervalMinutes) {
+    var currentEnabledManagerIds = cfg.enabledManagerIds ?? defaults.enabledManagerIds ?? [];
+    var currentRefreshIntervalMinutes = normalizeRefreshInterval(cfg.refreshIntervalMinutes ?? defaults.refreshIntervalMinutes ?? 30);
+
+    if (nextRefreshIntervalMinutes !== currentRefreshIntervalMinutes) return true;
+    if (nextEnabledManagerIds.length !== currentEnabledManagerIds.length) return true;
+
+    for (var i = 0; i < nextEnabledManagerIds.length; i++) {
+      if (nextEnabledManagerIds[i] !== currentEnabledManagerIds[i]) return true;
+    }
+
+    return false;
+  }
+
+  function normalizeCountTextPosition(value) {
+    return value === "left" ? "left" : "right";
+  }
+
+  function normalizeCountTextFontWeight(value) {
+    switch (value) {
+    case "regular":
+    case "medium":
+    case "semibold":
+    case "bold":
+      return value;
+    default:
+      return "bold";
+    }
+  }
+
+  function normalizeCountTextScale(value) {
+    var numericValue = Number(value);
+
+    if (isNaN(numericValue)) return 1.0;
+    return Math.max(0.8, Math.min(1.6, numericValue));
   }
 }
