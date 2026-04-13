@@ -1,0 +1,17 @@
+{
+  "enabledManagerIds": [
+    "pacman",
+    "paru",
+    "flatpak",
+    "npm",
+    "cargo",
+    "uv"
+  ],
+  "refreshIntervalMinutes": 120,
+  "iconName": "package",
+  "iconColor": "primary",
+  "countColor": "secondary",
+  "errorColor": "error",
+  "enableNotifications": true,
+  "terminalCommand": "foot -e sh -lc '{}'"
+}

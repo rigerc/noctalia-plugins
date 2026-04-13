@@ -29,195 +29,367 @@ ColumnLayout {
     { "key": 120, "name": pluginApi?.tr("settings.interval.120m") }
   ]
 
-  readonly property var managerOptions: buildManagerOptions()
+  readonly property var availableManagerOptions: buildManagerOptions(true)
+  readonly property var unavailableManagerOptions: buildManagerOptions(false)
+  readonly property int selectedManagerCount: root.editEnabledManagerIds.length
 
   spacing: Style.marginL
 
+  NHeader {
+    label: pluginApi?.tr("settings.header.label")
+    description: pluginApi?.tr("settings.header.description")
+  }
+
   NBox {
     Layout.fillWidth: true
+    implicitHeight: backendColumn.implicitHeight + Style.marginXL
 
-    RowLayout {
-      anchors.fill: parent
+    ColumnLayout {
+      id: backendColumn
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.top: parent.top
+      anchors.margins: Style.marginM
+      spacing: Style.marginS
+
+      RowLayout {
+        Layout.fillWidth: true
+        spacing: Style.marginM
+
+        Rectangle {
+          Layout.preferredWidth: Math.round(34 * Style.uiScaleRatio)
+          Layout.preferredHeight: Math.round(34 * Style.uiScaleRatio)
+          radius: Style.radiusM
+          color: mainInstance?.mpmAvailable
+            ? Qt.alpha(Color.mPrimary, 0.14)
+            : Qt.alpha(resolveColor(root.editErrorColor, Color.resolveColorKey("destructive")), 0.16)
+
+          NIcon {
+            anchors.centerIn: parent
+            icon: mainInstance?.mpmAvailable ? "circle-check" : "alert-triangle"
+            color: mainInstance?.mpmAvailable
+              ? Color.mPrimary
+              : resolveColor(root.editErrorColor, Color.resolveColorKey("destructive"))
+          }
+        }
+
+        ColumnLayout {
+          Layout.fillWidth: true
+          spacing: Style.marginXXS
+
+          NText {
+            text: mainInstance?.mpmAvailable
+              ? pluginApi?.tr("settings.backend.detected")
+              : pluginApi?.tr("settings.backend.missing")
+            pointSize: Style.fontSizeM
+            font.weight: Style.fontWeightSemiBold
+            color: Color.mOnSurface
+          }
+
+          NText {
+            Layout.fillWidth: true
+            text: mainInstance?.mpmAvailable
+              ? pluginApi?.tr("settings.backend.detail", {
+                  "version": mainInstance?.mpmVersion || pluginApi?.tr("common.unknown"),
+                  "path": mainInstance?.mpmPath || pluginApi?.tr("common.unknown")
+                })
+              : mainInstance?.mpmErrorMessage || pluginApi?.tr("settings.backend.installHint")
+            color: Color.mOnSurfaceVariant
+            wrapMode: Text.WordWrap
+          }
+        }
+      }
+    }
+  }
+
+  NBox {
+    Layout.fillWidth: true
+    implicitHeight: managersColumn.implicitHeight + Style.marginXL
+
+    ColumnLayout {
+      id: managersColumn
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.top: parent.top
       anchors.margins: Style.marginM
       spacing: Style.marginM
 
-      NIcon {
-        icon: mainInstance?.mpmAvailable ? "circle-check" : "alert-triangle"
-        color: mainInstance?.mpmAvailable ? Color.mPrimary : resolveColor(editErrorColor, Color.resolveColorKey("destructive"))
+      NText {
+        text: pluginApi?.tr("settings.managers.title")
+        pointSize: Style.fontSizeL
+        font.weight: Style.fontWeightSemiBold
+        color: Color.mPrimary
+      }
+
+      NText {
+        Layout.fillWidth: true
+        text: pluginApi?.tr("settings.managers.desc", {
+          "count": root.selectedManagerCount
+        })
+        color: Color.mOnSurfaceVariant
+        wrapMode: Text.WordWrap
+      }
+
+      NText {
+        text: pluginApi?.tr("settings.managers.availableTitle")
+        font.weight: Style.fontWeightSemiBold
+        color: Color.mOnSurface
+      }
+
+      Flow {
+        Layout.fillWidth: true
+        width: managersColumn.width
+        spacing: Style.marginS
+
+        Repeater {
+          model: root.availableManagerOptions
+
+          delegate: Rectangle {
+            required property var modelData
+            readonly property bool selected: root.editEnabledManagerIds.indexOf(modelData.id) !== -1
+
+            implicitWidth: chipLabel.implicitWidth + Math.round((selected ? 38 : 24) * Style.uiScaleRatio)
+            implicitHeight: Math.round(32 * Style.uiScaleRatio)
+            radius: implicitHeight / 2
+            color: selected ? Qt.alpha(Color.mPrimary, 0.14) : Color.mSurfaceVariant
+            border.color: selected ? Color.mPrimary : Color.mOutline
+            border.width: Style.borderS
+
+            RowLayout {
+              anchors.centerIn: parent
+              spacing: Style.marginXS
+
+              NIcon {
+                visible: selected
+                icon: "check"
+                color: Color.mPrimary
+                pointSize: Style.fontSizeXS
+              }
+
+              NText {
+                id: chipLabel
+                text: modelData.name
+                color: selected ? Color.mPrimary : Color.mOnSurface
+                font.weight: selected ? Style.fontWeightSemiBold : Style.fontWeightNormal
+              }
+            }
+
+            MouseArea {
+              anchors.fill: parent
+              hoverEnabled: true
+              cursorShape: Qt.PointingHandCursor
+              onClicked: root.setManagerEnabled(parent.modelData.id, !parent.selected)
+            }
+          }
+        }
+      }
+
+      NText {
+        visible: root.availableManagerOptions.length === 0
+        Layout.fillWidth: true
+        text: pluginApi?.tr("settings.managers.noAvailable")
+        color: Color.mOnSurfaceVariant
+        wrapMode: Text.WordWrap
       }
 
       ColumnLayout {
         Layout.fillWidth: true
-        spacing: Style.marginXS
+        spacing: Style.marginS
+        visible: root.unavailableManagerOptions.length > 0
 
         NText {
-          text: mainInstance?.mpmAvailable
-            ? pluginApi?.tr("settings.backend.detected")
-            : pluginApi?.tr("settings.backend.missing")
-          color: mainInstance?.mpmAvailable ? Color.mOnSurface : resolveColor(editErrorColor, Color.resolveColorKey("destructive"))
-          font.weight: Font.Bold
+          text: pluginApi?.tr("settings.managers.unavailableTitle")
+          font.weight: Style.fontWeightSemiBold
+          color: Color.mOnSurface
+        }
+
+        Flow {
+          Layout.fillWidth: true
+          width: managersColumn.width
+          spacing: Style.marginS
+
+          Repeater {
+            model: root.unavailableManagerOptions
+
+            delegate: Rectangle {
+              required property var modelData
+
+              implicitWidth: chipLabel.implicitWidth + Math.round(20 * Style.uiScaleRatio)
+              implicitHeight: Math.round(30 * Style.uiScaleRatio)
+              radius: implicitHeight / 2
+              color: Color.mSurfaceVariant
+              border.color: Qt.alpha(Color.mOutline, 0.8)
+              border.width: Style.borderS
+              opacity: 0.72
+
+              NText {
+                id: chipLabel
+                anchors.centerIn: parent
+                text: modelData.name
+                color: Color.mOnSurfaceVariant
+              }
+            }
+          }
         }
 
         NText {
-          text: mainInstance?.mpmAvailable
-            ? pluginApi?.tr("settings.backend.detail", {
-              "version": mainInstance?.mpmVersion || pluginApi?.tr("common.unknown"),
-              "path": mainInstance?.mpmPath || pluginApi?.tr("common.unknown")
-            })
-            : mainInstance?.mpmErrorMessage || pluginApi?.tr("settings.backend.installHint")
+          Layout.fillWidth: true
+          text: pluginApi?.tr("settings.managers.unavailable")
           color: Color.mOnSurfaceVariant
-          wrapMode: Text.Wrap
+          wrapMode: Text.WordWrap
         }
       }
     }
-  }
-
-  NDivider {
-    Layout.fillWidth: true
-  }
-
-  NText {
-    text: pluginApi?.tr("settings.managers.title")
-    font.pointSize: Style.fontSizeM
-    font.weight: Font.Medium
-    color: Color.mOnSurface
-  }
-
-  Repeater {
-    model: root.managerOptions
-
-    delegate: NToggle {
-      required property var modelData
-      Layout.fillWidth: true
-      label: modelData.name
-      description: modelData.description
-      checked: root.editEnabledManagerIds.indexOf(modelData.id) !== -1
-      enabled: modelData.available
-      onToggled: checked => root.setManagerEnabled(modelData.id, checked)
-    }
-  }
-
-  NDivider {
-    Layout.fillWidth: true
-  }
-
-  NText {
-    text: pluginApi?.tr("settings.appearance.title")
-    font.pointSize: Style.fontSizeM
-    font.weight: Font.Medium
-    color: Color.mOnSurface
-  }
-
-  RowLayout {
-    Layout.fillWidth: true
-    spacing: Style.marginM
-
-    NLabel {
-      Layout.fillWidth: true
-      label: pluginApi?.tr("settings.icon.label")
-      description: pluginApi?.tr("settings.icon.desc")
-    }
-
-    NIcon {
-      icon: root.editIconName
-      color: resolveColor(root.editIconColor, Color.mPrimary)
-      pointSize: Style.fontSizeXXL
-    }
-
-    NButton {
-      text: pluginApi?.tr("settings.icon.pick")
-      onClicked: iconPicker.open()
-    }
-  }
-
-  NIconPicker {
-    id: iconPicker
-    initialIcon: root.editIconName
-    onIconSelected: iconName => root.editIconName = iconName
-  }
-
-  NColorChoice {
-    label: pluginApi?.tr("settings.iconColor.label")
-    description: pluginApi?.tr("settings.iconColor.desc")
-    currentKey: root.editIconColor
-    onSelected: key => root.editIconColor = key
-  }
-
-  NColorChoice {
-    label: pluginApi?.tr("settings.countColor.label")
-    description: pluginApi?.tr("settings.countColor.desc")
-    currentKey: root.editCountColor
-    onSelected: key => root.editCountColor = key
-  }
-
-  NColorChoice {
-    label: pluginApi?.tr("settings.errorColor.label")
-    description: pluginApi?.tr("settings.errorColor.desc")
-    currentKey: root.editErrorColor
-    onSelected: key => root.editErrorColor = key
   }
 
   NBox {
     Layout.fillWidth: true
+    implicitHeight: appearanceColumn.implicitHeight + Style.marginXL
 
-    RowLayout {
-      anchors.fill: parent
+    ColumnLayout {
+      id: appearanceColumn
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.top: parent.top
       anchors.margins: Style.marginM
-      spacing: Style.marginS
+      spacing: Style.marginM
 
-      NIcon {
-        icon: root.editIconName
-        color: resolveColor(root.editIconColor, Color.mPrimary)
+      NText {
+        text: pluginApi?.tr("settings.appearance.title")
+        pointSize: Style.fontSizeL
+        font.weight: Style.fontWeightSemiBold
+        color: Color.mPrimary
       }
 
       NText {
-        text: "12"
-        color: resolveColor(root.editCountColor, Color.mOnSurface)
-        font.weight: Font.Bold
-      }
-
-      NText {
-        text: pluginApi?.tr("settings.preview.label")
+        Layout.fillWidth: true
+        text: pluginApi?.tr("settings.appearance.desc")
         color: Color.mOnSurfaceVariant
+        wrapMode: Text.WordWrap
+      }
+
+      RowLayout {
+        Layout.fillWidth: true
+        spacing: Style.marginM
+
+        NLabel {
+          Layout.fillWidth: true
+          label: pluginApi?.tr("settings.icon.label")
+          description: pluginApi?.tr("settings.icon.desc")
+        }
+
+        Rectangle {
+          Layout.preferredWidth: Math.round(116 * Style.uiScaleRatio)
+          Layout.preferredHeight: Math.round(40 * Style.uiScaleRatio)
+          radius: Style.radiusL
+          color: Style.capsuleColor
+          border.color: Style.capsuleBorderColor
+          border.width: Style.capsuleBorderWidth
+
+          RowLayout {
+            anchors.centerIn: parent
+            spacing: Style.marginXS
+
+            NIcon {
+              icon: root.editIconName
+              color: resolveColor(root.editIconColor, Color.mPrimary)
+            }
+
+            NText {
+              text: "12"
+              color: resolveColor(root.editCountColor, Color.mOnSurface)
+              font.weight: Style.fontWeightSemiBold
+            }
+          }
+        }
+
+        NButton {
+          text: pluginApi?.tr("settings.icon.pick")
+          onClicked: iconPicker.open()
+        }
+      }
+
+      NIconPicker {
+        id: iconPicker
+        initialIcon: root.editIconName
+        onIconSelected: iconName => root.editIconName = iconName
+      }
+
+      NColorChoice {
+        label: pluginApi?.tr("settings.iconColor.label")
+        description: pluginApi?.tr("settings.iconColor.desc")
+        currentKey: root.editIconColor
+        onSelected: key => root.editIconColor = key
+      }
+
+      NColorChoice {
+        label: pluginApi?.tr("settings.countColor.label")
+        description: pluginApi?.tr("settings.countColor.desc")
+        currentKey: root.editCountColor
+        onSelected: key => root.editCountColor = key
+      }
+
+      NColorChoice {
+        label: pluginApi?.tr("settings.errorColor.label")
+        description: pluginApi?.tr("settings.errorColor.desc")
+        currentKey: root.editErrorColor
+        onSelected: key => root.editErrorColor = key
       }
     }
   }
 
-  NDivider {
+  NBox {
     Layout.fillWidth: true
-  }
+    implicitHeight: behaviorColumn.implicitHeight + Style.marginXL
 
-  NText {
-    text: pluginApi?.tr("settings.behavior.title")
-    font.pointSize: Style.fontSizeM
-    font.weight: Font.Medium
-    color: Color.mOnSurface
-  }
+    ColumnLayout {
+      id: behaviorColumn
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.top: parent.top
+      anchors.margins: Style.marginM
+      spacing: Style.marginM
 
-  NComboBox {
-    Layout.fillWidth: true
-    label: pluginApi?.tr("settings.refreshInterval.label")
-    description: pluginApi?.tr("settings.refreshInterval.desc")
-    model: root.refreshIntervalOptions
-    currentKey: root.editRefreshIntervalMinutes
-    onSelected: key => root.editRefreshIntervalMinutes = Number(key)
-  }
+      NText {
+        text: pluginApi?.tr("settings.behavior.title")
+        pointSize: Style.fontSizeL
+        font.weight: Style.fontWeightSemiBold
+        color: Color.mPrimary
+      }
 
-  NToggle {
-    Layout.fillWidth: true
-    label: pluginApi?.tr("settings.notifications.label")
-    description: pluginApi?.tr("settings.notifications.desc")
-    checked: root.editEnableNotifications
-    onToggled: checked => root.editEnableNotifications = checked
-  }
+      NText {
+        Layout.fillWidth: true
+        text: pluginApi?.tr("settings.behavior.desc")
+        color: Color.mOnSurfaceVariant
+        wrapMode: Text.WordWrap
+      }
 
-  NTextInput {
-    Layout.fillWidth: true
-    label: pluginApi?.tr("settings.terminal.label")
-    description: pluginApi?.tr("settings.terminal.desc")
-    placeholderText: pluginApi?.tr("settings.terminal.placeholder")
-    text: root.editTerminalCommand
-    onTextChanged: root.editTerminalCommand = text
+      NComboBox {
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.refreshInterval.label")
+        description: pluginApi?.tr("settings.refreshInterval.desc")
+        model: root.refreshIntervalOptions
+        currentKey: root.editRefreshIntervalMinutes
+        onSelected: key => root.editRefreshIntervalMinutes = Number(key)
+      }
+
+      NToggle {
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.notifications.label")
+        description: pluginApi?.tr("settings.notifications.desc")
+        checked: root.editEnableNotifications
+        onToggled: checked => root.editEnableNotifications = checked
+      }
+
+      NTextInput {
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.terminal.label")
+        description: pluginApi?.tr("settings.terminal.desc")
+        placeholderText: pluginApi?.tr("settings.terminal.placeholder")
+        text: root.editTerminalCommand
+        onTextChanged: root.editTerminalCommand = text
+      }
+    }
   }
 
   function saveSettings() {
@@ -246,65 +418,37 @@ ColumnLayout {
     root.editEnabledManagerIds = next;
   }
 
-  function buildManagerOptions() {
-    var known = {};
+  function buildManagerOptions(availableOnly) {
+    var source = availableOnly
+      ? (mainInstance?.availableManagers ?? [])
+      : (mainInstance?.unavailableManagers ?? []);
     var options = [];
-    var defaultsIds = defaults.enabledManagerIds ?? [];
-    var selectedIds = editEnabledManagerIds ?? [];
-    var available = mainInstance?.availableManagers ?? [];
-    var unavailable = mainInstance?.unavailableManagers ?? [];
+    var seen = {};
 
-    function pushOption(id, name, availableState, description) {
-      if (!id || known[id]) return;
-      known[id] = true;
+    for (var i = 0; i < source.length; i++) {
+      var manager = source[i];
+      if (!manager?.id || seen[manager.id]) continue;
+      seen[manager.id] = true;
       options.push({
-        "id": id,
-        "name": name || id,
-        "available": availableState,
-        "description": description
+        "id": manager.id,
+        "name": manager.name || manager.id
       });
     }
 
-    for (var i = 0; i < available.length; i++) {
-      var manager = available[i];
-      pushOption(
-        manager.id,
-        manager.name,
-        true,
-        pluginApi?.tr("settings.managers.available")
-      );
-    }
-
-    for (var j = 0; j < unavailable.length; j++) {
-      var unavailableManager = unavailable[j];
-      pushOption(
-        unavailableManager.id,
-        unavailableManager.name,
-        false,
-        pluginApi?.tr("settings.managers.unavailable")
-      );
-    }
-
-    for (var k = 0; k < defaultsIds.length; k++) {
-      pushOption(
-        defaultsIds[k],
-        defaultsIds[k],
-        true,
-        pluginApi?.tr("settings.managers.available")
-      );
-    }
-
-    for (var m = 0; m < selectedIds.length; m++) {
-      pushOption(
-        selectedIds[m],
-        selectedIds[m],
-        true,
-        pluginApi?.tr("settings.managers.available")
-      );
+    if (availableOnly && options.length === 0) {
+      var fallbackIds = defaults.enabledManagerIds ?? [];
+      for (var j = 0; j < fallbackIds.length; j++) {
+        var fallbackId = fallbackIds[j];
+        if (seen[fallbackId]) continue;
+        seen[fallbackId] = true;
+        options.push({
+          "id": fallbackId,
+          "name": fallbackId
+        });
+      }
     }
 
     options.sort(function(a, b) {
-      if (a.available !== b.available) return a.available ? -1 : 1;
       return a.name.localeCompare(b.name);
     });
 

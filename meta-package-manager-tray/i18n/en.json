@@ -47,9 +47,25 @@
     "noActiveManagers": "Enable at least one available package manager in settings.",
     "noUpdates": "No updates were reported by the enabled package managers.",
     "managerSummary": "{count} updates",
-    "packageVersion": "{installed} -> {latest}"
+    "packageVersion": "{installed} -> {latest}",
+    "summary": {
+      "updates": "Updates",
+      "managers": "Managers",
+      "errors": "Errors"
+    },
+    "state": {
+      "checkingTitle": "Checking for updates",
+      "unavailableTitle": "mpm unavailable",
+      "noManagersTitle": "No active managers",
+      "errorTitle": "Refresh error",
+      "noUpdatesTitle": "All caught up"
+    }
   },
   "settings": {
+    "header": {
+      "label": "Meta Package Manager Tray",
+      "description": "Choose which managers are monitored, tune the bar appearance, and configure how upgrades launch."
+    },
     "backend": {
       "detected": "mpm detected",
       "missing": "mpm unavailable",
@@ -58,14 +74,20 @@
     },
     "managers": {
       "title": "Managers",
+      "desc": "{count} managers selected for refresh and upgrade checks.",
+      "availableTitle": "Available managers",
+      "unavailableTitle": "Unavailable managers",
       "available": "Available for refresh and upgrades",
-      "unavailable": "Detected by mpm but not currently available"
+      "unavailable": "Detected by mpm but not currently available",
+      "noAvailable": "No managers are currently available from mpm."
     },
     "appearance": {
-      "title": "Appearance"
+      "title": "Appearance",
+      "desc": "Control the bar icon and colors used for normal and error states."
     },
     "behavior": {
-      "title": "Behavior"
+      "title": "Behavior",
+      "desc": "Adjust refresh timing, notifications, and the terminal command used for upgrades."
     },
     "preview": {
       "label": "Preview"
