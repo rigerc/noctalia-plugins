@@ -1,8 +1,7 @@
 docs/
-docs/noctalia-shell
 .codex/
 .agents/
 .claude/
 CLAUDE.md
-taskbar2/settings.json
+*/settings.json
 .notes/
