@@ -19,7 +19,7 @@
   "titleFontWeight": "medium",
   "itemStateFadeEnabled": true,
   "itemStateFadeMinOpacity": 35,
-  "itemStateFadeOutDurationMs": 95,
+  "itemStateFadeOutDurationMs": 255,
   "itemStateFadeInDurationMs": 400,
   "itemPositionAnimationDurationMs": 120,
   "itemScaleAnimationDurationMs": 255,

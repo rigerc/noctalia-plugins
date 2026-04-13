@@ -1,0 +1,111 @@
+{
+  "plugin": {
+    "name": "Meta Package Manager Tray"
+  },
+  "common": {
+    "never": "Never",
+    "unknown": "Unknown"
+  },
+  "menu": {
+    "refresh": "Refresh",
+    "runUpgrades": "Run upgrades",
+    "settings": "Settings"
+  },
+  "tooltip": {
+    "checkingNow": "Checking package updates now",
+    "mpmMissing": "mpm is not installed or not available in PATH",
+    "mpmBroken": "mpm is installed but failed to execute",
+    "genericError": "The last refresh ended with an error",
+    "noEnabledManagers": "No enabled package managers are currently available",
+    "noUpdates": "No package updates available",
+    "updatesAvailable": "{count} updates available"
+  },
+  "status": {
+    "mpmMissing": "mpm command not found. Install meta-package-manager and ensure `mpm` is in PATH.",
+    "mpmBroken": "mpm is installed but could not be executed.",
+    "managersFailed": "Unable to query package managers.",
+    "outdatedFailed": "Unable to query outdated packages.",
+    "invalidJson": "mpm returned invalid JSON.",
+    "partialErrors": "Some package managers returned errors."
+  },
+  "toast": {
+    "mpmMissing": "mpm command not found. Install meta-package-manager and ensure `mpm` is in PATH.",
+    "mpmBroken": "mpm is installed but could not be executed.",
+    "updatesAvailable": "{count} updates available after the latest refresh.",
+    "noActiveManagers": "No enabled package managers are available for upgrades.",
+    "terminalMissing": "Set a terminal command in settings before running upgrades."
+  },
+  "panel": {
+    "title": "Meta Package Manager Tray",
+    "lastChecked": "Last checked: {time}",
+    "refresh": "Refresh",
+    "upgrade": "Upgrade all",
+    "checking": "Checking package managers and updates...",
+    "mpmUnavailable": "mpm is unavailable on this system right now.",
+    "installHint": "Install meta-package-manager and ensure the `mpm` command is available in PATH.",
+    "genericError": "The plugin could not load update data.",
+    "noActiveManagers": "Enable at least one available package manager in settings.",
+    "noUpdates": "No updates were reported by the enabled package managers.",
+    "managerSummary": "{count} updates",
+    "packageVersion": "{installed} -> {latest}"
+  },
+  "settings": {
+    "backend": {
+      "detected": "mpm detected",
+      "missing": "mpm unavailable",
+      "detail": "Version {version} at {path}",
+      "installHint": "Install meta-package-manager and keep `mpm` in PATH."
+    },
+    "managers": {
+      "title": "Managers",
+      "available": "Available for refresh and upgrades",
+      "unavailable": "Detected by mpm but not currently available"
+    },
+    "appearance": {
+      "title": "Appearance"
+    },
+    "behavior": {
+      "title": "Behavior"
+    },
+    "preview": {
+      "label": "Preview"
+    },
+    "icon": {
+      "label": "Bar icon",
+      "desc": "Choose the icon shown in the bar widget.",
+      "pick": "Pick icon"
+    },
+    "iconColor": {
+      "label": "Icon color",
+      "desc": "Color used for the bar icon in normal state."
+    },
+    "countColor": {
+      "label": "Count color",
+      "desc": "Color used for the update count in normal state."
+    },
+    "errorColor": {
+      "label": "Error color",
+      "desc": "Color used when refreshes fail or managers return errors."
+    },
+    "refreshInterval": {
+      "label": "Refresh interval",
+      "desc": "How often the plugin checks for updates."
+    },
+    "notifications": {
+      "label": "Update notifications",
+      "desc": "Notify only when the total update count increases after a successful refresh."
+    },
+    "terminal": {
+      "label": "Upgrade terminal command",
+      "desc": "Terminal command template used to run `mpm upgrade --all`. Use `{}` as the command placeholder.",
+      "placeholder": "foot -e sh -lc '{}'"
+    },
+    "interval": {
+      "5m": "Every 5 minutes",
+      "15m": "Every 15 minutes",
+      "30m": "Every 30 minutes",
+      "60m": "Every hour",
+      "120m": "Every 2 hours"
+    }
+  }
+}
