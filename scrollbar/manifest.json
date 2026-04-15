@@ -58,7 +58,15 @@
       "focusLineThickness": 2,
       "focusLineAnimationMs": 120,
       "centerFocusedWindow": true,
-      "centerAnimationMs": 200
+      "centerAnimationMs": 200,
+      "showIcons": true,
+      "titleFontFamily": "",
+      "titleFontSize": 0,
+      "titleFontWeight": "default",
+      "iconTintColor": "none",
+      "iconTintOpacity": 100,
+      "backgroundColor": "none",
+      "backgroundOpacity": 0
     }
   }
 }

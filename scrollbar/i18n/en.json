@@ -44,6 +44,10 @@
       "trackFocusLine": {
         "label": "Track & Focus Line",
         "desc": "The position track and focused-slot indicator line."
+      },
+      "background": {
+        "label": "Background",
+        "desc": "Background fill for the entire widget strip."
       }
     },
     "onlySameOutput": {
@@ -197,6 +201,38 @@
     "showUnfocusedBorder": {
       "label": "Show unfocused border",
       "desc": "Draw a border around idle unfocused slots."
+    },
+    "showIcons": {
+      "label": "Show icons",
+      "desc": "Display application icons inside each slot."
+    },
+    "titleFontFamily": {
+      "label": "Title font family",
+      "desc": "Font family used for window titles. Leave empty for the system default."
+    },
+    "titleFontSize": {
+      "label": "Title font size",
+      "desc": "Font size override for titles in points. Set to 0 to use the bar default."
+    },
+    "titleFontWeight": {
+      "label": "Title font weight",
+      "desc": "Font weight for titles. 'Default' keeps the focused/unfocused weight logic."
+    },
+    "iconTintColor": {
+      "label": "Icon tint color",
+      "desc": "Apply a uniform color tint over all application icons."
+    },
+    "iconTintOpacity": {
+      "label": "Icon tint opacity",
+      "desc": "Strength of the icon color tint."
+    },
+    "backgroundColor": {
+      "label": "Background color",
+      "desc": "Background fill color for the widget strip."
+    },
+    "backgroundOpacity": {
+      "label": "Background opacity",
+      "desc": "Opacity of the widget strip background."
     }
   }
 }

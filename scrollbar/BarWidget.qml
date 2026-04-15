@@ -68,6 +68,28 @@ Item {
     readonly property int centerAnimationMs: Math.max(0, cfg.centerAnimationMs ?? defaults.centerAnimationMs ?? 200)
     readonly property bool supportsLiveReorder: enableReorder && (mainInstance?.supportsLiveReorder ?? false)
 
+    readonly property bool showIcons: cfg.showIcons ?? defaults.showIcons ?? true
+    readonly property string titleFontFamily: cfg.titleFontFamily ?? defaults.titleFontFamily ?? ""
+    readonly property int titleFontSize: Math.max(0, cfg.titleFontSize ?? defaults.titleFontSize ?? 0)
+    readonly property string titleFontWeightKey: cfg.titleFontWeight ?? defaults.titleFontWeight ?? "default"
+    readonly property string iconTintColorKey: cfg.iconTintColor ?? defaults.iconTintColor ?? "none"
+    readonly property real iconTintOpacity: Math.max(0, Math.min(1, (cfg.iconTintOpacity ?? defaults.iconTintOpacity ?? 100) / 100))
+    readonly property string backgroundColorKey: cfg.backgroundColor ?? defaults.backgroundColor ?? "none"
+    readonly property real backgroundOpacity: Math.max(0, Math.min(1, (cfg.backgroundOpacity ?? defaults.backgroundOpacity ?? 0) / 100))
+    readonly property color iconTintColor: iconTintColorKey !== "none" ? Color.resolveColorKey(iconTintColorKey) : "transparent"
+    readonly property bool iconTintEnabled: iconTintColorKey !== "none"
+    readonly property bool backgroundEnabled: backgroundColorKey !== "none" && backgroundOpacity > 0
+    readonly property color backgroundColor: backgroundEnabled ? Qt.rgba(Color.resolveColorKey(backgroundColorKey).r, Color.resolveColorKey(backgroundColorKey).g, Color.resolveColorKey(backgroundColorKey).b, backgroundOpacity) : "transparent"
+
+    readonly property int titleFontWeightValue: {
+        if (titleFontWeightKey === "light") return Font.Light;
+        if (titleFontWeightKey === "normal") return Font.Normal;
+        if (titleFontWeightKey === "medium") return Font.Medium;
+        if (titleFontWeightKey === "semibold") return Font.DemiBold;
+        if (titleFontWeightKey === "bold") return Font.Bold;
+        return -1;
+    }
+
     readonly property int itemSize: Style.toOdd(capsuleHeight * Math.max(0.1, iconScale))
     readonly property int slotLength: Math.max(Math.round(baseSlotLength * Style.uiScaleRatio), Math.round(capsuleHeight * 1.4))
     readonly property real slotSpacing: Math.max(0, Math.round(slotSpacingUnits * Style.marginS))
@@ -460,6 +482,7 @@ Item {
                         Layout.preferredWidth: root.itemSize
                         Layout.preferredHeight: root.itemSize
                         Layout.alignment: Qt.AlignVCenter
+                        visible: root.showIcons
 
                         IconImage {
                             id: appIcon
@@ -468,11 +491,19 @@ Item {
                             smooth: true
                             asynchronous: true
                             visible: status === Image.Ready
+
+                            layer.enabled: root.iconTintEnabled && visible
+                            layer.effect: ShaderEffect {
+                                property color targetColor: Qt.rgba(root.iconTintColor.r, root.iconTintColor.g, root.iconTintColor.b, root.iconTintOpacity)
+                                property real colorizeMode: 0.0
+
+                                fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/appicon_colorize.frag.qsb")
+                            }
                         }
 
                         NText {
                             anchors.centerIn: parent
-                            visible: !appIcon.visible
+                            visible: root.showIcons && !appIcon.visible
                             text: delegateRoot.liveTitle.charAt(0).toUpperCase()
                             font.weight: Style.fontWeightBold
                             pointSize: Math.max(Style.fontSizeXS, root.barFontSize - 1)
@@ -489,8 +520,9 @@ Item {
                         maximumLineCount: 1
                         visible: root.showTitle
                         color: delegateRoot.slotTextColor
-                        pointSize: root.barFontSize
-                        font.weight: delegateRoot.isFocused ? Style.fontWeightSemiBold : Style.fontWeightMedium
+                        font.family: root.titleFontFamily || Qt.application.font.family
+                        pointSize: root.titleFontSize > 0 ? root.titleFontSize : root.barFontSize
+                        font.weight: root.titleFontWeightValue >= 0 ? root.titleFontWeightValue : (delegateRoot.isFocused ? Style.fontWeightSemiBold : Style.fontWeightMedium)
                     }
                 }
 
@@ -504,6 +536,7 @@ Item {
                         Layout.alignment: Qt.AlignHCenter
                         Layout.preferredWidth: root.itemSize
                         Layout.preferredHeight: root.itemSize
+                        visible: root.showIcons
 
                         IconImage {
                             id: appIconVertical
@@ -512,11 +545,19 @@ Item {
                             smooth: true
                             asynchronous: true
                             visible: status === Image.Ready
+
+                            layer.enabled: root.iconTintEnabled && visible
+                            layer.effect: ShaderEffect {
+                                property color targetColor: Qt.rgba(root.iconTintColor.r, root.iconTintColor.g, root.iconTintColor.b, root.iconTintOpacity)
+                                property real colorizeMode: 0.0
+
+                                fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/appicon_colorize.frag.qsb")
+                            }
                         }
 
                         NText {
                             anchors.centerIn: parent
-                            visible: !appIconVertical.visible
+                            visible: root.showIcons && !appIconVertical.visible
                             text: delegateRoot.liveTitle.charAt(0).toUpperCase()
                             font.weight: Style.fontWeightBold
                             pointSize: Math.max(Style.fontSizeXS, root.barFontSize - 1)
@@ -659,6 +700,13 @@ Item {
                 }
             }
         }
+    }
+
+    Rectangle {
+        visible: root.backgroundEnabled
+        anchors.fill: parent
+        color: root.backgroundColor
+        radius: Style.radiusM * root.radiusScale
     }
 
     Flickable {

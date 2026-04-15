@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Commons
+import qs.Services.System
 import qs.Widgets
 
 ColumnLayout {
@@ -50,6 +51,23 @@ ColumnLayout {
     property int valueFocusLineAnimationMs: cfg.focusLineAnimationMs ?? defaults.focusLineAnimationMs ?? 120
     property bool valueCenterFocusedWindow: cfg.centerFocusedWindow ?? defaults.centerFocusedWindow ?? true
     property int valueCenterAnimationMs: cfg.centerAnimationMs ?? defaults.centerAnimationMs ?? 200
+    property bool valueShowIcons: cfg.showIcons ?? defaults.showIcons ?? true
+    property string valueTitleFontFamily: cfg.titleFontFamily ?? defaults.titleFontFamily ?? ""
+    property int valueTitleFontSize: cfg.titleFontSize ?? defaults.titleFontSize ?? 0
+    property string valueTitleFontWeight: cfg.titleFontWeight ?? defaults.titleFontWeight ?? "default"
+    property string valueIconTintColor: cfg.iconTintColor ?? defaults.iconTintColor ?? "none"
+    property int valueIconTintOpacity: cfg.iconTintOpacity ?? defaults.iconTintOpacity ?? 100
+    property string valueBackgroundColor: cfg.backgroundColor ?? defaults.backgroundColor ?? "none"
+    property int valueBackgroundOpacity: cfg.backgroundOpacity ?? defaults.backgroundOpacity ?? 0
+
+    readonly property var fontWeightModel: ListModel {
+        ListElement { key: "default"; name: "Default" }
+        ListElement { key: "light"; name: "Light" }
+        ListElement { key: "normal"; name: "Normal" }
+        ListElement { key: "medium"; name: "Medium" }
+        ListElement { key: "semibold"; name: "Semibold" }
+        ListElement { key: "bold"; name: "Bold" }
+    }
 
     spacing: Style.marginM
     implicitWidth: preferredWidth
@@ -96,6 +114,14 @@ ColumnLayout {
         pluginApi.pluginSettings.focusLineAnimationMs = root.valueFocusLineAnimationMs;
         pluginApi.pluginSettings.centerFocusedWindow = root.valueCenterFocusedWindow;
         pluginApi.pluginSettings.centerAnimationMs = root.valueCenterAnimationMs;
+        pluginApi.pluginSettings.showIcons = root.valueShowIcons;
+        pluginApi.pluginSettings.titleFontFamily = root.valueTitleFontFamily;
+        pluginApi.pluginSettings.titleFontSize = root.valueTitleFontSize;
+        pluginApi.pluginSettings.titleFontWeight = root.valueTitleFontWeight;
+        pluginApi.pluginSettings.iconTintColor = root.valueIconTintColor;
+        pluginApi.pluginSettings.iconTintOpacity = root.valueIconTintOpacity;
+        pluginApi.pluginSettings.backgroundColor = root.valueBackgroundColor;
+        pluginApi.pluginSettings.backgroundOpacity = root.valueBackgroundOpacity;
         pluginApi.saveSettings();
     }
 
@@ -241,6 +267,15 @@ ColumnLayout {
             }
             NDivider {}
 
+            NToggle {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.showIcons.label")
+                description: pluginApi?.tr("settings.showIcons.desc")
+                checked: root.valueShowIcons
+                onToggled: checked => root.valueShowIcons = checked
+                defaultValue: defaults.showIcons ?? true
+            }
+
             NValueSlider {
                 label: pluginApi?.tr("settings.maxWidgetWidth.label")
                 description: pluginApi?.tr("settings.maxWidgetWidth.desc")
@@ -352,6 +387,88 @@ ColumnLayout {
                 defaultValue: defaults.edgeFadeMidOpacity ?? 40
                 showReset: true
                 onMoved: value => root.valueEdgeFadeMidOpacity = Math.round(value)
+            }
+
+            NColorChoice {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.iconTintColor.label")
+                description: pluginApi?.tr("settings.iconTintColor.desc")
+                currentKey: root.valueIconTintColor
+                onSelected: key => root.valueIconTintColor = key
+            }
+
+            NValueSlider {
+                label: pluginApi?.tr("settings.iconTintOpacity.label")
+                description: pluginApi?.tr("settings.iconTintOpacity.desc")
+                from: 0
+                to: 100
+                stepSize: 1
+                value: root.valueIconTintOpacity
+                text: Math.round(root.valueIconTintOpacity) + "%"
+                defaultValue: defaults.iconTintOpacity ?? 100
+                showReset: true
+                onMoved: value => root.valueIconTintOpacity = Math.round(value)
+            }
+
+            NSearchableComboBox {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.titleFontFamily.label")
+                description: pluginApi?.tr("settings.titleFontFamily.desc")
+                model: FontService.availableFonts
+                currentKey: root.valueTitleFontFamily
+                defaultValue: defaults.titleFontFamily ?? ""
+                onSelected: key => root.valueTitleFontFamily = key
+            }
+
+            NValueSlider {
+                label: pluginApi?.tr("settings.titleFontSize.label")
+                description: pluginApi?.tr("settings.titleFontSize.desc")
+                from: 0
+                to: 24
+                stepSize: 1
+                value: root.valueTitleFontSize
+                text: root.valueTitleFontSize === 0 ? "Auto" : (Math.round(root.valueTitleFontSize) + " pt")
+                defaultValue: defaults.titleFontSize ?? 0
+                showReset: true
+                onMoved: value => root.valueTitleFontSize = Math.round(value)
+            }
+
+            NSearchableComboBox {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.titleFontWeight.label")
+                description: pluginApi?.tr("settings.titleFontWeight.desc")
+                model: root.fontWeightModel
+                currentKey: root.valueTitleFontWeight
+                defaultValue: defaults.titleFontWeight ?? "default"
+                onSelected: key => root.valueTitleFontWeight = key
+            }
+
+            NHeader {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.section.background.label")
+                description: pluginApi?.tr("settings.section.background.desc")
+            }
+            NDivider {}
+
+            NColorChoice {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.backgroundColor.label")
+                description: pluginApi?.tr("settings.backgroundColor.desc")
+                currentKey: root.valueBackgroundColor
+                onSelected: key => root.valueBackgroundColor = key
+            }
+
+            NValueSlider {
+                label: pluginApi?.tr("settings.backgroundOpacity.label")
+                description: pluginApi?.tr("settings.backgroundOpacity.desc")
+                from: 0
+                to: 100
+                stepSize: 1
+                value: root.valueBackgroundOpacity
+                text: Math.round(root.valueBackgroundOpacity) + "%"
+                defaultValue: defaults.backgroundOpacity ?? 0
+                showReset: true
+                onMoved: value => root.valueBackgroundOpacity = Math.round(value)
             }
 
             NHeader {
