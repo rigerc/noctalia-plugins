@@ -138,7 +138,8 @@ ColumnLayout {
 
             NHeader {
                 Layout.fillWidth: true
-                label: pluginApi?.tr("settings.section.filtering")
+                label: pluginApi?.tr("settings.section.filtering.label")
+                description: pluginApi?.tr("settings.section.filtering.desc")
             }
             NDivider {}
 
@@ -162,7 +163,8 @@ ColumnLayout {
 
             NHeader {
                 Layout.fillWidth: true
-                label: pluginApi?.tr("settings.section.debug")
+                label: pluginApi?.tr("settings.section.debug.label")
+                description: pluginApi?.tr("settings.section.debug.desc")
             }
             NDivider {}
 
@@ -183,7 +185,8 @@ ColumnLayout {
 
             NHeader {
                 Layout.fillWidth: true
-                label: pluginApi?.tr("settings.section.interaction")
+                label: pluginApi?.tr("settings.section.interaction.label")
+                description: pluginApi?.tr("settings.section.interaction.desc")
             }
             NDivider {}
 
@@ -198,7 +201,8 @@ ColumnLayout {
 
             NHeader {
                 Layout.fillWidth: true
-                label: pluginApi?.tr("settings.section.scrollCentering")
+                label: pluginApi?.tr("settings.section.scrollCentering.label")
+                description: pluginApi?.tr("settings.section.scrollCentering.desc")
             }
             NDivider {}
 
@@ -232,7 +236,8 @@ ColumnLayout {
 
             NHeader {
                 Layout.fillWidth: true
-                label: pluginApi?.tr("settings.section.slotLayout")
+                label: pluginApi?.tr("settings.section.slotLayout.label")
+                description: pluginApi?.tr("settings.section.slotLayout.desc")
             }
             NDivider {}
 
@@ -351,7 +356,8 @@ ColumnLayout {
 
             NHeader {
                 Layout.fillWidth: true
-                label: pluginApi?.tr("settings.section.focusedSlot")
+                label: pluginApi?.tr("settings.section.focusedSlot.label")
+                description: pluginApi?.tr("settings.section.focusedSlot.desc")
             }
             NDivider {}
 
@@ -400,7 +406,8 @@ ColumnLayout {
 
             NHeader {
                 Layout.fillWidth: true
-                label: pluginApi?.tr("settings.section.unfocusedSlot")
+                label: pluginApi?.tr("settings.section.unfocusedSlot.label")
+                description: pluginApi?.tr("settings.section.unfocusedSlot.desc")
             }
             NDivider {}
 
@@ -454,7 +461,8 @@ ColumnLayout {
 
             NHeader {
                 Layout.fillWidth: true
-                label: pluginApi?.tr("settings.section.hoveredSlot")
+                label: pluginApi?.tr("settings.section.hoveredSlot.label")
+                description: pluginApi?.tr("settings.section.hoveredSlot.desc")
             }
             NDivider {}
 
@@ -545,7 +553,8 @@ ColumnLayout {
 
             NHeader {
                 Layout.fillWidth: true
-                label: pluginApi?.tr("settings.section.trackFocusLine")
+                label: pluginApi?.tr("settings.section.trackFocusLine.label")
+                description: pluginApi?.tr("settings.section.trackFocusLine.desc")
             }
             NDivider {}
 

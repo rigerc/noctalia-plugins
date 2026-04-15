@@ -9,15 +9,42 @@
       "appearance": "Appearance"
     },
     "section": {
-      "filtering": "Filtering",
-      "debug": "Debug",
-      "interaction": "Interaction",
-      "scrollCentering": "Scroll & Centering",
-      "slotLayout": "Slot Layout",
-      "focusedSlot": "Focused Slot",
-      "unfocusedSlot": "Unfocused Slot",
-      "hoveredSlot": "Hovered Slot",
-      "trackFocusLine": "Track & Focus Line"
+      "filtering": {
+        "label": "Filtering",
+        "desc": "Control which windows appear in the strip."
+      },
+      "debug": {
+        "label": "Debug",
+        "desc": "Diagnostic options for troubleshooting."
+      },
+      "interaction": {
+        "label": "Interaction",
+        "desc": "Mouse and drag behavior for window slots."
+      },
+      "scrollCentering": {
+        "label": "Scroll & Centering",
+        "desc": "How the strip reacts when focus changes."
+      },
+      "slotLayout": {
+        "label": "Slot Layout",
+        "desc": "Size, spacing, and structural dimensions for each window slot."
+      },
+      "focusedSlot": {
+        "label": "Focused Slot",
+        "desc": "Colors and borders for the currently active window."
+      },
+      "unfocusedSlot": {
+        "label": "Unfocused Slot",
+        "desc": "Appearance of idle, background window slots."
+      },
+      "hoveredSlot": {
+        "label": "Hovered Slot",
+        "desc": "Colors, borders, and animation when hovering a slot."
+      },
+      "trackFocusLine": {
+        "label": "Track & Focus Line",
+        "desc": "The position track and focused-slot indicator line."
+      }
     },
     "onlySameOutput": {
       "label": "Only same monitor",
