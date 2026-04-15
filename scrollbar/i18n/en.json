@@ -1,0 +1,112 @@
+{
+  "menu": {
+    "settings": "Widget settings"
+  },
+  "settings": {
+    "tabs": {
+      "behavior": "Behavior",
+      "layout": "Layout",
+      "style": "Style"
+    },
+    "onlySameOutput": {
+      "label": "Only same monitor",
+      "desc": "Only include windows that belong to the monitor hosting this widget."
+    },
+    "onlyActiveWorkspaces": {
+      "label": "Only active workspaces",
+      "desc": "Limit the strip to windows from currently active workspaces."
+    },
+    "enableReorder": {
+      "label": "Enable drag reorder",
+      "desc": "Allow drag-to-reorder on compositors that expose safe live reorder support."
+    },
+    "debugLogging": {
+      "label": "Debug logging",
+      "desc": "Write model refresh, focus, and interaction details to the shell log."
+    },
+    "maxWidgetWidth": {
+      "label": "Max widget width",
+      "desc": "Maximum percentage of the bar this strip may occupy before it starts clipping and fading."
+    },
+    "slotWidth": {
+      "label": "Slot width",
+      "desc": "Fixed size for each window slot along the strip axis."
+    },
+    "showTitle": {
+      "label": "Show titles",
+      "desc": "Display truncated window titles next to icons on horizontal bars."
+    },
+    "iconScale": {
+      "label": "Icon scale",
+      "desc": "Scale the app icon inside each slot."
+    },
+    "edgeFadeSize": {
+      "label": "Edge fade size",
+      "desc": "Width of the passive overflow fade at the leading and trailing edges."
+    },
+    "slotSpacingUnits": {
+      "label": "Slot spacing",
+      "desc": "Gap between adjacent window slots."
+    },
+    "showTrackLine": {
+      "label": "Show track line",
+      "desc": "Render the passive position track and thumb behind the strip."
+    },
+    "accentColor": {
+      "label": "Accent color",
+      "desc": "Color used for the focused slot and track thumb."
+    },
+    "hoverFillColor": {
+      "label": "Hover fill color",
+      "desc": "Background tint used when hovering an unfocused slot."
+    },
+    "hoverBorderColor": {
+      "label": "Hover border color",
+      "desc": "Border color used when hovering an unfocused slot."
+    },
+    "hoverTextColor": {
+      "label": "Hover text color",
+      "desc": "Text and fallback glyph color used on hovered slots."
+    },
+    "hoverFillOpacity": {
+      "label": "Hover fill opacity",
+      "desc": "Strength of the hover background tint."
+    },
+    "hoverScalePercent": {
+      "label": "Hover scale",
+      "desc": "How much the slot grows while hovered."
+    },
+    "hoverTransitionDurationMs": {
+      "label": "Hover transition duration",
+      "desc": "Animation duration used for hover scale and color changes."
+    },
+    "radiusScale": {
+      "label": "Corner roundness",
+      "desc": "Scale the slot corner radius."
+    },
+    "focusedFillOpacity": {
+      "label": "Focused fill opacity",
+      "desc": "Strength of the focused slot background tint."
+    },
+    "unfocusedFillOpacity": {
+      "label": "Unfocused fill opacity",
+      "desc": "Background visibility for unfocused slots."
+    },
+    "unfocusedBorderOpacity": {
+      "label": "Unfocused border opacity",
+      "desc": "Border visibility for unfocused slots."
+    },
+    "inactiveOpacity": {
+      "label": "Inactive opacity",
+      "desc": "How faint unfocused slots should appear relative to the focused slot."
+    },
+    "trackOpacity": {
+      "label": "Track opacity",
+      "desc": "Opacity used by the passive track line."
+    },
+    "showFocusedTopLine": {
+      "label": "Show focused top line",
+      "desc": "Draw a thin accent line on the focused slot."
+    }
+  }
+}

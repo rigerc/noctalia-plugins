@@ -2,6 +2,12 @@
   "target_dir": "docs",
   "repos": [
     {
+      "name": "noctalia-docs",
+      "url": "https://github.com/noctalia-dev/noctalia-docs.git",
+      "branch": "main",
+      "sparse": []
+    },
+    {
       "name": "noctalia-shell",
       "url": "https://github.com/noctalia-dev/noctalia-shell.git",
       "branch": "main",

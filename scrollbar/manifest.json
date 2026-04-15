@@ -1,0 +1,51 @@
+{
+  "id": "scrollbar",
+  "name": "Scrollbar",
+  "version": "1.0.0",
+  "minNoctaliaVersion": "4.6.6",
+  "author": "OpenAI",
+  "license": "MIT",
+  "repository": "https://github.com/noctalia-dev/noctalia-plugins",
+  "description": "A focused, scrolling window strip for the bar with centered selection and passive overflow fades.",
+  "tags": [
+    "Bar",
+    "Utility"
+  ],
+  "entryPoints": {
+    "main": "Main.qml",
+    "barWidget": "BarWidget.qml",
+    "settings": "Settings.qml"
+  },
+  "dependencies": {
+    "plugins": []
+  },
+  "metadata": {
+    "defaultSettings": {
+      "onlySameOutput": true,
+      "onlyActiveWorkspaces": true,
+      "enableReorder": true,
+      "debugLogging": false,
+      "maxWidgetWidth": 40,
+      "slotWidth": 112,
+      "showTitle": true,
+      "iconScale": 0.8,
+      "edgeFadeSize": 18,
+      "showTrackLine": true,
+      "accentColor": "primary",
+      "inactiveOpacity": 45,
+      "slotSpacingUnits": 1,
+      "radiusScale": 1.0,
+      "hoverFillColor": "hover",
+      "hoverBorderColor": "outline",
+      "hoverTextColor": "on-hover",
+      "hoverFillOpacity": 55,
+      "hoverScalePercent": 2.5,
+      "hoverTransitionDurationMs": 120,
+      "focusedFillOpacity": 92,
+      "unfocusedFillOpacity": 8,
+      "unfocusedBorderOpacity": 45,
+      "trackOpacity": 35,
+      "showFocusedTopLine": true
+    }
+  }
+}
