@@ -38,8 +38,8 @@ Item {
     readonly property real edgeFadeMidpoint: Math.max(0.05, Math.min(0.95, cfg.edgeFadeMidpoint ?? defaults.edgeFadeMidpoint ?? 0.45))
     readonly property real edgeFadeMidOpacity: Math.max(0, Math.min(1, (cfg.edgeFadeMidOpacity ?? defaults.edgeFadeMidOpacity ?? 40) / 100))
     readonly property bool showTrackLine: cfg.showTrackLine ?? defaults.showTrackLine ?? true
-    readonly property string accentColorKey: cfg.accentColor ?? defaults.accentColor ?? "primary"
-    readonly property color accentColor: Color.resolveColorKey(accentColorKey)
+    readonly property string trackThumbColorKey: cfg.trackThumbColor ?? defaults.trackThumbColor ?? "primary"
+    readonly property color trackThumbColor: Color.resolveColorKey(trackThumbColorKey)
     readonly property real inactiveOpacity: Math.max(0.05, Math.min(1, (cfg.inactiveOpacity ?? defaults.inactiveOpacity ?? 45) / 100))
     readonly property int slotSpacingUnits: cfg.slotSpacingUnits ?? defaults.slotSpacingUnits ?? 1
     readonly property real radiusScale: cfg.radiusScale ?? defaults.radiusScale ?? 1.0
@@ -382,7 +382,6 @@ Item {
             readonly property bool isHovered: root.hoveredEntryKey === modelData.entryKey
             readonly property bool reorderEnabled: root.supportsLiveReorder
             readonly property bool showTooltip: root.showTitle ? textLabel.truncated : true
-            readonly property color baseAccentColor: root.accentColor
             readonly property color focusedFillBaseColor: Color.resolveColorKey(root.focusedFillColorKey)
             readonly property color focusedBorderBaseColor: Color.resolveColorKey(root.focusedBorderColorKey)
             readonly property color focusedTextColor: Color.resolveColorKey(root.focusedTextColorKey)
@@ -776,7 +775,7 @@ Item {
             radius: height / 2
             width: Math.max(Style.marginXL, Math.round((flickable.width / flickable.contentWidth) * parent.width))
             x: flickable.contentWidth > flickable.width ? Math.round((flickable.contentX / Math.max(1, flickable.contentWidth - flickable.width)) * Math.max(0, parent.width - width)) : 0
-            color: Qt.rgba(root.accentColor.r, root.accentColor.g, root.accentColor.b, 0.85)
+            color: Qt.rgba(root.trackThumbColor.r, root.trackThumbColor.g, root.trackThumbColor.b, 0.85)
         }
 
         Rectangle {
@@ -823,7 +822,7 @@ Item {
             radius: width / 2
             height: Math.max(Style.marginXL, Math.round((flickable.height / flickable.contentHeight) * parent.height))
             y: flickable.contentHeight > flickable.height ? Math.round((flickable.contentY / Math.max(1, flickable.contentHeight - flickable.height)) * Math.max(0, parent.height - height)) : 0
-            color: Qt.rgba(root.accentColor.r, root.accentColor.g, root.accentColor.b, 0.85)
+            color: Qt.rgba(root.trackThumbColor.r, root.trackThumbColor.g, root.trackThumbColor.b, 0.85)
         }
 
         Rectangle {

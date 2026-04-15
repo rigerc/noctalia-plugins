@@ -134,9 +134,9 @@
       "label": "Center animation",
       "desc": "Duration of the smooth scroll animation when centering the focused window."
     },
-    "accentColor": {
-      "label": "Accent color",
-      "desc": "Color used for the focused slot and track thumb."
+    "trackThumbColor": {
+      "label": "Track thumb color",
+      "desc": "Color of the position indicator thumb on the scrollbar track."
     },
     "hoverFillColor": {
       "label": "Hover fill color",

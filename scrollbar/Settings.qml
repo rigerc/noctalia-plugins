@@ -25,7 +25,7 @@ ColumnLayout {
     property real valueEdgeFadeMidpoint: cfg.edgeFadeMidpoint ?? defaults.edgeFadeMidpoint ?? 0.45
     property int valueEdgeFadeMidOpacity: cfg.edgeFadeMidOpacity ?? defaults.edgeFadeMidOpacity ?? 40
     property bool valueShowTrackLine: cfg.showTrackLine ?? defaults.showTrackLine ?? true
-    property string valueAccentColor: cfg.accentColor ?? defaults.accentColor ?? "primary"
+    property string valueTrackThumbColor: cfg.trackThumbColor ?? defaults.trackThumbColor ?? "primary"
     property int valueInactiveOpacity: cfg.inactiveOpacity ?? defaults.inactiveOpacity ?? 45
     property int valueSlotSpacingUnits: cfg.slotSpacingUnits ?? defaults.slotSpacingUnits ?? 1
     property real valueRadiusScale: cfg.radiusScale ?? defaults.radiusScale ?? 1.0
@@ -96,7 +96,7 @@ ColumnLayout {
         pluginApi.pluginSettings.edgeFadeMidpoint = root.valueEdgeFadeMidpoint;
         pluginApi.pluginSettings.edgeFadeMidOpacity = root.valueEdgeFadeMidOpacity;
         pluginApi.pluginSettings.showTrackLine = root.valueShowTrackLine;
-        pluginApi.pluginSettings.accentColor = root.valueAccentColor;
+        pluginApi.pluginSettings.trackThumbColor = root.valueTrackThumbColor;
         pluginApi.pluginSettings.inactiveOpacity = root.valueInactiveOpacity;
         pluginApi.pluginSettings.slotSpacingUnits = root.valueSlotSpacingUnits;
         pluginApi.pluginSettings.radiusScale = root.valueRadiusScale;
@@ -494,14 +494,6 @@ ColumnLayout {
             }
             NDivider {}
 
-            NColorChoice {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.accentColor.label")
-                description: pluginApi?.tr("settings.accentColor.desc")
-                currentKey: root.valueAccentColor
-                onSelected: key => root.valueAccentColor = key
-            }
-
             NToggle {
                 Layout.fillWidth: true
                 label: pluginApi?.tr("settings.showFocusedFill.label")
@@ -777,6 +769,14 @@ ColumnLayout {
                 defaultValue: defaults.trackOpacity ?? 35
                 showReset: true
                 onMoved: value => root.valueTrackOpacity = Math.round(value)
+            }
+
+            NColorChoice {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.trackThumbColor.label")
+                description: pluginApi?.tr("settings.trackThumbColor.desc")
+                currentKey: root.valueTrackThumbColor
+                onSelected: key => root.valueTrackThumbColor = key
             }
 
             NToggle {

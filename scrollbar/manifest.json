@@ -33,7 +33,7 @@
       "edgeFadeMidpoint": 0.45,
       "edgeFadeMidOpacity": 40,
       "showTrackLine": true,
-      "accentColor": "primary",
+      "trackThumbColor": "primary",
       "inactiveOpacity": 45,
       "slotSpacingUnits": 1,
       "radiusScale": 1.0,
