@@ -141,15 +141,36 @@ Item {
     property real focusedIndicatorOffset: 0
     property real focusedIndicatorLength: 0
     property bool focusedIndicatorVisible: false
+    property real animatedIndicatorOffset: 0
+    property real animatedIndicatorLength: 0
     readonly property bool focusedIndicatorInView: {
         if (!focusedIndicatorVisible)
             return false;
         if (isVertical) {
-            const viewY = focusedIndicatorOffset - flickable.contentY;
-            return (viewY + focusedIndicatorLength) > 0 && viewY < flickable.height;
+            const viewY = animatedIndicatorOffset - flickable.contentY;
+            return (viewY + animatedIndicatorLength) > 0 && viewY < flickable.height;
         } else {
-            const viewX = focusedIndicatorOffset - flickable.contentX;
-            return (viewX + focusedIndicatorLength) > 0 && viewX < flickable.width;
+            const viewX = animatedIndicatorOffset - flickable.contentX;
+            return (viewX + animatedIndicatorLength) > 0 && viewX < flickable.width;
+        }
+    }
+
+    onFocusedIndicatorOffsetChanged: animatedIndicatorOffset = focusedIndicatorOffset
+    onFocusedIndicatorLengthChanged: animatedIndicatorLength = focusedIndicatorLength
+
+    Behavior on animatedIndicatorOffset {
+        enabled: focusedIndicatorVisible
+        NumberAnimation {
+            duration: root.focusLineAnimationMs
+            easing.type: Easing.OutCubic
+        }
+    }
+
+    Behavior on animatedIndicatorLength {
+        enabled: focusedIndicatorVisible
+        NumberAnimation {
+            duration: root.focusLineAnimationMs
+            easing.type: Easing.OutCubic
         }
     }
 
@@ -851,24 +872,10 @@ Item {
             anchors.bottom: parent.bottom
             height: root.focusLineThickness
             radius: height / 2
-            width: root.focusedIndicatorLength
-            x: root.focusedIndicatorOffset - flickable.contentX
+            width: root.animatedIndicatorLength
+            x: root.animatedIndicatorOffset - flickable.contentX
             color: Qt.rgba(root.focusLineColor.r, root.focusLineColor.g, root.focusLineColor.b, root.focusLineOpacity)
             z: 2
-
-            Behavior on x {
-                NumberAnimation {
-                    duration: root.focusLineAnimationMs
-                    easing.type: Easing.OutCubic
-                }
-            }
-
-            Behavior on width {
-                NumberAnimation {
-                    duration: root.focusLineAnimationMs
-                    easing.type: Easing.OutCubic
-                }
-            }
         }
 
         Rectangle {
@@ -898,24 +905,10 @@ Item {
             anchors.right: parent.right
             width: root.focusLineThickness
             radius: width / 2
-            height: root.focusedIndicatorLength
-            y: root.focusedIndicatorOffset - flickable.contentY
+            height: root.animatedIndicatorLength
+            y: root.animatedIndicatorOffset - flickable.contentY
             color: Qt.rgba(root.focusLineColor.r, root.focusLineColor.g, root.focusLineColor.b, root.focusLineOpacity)
             z: 2
-
-            Behavior on y {
-                NumberAnimation {
-                    duration: root.focusLineAnimationMs
-                    easing.type: Easing.OutCubic
-                }
-            }
-
-            Behavior on height {
-                NumberAnimation {
-                    duration: root.focusLineAnimationMs
-                    easing.type: Easing.OutCubic
-                }
-            }
         }
     }
 
