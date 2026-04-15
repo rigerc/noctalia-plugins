@@ -49,7 +49,8 @@
       "focusLineColor": "secondary",
       "focusLineOpacity": 96,
       "focusLineThickness": 2,
-      "focusLineAnimationMs": 120
+      "focusLineAnimationMs": 120,
+      "centerFocusedWindow": true
     }
   }
 }

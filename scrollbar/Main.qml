@@ -354,7 +354,7 @@ Item {
         }
 
         function onActiveWindowChanged() {
-            updateSnapshots("activeWindowChanged", false);
+            updateSnapshots("activeWindowChanged", pendingStructuralRefresh);
         }
     }
 

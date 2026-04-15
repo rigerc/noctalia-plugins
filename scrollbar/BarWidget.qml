@@ -57,6 +57,7 @@ Item {
     readonly property real focusLineOpacity: Math.max(0, Math.min(1, (cfg.focusLineOpacity ?? defaults.focusLineOpacity ?? 96) / 100))
     readonly property int focusLineThickness: Math.max(1, cfg.focusLineThickness ?? defaults.focusLineThickness ?? 2)
     readonly property int focusLineAnimationMs: Math.max(0, cfg.focusLineAnimationMs ?? defaults.focusLineAnimationMs ?? 120)
+    readonly property bool centerFocusedWindow: cfg.centerFocusedWindow ?? defaults.centerFocusedWindow ?? true
     readonly property bool supportsLiveReorder: enableReorder && (mainInstance?.supportsLiveReorder ?? false)
 
     readonly property int itemSize: Style.toOdd(capsuleHeight * Math.max(0.1, iconScale))
@@ -125,10 +126,12 @@ Item {
         combinedModel = nextEntries;
         combinedSignature = nextSignature;
         debugLog("rebuildCombinedModel(" + (reason || "unknown") + "): windows=" + combinedModel.length + " changed=" + structureChanged);
-        Qt.callLater(updateFocusedIndicator);
 
-        if (structureChanged)
-            Qt.callLater(centerActiveEntry);
+        if (structureChanged) {
+            scheduleCenterActive(true);
+        } else {
+            Qt.callLater(updateFocusedIndicator);
+        }
     }
 
     function indexOfEntry(entryKey) {
@@ -147,12 +150,12 @@ Item {
 
     function centerEntryAt(index) {
         if (index < 0 || index >= combinedModel.length)
-            return;
+            return false;
 
         const item = getDelegateItem(index);
         const container = stripLoader.item;
         if (!item || !container)
-            return;
+            return false;
 
         const centerPoint = item.mapToItem(container, item.width / 2, item.height / 2);
         if (isVertical) {
@@ -164,12 +167,35 @@ Item {
             const maxX = Math.max(0, flickable.contentWidth - flickable.width);
             flickable.contentX = Math.max(0, Math.min(maxX, desiredX));
         }
+        return true;
     }
 
-    function centerActiveEntry() {
+    function scheduleCenterActive(always) {
         if (!activeEntryKey)
             return;
-        centerEntryAt(indexOfEntry(activeEntryKey));
+        if (!always && !centerFocusedWindow)
+            return;
+        centerRetryTimer.attempts = 0;
+        centerRetryTimer.start();
+    }
+
+    function tryCenterActive() {
+        if (!activeEntryKey) {
+            centerRetryTimer.stop();
+            return;
+        }
+        const index = indexOfEntry(activeEntryKey);
+        if (centerEntryAt(index)) {
+            Qt.callLater(updateFocusedIndicator);
+            centerRetryTimer.stop();
+            return;
+        }
+        centerRetryTimer.attempts += 1;
+        if (centerRetryTimer.attempts < centerRetryTimer.maxAttempts) {
+            centerRetryTimer.start();
+        } else {
+            Qt.callLater(updateFocusedIndicator);
+        }
     }
 
     function updateFocusedIndicator() {
@@ -263,15 +289,13 @@ Item {
     onOnlyActiveWorkspacesChanged: rebuildCombinedModel("onlyActiveWorkspacesChanged")
     onScreenChanged: rebuildCombinedModel("screenChanged")
     onActiveEntryKeyChanged: {
-        Qt.callLater(centerActiveEntry);
-        Qt.callLater(updateFocusedIndicator);
+        scheduleCenterActive(false);
     }
     onLiveRevisionChanged: Qt.callLater(updateFocusedIndicator)
     onShowFocusLineChanged: Qt.callLater(updateFocusedIndicator)
 
     Component.onCompleted: {
         rebuildCombinedModel("init");
-        Qt.callLater(updateFocusedIndicator);
     }
 
     NPopupContextMenu {
@@ -293,6 +317,15 @@ Item {
             if (action === "settings")
                 BarService.openPluginSettings(root.screen, pluginApi.manifest);
         }
+    }
+
+    Timer {
+        id: centerRetryTimer
+        interval: 16
+        repeat: false
+        property int attempts: 0
+        readonly property int maxAttempts: 12
+        onTriggered: tryCenterActive()
     }
 
     Component {

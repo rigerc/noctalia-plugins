@@ -79,6 +79,10 @@
       "label": "Focus line animation",
       "desc": "Duration of the focus indicator position and size animations."
     },
+    "centerFocusedWindow": {
+      "label": "Center focused window",
+      "desc": "Auto-scroll the strip to keep the focused window centered."
+    },
     "accentColor": {
       "label": "Accent color",
       "desc": "Color used for the focused slot and track thumb."
