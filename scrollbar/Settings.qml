@@ -42,6 +42,7 @@ ColumnLayout {
   property int valueFocusLineThickness: cfg.focusLineThickness ?? defaults.focusLineThickness ?? 2
   property int valueFocusLineAnimationMs: cfg.focusLineAnimationMs ?? defaults.focusLineAnimationMs ?? 120
   property bool valueCenterFocusedWindow: cfg.centerFocusedWindow ?? defaults.centerFocusedWindow ?? true
+  property int valueCenterAnimationMs: cfg.centerAnimationMs ?? defaults.centerAnimationMs ?? 200
 
   spacing: Style.marginM
   implicitWidth: preferredWidth
@@ -80,6 +81,7 @@ ColumnLayout {
     pluginApi.pluginSettings.focusLineThickness = root.valueFocusLineThickness;
     pluginApi.pluginSettings.focusLineAnimationMs = root.valueFocusLineAnimationMs;
     pluginApi.pluginSettings.centerFocusedWindow = root.valueCenterFocusedWindow;
+    pluginApi.pluginSettings.centerAnimationMs = root.valueCenterAnimationMs;
     pluginApi.saveSettings();
   }
 
@@ -241,6 +243,19 @@ ColumnLayout {
         checked: root.valueCenterFocusedWindow
         onToggled: checked => root.valueCenterFocusedWindow = checked
         defaultValue: defaults.centerFocusedWindow ?? true
+      }
+
+      NValueSlider {
+        label: pluginApi?.tr("settings.centerAnimationMs.label")
+        description: pluginApi?.tr("settings.centerAnimationMs.desc")
+        from: 0
+        to: 500
+        stepSize: 10
+        value: root.valueCenterAnimationMs
+        text: Math.round(root.valueCenterAnimationMs) + " ms"
+        defaultValue: defaults.centerAnimationMs ?? 200
+        showReset: true
+        onMoved: value => root.valueCenterAnimationMs = Math.round(value)
       }
     }
 

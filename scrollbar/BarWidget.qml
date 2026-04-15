@@ -58,6 +58,7 @@ Item {
     readonly property int focusLineThickness: Math.max(1, cfg.focusLineThickness ?? defaults.focusLineThickness ?? 2)
     readonly property int focusLineAnimationMs: Math.max(0, cfg.focusLineAnimationMs ?? defaults.focusLineAnimationMs ?? 120)
     readonly property bool centerFocusedWindow: cfg.centerFocusedWindow ?? defaults.centerFocusedWindow ?? true
+    readonly property int centerAnimationMs: Math.max(0, cfg.centerAnimationMs ?? defaults.centerAnimationMs ?? 200)
     readonly property bool supportsLiveReorder: enableReorder && (mainInstance?.supportsLiveReorder ?? false)
 
     readonly property int itemSize: Style.toOdd(capsuleHeight * Math.max(0.1, iconScale))
@@ -659,6 +660,22 @@ Item {
         boundsBehavior: Flickable.StopAtBounds
         contentWidth: root.isVertical ? width : root.contentExtent
         contentHeight: root.isVertical ? root.contentExtent : height
+
+        Behavior on contentX {
+            enabled: root.centerAnimationMs > 0
+            NumberAnimation {
+                duration: root.centerAnimationMs
+                easing.type: Easing.OutCubic
+            }
+        }
+
+        Behavior on contentY {
+            enabled: root.centerAnimationMs > 0
+            NumberAnimation {
+                duration: root.centerAnimationMs
+                easing.type: Easing.OutCubic
+            }
+        }
 
         Loader {
             id: stripLoader

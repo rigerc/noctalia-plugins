@@ -83,6 +83,10 @@
       "label": "Center focused window",
       "desc": "Auto-scroll the strip to keep the focused window centered."
     },
+    "centerAnimationMs": {
+      "label": "Center animation",
+      "desc": "Duration of the smooth scroll animation when centering the focused window."
+    },
     "accentColor": {
       "label": "Accent color",
       "desc": "Color used for the focused slot and track thumb."

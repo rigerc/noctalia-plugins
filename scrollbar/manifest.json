@@ -50,7 +50,8 @@
       "focusLineOpacity": 96,
       "focusLineThickness": 2,
       "focusLineAnimationMs": 120,
-      "centerFocusedWindow": true
+      "centerFocusedWindow": true,
+      "centerAnimationMs": 200
     }
   }
 }
