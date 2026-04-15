@@ -104,11 +104,11 @@ Item {
         return -1;
     }
 
-    readonly property int itemSize: Style.toOdd(capsuleHeight * Math.max(0.1, iconScale))
     readonly property int slotLength: Math.max(Math.round(baseSlotLength * Style.uiScaleRatio), Math.round(capsuleHeight * 1.4))
     readonly property real slotSpacing: Math.max(0, Math.round(slotSpacingUnits * Style.marginS))
     readonly property real crossExtent: capsuleHeight
     readonly property real trackThickness: Math.max(1, Math.round(Style.borderS))
+    readonly property int itemSize: Style.toOdd(crossExtent * Math.max(0.1, iconScale))
     readonly property var liveEntriesByKey: mainInstance?.liveEntriesByKey ?? ({})
     readonly property string activeEntryKey: mainInstance?.activeEntryKey ?? ""
     readonly property int structureRevision: mainInstance?.structureRevision ?? 0
