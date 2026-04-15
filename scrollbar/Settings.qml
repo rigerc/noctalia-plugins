@@ -36,7 +36,11 @@ ColumnLayout {
   property int valueUnfocusedFillOpacity: cfg.unfocusedFillOpacity ?? defaults.unfocusedFillOpacity ?? 8
   property int valueUnfocusedBorderOpacity: cfg.unfocusedBorderOpacity ?? defaults.unfocusedBorderOpacity ?? 45
   property int valueTrackOpacity: cfg.trackOpacity ?? defaults.trackOpacity ?? 35
-  property bool valueShowFocusedTopLine: cfg.showFocusedTopLine ?? defaults.showFocusedTopLine ?? true
+  property bool valueShowFocusLine: cfg.showFocusLine ?? defaults.showFocusLine ?? true
+  property string valueFocusLineColor: cfg.focusLineColor ?? defaults.focusLineColor ?? "secondary"
+  property int valueFocusLineOpacity: cfg.focusLineOpacity ?? defaults.focusLineOpacity ?? 96
+  property int valueFocusLineThickness: cfg.focusLineThickness ?? defaults.focusLineThickness ?? 2
+  property int valueFocusLineAnimationMs: cfg.focusLineAnimationMs ?? defaults.focusLineAnimationMs ?? 120
 
   spacing: Style.marginM
   implicitWidth: preferredWidth
@@ -69,7 +73,11 @@ ColumnLayout {
     pluginApi.pluginSettings.unfocusedFillOpacity = root.valueUnfocusedFillOpacity;
     pluginApi.pluginSettings.unfocusedBorderOpacity = root.valueUnfocusedBorderOpacity;
     pluginApi.pluginSettings.trackOpacity = root.valueTrackOpacity;
-    pluginApi.pluginSettings.showFocusedTopLine = root.valueShowFocusedTopLine;
+    pluginApi.pluginSettings.showFocusLine = root.valueShowFocusLine;
+    pluginApi.pluginSettings.focusLineColor = root.valueFocusLineColor;
+    pluginApi.pluginSettings.focusLineOpacity = root.valueFocusLineOpacity;
+    pluginApi.pluginSettings.focusLineThickness = root.valueFocusLineThickness;
+    pluginApi.pluginSettings.focusLineAnimationMs = root.valueFocusLineAnimationMs;
     pluginApi.saveSettings();
   }
 
@@ -223,15 +231,6 @@ ColumnLayout {
         showReset: true
         onMoved: value => root.valueSlotSpacingUnits = Math.round(value)
       }
-
-      NToggle {
-        Layout.fillWidth: true
-        label: pluginApi?.tr("settings.showTrackLine.label")
-        description: pluginApi?.tr("settings.showTrackLine.desc")
-        checked: root.valueShowTrackLine
-        onToggled: checked => root.valueShowTrackLine = checked
-        defaultValue: defaults.showTrackLine ?? true
-      }
     }
 
     ColumnLayout {
@@ -374,6 +373,20 @@ ColumnLayout {
         onMoved: value => root.valueInactiveOpacity = Math.round(value)
       }
 
+      NHeader {
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.section.trackLines")
+      }
+
+      NToggle {
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.showTrackLine.label")
+        description: pluginApi?.tr("settings.showTrackLine.desc")
+        checked: root.valueShowTrackLine
+        onToggled: checked => root.valueShowTrackLine = checked
+        defaultValue: defaults.showTrackLine ?? true
+      }
+
       NValueSlider {
         label: pluginApi?.tr("settings.trackOpacity.label")
         description: pluginApi?.tr("settings.trackOpacity.desc")
@@ -389,11 +402,58 @@ ColumnLayout {
 
       NToggle {
         Layout.fillWidth: true
-        label: pluginApi?.tr("settings.showFocusedTopLine.label")
-        description: pluginApi?.tr("settings.showFocusedTopLine.desc")
-        checked: root.valueShowFocusedTopLine
-        onToggled: checked => root.valueShowFocusedTopLine = checked
-        defaultValue: defaults.showFocusedTopLine ?? true
+        label: pluginApi?.tr("settings.focusLine.label")
+        description: pluginApi?.tr("settings.focusLine.desc")
+        checked: root.valueShowFocusLine
+        onToggled: checked => root.valueShowFocusLine = checked
+        defaultValue: defaults.showFocusLine ?? true
+      }
+
+      NColorChoice {
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.focusLineColor.label")
+        description: pluginApi?.tr("settings.focusLineColor.desc")
+        currentKey: root.valueFocusLineColor
+        onSelected: key => root.valueFocusLineColor = key
+      }
+
+      NValueSlider {
+        label: pluginApi?.tr("settings.focusLineOpacity.label")
+        description: pluginApi?.tr("settings.focusLineOpacity.desc")
+        from: 0
+        to: 100
+        stepSize: 1
+        value: root.valueFocusLineOpacity
+        text: Math.round(root.valueFocusLineOpacity) + "%"
+        defaultValue: defaults.focusLineOpacity ?? 96
+        showReset: true
+        onMoved: value => root.valueFocusLineOpacity = Math.round(value)
+      }
+
+      NValueSlider {
+        label: pluginApi?.tr("settings.focusLineThickness.label")
+        description: pluginApi?.tr("settings.focusLineThickness.desc")
+        from: 1
+        to: 6
+        stepSize: 1
+        value: root.valueFocusLineThickness
+        text: Math.round(root.valueFocusLineThickness) + " px"
+        defaultValue: defaults.focusLineThickness ?? 2
+        showReset: true
+        onMoved: value => root.valueFocusLineThickness = Math.round(value)
+      }
+
+      NValueSlider {
+        label: pluginApi?.tr("settings.focusLineAnimationMs.label")
+        description: pluginApi?.tr("settings.focusLineAnimationMs.desc")
+        from: 0
+        to: 400
+        stepSize: 10
+        value: root.valueFocusLineAnimationMs
+        text: Math.round(root.valueFocusLineAnimationMs) + " ms"
+        defaultValue: defaults.focusLineAnimationMs ?? 120
+        showReset: true
+        onMoved: value => root.valueFocusLineAnimationMs = Math.round(value)
       }
     }
   }

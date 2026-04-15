@@ -45,7 +45,11 @@
       "unfocusedFillOpacity": 8,
       "unfocusedBorderOpacity": 45,
       "trackOpacity": 35,
-      "showFocusedTopLine": true
+      "showFocusLine": true,
+      "focusLineColor": "secondary",
+      "focusLineOpacity": 96,
+      "focusLineThickness": 2,
+      "focusLineAnimationMs": 120
     }
   }
 }

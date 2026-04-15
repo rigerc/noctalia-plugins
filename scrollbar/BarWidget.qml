@@ -51,7 +51,12 @@ Item {
     readonly property real unfocusedFillOpacity: Math.max(0, Math.min(1, (cfg.unfocusedFillOpacity ?? defaults.unfocusedFillOpacity ?? 8) / 100))
     readonly property real unfocusedBorderOpacity: Math.max(0, Math.min(1, (cfg.unfocusedBorderOpacity ?? defaults.unfocusedBorderOpacity ?? 45) / 100))
     readonly property real trackOpacity: Math.max(0, Math.min(1, (cfg.trackOpacity ?? defaults.trackOpacity ?? 35) / 100))
-    readonly property bool showFocusedTopLine: cfg.showFocusedTopLine ?? defaults.showFocusedTopLine ?? true
+    readonly property bool showFocusLine: cfg.showFocusLine ?? defaults.showFocusLine ?? true
+    readonly property string focusLineColorKey: cfg.focusLineColor ?? defaults.focusLineColor ?? "secondary"
+    readonly property color focusLineColor: Color.resolveColorKey(focusLineColorKey)
+    readonly property real focusLineOpacity: Math.max(0, Math.min(1, (cfg.focusLineOpacity ?? defaults.focusLineOpacity ?? 96) / 100))
+    readonly property int focusLineThickness: Math.max(1, cfg.focusLineThickness ?? defaults.focusLineThickness ?? 2)
+    readonly property int focusLineAnimationMs: Math.max(0, cfg.focusLineAnimationMs ?? defaults.focusLineAnimationMs ?? 120)
     readonly property bool supportsLiveReorder: enableReorder && (mainInstance?.supportsLiveReorder ?? false)
 
     readonly property int itemSize: Style.toOdd(capsuleHeight * Math.max(0.1, iconScale))
@@ -168,7 +173,7 @@ Item {
     }
 
     function updateFocusedIndicator() {
-        if (!showFocusedTopLine || !activeEntryKey) {
+        if (!showFocusLine || !activeEntryKey) {
             focusedIndicatorVisible = false;
             focusedIndicatorLength = 0;
             return;
@@ -262,7 +267,7 @@ Item {
         Qt.callLater(updateFocusedIndicator);
     }
     onLiveRevisionChanged: Qt.callLater(updateFocusedIndicator)
-    onShowFocusedTopLineChanged: Qt.callLater(updateFocusedIndicator)
+    onShowFocusLineChanged: Qt.callLater(updateFocusedIndicator)
 
     Component.onCompleted: {
         rebuildCombinedModel("init");
@@ -656,23 +661,23 @@ Item {
         Rectangle {
             visible: !root.isVertical && root.focusedIndicatorVisible
             anchors.bottom: parent.bottom
-            height: Math.max(2, root.trackThickness + 1)
+            height: root.focusLineThickness
             radius: height / 2
             width: root.focusedIndicatorLength
             x: root.focusedIndicatorOffset - flickable.contentX
-            color: Qt.rgba(Color.mSecondary.r, Color.mSecondary.g, Color.mSecondary.b, 0.96)
+            color: Qt.rgba(root.focusLineColor.r, root.focusLineColor.g, root.focusLineColor.b, root.focusLineOpacity)
             z: 2
 
             Behavior on x {
                 NumberAnimation {
-                    duration: Math.max(120, root.hoverTransitionDurationMs)
+                    duration: root.focusLineAnimationMs
                     easing.type: Easing.OutCubic
                 }
             }
 
             Behavior on width {
                 NumberAnimation {
-                    duration: Math.max(120, root.hoverTransitionDurationMs)
+                    duration: root.focusLineAnimationMs
                     easing.type: Easing.OutCubic
                 }
             }
@@ -703,23 +708,23 @@ Item {
         Rectangle {
             visible: root.isVertical && root.focusedIndicatorVisible
             anchors.right: parent.right
-            width: Math.max(2, root.trackThickness + 1)
+            width: root.focusLineThickness
             radius: width / 2
             height: root.focusedIndicatorLength
             y: root.focusedIndicatorOffset - flickable.contentY
-            color: Qt.rgba(Color.mSecondary.r, Color.mSecondary.g, Color.mSecondary.b, 0.96)
+            color: Qt.rgba(root.focusLineColor.r, root.focusLineColor.g, root.focusLineColor.b, root.focusLineOpacity)
             z: 2
 
             Behavior on y {
                 NumberAnimation {
-                    duration: Math.max(120, root.hoverTransitionDurationMs)
+                    duration: root.focusLineAnimationMs
                     easing.type: Easing.OutCubic
                 }
             }
 
             Behavior on height {
                 NumberAnimation {
-                    duration: Math.max(120, root.hoverTransitionDurationMs)
+                    duration: root.focusLineAnimationMs
                     easing.type: Easing.OutCubic
                 }
             }
