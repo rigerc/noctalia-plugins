@@ -36,8 +36,16 @@ ColumnLayout {
     property real valueHoverScalePercent: cfg.hoverScalePercent ?? defaults.hoverScalePercent ?? 2.5
     property int valueHoverTransitionDurationMs: cfg.hoverTransitionDurationMs ?? defaults.hoverTransitionDurationMs ?? 120
     property int valueFocusedFillOpacity: cfg.focusedFillOpacity ?? defaults.focusedFillOpacity ?? 92
+    property string valueFocusedFillColor: cfg.focusedFillColor ?? defaults.focusedFillColor ?? "primary"
+    property string valueFocusedBorderColor: cfg.focusedBorderColor ?? defaults.focusedBorderColor ?? "primary"
+    property string valueFocusedTextColor: cfg.focusedTextColor ?? defaults.focusedTextColor ?? "on-primary"
+    property bool valueShowFocusedFill: cfg.showFocusedFill ?? defaults.showFocusedFill ?? true
     property int valueUnfocusedFillOpacity: cfg.unfocusedFillOpacity ?? defaults.unfocusedFillOpacity ?? 8
     property int valueUnfocusedBorderOpacity: cfg.unfocusedBorderOpacity ?? defaults.unfocusedBorderOpacity ?? 45
+    property string valueUnfocusedFillColor: cfg.unfocusedFillColor ?? defaults.unfocusedFillColor ?? "surface-variant"
+    property string valueUnfocusedBorderColor: cfg.unfocusedBorderColor ?? defaults.unfocusedBorderColor ?? "outline"
+    property string valueUnfocusedTextColor: cfg.unfocusedTextColor ?? defaults.unfocusedTextColor ?? "on-surface"
+    property bool valueShowUnfocusedFill: cfg.showUnfocusedFill ?? defaults.showUnfocusedFill ?? true
     property bool valueShowFocusedBorder: cfg.showFocusedBorder ?? defaults.showFocusedBorder ?? true
     property int valueFocusedBorderOpacity: cfg.focusedBorderOpacity ?? defaults.focusedBorderOpacity ?? 100
     property bool valueShowHoverBorder: cfg.showHoverBorder ?? defaults.showHoverBorder ?? true
@@ -99,8 +107,16 @@ ColumnLayout {
         pluginApi.pluginSettings.hoverScalePercent = root.valueHoverScalePercent;
         pluginApi.pluginSettings.hoverTransitionDurationMs = root.valueHoverTransitionDurationMs;
         pluginApi.pluginSettings.focusedFillOpacity = root.valueFocusedFillOpacity;
+        pluginApi.pluginSettings.focusedFillColor = root.valueFocusedFillColor;
+        pluginApi.pluginSettings.focusedBorderColor = root.valueFocusedBorderColor;
+        pluginApi.pluginSettings.focusedTextColor = root.valueFocusedTextColor;
+        pluginApi.pluginSettings.showFocusedFill = root.valueShowFocusedFill;
         pluginApi.pluginSettings.unfocusedFillOpacity = root.valueUnfocusedFillOpacity;
         pluginApi.pluginSettings.unfocusedBorderOpacity = root.valueUnfocusedBorderOpacity;
+        pluginApi.pluginSettings.unfocusedFillColor = root.valueUnfocusedFillColor;
+        pluginApi.pluginSettings.unfocusedBorderColor = root.valueUnfocusedBorderColor;
+        pluginApi.pluginSettings.unfocusedTextColor = root.valueUnfocusedTextColor;
+        pluginApi.pluginSettings.showUnfocusedFill = root.valueShowUnfocusedFill;
         pluginApi.pluginSettings.showFocusedBorder = root.valueShowFocusedBorder;
         pluginApi.pluginSettings.focusedBorderOpacity = root.valueFocusedBorderOpacity;
         pluginApi.pluginSettings.showHoverBorder = root.valueShowHoverBorder;
@@ -486,6 +502,23 @@ ColumnLayout {
                 onSelected: key => root.valueAccentColor = key
             }
 
+            NToggle {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.showFocusedFill.label")
+                description: pluginApi?.tr("settings.showFocusedFill.desc")
+                checked: root.valueShowFocusedFill
+                onToggled: checked => root.valueShowFocusedFill = checked
+                defaultValue: defaults.showFocusedFill ?? true
+            }
+
+            NColorChoice {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.focusedFillColor.label")
+                description: pluginApi?.tr("settings.focusedFillColor.desc")
+                currentKey: root.valueFocusedFillColor
+                onSelected: key => root.valueFocusedFillColor = key
+            }
+
             NValueSlider {
                 label: pluginApi?.tr("settings.focusedFillOpacity.label")
                 description: pluginApi?.tr("settings.focusedFillOpacity.desc")
@@ -497,6 +530,14 @@ ColumnLayout {
                 defaultValue: defaults.focusedFillOpacity ?? 92
                 showReset: true
                 onMoved: value => root.valueFocusedFillOpacity = Math.round(value)
+            }
+
+            NColorChoice {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.focusedBorderColor.label")
+                description: pluginApi?.tr("settings.focusedBorderColor.desc")
+                currentKey: root.valueFocusedBorderColor
+                onSelected: key => root.valueFocusedBorderColor = key
             }
 
             NToggle {
@@ -521,12 +562,37 @@ ColumnLayout {
                 onMoved: value => root.valueFocusedBorderOpacity = Math.round(value)
             }
 
+            NColorChoice {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.focusedTextColor.label")
+                description: pluginApi?.tr("settings.focusedTextColor.desc")
+                currentKey: root.valueFocusedTextColor
+                onSelected: key => root.valueFocusedTextColor = key
+            }
+
             NHeader {
                 Layout.fillWidth: true
                 label: pluginApi?.tr("settings.section.unfocusedSlot.label")
                 description: pluginApi?.tr("settings.section.unfocusedSlot.desc")
             }
             NDivider {}
+
+            NToggle {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.showUnfocusedFill.label")
+                description: pluginApi?.tr("settings.showUnfocusedFill.desc")
+                checked: root.valueShowUnfocusedFill
+                onToggled: checked => root.valueShowUnfocusedFill = checked
+                defaultValue: defaults.showUnfocusedFill ?? true
+            }
+
+            NColorChoice {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.unfocusedFillColor.label")
+                description: pluginApi?.tr("settings.unfocusedFillColor.desc")
+                currentKey: root.valueUnfocusedFillColor
+                onSelected: key => root.valueUnfocusedFillColor = key
+            }
 
             NValueSlider {
                 label: pluginApi?.tr("settings.unfocusedFillOpacity.label")
@@ -541,17 +607,12 @@ ColumnLayout {
                 onMoved: value => root.valueUnfocusedFillOpacity = Math.round(value)
             }
 
-            NValueSlider {
-                label: pluginApi?.tr("settings.inactiveOpacity.label")
-                description: pluginApi?.tr("settings.inactiveOpacity.desc")
-                from: 10
-                to: 100
-                stepSize: 1
-                value: root.valueInactiveOpacity
-                text: Math.round(root.valueInactiveOpacity) + "%"
-                defaultValue: defaults.inactiveOpacity ?? 45
-                showReset: true
-                onMoved: value => root.valueInactiveOpacity = Math.round(value)
+            NColorChoice {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.unfocusedBorderColor.label")
+                description: pluginApi?.tr("settings.unfocusedBorderColor.desc")
+                currentKey: root.valueUnfocusedBorderColor
+                onSelected: key => root.valueUnfocusedBorderColor = key
             }
 
             NToggle {
@@ -574,6 +635,27 @@ ColumnLayout {
                 defaultValue: defaults.unfocusedBorderOpacity ?? 45
                 showReset: true
                 onMoved: value => root.valueUnfocusedBorderOpacity = Math.round(value)
+            }
+
+            NColorChoice {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.unfocusedTextColor.label")
+                description: pluginApi?.tr("settings.unfocusedTextColor.desc")
+                currentKey: root.valueUnfocusedTextColor
+                onSelected: key => root.valueUnfocusedTextColor = key
+            }
+
+            NValueSlider {
+                label: pluginApi?.tr("settings.inactiveOpacity.label")
+                description: pluginApi?.tr("settings.inactiveOpacity.desc")
+                from: 10
+                to: 100
+                stepSize: 1
+                value: root.valueInactiveOpacity
+                text: Math.round(root.valueInactiveOpacity) + "%"
+                defaultValue: defaults.inactiveOpacity ?? 45
+                showReset: true
+                onMoved: value => root.valueInactiveOpacity = Math.round(value)
             }
 
             NHeader {

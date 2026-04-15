@@ -170,9 +170,41 @@
       "label": "Focused fill opacity",
       "desc": "Strength of the focused slot background tint."
     },
+    "focusedFillColor": {
+      "label": "Focused fill color",
+      "desc": "Background color for the focused slot."
+    },
+    "focusedBorderColor": {
+      "label": "Focused border color",
+      "desc": "Border color for the focused slot."
+    },
+    "focusedTextColor": {
+      "label": "Focused text color",
+      "desc": "Text and icon color for the focused slot."
+    },
+    "showFocusedFill": {
+      "label": "Show focused fill",
+      "desc": "Enable the background color on the focused slot."
+    },
     "unfocusedFillOpacity": {
       "label": "Unfocused fill opacity",
       "desc": "Background visibility for unfocused slots."
+    },
+    "unfocusedFillColor": {
+      "label": "Unfocused fill color",
+      "desc": "Background color for unfocused slots."
+    },
+    "unfocusedBorderColor": {
+      "label": "Unfocused border color",
+      "desc": "Border color for unfocused slots."
+    },
+    "unfocusedTextColor": {
+      "label": "Unfocused text color",
+      "desc": "Text and icon color for unfocused slots."
+    },
+    "showUnfocusedFill": {
+      "label": "Show unfocused fill",
+      "desc": "Enable the background color on unfocused slots."
     },
     "unfocusedBorderOpacity": {
       "label": "Unfocused border opacity",

@@ -50,8 +50,16 @@ Item {
     readonly property real hoverScalePercent: Math.max(0, cfg.hoverScalePercent ?? defaults.hoverScalePercent ?? 2.5)
     readonly property int hoverTransitionDurationMs: Math.max(0, cfg.hoverTransitionDurationMs ?? defaults.hoverTransitionDurationMs ?? 120)
     readonly property real focusedFillOpacity: Math.max(0, Math.min(1, (cfg.focusedFillOpacity ?? defaults.focusedFillOpacity ?? 92) / 100))
+    readonly property string focusedFillColorKey: cfg.focusedFillColor ?? defaults.focusedFillColor ?? "primary"
+    readonly property string focusedBorderColorKey: cfg.focusedBorderColor ?? defaults.focusedBorderColor ?? "primary"
+    readonly property string focusedTextColorKey: cfg.focusedTextColor ?? defaults.focusedTextColor ?? "on-primary"
+    readonly property bool showFocusedFill: cfg.showFocusedFill ?? defaults.showFocusedFill ?? true
     readonly property real unfocusedFillOpacity: Math.max(0, Math.min(1, (cfg.unfocusedFillOpacity ?? defaults.unfocusedFillOpacity ?? 8) / 100))
     readonly property real unfocusedBorderOpacity: Math.max(0, Math.min(1, (cfg.unfocusedBorderOpacity ?? defaults.unfocusedBorderOpacity ?? 45) / 100))
+    readonly property string unfocusedFillColorKey: cfg.unfocusedFillColor ?? defaults.unfocusedFillColor ?? "surface-variant"
+    readonly property string unfocusedBorderColorKey: cfg.unfocusedBorderColor ?? defaults.unfocusedBorderColor ?? "outline"
+    readonly property string unfocusedTextColorKey: cfg.unfocusedTextColor ?? defaults.unfocusedTextColor ?? "on-surface"
+    readonly property bool showUnfocusedFill: cfg.showUnfocusedFill ?? defaults.showUnfocusedFill ?? true
     readonly property bool showFocusedBorder: cfg.showFocusedBorder ?? defaults.showFocusedBorder ?? true
     readonly property real focusedBorderOpacity: Math.max(0, Math.min(1, (cfg.focusedBorderOpacity ?? defaults.focusedBorderOpacity ?? 100) / 100))
     readonly property bool showHoverBorder: cfg.showHoverBorder ?? defaults.showHoverBorder ?? true
@@ -375,16 +383,22 @@ Item {
             readonly property bool reorderEnabled: root.supportsLiveReorder
             readonly property bool showTooltip: root.showTitle ? textLabel.truncated : true
             readonly property color baseAccentColor: root.accentColor
-            readonly property color accentFill: Qt.rgba(baseAccentColor.r, baseAccentColor.g, baseAccentColor.b, root.focusedFillOpacity)
-            readonly property color accentOutline: Qt.rgba(baseAccentColor.r, baseAccentColor.g, baseAccentColor.b, root.focusedBorderOpacity)
+            readonly property color focusedFillBaseColor: Color.resolveColorKey(root.focusedFillColorKey)
+            readonly property color focusedBorderBaseColor: Color.resolveColorKey(root.focusedBorderColorKey)
+            readonly property color focusedTextColor: Color.resolveColorKey(root.focusedTextColorKey)
+            readonly property color accentFill: root.showFocusedFill ? Qt.rgba(focusedFillBaseColor.r, focusedFillBaseColor.g, focusedFillBaseColor.b, root.focusedFillOpacity) : "transparent"
+            readonly property color accentOutline: Qt.rgba(focusedBorderBaseColor.r, focusedBorderBaseColor.g, focusedBorderBaseColor.b, root.focusedBorderOpacity)
             readonly property color hoverFillBaseColor: Color.resolveColorKey(root.hoverFillColorKey)
             readonly property color hoverBorderBaseColor: Color.resolveColorKey(root.hoverBorderColorKey)
             readonly property color hoverTextColor: Color.resolveColorKey(root.hoverTextColorKey)
-            readonly property color mutedOutline: Qt.rgba(Color.mOutline.r, Color.mOutline.g, Color.mOutline.b, root.unfocusedBorderOpacity)
-            readonly property color mutedFill: Qt.rgba(Color.mSurfaceVariant.r, Color.mSurfaceVariant.g, Color.mSurfaceVariant.b, root.unfocusedFillOpacity)
+            readonly property color unfocusedFillBaseColor: Color.resolveColorKey(root.unfocusedFillColorKey)
+            readonly property color unfocusedBorderBaseColor: Color.resolveColorKey(root.unfocusedBorderColorKey)
+            readonly property color unfocusedTextColor: Color.resolveColorKey(root.unfocusedTextColorKey)
+            readonly property color mutedOutline: Qt.rgba(unfocusedBorderBaseColor.r, unfocusedBorderBaseColor.g, unfocusedBorderBaseColor.b, root.unfocusedBorderOpacity)
+            readonly property color mutedFill: root.showUnfocusedFill ? Qt.rgba(unfocusedFillBaseColor.r, unfocusedFillBaseColor.g, unfocusedFillBaseColor.b, root.unfocusedFillOpacity) : "transparent"
             readonly property color hoverFill: Qt.rgba(hoverFillBaseColor.r, hoverFillBaseColor.g, hoverFillBaseColor.b, root.hoverFillOpacity)
             readonly property color hoverOutline: Qt.rgba(hoverBorderBaseColor.r, hoverBorderBaseColor.g, hoverBorderBaseColor.b, root.hoverBorderOpacity)
-            readonly property color slotTextColor: isFocused ? Color.mOnPrimary : (isHovered ? hoverTextColor : Color.mOnSurface)
+            readonly property color slotTextColor: isFocused ? focusedTextColor : (isHovered ? hoverTextColor : unfocusedTextColor)
             readonly property real hoverScaleMultiplier: 1 + (root.hoverScalePercent / 100)
             readonly property real neighborShift: {
                 if (root.dragSourceIndex === -1 || root.dragTargetIndex === -1 || root.dragSourceIndex === index)
