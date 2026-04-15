@@ -72,6 +72,7 @@ Item {
     readonly property real focusLineOpacity: Math.max(0, Math.min(1, (cfg.focusLineOpacity ?? defaults.focusLineOpacity ?? 96) / 100))
     readonly property int focusLineThickness: Math.max(1, cfg.focusLineThickness ?? defaults.focusLineThickness ?? 2)
     readonly property int focusLineAnimationMs: Math.max(0, cfg.focusLineAnimationMs ?? defaults.focusLineAnimationMs ?? 120)
+    readonly property bool enableScrollWheel: cfg.enableScrollWheel ?? defaults.enableScrollWheel ?? true
     readonly property bool centerFocusedWindow: cfg.centerFocusedWindow ?? defaults.centerFocusedWindow ?? true
     readonly property int centerAnimationMs: Math.max(0, cfg.centerAnimationMs ?? defaults.centerAnimationMs ?? 200)
     readonly property bool supportsLiveReorder: enableReorder && (mainInstance?.supportsLiveReorder ?? false)
@@ -336,6 +337,32 @@ Item {
         rebuildCombinedModel("init");
     }
 
+    HoverHandler {
+        onHoveredChanged: {
+            root.debugLog("HoverHandler hovered=" + hovered);
+            if (!hovered && root.activeEntryKey)
+                root.centerEntryAt(root.indexOfEntry(root.activeEntryKey));
+        }
+    }
+
+    WheelHandler {
+        enabled: root.enableScrollWheel && root.hasWindow
+        target: null
+        onActiveChanged: root.debugLog("WheelHandler active=" + active)
+        onWheel: event => {
+            root.debugLog("WheelHandler wheel delta=" + event.angleDelta.y + " contentX=" + flickable.contentX + " contentWidth=" + flickable.contentWidth + " width=" + flickable.width);
+            const step = event.angleDelta.y / 120 * root.slotLength;
+            if (root.isVertical) {
+                const maxY = Math.max(0, flickable.contentHeight - flickable.height);
+                flickable.contentY = Math.max(0, Math.min(maxY, flickable.contentY - step));
+            } else {
+                const maxX = Math.max(0, flickable.contentWidth - flickable.width);
+                flickable.contentX = Math.max(0, Math.min(maxX, flickable.contentX - step));
+            }
+            event.accepted = true;
+        }
+    }
+
     NPopupContextMenu {
         id: contextMenu
 
@@ -421,7 +448,7 @@ Item {
                 anchors.fill: dragArea.drag.active ? undefined : parent
                 z: dragArea.drag.active ? 1000 : 0
                 scale: (dragArea.drag.active ? 1.03 : 1.0) * ((delegateRoot.isHovered && !delegateRoot.isFocused) ? delegateRoot.hoverScaleMultiplier : 1.0)
-                opacity: delegateRoot.isFocused ? 1.0 : root.inactiveOpacity
+                opacity: (delegateRoot.isFocused || delegateRoot.isHovered) ? 1.0 : root.inactiveOpacity
 
                 transform: Translate {
                     x: !root.isVertical ? delegateRoot.neighborShift : 0
@@ -646,6 +673,23 @@ Item {
                             root.centerEntryAt(index);
                         });
                     }
+                }
+
+                onWheel: wheel => {
+                    if (!root.enableScrollWheel || !root.hasWindow) {
+                        wheel.accepted = false;
+                        return;
+                    }
+                    root.debugLog("delegate onWheel delta=" + wheel.angleDelta.y);
+                    const step = wheel.angleDelta.y / 120 * root.slotLength;
+                    if (root.isVertical) {
+                        const maxY = Math.max(0, flickable.contentHeight - flickable.height);
+                        flickable.contentY = Math.max(0, Math.min(maxY, flickable.contentY - step));
+                    } else {
+                        const maxX = Math.max(0, flickable.contentWidth - flickable.width);
+                        flickable.contentX = Math.max(0, Math.min(maxX, flickable.contentX - step));
+                    }
+                    wheel.accepted = true;
                 }
             }
         }

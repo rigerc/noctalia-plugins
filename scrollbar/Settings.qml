@@ -58,6 +58,7 @@ ColumnLayout {
     property int valueFocusLineThickness: cfg.focusLineThickness ?? defaults.focusLineThickness ?? 2
     property int valueFocusLineAnimationMs: cfg.focusLineAnimationMs ?? defaults.focusLineAnimationMs ?? 120
     property bool valueCenterFocusedWindow: cfg.centerFocusedWindow ?? defaults.centerFocusedWindow ?? true
+    property bool valueEnableScrollWheel: cfg.enableScrollWheel ?? defaults.enableScrollWheel ?? true
     property int valueCenterAnimationMs: cfg.centerAnimationMs ?? defaults.centerAnimationMs ?? 200
     property bool valueShowIcons: cfg.showIcons ?? defaults.showIcons ?? true
     property string valueTitleFontFamily: cfg.titleFontFamily ?? defaults.titleFontFamily ?? ""
@@ -130,6 +131,7 @@ ColumnLayout {
         pluginApi.pluginSettings.focusLineAnimationMs = root.valueFocusLineAnimationMs;
         pluginApi.pluginSettings.centerFocusedWindow = root.valueCenterFocusedWindow;
         pluginApi.pluginSettings.centerAnimationMs = root.valueCenterAnimationMs;
+        pluginApi.pluginSettings.enableScrollWheel = root.valueEnableScrollWheel;
         pluginApi.pluginSettings.showIcons = root.valueShowIcons;
         pluginApi.pluginSettings.titleFontFamily = root.valueTitleFontFamily;
         pluginApi.pluginSettings.titleFontSize = root.valueTitleFontSize;
@@ -268,6 +270,15 @@ ColumnLayout {
                 defaultValue: defaults.centerAnimationMs ?? 200
                 showReset: true
                 onMoved: value => root.valueCenterAnimationMs = Math.round(value)
+            }
+
+            NToggle {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.enableScrollWheel.label")
+                description: pluginApi?.tr("settings.enableScrollWheel.desc")
+                checked: root.valueEnableScrollWheel
+                onToggled: checked => root.valueEnableScrollWheel = checked
+                defaultValue: defaults.enableScrollWheel ?? true
             }
         }
 

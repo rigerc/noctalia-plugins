@@ -134,6 +134,10 @@
       "label": "Center animation",
       "desc": "Duration of the smooth scroll animation when centering the focused window."
     },
+    "enableScrollWheel": {
+      "label": "Scroll wheel panning",
+      "desc": "Use the mouse wheel to pan the strip when more windows exist than fit in view. Scrolls back to the focused window when the cursor leaves the widget."
+    },
     "trackThumbColor": {
       "label": "Track thumb color",
       "desc": "Color of the position indicator thumb on the scrollbar track."

@@ -65,6 +65,7 @@
       "focusLineOpacity": 96,
       "focusLineThickness": 2,
       "focusLineAnimationMs": 120,
+      "enableScrollWheel": true,
       "centerFocusedWindow": true,
       "centerAnimationMs": 200,
       "showIcons": true,
