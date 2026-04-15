@@ -37,6 +37,11 @@ ColumnLayout {
   property int valueFocusedFillOpacity: cfg.focusedFillOpacity ?? defaults.focusedFillOpacity ?? 92
   property int valueUnfocusedFillOpacity: cfg.unfocusedFillOpacity ?? defaults.unfocusedFillOpacity ?? 8
   property int valueUnfocusedBorderOpacity: cfg.unfocusedBorderOpacity ?? defaults.unfocusedBorderOpacity ?? 45
+  property bool valueShowFocusedBorder: cfg.showFocusedBorder ?? defaults.showFocusedBorder ?? true
+  property int valueFocusedBorderOpacity: cfg.focusedBorderOpacity ?? defaults.focusedBorderOpacity ?? 100
+  property bool valueShowHoverBorder: cfg.showHoverBorder ?? defaults.showHoverBorder ?? true
+  property int valueHoverBorderOpacity: cfg.hoverBorderOpacity ?? defaults.hoverBorderOpacity ?? 100
+  property bool valueShowUnfocusedBorder: cfg.showUnfocusedBorder ?? defaults.showUnfocusedBorder ?? true
   property int valueTrackOpacity: cfg.trackOpacity ?? defaults.trackOpacity ?? 35
   property bool valueShowFocusLine: cfg.showFocusLine ?? defaults.showFocusLine ?? true
   property string valueFocusLineColor: cfg.focusLineColor ?? defaults.focusLineColor ?? "secondary"
@@ -78,6 +83,11 @@ ColumnLayout {
     pluginApi.pluginSettings.focusedFillOpacity = root.valueFocusedFillOpacity;
     pluginApi.pluginSettings.unfocusedFillOpacity = root.valueUnfocusedFillOpacity;
     pluginApi.pluginSettings.unfocusedBorderOpacity = root.valueUnfocusedBorderOpacity;
+    pluginApi.pluginSettings.showFocusedBorder = root.valueShowFocusedBorder;
+    pluginApi.pluginSettings.focusedBorderOpacity = root.valueFocusedBorderOpacity;
+    pluginApi.pluginSettings.showHoverBorder = root.valueShowHoverBorder;
+    pluginApi.pluginSettings.hoverBorderOpacity = root.valueHoverBorderOpacity;
+    pluginApi.pluginSettings.showUnfocusedBorder = root.valueShowUnfocusedBorder;
     pluginApi.pluginSettings.trackOpacity = root.valueTrackOpacity;
     pluginApi.pluginSettings.showFocusLine = root.valueShowFocusLine;
     pluginApi.pluginSettings.focusLineColor = root.valueFocusLineColor;
@@ -414,6 +424,64 @@ ColumnLayout {
         defaultValue: defaults.unfocusedBorderOpacity ?? 45
         showReset: true
         onMoved: value => root.valueUnfocusedBorderOpacity = Math.round(value)
+      }
+
+      NHeader {
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.section.slotBorders")
+      }
+
+      NToggle {
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.showFocusedBorder.label")
+        description: pluginApi?.tr("settings.showFocusedBorder.desc")
+        checked: root.valueShowFocusedBorder
+        onToggled: checked => root.valueShowFocusedBorder = checked
+        defaultValue: defaults.showFocusedBorder ?? true
+      }
+
+      NValueSlider {
+        label: pluginApi?.tr("settings.focusedBorderOpacity.label")
+        description: pluginApi?.tr("settings.focusedBorderOpacity.desc")
+        from: 0
+        to: 100
+        stepSize: 1
+        value: root.valueFocusedBorderOpacity
+        text: Math.round(root.valueFocusedBorderOpacity) + "%"
+        defaultValue: defaults.focusedBorderOpacity ?? 100
+        showReset: true
+        onMoved: value => root.valueFocusedBorderOpacity = Math.round(value)
+      }
+
+      NToggle {
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.showHoverBorder.label")
+        description: pluginApi?.tr("settings.showHoverBorder.desc")
+        checked: root.valueShowHoverBorder
+        onToggled: checked => root.valueShowHoverBorder = checked
+        defaultValue: defaults.showHoverBorder ?? true
+      }
+
+      NValueSlider {
+        label: pluginApi?.tr("settings.hoverBorderOpacity.label")
+        description: pluginApi?.tr("settings.hoverBorderOpacity.desc")
+        from: 0
+        to: 100
+        stepSize: 1
+        value: root.valueHoverBorderOpacity
+        text: Math.round(root.valueHoverBorderOpacity) + "%"
+        defaultValue: defaults.hoverBorderOpacity ?? 100
+        showReset: true
+        onMoved: value => root.valueHoverBorderOpacity = Math.round(value)
+      }
+
+      NToggle {
+        Layout.fillWidth: true
+        label: pluginApi?.tr("settings.showUnfocusedBorder.label")
+        description: pluginApi?.tr("settings.showUnfocusedBorder.desc")
+        checked: root.valueShowUnfocusedBorder
+        onToggled: checked => root.valueShowUnfocusedBorder = checked
+        defaultValue: defaults.showUnfocusedBorder ?? true
       }
 
       NValueSlider {

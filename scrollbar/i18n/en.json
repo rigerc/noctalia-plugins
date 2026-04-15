@@ -9,7 +9,8 @@
       "style": "Style"
     },
     "section": {
-      "trackLines": "Track Lines"
+      "trackLines": "Track Lines",
+      "slotBorders": "Slot Borders"
     },
     "onlySameOutput": {
       "label": "Only same monitor",
@@ -142,6 +143,26 @@
     "inactiveOpacity": {
       "label": "Inactive opacity",
       "desc": "How faint unfocused slots should appear relative to the focused slot."
+    },
+    "showFocusedBorder": {
+      "label": "Show focused border",
+      "desc": "Draw a border around the focused slot."
+    },
+    "focusedBorderOpacity": {
+      "label": "Focused border opacity",
+      "desc": "Opacity of the focused slot border."
+    },
+    "showHoverBorder": {
+      "label": "Show hover border",
+      "desc": "Draw a border around hovered unfocused slots."
+    },
+    "hoverBorderOpacity": {
+      "label": "Hover border opacity",
+      "desc": "Opacity of the hover slot border."
+    },
+    "showUnfocusedBorder": {
+      "label": "Show unfocused border",
+      "desc": "Draw a border around idle unfocused slots."
     }
   }
 }

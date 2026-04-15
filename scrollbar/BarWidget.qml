@@ -52,6 +52,11 @@ Item {
     readonly property real focusedFillOpacity: Math.max(0, Math.min(1, (cfg.focusedFillOpacity ?? defaults.focusedFillOpacity ?? 92) / 100))
     readonly property real unfocusedFillOpacity: Math.max(0, Math.min(1, (cfg.unfocusedFillOpacity ?? defaults.unfocusedFillOpacity ?? 8) / 100))
     readonly property real unfocusedBorderOpacity: Math.max(0, Math.min(1, (cfg.unfocusedBorderOpacity ?? defaults.unfocusedBorderOpacity ?? 45) / 100))
+    readonly property bool showFocusedBorder: cfg.showFocusedBorder ?? defaults.showFocusedBorder ?? true
+    readonly property real focusedBorderOpacity: Math.max(0, Math.min(1, (cfg.focusedBorderOpacity ?? defaults.focusedBorderOpacity ?? 100) / 100))
+    readonly property bool showHoverBorder: cfg.showHoverBorder ?? defaults.showHoverBorder ?? true
+    readonly property real hoverBorderOpacity: Math.max(0, Math.min(1, (cfg.hoverBorderOpacity ?? defaults.hoverBorderOpacity ?? 100) / 100))
+    readonly property bool showUnfocusedBorder: cfg.showUnfocusedBorder ?? defaults.showUnfocusedBorder ?? true
     readonly property real trackOpacity: Math.max(0, Math.min(1, (cfg.trackOpacity ?? defaults.trackOpacity ?? 35) / 100))
     readonly property bool showFocusLine: cfg.showFocusLine ?? defaults.showFocusLine ?? true
     readonly property string focusLineColorKey: cfg.focusLineColor ?? defaults.focusLineColor ?? "secondary"
@@ -349,14 +354,14 @@ Item {
             readonly property bool showTooltip: root.showTitle ? textLabel.truncated : true
             readonly property color baseAccentColor: root.accentColor
             readonly property color accentFill: Qt.rgba(baseAccentColor.r, baseAccentColor.g, baseAccentColor.b, root.focusedFillOpacity)
-            readonly property color accentOutline: Qt.rgba(baseAccentColor.r, baseAccentColor.g, baseAccentColor.b, 1)
+            readonly property color accentOutline: Qt.rgba(baseAccentColor.r, baseAccentColor.g, baseAccentColor.b, root.focusedBorderOpacity)
             readonly property color hoverFillBaseColor: Color.resolveColorKey(root.hoverFillColorKey)
             readonly property color hoverBorderBaseColor: Color.resolveColorKey(root.hoverBorderColorKey)
             readonly property color hoverTextColor: Color.resolveColorKey(root.hoverTextColorKey)
             readonly property color mutedOutline: Qt.rgba(Color.mOutline.r, Color.mOutline.g, Color.mOutline.b, root.unfocusedBorderOpacity)
             readonly property color mutedFill: Qt.rgba(Color.mSurfaceVariant.r, Color.mSurfaceVariant.g, Color.mSurfaceVariant.b, root.unfocusedFillOpacity)
             readonly property color hoverFill: Qt.rgba(hoverFillBaseColor.r, hoverFillBaseColor.g, hoverFillBaseColor.b, root.hoverFillOpacity)
-            readonly property color hoverOutline: Qt.rgba(hoverBorderBaseColor.r, hoverBorderBaseColor.g, hoverBorderBaseColor.b, 1)
+            readonly property color hoverOutline: Qt.rgba(hoverBorderBaseColor.r, hoverBorderBaseColor.g, hoverBorderBaseColor.b, root.hoverBorderOpacity)
             readonly property color slotTextColor: isFocused ? Color.mOnPrimary : (isHovered ? hoverTextColor : Color.mOnSurface)
             readonly property real hoverScaleMultiplier: 1 + (root.hoverScalePercent / 100)
             readonly property real neighborShift: {
@@ -423,7 +428,11 @@ Item {
                     radius: Style.radiusM * root.radiusScale
                     color: delegateRoot.isFocused ? delegateRoot.accentFill : (delegateRoot.isHovered ? delegateRoot.hoverFill : delegateRoot.mutedFill)
                     border.color: delegateRoot.isFocused ? delegateRoot.accentOutline : (delegateRoot.isHovered ? delegateRoot.hoverOutline : delegateRoot.mutedOutline)
-                    border.width: delegateRoot.isFocused ? Style.borderM : Style.borderS
+                    border.width: {
+                        if (delegateRoot.isFocused) return root.showFocusedBorder ? Style.borderS : 0;
+                        if (delegateRoot.isHovered) return root.showHoverBorder ? Style.borderS : 0;
+                        return root.showUnfocusedBorder ? Style.borderS : 0;
+                    }
 
                     Behavior on color {
                         ColorAnimation {
