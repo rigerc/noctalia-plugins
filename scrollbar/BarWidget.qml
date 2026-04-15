@@ -141,6 +141,17 @@ Item {
     property real focusedIndicatorOffset: 0
     property real focusedIndicatorLength: 0
     property bool focusedIndicatorVisible: false
+    readonly property bool focusedIndicatorInView: {
+        if (!focusedIndicatorVisible)
+            return false;
+        if (isVertical) {
+            const viewY = focusedIndicatorOffset - flickable.contentY;
+            return (viewY + focusedIndicatorLength) > 0 && viewY < flickable.height;
+        } else {
+            const viewX = focusedIndicatorOffset - flickable.contentX;
+            return (viewX + focusedIndicatorLength) > 0 && viewX < flickable.width;
+        }
+    }
 
     function debugLog(message) {
         if (debugLogging)
@@ -340,7 +351,20 @@ Item {
     HoverHandler {
         onHoveredChanged: {
             root.debugLog("HoverHandler hovered=" + hovered);
-            if (!hovered && root.activeEntryKey)
+            if (!hovered && root.activeEntryKey) {
+                scrollBackTimer.restart();
+            } else {
+                scrollBackTimer.stop();
+            }
+        }
+    }
+
+    Timer {
+        id: scrollBackTimer
+        interval: 600
+        repeat: false
+        onTriggered: {
+            if (root.activeEntryKey)
                 root.centerEntryAt(root.indexOfEntry(root.activeEntryKey));
         }
     }
@@ -823,7 +847,7 @@ Item {
         }
 
         Rectangle {
-            visible: !root.isVertical && root.focusedIndicatorVisible
+            visible: !root.isVertical && root.focusedIndicatorInView
             anchors.bottom: parent.bottom
             height: root.focusLineThickness
             radius: height / 2
@@ -870,7 +894,7 @@ Item {
         }
 
         Rectangle {
-            visible: root.isVertical && root.focusedIndicatorVisible
+            visible: root.isVertical && root.focusedIndicatorInView
             anchors.right: parent.right
             width: root.focusLineThickness
             radius: width / 2
