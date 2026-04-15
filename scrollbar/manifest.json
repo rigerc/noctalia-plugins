@@ -30,6 +30,8 @@
       "showTitle": true,
       "iconScale": 0.8,
       "edgeFadeSize": 18,
+      "edgeFadeMidpoint": 0.45,
+      "edgeFadeMidOpacity": 40,
       "showTrackLine": true,
       "accentColor": "primary",
       "inactiveOpacity": 45,

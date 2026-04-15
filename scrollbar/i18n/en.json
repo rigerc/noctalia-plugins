@@ -47,6 +47,14 @@
       "label": "Edge fade size",
       "desc": "Width of the passive overflow fade at the leading and trailing edges."
     },
+    "edgeFadeMidpoint": {
+      "label": "Edge fade midpoint",
+      "desc": "Position of the intermediate fade stop. Lower values fade sooner, higher values stay opaque longer."
+    },
+    "edgeFadeMidOpacity": {
+      "label": "Edge fade midpoint opacity",
+      "desc": "Opacity at the intermediate fade stop. Lower values produce a gentler fade curve."
+    },
     "slotSpacingUnits": {
       "label": "Slot spacing",
       "desc": "Gap between adjacent window slots."

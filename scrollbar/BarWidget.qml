@@ -35,6 +35,8 @@ Item {
     readonly property bool showTitle: !isVertical && (cfg.showTitle ?? defaults.showTitle ?? true)
     readonly property real iconScale: cfg.iconScale ?? defaults.iconScale ?? 0.8
     readonly property real edgeFadeSize: Math.max(0, Math.round((cfg.edgeFadeSize ?? defaults.edgeFadeSize ?? 18) * Style.uiScaleRatio))
+    readonly property real edgeFadeMidpoint: Math.max(0.05, Math.min(0.95, cfg.edgeFadeMidpoint ?? defaults.edgeFadeMidpoint ?? 0.45))
+    readonly property real edgeFadeMidOpacity: Math.max(0, Math.min(1, (cfg.edgeFadeMidOpacity ?? defaults.edgeFadeMidOpacity ?? 40) / 100))
     readonly property bool showTrackLine: cfg.showTrackLine ?? defaults.showTrackLine ?? true
     readonly property string accentColorKey: cfg.accentColor ?? defaults.accentColor ?? "primary"
     readonly property color accentColor: Color.resolveColorKey(accentColorKey)
@@ -791,6 +793,7 @@ Item {
         gradient: Gradient {
             orientation: Gradient.Horizontal
             GradientStop { position: 0.0; color: Color.mSurface }
+            GradientStop { position: root.edgeFadeMidpoint; color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, root.edgeFadeMidOpacity) }
             GradientStop { position: 1.0; color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, 0.0) }
         }
     }
@@ -805,6 +808,7 @@ Item {
         gradient: Gradient {
             orientation: Gradient.Horizontal
             GradientStop { position: 0.0; color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, 0.0) }
+            GradientStop { position: 1.0 - root.edgeFadeMidpoint; color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, root.edgeFadeMidOpacity) }
             GradientStop { position: 1.0; color: Color.mSurface }
         }
     }
@@ -819,6 +823,7 @@ Item {
         gradient: Gradient {
             orientation: Gradient.Vertical
             GradientStop { position: 0.0; color: Color.mSurface }
+            GradientStop { position: root.edgeFadeMidpoint; color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, root.edgeFadeMidOpacity) }
             GradientStop { position: 1.0; color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, 0.0) }
         }
     }
@@ -833,6 +838,7 @@ Item {
         gradient: Gradient {
             orientation: Gradient.Vertical
             GradientStop { position: 0.0; color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, 0.0) }
+            GradientStop { position: 1.0 - root.edgeFadeMidpoint; color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, root.edgeFadeMidOpacity) }
             GradientStop { position: 1.0; color: Color.mSurface }
         }
     }

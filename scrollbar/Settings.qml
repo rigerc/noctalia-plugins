@@ -21,6 +21,8 @@ ColumnLayout {
   property bool valueShowTitle: cfg.showTitle ?? defaults.showTitle ?? true
   property real valueIconScale: cfg.iconScale ?? defaults.iconScale ?? 0.8
   property int valueEdgeFadeSize: cfg.edgeFadeSize ?? defaults.edgeFadeSize ?? 18
+  property real valueEdgeFadeMidpoint: cfg.edgeFadeMidpoint ?? defaults.edgeFadeMidpoint ?? 0.45
+  property int valueEdgeFadeMidOpacity: cfg.edgeFadeMidOpacity ?? defaults.edgeFadeMidOpacity ?? 40
   property bool valueShowTrackLine: cfg.showTrackLine ?? defaults.showTrackLine ?? true
   property string valueAccentColor: cfg.accentColor ?? defaults.accentColor ?? "primary"
   property int valueInactiveOpacity: cfg.inactiveOpacity ?? defaults.inactiveOpacity ?? 45
@@ -60,6 +62,8 @@ ColumnLayout {
     pluginApi.pluginSettings.showTitle = root.valueShowTitle;
     pluginApi.pluginSettings.iconScale = root.valueIconScale;
     pluginApi.pluginSettings.edgeFadeSize = root.valueEdgeFadeSize;
+    pluginApi.pluginSettings.edgeFadeMidpoint = root.valueEdgeFadeMidpoint;
+    pluginApi.pluginSettings.edgeFadeMidOpacity = root.valueEdgeFadeMidOpacity;
     pluginApi.pluginSettings.showTrackLine = root.valueShowTrackLine;
     pluginApi.pluginSettings.accentColor = root.valueAccentColor;
     pluginApi.pluginSettings.inactiveOpacity = root.valueInactiveOpacity;
@@ -221,6 +225,32 @@ ColumnLayout {
         defaultValue: defaults.edgeFadeSize ?? 18
         showReset: true
         onMoved: value => root.valueEdgeFadeSize = Math.round(value)
+      }
+
+      NValueSlider {
+        label: pluginApi?.tr("settings.edgeFadeMidpoint.label")
+        description: pluginApi?.tr("settings.edgeFadeMidpoint.desc")
+        from: 0.05
+        to: 0.95
+        stepSize: 0.05
+        value: root.valueEdgeFadeMidpoint
+        text: Math.round(root.valueEdgeFadeMidpoint * 100) + "%"
+        defaultValue: defaults.edgeFadeMidpoint ?? 0.45
+        showReset: true
+        onMoved: value => root.valueEdgeFadeMidpoint = Math.round(value * 100) / 100
+      }
+
+      NValueSlider {
+        label: pluginApi?.tr("settings.edgeFadeMidOpacity.label")
+        description: pluginApi?.tr("settings.edgeFadeMidOpacity.desc")
+        from: 0
+        to: 100
+        stepSize: 1
+        value: root.valueEdgeFadeMidOpacity
+        text: Math.round(root.valueEdgeFadeMidOpacity) + "%"
+        defaultValue: defaults.edgeFadeMidOpacity ?? 40
+        showReset: true
+        onMoved: value => root.valueEdgeFadeMidOpacity = Math.round(value)
       }
 
       NValueSlider {
