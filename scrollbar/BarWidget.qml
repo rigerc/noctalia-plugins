@@ -91,11 +91,16 @@ Item {
     readonly property color backgroundColor: backgroundEnabled ? Qt.rgba(Color.resolveColorKey(backgroundColorKey).r, Color.resolveColorKey(backgroundColorKey).g, Color.resolveColorKey(backgroundColorKey).b, backgroundOpacity) : "transparent"
 
     readonly property int titleFontWeightValue: {
-        if (titleFontWeightKey === "light") return Font.Light;
-        if (titleFontWeightKey === "normal") return Font.Normal;
-        if (titleFontWeightKey === "medium") return Font.Medium;
-        if (titleFontWeightKey === "semibold") return Font.DemiBold;
-        if (titleFontWeightKey === "bold") return Font.Bold;
+        if (titleFontWeightKey === "light")
+            return Font.Light;
+        if (titleFontWeightKey === "normal")
+            return Font.Normal;
+        if (titleFontWeightKey === "medium")
+            return Font.Medium;
+        if (titleFontWeightKey === "semibold")
+            return Font.DemiBold;
+        if (titleFontWeightKey === "bold")
+            return Font.Bold;
         return -1;
     }
 
@@ -534,8 +539,10 @@ Item {
                     color: delegateRoot.isFocused ? delegateRoot.accentFill : (delegateRoot.isHovered ? delegateRoot.hoverFill : delegateRoot.mutedFill)
                     border.color: delegateRoot.isFocused ? delegateRoot.accentOutline : (delegateRoot.isHovered ? delegateRoot.hoverOutline : delegateRoot.mutedOutline)
                     border.width: {
-                        if (delegateRoot.isFocused) return root.showFocusedBorder ? Style.borderS : 0;
-                        if (delegateRoot.isHovered) return root.showHoverBorder ? Style.borderS : 0;
+                        if (delegateRoot.isFocused)
+                            return root.showFocusedBorder ? Style.borderS : 0;
+                        if (delegateRoot.isHovered)
+                            return root.showHoverBorder ? Style.borderS : 0;
                         return root.showUnfocusedBorder ? Style.borderS : 0;
                     }
 
@@ -865,6 +872,7 @@ Item {
             width: Math.max(Style.marginXL, Math.round((flickable.width / flickable.contentWidth) * parent.width))
             x: flickable.contentWidth > flickable.width ? Math.round((flickable.contentX / Math.max(1, flickable.contentWidth - flickable.width)) * Math.max(0, parent.width - width)) : 0
             color: Qt.rgba(root.trackThumbColor.r, root.trackThumbColor.g, root.trackThumbColor.b, 0.85)
+            z: 0
         }
 
         Rectangle {
@@ -875,7 +883,7 @@ Item {
             width: root.animatedIndicatorLength
             x: root.animatedIndicatorOffset - flickable.contentX
             color: Qt.rgba(root.focusLineColor.r, root.focusLineColor.g, root.focusLineColor.b, root.focusLineOpacity)
-            z: 2
+            z: 0
         }
 
         Rectangle {
@@ -887,6 +895,7 @@ Item {
             width: root.trackThickness
             radius: width / 2
             color: Qt.rgba(Color.mOutline.r, Color.mOutline.g, Color.mOutline.b, root.trackOpacity)
+            z: 0
         }
 
         Rectangle {
@@ -898,6 +907,7 @@ Item {
             height: Math.max(Style.marginXL, Math.round((flickable.height / flickable.contentHeight) * parent.height))
             y: flickable.contentHeight > flickable.height ? Math.round((flickable.contentY / Math.max(1, flickable.contentHeight - flickable.height)) * Math.max(0, parent.height - height)) : 0
             color: Qt.rgba(root.trackThumbColor.r, root.trackThumbColor.g, root.trackThumbColor.b, 0.85)
+            z: 0
         }
 
         Rectangle {
@@ -908,12 +918,13 @@ Item {
             height: root.animatedIndicatorLength
             y: root.animatedIndicatorOffset - flickable.contentY
             color: Qt.rgba(root.focusLineColor.r, root.focusLineColor.g, root.focusLineColor.b, root.focusLineOpacity)
-            z: 2
+            z: 0
         }
     }
 
     Rectangle {
         visible: !root.isVertical && root.edgeFadeSize > 0 && root.showLeadingFade
+        z: 10
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.bottom: parent.bottom
@@ -921,14 +932,24 @@ Item {
         color: "transparent"
         gradient: Gradient {
             orientation: Gradient.Horizontal
-            GradientStop { position: 0.0; color: Color.mSurface }
-            GradientStop { position: root.edgeFadeMidpoint; color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, root.edgeFadeMidOpacity) }
-            GradientStop { position: 1.0; color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, 0.0) }
+            GradientStop {
+                position: 0.0
+                color: Color.mSurface
+            }
+            GradientStop {
+                position: root.edgeFadeMidpoint
+                color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, root.edgeFadeMidOpacity)
+            }
+            GradientStop {
+                position: 1.0
+                color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, 0.0)
+            }
         }
     }
 
     Rectangle {
         visible: !root.isVertical && root.edgeFadeSize > 0 && root.showTrailingFade
+        z: 10
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.bottom: parent.bottom
@@ -936,14 +957,24 @@ Item {
         color: "transparent"
         gradient: Gradient {
             orientation: Gradient.Horizontal
-            GradientStop { position: 0.0; color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, 0.0) }
-            GradientStop { position: 1.0 - root.edgeFadeMidpoint; color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, root.edgeFadeMidOpacity) }
-            GradientStop { position: 1.0; color: Color.mSurface }
+            GradientStop {
+                position: 0.0
+                color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, 0.0)
+            }
+            GradientStop {
+                position: 1.0 - root.edgeFadeMidpoint
+                color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, root.edgeFadeMidOpacity)
+            }
+            GradientStop {
+                position: 1.0
+                color: Color.mSurface
+            }
         }
     }
 
     Rectangle {
         visible: root.isVertical && root.edgeFadeSize > 0 && root.showLeadingFade
+        z: 10
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
@@ -951,14 +982,24 @@ Item {
         color: "transparent"
         gradient: Gradient {
             orientation: Gradient.Vertical
-            GradientStop { position: 0.0; color: Color.mSurface }
-            GradientStop { position: root.edgeFadeMidpoint; color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, root.edgeFadeMidOpacity) }
-            GradientStop { position: 1.0; color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, 0.0) }
+            GradientStop {
+                position: 0.0
+                color: Color.mSurface
+            }
+            GradientStop {
+                position: root.edgeFadeMidpoint
+                color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, root.edgeFadeMidOpacity)
+            }
+            GradientStop {
+                position: 1.0
+                color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, 0.0)
+            }
         }
     }
 
     Rectangle {
         visible: root.isVertical && root.edgeFadeSize > 0 && root.showTrailingFade
+        z: 10
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
@@ -966,9 +1007,18 @@ Item {
         color: "transparent"
         gradient: Gradient {
             orientation: Gradient.Vertical
-            GradientStop { position: 0.0; color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, 0.0) }
-            GradientStop { position: 1.0 - root.edgeFadeMidpoint; color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, root.edgeFadeMidOpacity) }
-            GradientStop { position: 1.0; color: Color.mSurface }
+            GradientStop {
+                position: 0.0
+                color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, 0.0)
+            }
+            GradientStop {
+                position: 1.0 - root.edgeFadeMidpoint
+                color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, root.edgeFadeMidOpacity)
+            }
+            GradientStop {
+                position: 1.0
+                color: Color.mSurface
+            }
         }
     }
 }
