@@ -383,9 +383,7 @@ Item {
 
             Item {
                 id: draggableContent
-                anchors.centerIn: dragArea.drag.active ? undefined : parent
-                width: parent.width
-                height: parent.height
+                anchors.fill: dragArea.drag.active ? undefined : parent
                 z: dragArea.drag.active ? 1000 : 0
                 scale: (dragArea.drag.active ? 1.03 : 1.0) * ((delegateRoot.isHovered && !delegateRoot.isFocused) ? delegateRoot.hoverScaleMultiplier : 1.0)
                 opacity: delegateRoot.isFocused ? 1.0 : root.inactiveOpacity

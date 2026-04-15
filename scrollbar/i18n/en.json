@@ -4,13 +4,20 @@
   },
   "settings": {
     "tabs": {
+      "general": "General",
       "behavior": "Behavior",
-      "layout": "Layout",
-      "style": "Style"
+      "appearance": "Appearance"
     },
     "section": {
-      "trackLines": "Track Lines",
-      "slotBorders": "Slot Borders"
+      "filtering": "Filtering",
+      "debug": "Debug",
+      "interaction": "Interaction",
+      "scrollCentering": "Scroll & Centering",
+      "slotLayout": "Slot Layout",
+      "focusedSlot": "Focused Slot",
+      "unfocusedSlot": "Unfocused Slot",
+      "hoveredSlot": "Hovered Slot",
+      "trackFocusLine": "Track & Focus Line"
     },
     "onlySameOutput": {
       "label": "Only same monitor",
