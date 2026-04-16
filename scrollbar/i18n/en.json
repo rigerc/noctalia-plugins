@@ -197,6 +197,10 @@
       "label": "Capsule height scale",
       "desc": "Scale the slot capsule height independently of the track line. Values below 100% shrink the capsules; values above 100% enlarge them."
     },
+    "clipToBarBounds": {
+      "label": "Clip to bar bounds",
+      "desc": "Keep slot visuals clipped to the bar height or width. Disable this to let oversized slots overflow beyond the bar."
+    },
     "focusedFillOpacity": {
       "label": "Focused fill opacity",
       "desc": "Strength of the focused slot background tint."

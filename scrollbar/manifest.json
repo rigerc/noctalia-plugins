@@ -41,7 +41,8 @@
         "slotWidth": 100,
         "slotSpacingUnits": 5,
         "radiusScale": 1,
-        "slotCapsuleScale": 0.8
+        "slotCapsuleScale": 0.8,
+        "clipToBarBounds": true
       },
       "icons": {
         "showIcons": true,

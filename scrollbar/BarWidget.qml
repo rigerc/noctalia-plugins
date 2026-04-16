@@ -56,6 +56,7 @@ Item {
     readonly property int maxWidgetWidthPercent: settingValue("layout", "maxWidgetWidth", "maxWidgetWidth", 40)
     readonly property real baseSlotLength: settingValue("layout", "slotWidth", "slotWidth", 112)
     readonly property real slotCapsuleScale: Math.max(0.3, settingValue("layout", "slotCapsuleScale", "slotCapsuleScale", 1.0))
+    readonly property bool clipToBarBounds: settingValue("layout", "clipToBarBounds", "clipToBarBounds", true)
     readonly property bool showTitle: !isVertical && settingValue("title", "showTitle", "showTitle", true)
     readonly property real iconScale: settingValue("icons", "iconScale", "iconScale", 0.8)
     readonly property real edgeFadeSize: Math.max(0, Math.round(settingValue("edgeFade", "size", "edgeFadeSize", 18) * Style.uiScaleRatio))
@@ -157,7 +158,7 @@ Item {
             return capsuleHeight;
         return widgetSize - indicatorSpace;
     }
-    readonly property real slotCrossExtent: Math.min(crossExtent, scaledCapsuleHeight)
+    readonly property real slotCrossExtent: clipToBarBounds ? Math.min(crossExtent, scaledCapsuleHeight) : scaledCapsuleHeight
     readonly property real trackThickness: Math.max(1, Math.round(Style.borderS))
     readonly property int itemSize: Style.toOdd(slotCrossExtent * Math.max(0.1, iconScale))
     readonly property var liveEntriesByKey: mainInstance?.liveEntriesByKey ?? ({})
@@ -516,6 +517,7 @@ Item {
 
         WindowSlot {
             barRoot: root
+
             contextMenu: contextMenu
         }
     }
@@ -592,7 +594,8 @@ Item {
     Flickable {
         id: flickable
         anchors.fill: parent
-        clip: true
+        clip: root.clipToBarBounds
+
         interactive: false
         boundsBehavior: Flickable.StopAtBounds
         contentWidth: root.isVertical ? width : root.contentExtent

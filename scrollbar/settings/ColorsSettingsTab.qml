@@ -301,15 +301,6 @@ ColumnLayout {
     }
     NDivider {}
 
-    NToggle {
-        Layout.fillWidth: true
-        label: rootSettings?.pluginApi?.tr("settings.showTrackLine.label")
-        description: rootSettings?.pluginApi?.tr("settings.showTrackLine.desc")
-        checked: rootSettings?.settingValue("indicators", "showTrackLine") ?? true
-        onToggled: checked => rootSettings?.setSetting("indicators", "showTrackLine", checked)
-        defaultValue: rootSettings?.defaultValue("indicators", "showTrackLine") ?? true
-    }
-
     NValueSlider {
         label: rootSettings?.pluginApi?.tr("settings.trackOpacity.label")
         description: rootSettings?.pluginApi?.tr("settings.trackOpacity.desc")
@@ -331,15 +322,6 @@ ColumnLayout {
         onSelected: key => rootSettings?.setSetting("indicators", "trackThumbColor", key)
     }
 
-    NToggle {
-        Layout.fillWidth: true
-        label: rootSettings?.pluginApi?.tr("settings.showFocusLine.label")
-        description: rootSettings?.pluginApi?.tr("settings.showFocusLine.desc")
-        checked: rootSettings?.settingValue("indicators", "showFocusLine") ?? true
-        onToggled: checked => rootSettings?.setSetting("indicators", "showFocusLine", checked)
-        defaultValue: rootSettings?.defaultValue("indicators", "showFocusLine") ?? true
-    }
-
     NColorChoice {
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.focusLineColor.label")
@@ -359,31 +341,5 @@ ColumnLayout {
         defaultValue: rootSettings?.defaultValue("indicators", "focusLineOpacity") ?? 96
         showReset: true
         onMoved: sliderValue => rootSettings?.setSetting("indicators", "focusLineOpacity", Math.round(sliderValue))
-    }
-
-    NValueSlider {
-        label: rootSettings?.pluginApi?.tr("settings.focusLineThickness.label")
-        description: rootSettings?.pluginApi?.tr("settings.focusLineThickness.desc")
-        from: 1
-        to: 6
-        stepSize: 1
-        value: rootSettings?.settingValue("indicators", "focusLineThickness") ?? 2
-        text: Math.round(value) + " px"
-        defaultValue: rootSettings?.defaultValue("indicators", "focusLineThickness") ?? 2
-        showReset: true
-        onMoved: sliderValue => rootSettings?.setSetting("indicators", "focusLineThickness", Math.round(sliderValue))
-    }
-
-    NValueSlider {
-        label: rootSettings?.pluginApi?.tr("settings.focusLineAnimationMs.label")
-        description: rootSettings?.pluginApi?.tr("settings.focusLineAnimationMs.desc")
-        from: 0
-        to: 400
-        stepSize: 10
-        value: rootSettings?.settingValue("indicators", "focusLineAnimationMs") ?? 120
-        text: Math.round(value) + " ms"
-        defaultValue: rootSettings?.defaultValue("indicators", "focusLineAnimationMs") ?? 120
-        showReset: true
-        onMoved: sliderValue => rootSettings?.setSetting("indicators", "focusLineAnimationMs", Math.round(sliderValue))
     }
 }

@@ -94,7 +94,8 @@ ColumnLayout {
                 "slotWidth": readSetting(primary, secondary, "layout", "slotWidth", "slotWidth", 112),
                 "slotSpacingUnits": readSetting(primary, secondary, "layout", "slotSpacingUnits", "slotSpacingUnits", 1),
                 "radiusScale": readSetting(primary, secondary, "layout", "radiusScale", "radiusScale", 1.0),
-                "slotCapsuleScale": readSetting(primary, secondary, "layout", "slotCapsuleScale", "slotCapsuleScale", 1.0)
+                "slotCapsuleScale": readSetting(primary, secondary, "layout", "slotCapsuleScale", "slotCapsuleScale", 1.0),
+                "clipToBarBounds": readSetting(primary, secondary, "layout", "clipToBarBounds", "clipToBarBounds", true)
             },
             "icons": {
                 "showIcons": readSetting(primary, secondary, "icons", "showIcons", "showIcons", true),
