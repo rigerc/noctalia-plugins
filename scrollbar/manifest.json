@@ -1,7 +1,7 @@
 {
   "id": "scrollbar",
   "name": "Scrollbar",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "minNoctaliaVersion": "4.6.6",
   "author": "rigerc",
   "license": "MIT",
@@ -38,6 +38,7 @@
       },
       "layout": {
         "maxWidgetWidth": 20,
+        "showSlots": true,
         "slotWidth": 100,
         "slotSpacingUnits": 5,
         "radiusScale": 1,

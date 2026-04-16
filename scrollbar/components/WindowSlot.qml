@@ -19,9 +19,10 @@ Item {
     readonly property var liveEntry: (barRoot?.liveEntriesByKey && barRoot.liveEntriesByKey[modelData.entryKey]) || ({})
     readonly property string liveTitle: liveEntry.title || modelData.fallbackTitle || ""
     readonly property bool isFocused: !!liveEntry.isFocused
-    readonly property bool isHovered: barRoot?.hoveredEntryKey === modelData.entryKey
-    readonly property bool reorderEnabled: barRoot?.supportsLiveReorder ?? false
-    readonly property bool showTooltip: barRoot?.showTitle ? textLabel.truncated : true
+    readonly property bool slotsVisible: barRoot?.showSlots ?? true
+    readonly property bool isHovered: slotsVisible && barRoot?.hoveredEntryKey === modelData.entryKey
+    readonly property bool reorderEnabled: slotsVisible && (barRoot?.supportsLiveReorder ?? false)
+    readonly property bool showTooltip: slotsVisible && (barRoot?.showTitle ? textLabel.truncated : true)
     readonly property color focusedFillBaseColor: barRoot?.focusedFillColor ?? "transparent"
     readonly property color focusedBorderBaseColor: barRoot?.focusedBorderColor ?? "transparent"
     readonly property color focusedTextColor: barRoot?.focusedTextColor ?? Color.mOnSurface
@@ -59,6 +60,7 @@ Item {
 
     Item {
         id: draggableContent
+        visible: delegateRoot.slotsVisible
         anchors.fill: dragArea.drag.active ? undefined : parent
         z: dragArea.drag.active ? 1000 : (delegateRoot.isHovered ? 1 : 0)
         scale: (dragArea.drag.active ? 1.03 : 1.0) * ((delegateRoot.isHovered && !delegateRoot.isFocused) ? delegateRoot.hoverScaleMultiplier : 1.0)
@@ -238,8 +240,9 @@ Item {
     MouseArea {
         id: dragArea
         anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
+        enabled: delegateRoot.slotsVisible
+        hoverEnabled: delegateRoot.slotsVisible
+        cursorShape: delegateRoot.slotsVisible ? Qt.PointingHandCursor : Qt.ArrowCursor
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
         preventStealing: true
         drag.target: delegateRoot.reorderEnabled ? draggableContent : null

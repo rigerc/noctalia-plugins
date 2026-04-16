@@ -45,6 +45,15 @@ ColumnLayout {
         onMoved: sliderValue => rootSettings?.setSetting("layout", "maxWidgetWidth", Math.round(sliderValue))
     }
 
+    NToggle {
+        Layout.fillWidth: true
+        label: rootSettings?.pluginApi?.tr("settings.showSlots.label")
+        description: rootSettings?.pluginApi?.tr("settings.showSlots.desc")
+        checked: rootSettings?.settingValue("layout", "showSlots") ?? true
+        onToggled: checked => rootSettings?.setSetting("layout", "showSlots", checked)
+        defaultValue: rootSettings?.defaultValue("layout", "showSlots") ?? true
+    }
+
     NValueSlider {
         label: rootSettings?.pluginApi?.tr("settings.slotSpacingUnits.label")
         description: rootSettings?.pluginApi?.tr("settings.slotSpacingUnits.desc")

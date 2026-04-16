@@ -39,6 +39,7 @@ The bar is not manually scrollable — it only moves when focus changes, so its 
 | Setting | Default | Description |
 |---|---|---|
 | Max widget width | 40% | Maximum bar space the widget can occupy |
+| Show slots | On | Render the window slot capsules; turn off to keep only the track and focus line |
 | Slot width | 112 px | Fixed width per window slot |
 | Show title | On | Display window title in each slot |
 | Show workspace indicator | Off | Display the current workspace ID or name outside the strip |

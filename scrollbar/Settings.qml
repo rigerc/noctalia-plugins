@@ -119,6 +119,7 @@ ColumnLayout {
             },
             "layout": {
                 "maxWidgetWidth": readSetting(primary, secondary, "layout", "maxWidgetWidth", "maxWidgetWidth", 40),
+                "showSlots": readSetting(primary, secondary, "layout", "showSlots", "showSlots", true),
                 "slotWidth": readSetting(primary, secondary, "layout", "slotWidth", "slotWidth", 112),
                 "slotSpacingUnits": readSetting(primary, secondary, "layout", "slotSpacingUnits", "slotSpacingUnits", 1),
                 "radiusScale": readSetting(primary, secondary, "layout", "radiusScale", "radiusScale", 1.0),

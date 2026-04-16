@@ -83,6 +83,7 @@ Item {
     readonly property bool enableReorder: settingValue("interaction", "enableReorder", "enableReorder", true)
     readonly property bool debugLogging: settingValue("advanced", "debugLogging", "debugLogging", false)
     readonly property int maxWidgetWidthPercent: settingValue("layout", "maxWidgetWidth", "maxWidgetWidth", 40)
+    readonly property bool showSlots: settingValue("layout", "showSlots", "showSlots", true)
     readonly property real baseSlotLength: settingValue("layout", "slotWidth", "slotWidth", 112)
     readonly property real slotCapsuleScale: Math.max(0.3, settingValue("layout", "slotCapsuleScale", "slotCapsuleScale", 1.0))
     readonly property bool showTitle: !isVertical && settingValue("title", "showTitle", "showTitle", true)
@@ -316,6 +317,14 @@ Item {
 
     onFocusedIndicatorOffsetChanged: animatedIndicatorOffset = focusedIndicatorOffset
     onFocusedIndicatorLengthChanged: animatedIndicatorLength = focusedIndicatorLength
+    onShowSlotsChanged: {
+        if (showSlots)
+            return;
+
+        hoveredEntryKey = "";
+        if (dragSourceIndex !== -1 || dragTargetIndex !== -1)
+            completeDragReorder();
+    }
 
     Behavior on animatedIndicatorOffset {
         enabled: focusedIndicatorVisible

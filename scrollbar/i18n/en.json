@@ -111,6 +111,10 @@
       "label": "Max widget width",
       "desc": "Maximum percentage of the bar this strip may occupy before it starts clipping and fading."
     },
+    "showSlots": {
+      "label": "Show slots",
+      "desc": "Render the window slot capsules and their contents. Disable this to leave only the track and focus line visible."
+    },
     "slotWidth": {
       "label": "Slot width",
       "desc": "Fixed size for each window slot along the strip axis."
