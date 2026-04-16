@@ -33,8 +33,8 @@
         "desc": "Font and visibility for window titles inside slots."
       },
       "edgeFade": {
-        "label": "Edge Fade",
-        "desc": "Overflow fade at the leading and trailing edges."
+        "label": "Edge Overflow Cue",
+        "desc": "How the widget marks hidden content at the leading and trailing edges."
       },
       "background": {
         "label": "Widget Background",
@@ -105,17 +105,29 @@
       "label": "Icon scale",
       "desc": "Scale the app icon inside each slot."
     },
+    "edgeCueMode": {
+      "label": "Edge cue style",
+      "desc": "Choose whether hidden content is marked with a gradual fade, a border line, or not at all."
+    },
     "edgeFadeSize": {
-      "label": "Edge fade size",
-      "desc": "Width of the passive overflow fade at the leading and trailing edges."
+      "label": "Fade size",
+      "desc": "Width of the gradual fade at the overflowing edges."
     },
-    "edgeFadeMidpoint": {
-      "label": "Edge fade midpoint",
-      "desc": "Position of the intermediate fade stop. Lower values fade sooner, higher values stay opaque longer."
+    "edgeFadeOpacity": {
+      "label": "Fade opacity",
+      "desc": "Strength of the overflow fade into the widget background."
     },
-    "edgeFadeMidOpacity": {
-      "label": "Edge fade midpoint opacity",
-      "desc": "Opacity at the intermediate fade stop. Lower values produce a gentler fade curve."
+    "edgeBorderColor": {
+      "label": "Border color",
+      "desc": "Color of the overflow border marker."
+    },
+    "edgeBorderOpacity": {
+      "label": "Border opacity",
+      "desc": "Opacity of the overflow border marker."
+    },
+    "edgeBorderThickness": {
+      "label": "Border thickness",
+      "desc": "Thickness of the overflow border marker."
     },
     "slotSpacingUnits": {
       "label": "Slot spacing",

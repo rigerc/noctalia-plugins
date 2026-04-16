@@ -39,7 +39,20 @@ ColumnLayout {
             name: QT_TR_NOOP("Bold")
         }
     }
-
+    readonly property var edgeCueModeModel: ListModel {
+        ListElement {
+            key: "fade"
+            name: QT_TR_NOOP("Fade")
+        }
+        ListElement {
+            key: "border"
+            name: QT_TR_NOOP("Border")
+        }
+        ListElement {
+            key: "off"
+            name: QT_TR_NOOP("Off")
+        }
+    }
     readonly property var defaultSettings: createSettingsSnapshot(defaults, ({}))
     property var editSettings: createSettingsSnapshot(cfg, defaults)
 
@@ -110,9 +123,27 @@ ColumnLayout {
                 "titleFontWeight": readSetting(primary, secondary, "title", "titleFontWeight", "titleFontWeight", "default")
             },
             "edgeFade": {
-                "size": readSetting(primary, secondary, "edgeFade", "size", "edgeFadeSize", 18),
-                "midpoint": readSetting(primary, secondary, "edgeFade", "midpoint", "edgeFadeMidpoint", 0.45),
-                "midOpacity": readSetting(primary, secondary, "edgeFade", "midOpacity", "edgeFadeMidOpacity", 40)
+                "mode": (() => {
+                    const configuredMode = readSetting(primary, secondary, "edgeFade", "mode", "edgeFadeMode", undefined);
+                    if (configuredMode !== undefined)
+                        return configuredMode;
+
+                    const legacySize = readSetting(primary, secondary, "edgeFade", "size", "edgeFadeSize", undefined);
+                    if (legacySize !== undefined)
+                        return legacySize > 0 ? "fade" : "off";
+
+                    return "fade";
+                })(),
+                "fadeSize": (() => {
+                    const configuredFadeSize = readSetting(primary, secondary, "edgeFade", "fadeSize", "edgeFadeFadeSize", undefined);
+                    if (configuredFadeSize !== undefined)
+                        return configuredFadeSize;
+                    return readSetting(primary, secondary, "edgeFade", "size", "edgeFadeSize", 18);
+                })(),
+                "fadeOpacity": readSetting(primary, secondary, "edgeFade", "fadeOpacity", "edgeFadeOpacity", 100),
+                "borderColor": readSetting(primary, secondary, "edgeFade", "borderColor", "edgeFadeBorderColor", "outline"),
+                "borderOpacity": readSetting(primary, secondary, "edgeFade", "borderOpacity", "edgeFadeBorderOpacity", 70),
+                "borderThickness": readSetting(primary, secondary, "edgeFade", "borderThickness", "edgeFadeBorderThickness", 1)
             },
             "background": {
                 "color": readSetting(primary, secondary, "background", "color", "backgroundColor", "none"),

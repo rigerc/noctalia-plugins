@@ -6,7 +6,7 @@
   "author": "rigerc",
   "license": "MIT",
   "repository": "https://github.com/noctalia-dev/noctalia-plugins",
-  "description": "A focused, scrolling window strip for the bar with centered selection and passive overflow fades.",
+  "description": "A focused, scrolling window strip for the bar with centered selection and customizable overflow edge cues.",
   "tags": [
     "Bar",
     "Utility"
@@ -57,9 +57,12 @@
         "titleFontWeight": "default"
       },
       "edgeFade": {
-        "size": 30,
-        "midpoint": 0.05,
-        "midOpacity": 0
+        "mode": "fade",
+        "fadeSize": 30,
+        "fadeOpacity": 100,
+        "borderColor": "outline",
+        "borderOpacity": 70,
+        "borderThickness": 1
       },
       "background": {
         "color": "none",

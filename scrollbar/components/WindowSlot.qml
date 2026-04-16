@@ -299,16 +299,7 @@ Item {
                 return;
             }
             barRoot.debugLog("delegate onWheel delta=" + wheel.angleDelta.y);
-            const flickable = barRoot.flickableRef;
-            const step = wheel.angleDelta.y / 120 * barRoot.effectiveSlotLength;
-            if (barRoot.isVertical) {
-                const maxY = Math.max(0, flickable.contentHeight - flickable.height);
-                flickable.contentY = Math.max(0, Math.min(maxY, flickable.contentY - step));
-            } else {
-                const maxX = Math.max(0, flickable.contentWidth - flickable.width);
-                flickable.contentX = Math.max(0, Math.min(maxX, flickable.contentX - step));
-            }
-            wheel.accepted = true;
+            wheel.accepted = barRoot.scrollByWheelDelta(wheel.angleDelta.y);
         }
     }
 }

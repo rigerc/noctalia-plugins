@@ -59,9 +59,22 @@ Item {
     readonly property bool clipToBarBounds: settingValue("layout", "clipToBarBounds", "clipToBarBounds", true)
     readonly property bool showTitle: !isVertical && settingValue("title", "showTitle", "showTitle", true)
     readonly property real iconScale: settingValue("icons", "iconScale", "iconScale", 0.8)
-    readonly property real edgeFadeSize: Math.max(0, Math.round(settingValue("edgeFade", "size", "edgeFadeSize", 18) * Style.uiScaleRatio))
-    readonly property real edgeFadeMidpoint: Math.max(0.05, Math.min(0.95, settingValue("edgeFade", "midpoint", "edgeFadeMidpoint", 0.45)))
-    readonly property real edgeFadeMidOpacity: Math.max(0, Math.min(1, settingValue("edgeFade", "midOpacity", "edgeFadeMidOpacity", 40) / 100))
+    readonly property string edgeCueMode: (() => {
+        const configuredMode = settingValue("edgeFade", "mode", "edgeFadeMode", undefined);
+        if (configuredMode !== undefined)
+            return configuredMode;
+
+        const legacySize = settingValue("edgeFade", "size", "edgeFadeSize", undefined);
+        if (legacySize !== undefined)
+            return legacySize > 0 ? "fade" : "off";
+
+        return "fade";
+    })()
+    readonly property real edgeFadeSize: Math.max(0, Math.round(settingValue("edgeFade", "fadeSize", "edgeFadeSize", 18) * Style.uiScaleRatio))
+    readonly property real edgeFadeOpacity: Math.max(0, Math.min(1, settingValue("edgeFade", "fadeOpacity", "edgeFadeOpacity", 100) / 100))
+    readonly property string edgeBorderColorKey: settingValue("edgeFade", "borderColor", "edgeFadeBorderColor", "outline")
+    readonly property real edgeBorderOpacity: Math.max(0, Math.min(1, settingValue("edgeFade", "borderOpacity", "edgeFadeBorderOpacity", 70) / 100))
+    readonly property int edgeBorderThickness: Math.max(1, Math.round(settingValue("edgeFade", "borderThickness", "edgeFadeBorderThickness", 1) * Style.uiScaleRatio))
     readonly property bool showTrackLine: settingValue("indicators", "showTrackLine", "showTrackLine", true)
     readonly property string trackThumbColorKey: settingValue("indicators", "trackThumbColor", "trackThumbColor", "primary")
     readonly property color trackThumbColor: Color.resolveColorKey(trackThumbColorKey)
@@ -115,7 +128,8 @@ Item {
     readonly property bool backgroundEnabled: backgroundColorKey !== "none" && backgroundOpacity > 0
     readonly property color backgroundBaseColor: backgroundColorKey !== "none" ? Color.resolveColorKey(backgroundColorKey) : "transparent"
     readonly property color backgroundColor: backgroundEnabled ? Qt.alpha(backgroundBaseColor, backgroundOpacity) : "transparent"
-    readonly property color fadeBaseColor: backgroundEnabled ? backgroundColor : Color.mSurface
+    readonly property color fadeBaseColor: Color.mSurface
+    readonly property color edgeBorderColor: Qt.alpha(Color.resolveColorKey(edgeBorderColorKey), edgeBorderOpacity)
     readonly property color focusedFillColor: Color.resolveColorKey(focusedFillColorKey)
     readonly property color focusedBorderColor: Color.resolveColorKey(focusedBorderColorKey)
     readonly property color focusedTextColor: Color.resolveColorKey(focusedTextColorKey)
@@ -240,6 +254,22 @@ Item {
     function debugLog(message) {
         if (debugLogging)
             Logger.d("Scrollbar", message);
+    }
+
+    function scrollByWheelDelta(delta) {
+        if (!enableScrollWheel || !hasWindow)
+            return false;
+
+        const step = delta / 120 * effectiveSlotLength;
+        if (isVertical) {
+            const maxY = Math.max(0, flickable.contentHeight - flickable.height);
+            flickable.contentY = Math.max(0, Math.min(maxY, flickable.contentY - step));
+        } else {
+            const maxX = Math.max(0, flickable.contentWidth - flickable.width);
+            flickable.contentX = Math.max(0, Math.min(maxX, flickable.contentX - step));
+        }
+
+        return true;
     }
 
     function clearContextSelection() {
@@ -522,15 +552,7 @@ Item {
         onActiveChanged: root.debugLog("WheelHandler active=" + active)
         onWheel: event => {
             root.debugLog("WheelHandler wheel delta=" + event.angleDelta.y + " contentX=" + flickable.contentX + " contentWidth=" + flickable.contentWidth + " width=" + flickable.width);
-            const step = event.angleDelta.y / 120 * root.effectiveSlotLength;
-            if (root.isVertical) {
-                const maxY = Math.max(0, flickable.contentHeight - flickable.height);
-                flickable.contentY = Math.max(0, Math.min(maxY, flickable.contentY - step));
-            } else {
-                const maxX = Math.max(0, flickable.contentWidth - flickable.width);
-                flickable.contentX = Math.max(0, Math.min(maxX, flickable.contentX - step));
-            }
-            event.accepted = true;
+            event.accepted = root.scrollByWheelDelta(event.angleDelta.y);
         }
     }
 
@@ -571,6 +593,11 @@ Item {
                 root.openWidgetContextMenu(root);
                 mouse.accepted = true;
             }
+        }
+
+        onWheel: wheel => {
+            root.debugLog("background onWheel delta=" + wheel.angleDelta.y);
+            wheel.accepted = root.scrollByWheelDelta(wheel.angleDelta.y);
         }
     }
 
