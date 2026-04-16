@@ -191,7 +191,7 @@ Item {
     readonly property bool showTrailingFade: isVertical ? (flickable.contentY + flickable.height) < (flickable.contentHeight - 0.5) : (flickable.contentX + flickable.width) < (flickable.contentWidth - 0.5)
     readonly property real contentWidth: isVertical ? crossExtent : Math.max(crossExtent, viewportExtent)
     readonly property real contentHeight: isVertical ? Math.max(crossExtent, viewportExtent) : crossExtent
-    readonly property color capsuleBaseColor: rootHoverHandler.hovered ? Color.mHover : Style.capsuleColor
+    readonly property color capsuleBaseColor: Style.capsuleColor
 
     property var combinedModel: []
     property string combinedSignature: ""
@@ -199,19 +199,13 @@ Item {
     property int dragSourceIndex: -1
     property int dragTargetIndex: -1
     property string selectedEntryKey: ""
+    property string selectedAppId: ""
     property real focusedIndicatorOffset: 0
     property real focusedIndicatorLength: 0
     property bool focusedIndicatorVisible: false
     property real animatedIndicatorOffset: 0
     property real animatedIndicatorLength: 0
-    readonly property var contextMenuModel: [
-        {
-            "label": pluginApi?.tr("menu.settings"),
-            "action": "settings",
-            "icon": "settings",
-            "visible": true
-        }
-    ]
+    property var contextMenuModel: []
     readonly property bool focusedIndicatorInView: {
         if (!focusedIndicatorVisible)
             return false;
@@ -246,6 +240,80 @@ Item {
     function debugLog(message) {
         if (debugLogging)
             Logger.d("Scrollbar", message);
+    }
+
+    function clearContextSelection() {
+        selectedEntryKey = "";
+        selectedAppId = "";
+    }
+
+    function widgetSettingsMenuItem() {
+        return {
+            "label": I18n.tr("actions.widget-settings"),
+            "action": "widget-settings",
+            "icon": "settings"
+        };
+    }
+
+    function desktopEntryActionsForApp(appId) {
+        if (!appId)
+            return [];
+
+        try {
+            if (typeof DesktopEntries === "undefined")
+                return [];
+
+            const entry = DesktopEntries.heuristicLookup ? DesktopEntries.heuristicLookup(appId) : DesktopEntries.byId?.(appId);
+            if (!entry || !entry.actions || entry.actions.length === 0)
+                return [];
+
+            return entry.actions.map(function (desktopAction, index) {
+                return {
+                    "label": desktopAction.name,
+                    "action": "desktop-action-" + index,
+                    "icon": "chevron-right",
+                    "desktopAction": desktopAction
+                };
+            });
+        } catch (error) {
+            debugLog("desktopEntryActionsForApp failed: " + error);
+            return [];
+        }
+    }
+
+    function openWidgetContextMenu(anchorItem) {
+        clearContextSelection();
+        contextMenuModel = [widgetSettingsMenuItem()];
+        PanelService.showContextMenu(contextMenu, root, root.screen, anchorItem ?? root);
+    }
+
+    function openSlotContextMenu(anchorItem, entryData) {
+        const model = [];
+        const entryKey = entryData?.entryKey ?? "";
+        const appId = entryData?.appId ?? "";
+
+        selectedEntryKey = entryKey;
+        selectedAppId = appId;
+
+        if (entryKey) {
+            model.push({
+                "label": I18n.tr("common.focus"),
+                "action": "focus",
+                "icon": "eye"
+            });
+            model.push({
+                "label": I18n.tr("common.close"),
+                "action": "close",
+                "icon": "x"
+            });
+            desktopEntryActionsForApp(appId).forEach(function (item) {
+                model.push(item);
+            });
+        }
+
+        model.push(widgetSettingsMenuItem());
+        contextMenuModel = model;
+        PanelService.showContextMenu(contextMenu, root, root.screen, anchorItem ?? root);
     }
 
     visible: hasWindow
@@ -438,19 +506,6 @@ Item {
         rebuildCombinedModel("init");
     }
 
-    HoverHandler {
-        id: rootHoverHandler
-
-        onHoveredChanged: {
-            root.debugLog("HoverHandler hovered=" + hovered);
-            if (!hovered && root.activeEntryKey) {
-                scrollBackTimer.restart();
-            } else {
-                scrollBackTimer.stop();
-            }
-        }
-    }
-
     Timer {
         id: scrollBackTimer
         interval: 600
@@ -484,13 +539,24 @@ Item {
 
         model: root.contextMenuModel
 
-        onTriggered: action => {
+        onTriggered: (action, item) => {
             contextMenu.close();
             PanelService.closeContextMenu(root.screen);
-            selectedEntryKey = "";
-
-            if (action === "settings")
+            if (action === "focus" && root.selectedEntryKey) {
+                root.mainInstance?.focusEntry(root.selectedEntryKey);
+            } else if (action === "close" && root.selectedEntryKey) {
+                root.mainInstance?.closeEntry(root.selectedEntryKey);
+            } else if (action === "widget-settings") {
                 BarService.openPluginSettings(root.screen, pluginApi.manifest);
+            } else if (action.startsWith("desktop-action-") && item?.desktopAction) {
+                if (item.desktopAction.command && item.desktopAction.command.length > 0) {
+                    Quickshell.execDetached(item.desktopAction.command);
+                } else if (item.desktopAction.execute) {
+                    item.desktopAction.execute();
+                }
+            }
+
+            clearContextSelection();
         }
     }
 
@@ -498,12 +564,11 @@ Item {
         id: backgroundMouseArea
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton | Qt.RightButton
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
+        hoverEnabled: false
 
         onClicked: mouse => {
             if (mouse.button === Qt.RightButton) {
-                PanelService.showContextMenu(contextMenu, root, root.screen);
+                root.openWidgetContextMenu(root);
                 mouse.accepted = true;
             }
         }
@@ -536,6 +601,7 @@ Item {
 
             width: contentExtent
             height: root.crossExtent
+            z: 0
 
             function delegateItemAt(index) {
                 for (let i = 0; i < rowLayout.children.length; i++) {

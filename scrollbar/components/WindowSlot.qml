@@ -260,8 +260,6 @@ Item {
 
         onPressed: mouse => {
             delegateRoot.hadDragDuringPress = false;
-            if (mouse.button === Qt.RightButton)
-                barRoot.selectedEntryKey = delegateRoot.modelData.entryKey;
         }
 
         onPositionChanged: {
@@ -281,7 +279,7 @@ Item {
             if (mouse.button === Qt.RightButton) {
                 TooltipService.hide();
                 barRoot.debugLog("Open context menu for " + delegateRoot.modelData.entryKey);
-                PanelService.showContextMenu(contextMenu, delegateRoot, barRoot.screen);
+                barRoot.openSlotContextMenu(delegateRoot, delegateRoot.modelData);
                 return;
             }
 

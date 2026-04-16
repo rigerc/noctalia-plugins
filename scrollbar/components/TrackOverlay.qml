@@ -7,6 +7,7 @@ Item {
     property var barRoot: null
 
     anchors.fill: parent
+    clip: false
     visible: (barRoot?.showTrackLine ?? false) || (barRoot?.showFocusLine ?? false)
 
     Rectangle {
