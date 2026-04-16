@@ -56,12 +56,9 @@
         "titleFontWeight": "default"
       },
       "edgeFade": {
-        "mode": "fade",
-        "fadeSize": 30,
-        "fadeOpacity": 100,
-        "borderColor": "outline",
-        "borderOpacity": 70,
-        "borderThickness": 1
+        "enabled": true,
+        "fadeSize": 48,
+        "fadeOpacity": 100
       },
       "background": {
         "color": "none",

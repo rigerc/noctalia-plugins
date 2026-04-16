@@ -38,20 +38,6 @@ ColumnLayout {
             name: QT_TR_NOOP("Bold")
         }
     }
-    readonly property var edgeCueModeModel: ListModel {
-        ListElement {
-            key: "fade"
-            name: QT_TR_NOOP("Fade")
-        }
-        ListElement {
-            key: "border"
-            name: QT_TR_NOOP("Border")
-        }
-        ListElement {
-            key: "off"
-            name: QT_TR_NOOP("Off")
-        }
-    }
     readonly property var defaultSettings: createSettingsSnapshot(defaults, ({}))
     property var editSettings: createSettingsSnapshot(pluginApi?.pluginSettings || ({}), defaults)
 
@@ -121,27 +107,28 @@ ColumnLayout {
                 "titleFontWeight": readSetting(primary, secondary, "title", "titleFontWeight", "titleFontWeight", "default")
             },
             "edgeFade": {
-                "mode": (() => {
+                "enabled": (() => {
+                    const configuredEnabled = readSetting(primary, secondary, "edgeFade", "enabled", "edgeFadeEnabled", undefined);
+                    if (configuredEnabled !== undefined)
+                        return configuredEnabled;
+
                     const configuredMode = readSetting(primary, secondary, "edgeFade", "mode", "edgeFadeMode", undefined);
                     if (configuredMode !== undefined)
-                        return configuredMode;
+                        return configuredMode !== "off";
 
                     const legacySize = readSetting(primary, secondary, "edgeFade", "size", "edgeFadeSize", undefined);
                     if (legacySize !== undefined)
-                        return legacySize > 0 ? "fade" : "off";
+                        return legacySize > 0;
 
-                    return "fade";
+                    return true;
                 })(),
                 "fadeSize": (() => {
                     const configuredFadeSize = readSetting(primary, secondary, "edgeFade", "fadeSize", "edgeFadeFadeSize", undefined);
                     if (configuredFadeSize !== undefined)
                         return configuredFadeSize;
-                    return readSetting(primary, secondary, "edgeFade", "size", "edgeFadeSize", 18);
+                    return readSetting(primary, secondary, "edgeFade", "size", "edgeFadeSize", 48);
                 })(),
-                "fadeOpacity": readSetting(primary, secondary, "edgeFade", "fadeOpacity", "edgeFadeOpacity", 100),
-                "borderColor": readSetting(primary, secondary, "edgeFade", "borderColor", "edgeFadeBorderColor", "outline"),
-                "borderOpacity": readSetting(primary, secondary, "edgeFade", "borderOpacity", "edgeFadeBorderOpacity", 70),
-                "borderThickness": readSetting(primary, secondary, "edgeFade", "borderThickness", "edgeFadeBorderThickness", 1)
+                "fadeOpacity": readSetting(primary, secondary, "edgeFade", "fadeOpacity", "edgeFadeOpacity", 100)
             },
             "background": {
                 "color": readSetting(primary, secondary, "background", "color", "backgroundColor", "none"),

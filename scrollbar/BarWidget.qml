@@ -87,22 +87,9 @@ Item {
     readonly property real slotCapsuleScale: Math.max(0.3, settingValue("layout", "slotCapsuleScale", "slotCapsuleScale", 1.0))
     readonly property bool showTitle: !isVertical && settingValue("title", "showTitle", "showTitle", true)
     readonly property real iconScale: settingValue("icons", "iconScale", "iconScale", 0.8)
-    readonly property string edgeCueMode: (() => {
-            const configuredMode = settingValue("edgeFade", "mode", "edgeFadeMode", undefined);
-            if (configuredMode !== undefined)
-                return configuredMode;
-
-            const legacySize = settingValue("edgeFade", "size", "edgeFadeSize", undefined);
-            if (legacySize !== undefined)
-                return legacySize > 0 ? "fade" : "off";
-
-            return "fade";
-        })()
-    readonly property real edgeFadeSize: Math.max(0, Math.round(settingValue("edgeFade", "fadeSize", "edgeFadeSize", 18) * Style.uiScaleRatio))
+    readonly property bool edgeFadeEnabled: settingValue("edgeFade", "enabled", "edgeFadeEnabled", true)
+    readonly property real edgeFadeSize: Math.max(0, Math.round(settingValue("edgeFade", "fadeSize", "edgeFadeSize", 48) * Style.uiScaleRatio))
     readonly property real edgeFadeOpacity: Math.max(0, Math.min(1, settingValue("edgeFade", "fadeOpacity", "edgeFadeOpacity", 100) / 100))
-    readonly property string edgeBorderColorKey: settingValue("edgeFade", "borderColor", "edgeFadeBorderColor", "outline")
-    readonly property real edgeBorderOpacity: Math.max(0, Math.min(1, settingValue("edgeFade", "borderOpacity", "edgeFadeBorderOpacity", 70) / 100))
-    readonly property int edgeBorderThickness: Math.max(1, Math.round(settingValue("edgeFade", "borderThickness", "edgeFadeBorderThickness", 1) * Style.uiScaleRatio))
     readonly property bool showTrackLine: settingValue("indicators", "showTrackLine", "showTrackLine", true)
     readonly property string trackThumbColorKey: settingValue("indicators", "trackThumbColor", "trackThumbColor", "primary")
     readonly property color trackThumbColor: Color.resolveColorKey(trackThumbColorKey)
@@ -156,7 +143,6 @@ Item {
     readonly property bool backgroundEnabled: backgroundColorKey !== "none" && backgroundOpacity > 0
     readonly property color backgroundBaseColor: backgroundColorKey !== "none" ? Color.resolveColorKey(backgroundColorKey) : "transparent"
     readonly property color backgroundColor: backgroundEnabled ? Qt.alpha(backgroundBaseColor, backgroundOpacity) : "transparent"
-    readonly property color edgeBorderColor: Qt.alpha(Color.resolveColorKey(edgeBorderColorKey), edgeBorderOpacity)
     readonly property color focusedFillColor: Color.resolveColorKey(focusedFillColorKey)
     readonly property color focusedBorderColor: Color.resolveColorKey(focusedBorderColorKey)
     readonly property color focusedTextColor: Color.resolveColorKey(focusedTextColorKey)
@@ -249,7 +235,7 @@ Item {
     readonly property real logicalOverflowRange: Math.max(0, logicalContentExtent - logicalViewportExtent)
     readonly property bool showLeadingFade: logicalScrollOffset > 0.5
     readonly property bool showTrailingFade: (logicalScrollOffset + logicalViewportExtent) < (logicalContentExtent - 0.5)
-    readonly property bool useEdgeFadeMask: edgeCueMode === "fade" && edgeFadeSize > 0 && (showLeadingFade || showTrailingFade)
+    readonly property bool useEdgeFadeMask: edgeFadeEnabled && edgeFadeSize > 0 && (showLeadingFade || showTrailingFade)
     readonly property real contentWidth: isVertical ? crossExtent : Math.max(crossExtent, viewportExtent)
     readonly property real contentHeight: isVertical ? Math.max(crossExtent, viewportExtent) : crossExtent
     readonly property color capsuleBaseColor: Style.capsuleColor
@@ -741,13 +727,13 @@ Item {
         y: Style.pixelAlignCenter(parent.height, height)
         width: root.contentWidth
         height: root.contentHeight
-        
+
         Item {
             anchors.fill: parent
-            layer.enabled: root.useEdgeFadeMask
+            layer.enabled: true
             layer.smooth: true
             layer.effect: MultiEffect {
-                maskEnabled: true
+                maskEnabled: root.useEdgeFadeMask
                 maskThresholdMin: 0.5
                 maskSpreadAtMin: 1.0
                 maskSource: fadeMask
@@ -774,7 +760,7 @@ Item {
                 Flickable {
                     id: flickable
                     anchors.fill: parent
-                    clip: false
+                    clip: true
                     interactive: false
                     boundsBehavior: Flickable.StopAtBounds
                     contentWidth: root.isVertical ? width : root.stripContentExtent
@@ -804,16 +790,6 @@ Item {
 
                 TrackOverlay {
                     barRoot: root
-                }
-
-                EdgeFadeOverlay {
-                    barRoot: root
-                    leading: true
-                }
-
-                EdgeFadeOverlay {
-                    barRoot: root
-                    leading: false
                 }
             }
         }

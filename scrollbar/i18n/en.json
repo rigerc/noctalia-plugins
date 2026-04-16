@@ -105,9 +105,9 @@
       "label": "Icon scale",
       "desc": "Scale the app icon inside each slot."
     },
-    "edgeCueMode": {
-      "label": "Edge cue style",
-      "desc": "Choose whether hidden content is marked with a gradual fade, a border line, or not at all."
+    "edgeFadeEnabled": {
+      "label": "Enable edge fade",
+      "desc": "Show a gradual fade at the edges when content overflows the visible area."
     },
     "edgeFadeSize": {
       "label": "Fade size",
@@ -116,18 +116,6 @@
     "edgeFadeOpacity": {
       "label": "Fade opacity",
       "desc": "Strength of the overflow fade into the widget background."
-    },
-    "edgeBorderColor": {
-      "label": "Border color",
-      "desc": "Color of the overflow border marker."
-    },
-    "edgeBorderOpacity": {
-      "label": "Border opacity",
-      "desc": "Opacity of the overflow border marker."
-    },
-    "edgeBorderThickness": {
-      "label": "Border thickness",
-      "desc": "Thickness of the overflow border marker."
     },
     "slotSpacingUnits": {
       "label": "Slot spacing",

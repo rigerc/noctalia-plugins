@@ -190,32 +190,31 @@ ColumnLayout {
     }
     NDivider {}
 
-    NComboBox {
+    NToggle {
         Layout.fillWidth: true
-        label: rootSettings?.pluginApi?.tr("settings.edgeCueMode.label")
-        description: rootSettings?.pluginApi?.tr("settings.edgeCueMode.desc")
-        model: rootSettings?.edgeCueModeModel
-        currentKey: rootSettings?.settingValue("edgeFade", "mode") ?? "fade"
-        defaultValue: rootSettings?.defaultValue("edgeFade", "mode") ?? "fade"
-        onSelected: key => rootSettings?.setSetting("edgeFade", "mode", key)
+        label: rootSettings?.pluginApi?.tr("settings.edgeFadeEnabled.label")
+        description: rootSettings?.pluginApi?.tr("settings.edgeFadeEnabled.desc")
+        checked: rootSettings?.settingValue("edgeFade", "enabled") ?? true
+        defaultValue: rootSettings?.defaultValue("edgeFade", "enabled") ?? true
+        onToggled: rootSettings?.setSetting("edgeFade", "enabled", checked)
     }
 
     NValueSlider {
-        visible: (rootSettings?.settingValue("edgeFade", "mode") ?? "fade") === "fade"
+        Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.edgeFadeSize.label")
         description: rootSettings?.pluginApi?.tr("settings.edgeFadeSize.desc")
         from: 0
-        to: 48
+        to: 96
         stepSize: 1
-        value: rootSettings?.settingValue("edgeFade", "fadeSize") ?? 18
+        value: rootSettings?.settingValue("edgeFade", "fadeSize") ?? 48
         text: Math.round(value) + " px"
-        defaultValue: rootSettings?.defaultValue("edgeFade", "fadeSize") ?? 18
+        defaultValue: rootSettings?.defaultValue("edgeFade", "fadeSize") ?? 48
         showReset: true
         onMoved: sliderValue => rootSettings?.setSetting("edgeFade", "fadeSize", Math.round(sliderValue))
     }
 
     NValueSlider {
-        visible: (rootSettings?.settingValue("edgeFade", "mode") ?? "fade") === "fade"
+        Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.edgeFadeOpacity.label")
         description: rootSettings?.pluginApi?.tr("settings.edgeFadeOpacity.desc")
         from: 0
@@ -226,42 +225,5 @@ ColumnLayout {
         defaultValue: rootSettings?.defaultValue("edgeFade", "fadeOpacity") ?? 100
         showReset: true
         onMoved: sliderValue => rootSettings?.setSetting("edgeFade", "fadeOpacity", Math.round(sliderValue))
-    }
-
-    NColorChoice {
-        visible: (rootSettings?.settingValue("edgeFade", "mode") ?? "fade") === "border"
-        Layout.fillWidth: true
-        label: rootSettings?.pluginApi?.tr("settings.edgeBorderColor.label")
-        description: rootSettings?.pluginApi?.tr("settings.edgeBorderColor.desc")
-        currentKey: rootSettings?.settingValue("edgeFade", "borderColor") ?? "outline"
-        onSelected: key => rootSettings?.setSetting("edgeFade", "borderColor", key)
-    }
-
-    NValueSlider {
-        visible: (rootSettings?.settingValue("edgeFade", "mode") ?? "fade") === "border"
-        label: rootSettings?.pluginApi?.tr("settings.edgeBorderOpacity.label")
-        description: rootSettings?.pluginApi?.tr("settings.edgeBorderOpacity.desc")
-        from: 0
-        to: 100
-        stepSize: 1
-        value: rootSettings?.settingValue("edgeFade", "borderOpacity") ?? 70
-        text: Math.round(value) + "%"
-        defaultValue: rootSettings?.defaultValue("edgeFade", "borderOpacity") ?? 70
-        showReset: true
-        onMoved: sliderValue => rootSettings?.setSetting("edgeFade", "borderOpacity", Math.round(sliderValue))
-    }
-
-    NValueSlider {
-        visible: (rootSettings?.settingValue("edgeFade", "mode") ?? "fade") === "border"
-        label: rootSettings?.pluginApi?.tr("settings.edgeBorderThickness.label")
-        description: rootSettings?.pluginApi?.tr("settings.edgeBorderThickness.desc")
-        from: 1
-        to: 6
-        stepSize: 1
-        value: rootSettings?.settingValue("edgeFade", "borderThickness") ?? 1
-        text: Math.round(value) + " px"
-        defaultValue: rootSettings?.defaultValue("edgeFade", "borderThickness") ?? 1
-        showReset: true
-        onMoved: sliderValue => rootSettings?.setSetting("edgeFade", "borderThickness", Math.round(sliderValue))
     }
 }
