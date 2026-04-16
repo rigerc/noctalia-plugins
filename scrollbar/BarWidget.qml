@@ -750,9 +750,7 @@ Item {
                 maskEnabled: true
                 maskThresholdMin: 0.5
                 maskSpreadAtMin: 1.0
-                maskSource: ShaderEffectSource {
-                    sourceItem: fadeMask
-                }
+                maskSource: fadeMask
             }
 
             Rectangle {
@@ -823,7 +821,8 @@ Item {
         Rectangle {
             id: fadeMask
             readonly property real maskExtent: root.isVertical ? height : width
-            readonly property real requestedNormalizedFade: maskExtent > 0 ? Math.min(0.49, root.edgeFadeSize / maskExtent) : 0
+            readonly property real viewportExtent: root.logicalViewportExtent
+            readonly property real requestedNormalizedFade: viewportExtent > 0 ? Math.min(0.49, root.edgeFadeSize / viewportExtent) : 0
             readonly property real normalizedLeadingFade: root.showLeadingFade ? requestedNormalizedFade : 0
             readonly property real normalizedTrailingFade: root.showTrailingFade ? requestedNormalizedFade : 0
             readonly property real normalizedTotalFade: normalizedLeadingFade + normalizedTrailingFade
@@ -837,7 +836,7 @@ Item {
             height: visualCapsule.height
             radius: visualCapsule.radius
             color: "white"
-            visible: root.useEdgeFadeMask
+            visible: true
             opacity: 0
             layer.enabled: true
             layer.smooth: true
