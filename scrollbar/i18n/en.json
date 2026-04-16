@@ -11,7 +11,13 @@
     "fontWeightNormal": "Normal",
     "fontWeightMedium": "Medium",
     "fontWeightSemibold": "Semibold",
-    "fontWeightBold": "Bold"
+    "fontWeightBold": "Bold",
+    "workspaceIndicatorId": "Workspace ID",
+    "workspaceIndicatorName": "Workspace name",
+    "workspaceIndicatorBefore": "Before strip",
+    "workspaceIndicatorAfter": "After strip",
+    "workspaceAnimationHorizontal": "Horizontal",
+    "workspaceAnimationVertical": "Vertical"
   },
   "settings": {
     "tabs": {
@@ -31,6 +37,10 @@
       "windowTitle": {
         "label": "Window Title",
         "desc": "Font and visibility for window titles inside slots."
+      },
+      "workspaceIndicator": {
+        "label": "Workspace Indicator",
+        "desc": "Show the active workspace outside the scrolling strip so it remains visible."
       },
       "edgeFade": {
         "label": "Edge Overflow Cue",
@@ -52,6 +62,10 @@
         "label": "Hovered Window",
         "desc": "Colors, borders, and animation when hovering a slot."
       },
+      "workspaceIndicatorColors": {
+        "label": "Workspace Indicator",
+        "desc": "Color styling for the external workspace label."
+      },
       "indicators": {
         "label": "Track & Focus Indicator",
         "desc": "The position track and focused-slot indicator line."
@@ -67,6 +81,10 @@
       "autoScroll": {
         "label": "Auto-Scroll",
         "desc": "How the strip reacts when focus changes."
+      },
+      "workspaceAnimation": {
+        "label": "Workspace Change Animation",
+        "desc": "Animate the whole widget when the active workspace changes."
       },
       "advanced": {
         "label": "Advanced",
@@ -100,6 +118,34 @@
     "showTitle": {
       "label": "Show titles",
       "desc": "Display truncated window titles next to icons on horizontal bars."
+    },
+    "workspaceIndicatorEnabled": {
+      "label": "Show workspace indicator",
+      "desc": "Render the active workspace label outside the strip so it stays readable even when content fades."
+    },
+    "workspaceIndicatorLabelMode": {
+      "label": "Workspace label mode",
+      "desc": "Choose whether the indicator shows the active workspace ID or workspace name."
+    },
+    "workspaceIndicatorPosition": {
+      "label": "Workspace indicator position",
+      "desc": "Place the indicator before or after the strip. On horizontal bars this maps to left or right; on vertical bars it maps to top or bottom."
+    },
+    "workspaceIndicatorFontFamily": {
+      "label": "Workspace font family",
+      "desc": "Font family used for the workspace indicator. Leave empty for the default fixed font."
+    },
+    "workspaceIndicatorFontSize": {
+      "label": "Workspace font size",
+      "desc": "Font size override for the workspace indicator in points. Set to 0 to use the bar default."
+    },
+    "workspaceIndicatorSpacing": {
+      "label": "Workspace spacing",
+      "desc": "Gap between the workspace indicator and the strip."
+    },
+    "workspaceIndicatorPadding": {
+      "label": "Workspace padding",
+      "desc": "Outer padding around the combined workspace indicator and strip layout."
     },
     "iconScale": {
       "label": "Icon scale",
@@ -156,6 +202,14 @@
     "centerAnimationMs": {
       "label": "Center animation",
       "desc": "Duration of the smooth scroll animation when centering the focused window."
+    },
+    "workspaceAnimationEnabled": {
+      "label": "Animate on workspace changes",
+      "desc": "Slide the whole widget when the active workspace changes."
+    },
+    "workspaceAnimationAxis": {
+      "label": "Workspace animation axis",
+      "desc": "Choose whether workspace-change animation slides horizontally or vertically."
     },
     "enableScrollWheel": {
       "label": "Scroll wheel panning",
@@ -296,6 +350,14 @@
     "backgroundOpacity": {
       "label": "Background opacity",
       "desc": "Opacity of the widget strip background."
+    },
+    "workspaceIndicatorTextColor": {
+      "label": "Workspace text color",
+      "desc": "Color used for the workspace indicator text."
+    },
+    "workspaceIndicatorOpacity": {
+      "label": "Workspace text opacity",
+      "desc": "Opacity used for the workspace indicator text."
     }
   }
 }

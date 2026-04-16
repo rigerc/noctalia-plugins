@@ -20,6 +20,7 @@ The bar is not manually scrollable — it only moves when focus changes, so its 
 - **Unfocused slots**: dim outlines, subordinate but countable
 - **Edge fades**: gradient masks at both ends signal overflow — a hard edge means you're at the boundary
 - **Track line**: thin accent bar showing your global position in the strip
+- **Workspace indicator**: optional active-workspace label rendered outside the strip so it remains visible past the fade
 
 ## Settings
 
@@ -30,6 +31,7 @@ The bar is not manually scrollable — it only moves when focus changes, so its 
 | Same output only | On | Only show windows on the current monitor |
 | Active workspaces only | On | Only show windows on active workspaces |
 | Enable reorder | On | Allow drag-to-reorder (Hyprland & Niri) |
+| Animate on workspace changes | Off | Slide the whole widget when the active workspace changes |
 | Debug logging | Off | Verbose log output |
 
 ### Layout
@@ -39,6 +41,7 @@ The bar is not manually scrollable — it only moves when focus changes, so its 
 | Max widget width | 40% | Maximum bar space the widget can occupy |
 | Slot width | 112 px | Fixed width per window slot |
 | Show title | On | Display window title in each slot |
+| Show workspace indicator | Off | Display the current workspace ID or name outside the strip |
 | Icon scale | 80% | App icon size relative to capsule |
 | Edge fade size | 18 px | Width of the gradient overflow fade |
 | Slot spacing | 1 unit | Gap between slots |
@@ -59,6 +62,7 @@ The bar is not manually scrollable — it only moves when focus changes, so its 
 | Inactive opacity | 45% | Overall dimming for unfocused slots |
 | Track opacity | 35% | Position track visibility |
 | Focused top line | On | Accent marker above the focused slot |
+| Workspace text color | Primary | Color of the external workspace label |
 
 ## Requirements
 

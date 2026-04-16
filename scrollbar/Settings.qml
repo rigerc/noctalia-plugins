@@ -38,6 +38,36 @@ ColumnLayout {
             name: QT_TR_NOOP("Bold")
         }
     }
+    readonly property var workspaceIndicatorLabelModeModel: [
+        {
+            "key": "id",
+            "name": pluginApi?.tr("options.workspaceIndicatorId")
+        },
+        {
+            "key": "name",
+            "name": pluginApi?.tr("options.workspaceIndicatorName")
+        }
+    ]
+    readonly property var workspaceIndicatorPositionModel: [
+        {
+            "key": "before",
+            "name": pluginApi?.tr("options.workspaceIndicatorBefore")
+        },
+        {
+            "key": "after",
+            "name": pluginApi?.tr("options.workspaceIndicatorAfter")
+        }
+    ]
+    readonly property var workspaceAnimationAxisModel: [
+        {
+            "key": "horizontal",
+            "name": pluginApi?.tr("options.workspaceAnimationHorizontal")
+        },
+        {
+            "key": "vertical",
+            "name": pluginApi?.tr("options.workspaceAnimationVertical")
+        }
+    ]
     readonly property var defaultSettings: createSettingsSnapshot(defaults, ({}))
     property var editSettings: createSettingsSnapshot(pluginApi?.pluginSettings || ({}), defaults)
 
@@ -106,6 +136,17 @@ ColumnLayout {
                 "titleFontSize": readSetting(primary, secondary, "title", "titleFontSize", "titleFontSize", 0),
                 "titleFontWeight": readSetting(primary, secondary, "title", "titleFontWeight", "titleFontWeight", "default")
             },
+            "workspaceIndicator": {
+                "enabled": readSetting(primary, secondary, "workspaceIndicator", "enabled", "workspaceIndicatorEnabled", false),
+                "labelMode": readSetting(primary, secondary, "workspaceIndicator", "labelMode", "workspaceIndicatorLabelMode", "id"),
+                "position": readSetting(primary, secondary, "workspaceIndicator", "position", "workspaceIndicatorPosition", "before"),
+                "spacing": readSetting(primary, secondary, "workspaceIndicator", "spacing", "workspaceIndicatorSpacing", 8),
+                "padding": readSetting(primary, secondary, "workspaceIndicator", "padding", "workspaceIndicatorPadding", 0),
+                "fontFamily": readSetting(primary, secondary, "workspaceIndicator", "fontFamily", "workspaceIndicatorFontFamily", ""),
+                "fontSize": readSetting(primary, secondary, "workspaceIndicator", "fontSize", "workspaceIndicatorFontSize", 0),
+                "textColor": readSetting(primary, secondary, "workspaceIndicator", "textColor", "workspaceIndicatorTextColor", "primary"),
+                "opacity": readSetting(primary, secondary, "workspaceIndicator", "opacity", "workspaceIndicatorOpacity", 100)
+            },
             "edgeFade": {
                 "enabled": (() => {
                     const configuredEnabled = readSetting(primary, secondary, "edgeFade", "enabled", "edgeFadeEnabled", undefined);
@@ -172,6 +213,10 @@ ColumnLayout {
                 "focusLineOpacity": readSetting(primary, secondary, "indicators", "focusLineOpacity", "focusLineOpacity", 96),
                 "focusLineThickness": readSetting(primary, secondary, "indicators", "focusLineThickness", "focusLineThickness", 2),
                 "focusLineAnimationMs": readSetting(primary, secondary, "indicators", "focusLineAnimationMs", "focusLineAnimationMs", 120)
+            },
+            "workspaceAnimation": {
+                "enabled": readSetting(primary, secondary, "workspaceAnimation", "enabled", "workspaceAnimationEnabled", false),
+                "axis": readSetting(primary, secondary, "workspaceAnimation", "axis", "workspaceAnimationAxis", "horizontal")
             }
         };
     }

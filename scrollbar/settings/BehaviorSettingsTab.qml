@@ -143,6 +143,32 @@ ColumnLayout {
 
     NHeader {
         Layout.fillWidth: true
+        label: rootSettings?.pluginApi?.tr("settings.section.workspaceAnimation.label")
+        description: rootSettings?.pluginApi?.tr("settings.section.workspaceAnimation.desc")
+    }
+    NDivider {}
+
+    NToggle {
+        Layout.fillWidth: true
+        label: rootSettings?.pluginApi?.tr("settings.workspaceAnimationEnabled.label")
+        description: rootSettings?.pluginApi?.tr("settings.workspaceAnimationEnabled.desc")
+        checked: rootSettings?.settingValue("workspaceAnimation", "enabled") ?? false
+        onToggled: checked => rootSettings?.setSetting("workspaceAnimation", "enabled", checked)
+        defaultValue: rootSettings?.defaultValue("workspaceAnimation", "enabled") ?? false
+    }
+
+    NComboBox {
+        Layout.fillWidth: true
+        label: rootSettings?.pluginApi?.tr("settings.workspaceAnimationAxis.label")
+        description: rootSettings?.pluginApi?.tr("settings.workspaceAnimationAxis.desc")
+        model: rootSettings?.workspaceAnimationAxisModel
+        currentKey: rootSettings?.settingValue("workspaceAnimation", "axis") ?? "horizontal"
+        defaultValue: rootSettings?.defaultValue("workspaceAnimation", "axis") ?? "horizontal"
+        onSelected: key => rootSettings?.setSetting("workspaceAnimation", "axis", key)
+    }
+
+    NHeader {
+        Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.section.advanced.label")
         description: rootSettings?.pluginApi?.tr("settings.section.advanced.desc")
     }

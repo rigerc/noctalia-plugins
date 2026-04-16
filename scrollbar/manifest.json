@@ -1,7 +1,7 @@
 {
   "id": "scrollbar",
   "name": "Scrollbar",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "minNoctaliaVersion": "4.6.6",
   "author": "rigerc",
   "license": "MIT",
@@ -55,6 +55,17 @@
         "titleFontSize": 0,
         "titleFontWeight": "default"
       },
+      "workspaceIndicator": {
+        "enabled": false,
+        "labelMode": "id",
+        "position": "before",
+        "spacing": 8,
+        "padding": 0,
+        "fontFamily": "",
+        "fontSize": 0,
+        "textColor": "primary",
+        "opacity": 100
+      },
       "edgeFade": {
         "enabled": true,
         "fadeSize": 48,
@@ -102,6 +113,10 @@
         "focusLineOpacity": 96,
         "focusLineThickness": 3,
         "focusLineAnimationMs": 400
+      },
+      "workspaceAnimation": {
+        "enabled": false,
+        "axis": "horizontal"
       }
     }
   }

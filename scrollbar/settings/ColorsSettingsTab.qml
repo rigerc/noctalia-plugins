@@ -296,6 +296,34 @@ ColumnLayout {
 
     NHeader {
         Layout.fillWidth: true
+        label: rootSettings?.pluginApi?.tr("settings.section.workspaceIndicatorColors.label")
+        description: rootSettings?.pluginApi?.tr("settings.section.workspaceIndicatorColors.desc")
+    }
+    NDivider {}
+
+    NColorChoice {
+        Layout.fillWidth: true
+        label: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorTextColor.label")
+        description: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorTextColor.desc")
+        currentKey: rootSettings?.settingValue("workspaceIndicator", "textColor") ?? "primary"
+        onSelected: key => rootSettings?.setSetting("workspaceIndicator", "textColor", key)
+    }
+
+    NValueSlider {
+        label: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorOpacity.label")
+        description: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorOpacity.desc")
+        from: 0
+        to: 100
+        stepSize: 1
+        value: rootSettings?.settingValue("workspaceIndicator", "opacity") ?? 100
+        text: Math.round(value) + "%"
+        defaultValue: rootSettings?.defaultValue("workspaceIndicator", "opacity") ?? 100
+        showReset: true
+        onMoved: sliderValue => rootSettings?.setSetting("workspaceIndicator", "opacity", Math.round(sliderValue))
+    }
+
+    NHeader {
+        Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.section.indicators.label")
         description: rootSettings?.pluginApi?.tr("settings.section.indicators.desc")
     }

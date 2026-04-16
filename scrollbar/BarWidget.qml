@@ -134,6 +134,17 @@ Item {
     readonly property string titleFontFamily: settingValue("title", "titleFontFamily", "titleFontFamily", "")
     readonly property int titleFontSize: Math.max(0, settingValue("title", "titleFontSize", "titleFontSize", 0))
     readonly property string titleFontWeightKey: settingValue("title", "titleFontWeight", "titleFontWeight", "default")
+    readonly property bool workspaceIndicatorEnabled: settingValue("workspaceIndicator", "enabled", "workspaceIndicatorEnabled", false)
+    readonly property string workspaceIndicatorLabelMode: settingValue("workspaceIndicator", "labelMode", "workspaceIndicatorLabelMode", "id")
+    readonly property string workspaceIndicatorPosition: settingValue("workspaceIndicator", "position", "workspaceIndicatorPosition", "before")
+    readonly property real workspaceIndicatorSpacing: Math.max(0, Math.round(settingValue("workspaceIndicator", "spacing", "workspaceIndicatorSpacing", 8) * Style.uiScaleRatio))
+    readonly property real workspaceIndicatorPadding: Math.max(0, Math.round(settingValue("workspaceIndicator", "padding", "workspaceIndicatorPadding", 0) * Style.uiScaleRatio))
+    readonly property string workspaceIndicatorFontFamily: settingValue("workspaceIndicator", "fontFamily", "workspaceIndicatorFontFamily", "")
+    readonly property int workspaceIndicatorFontSize: Math.max(0, settingValue("workspaceIndicator", "fontSize", "workspaceIndicatorFontSize", 0))
+    readonly property string workspaceIndicatorTextColorKey: settingValue("workspaceIndicator", "textColor", "workspaceIndicatorTextColor", "primary")
+    readonly property real workspaceIndicatorOpacity: Math.max(0, Math.min(1, settingValue("workspaceIndicator", "opacity", "workspaceIndicatorOpacity", 100) / 100))
+    readonly property bool workspaceAnimationEnabled: settingValue("workspaceAnimation", "enabled", "workspaceAnimationEnabled", false)
+    readonly property string workspaceAnimationAxis: settingValue("workspaceAnimation", "axis", "workspaceAnimationAxis", "horizontal")
     readonly property string iconTintColorKey: settingValue("icons", "iconTintColor", "iconTintColor", "none")
     readonly property real iconTintOpacity: Math.max(0, Math.min(1, settingValue("icons", "iconTintOpacity", "iconTintOpacity", 100) / 100))
     readonly property string backgroundColorKey: settingValue("background", "color", "backgroundColor", "none")
@@ -152,6 +163,7 @@ Item {
     readonly property color unfocusedFillColor: Color.resolveColorKey(unfocusedFillColorKey)
     readonly property color unfocusedBorderColor: Color.resolveColorKey(unfocusedBorderColorKey)
     readonly property color unfocusedTextColor: Color.resolveColorKey(unfocusedTextColorKey)
+    readonly property color workspaceIndicatorTextColor: Color.resolveColorKey(workspaceIndicatorTextColorKey)
 
     readonly property int titleFontWeightValue: {
         if (titleFontWeightKey === "light")
@@ -196,9 +208,45 @@ Item {
     readonly property string activeEntryKey: mainInstance?.activeEntryKey ?? ""
     readonly property int structureRevision: mainInstance?.structureRevision ?? 0
     readonly property int liveRevision: mainInstance?.liveRevision ?? 0
+    readonly property int workspaceRevision: mainInstance?.workspaceRevision ?? 0
     readonly property real logicalContentExtent: stripLoader.item?.logicalExtent ?? 0
     readonly property real stripContentExtent: stripLoader.item?.contentExtent ?? 0
     readonly property var flickableRef: flickable
+    readonly property var activeWorkspace: {
+        const revision = workspaceRevision;
+        return mainInstance?.resolveWorkspaceForScreen(screenName) ?? null;
+    }
+    readonly property string activeWorkspaceToken: mainInstance?.workspaceToken(activeWorkspace) ?? ""
+    readonly property string activeWorkspaceIdText: {
+        if (!activeWorkspace)
+            return "";
+        if (activeWorkspace.idx !== undefined && activeWorkspace.idx !== null && String(activeWorkspace.idx) !== "")
+            return String(activeWorkspace.idx);
+        if (activeWorkspace.id !== undefined && activeWorkspace.id !== null && String(activeWorkspace.id) !== "")
+            return String(activeWorkspace.id);
+        return "";
+    }
+    readonly property string activeWorkspaceNameText: String(activeWorkspace?.name || "").trim()
+    readonly property string workspaceIndicatorText: {
+        if (!activeWorkspace)
+            return "";
+        if (workspaceIndicatorLabelMode === "name")
+            return activeWorkspaceNameText || activeWorkspaceIdText;
+        return activeWorkspaceIdText;
+    }
+    readonly property bool showWorkspaceIndicator: workspaceIndicatorEnabled && workspaceIndicatorText !== ""
+    readonly property real workspaceIndicatorPointSize: workspaceIndicatorFontSize > 0 ? workspaceIndicatorFontSize : Math.max(Style.fontSizeXS, Math.round(barFontSize * 0.85))
+    readonly property bool indicatorBeforeStrip: workspaceIndicatorPosition !== "after"
+    readonly property string workspaceIndicatorFamily: workspaceIndicatorFontFamily || Settings.data.ui.fontFixed
+    readonly property real contentSpacing: showWorkspaceIndicator && hasWindow ? workspaceIndicatorSpacing : 0
+    readonly property bool hasContent: hasWindow || showWorkspaceIndicator
+    readonly property real stripImplicitWidth: hasWindow ? contentWidth : 0
+    readonly property real stripImplicitHeight: hasWindow ? contentHeight : 0
+    readonly property real layoutInnerWidth: isVertical ? Math.max(stripImplicitWidth, workspaceLabelMeasure.implicitWidth) : (stripImplicitWidth + (showWorkspaceIndicator ? workspaceLabelMeasure.implicitWidth + contentSpacing : 0))
+    readonly property real layoutInnerHeight: isVertical ? (stripImplicitHeight + (showWorkspaceIndicator ? workspaceLabelMeasure.implicitHeight + contentSpacing : 0)) : Math.max(stripImplicitHeight, workspaceLabelMeasure.implicitHeight)
+    readonly property real layoutImplicitWidth: layoutInnerWidth + workspaceIndicatorPadding * 2
+    readonly property real layoutImplicitHeight: layoutInnerHeight + workspaceIndicatorPadding * 2
+    readonly property real workspaceSlideDistance: Math.max(Style.marginXL, Math.round(barFontSize * 1.4))
 
     readonly property real maxWidgetExtent: {
         if (!screen || maxWidgetWidthPercent <= 0)
@@ -378,9 +426,9 @@ Item {
         PanelService.showContextMenu(contextMenu, root, root.screen, anchorItem ?? root);
     }
 
-    visible: hasWindow
-    implicitWidth: hasWindow ? contentWidth : 0
-    implicitHeight: hasWindow ? contentHeight : 0
+    visible: hasContent
+    implicitWidth: hasContent ? layoutImplicitWidth : 0
+    implicitHeight: hasContent ? layoutImplicitHeight : 0
 
     function filteredSignature(entries) {
         return (entries || []).map(function (entry) {
@@ -559,6 +607,23 @@ Item {
     onActiveEntryKeyChanged: {
         scheduleCenterActive(false);
     }
+    onActiveWorkspaceTokenChanged: {
+        if (!workspaceStateInitialized) {
+            previousWorkspaceToken = activeWorkspaceToken;
+            previousWorkspaceIndex = workspaceNumericIndex(activeWorkspace);
+            workspaceStateInitialized = true;
+            return;
+        }
+
+        if (activeWorkspaceToken === previousWorkspaceToken || activeWorkspaceToken === "")
+            return;
+
+        if (workspaceAnimationEnabled)
+            triggerWorkspaceSlide(activeWorkspace);
+
+        previousWorkspaceToken = activeWorkspaceToken;
+        previousWorkspaceIndex = workspaceNumericIndex(activeWorkspace);
+    }
     onStripContentExtentChanged: Qt.callLater(clampScrollPosition)
     onPaintOverflowInsetChanged: Qt.callLater(clampScrollPosition)
     onContentWidthChanged: Qt.callLater(clampScrollPosition)
@@ -568,6 +633,42 @@ Item {
 
     Component.onCompleted: {
         rebuildCombinedModel("init");
+        previousWorkspaceToken = activeWorkspaceToken;
+        previousWorkspaceIndex = workspaceNumericIndex(activeWorkspace);
+        workspaceStateInitialized = true;
+    }
+
+    property real workspaceSlideOffset: 0
+    property string previousWorkspaceToken: ""
+    property real previousWorkspaceIndex: NaN
+    property bool workspaceStateInitialized: false
+    property bool workspaceSlideBackAnimationActive: false
+
+    Behavior on workspaceSlideOffset {
+        enabled: workspaceSlideBackAnimationActive
+        NumberAnimation {
+            duration: 180
+            easing.type: Easing.OutCubic
+        }
+    }
+
+    function workspaceNumericIndex(workspace) {
+        const numericIndex = Number(workspace?.idx);
+        return Number.isFinite(numericIndex) ? numericIndex : NaN;
+    }
+
+    function triggerWorkspaceSlide(workspace) {
+        const nextIndex = workspaceNumericIndex(workspace);
+        let direction = 1;
+
+        if (Number.isFinite(previousWorkspaceIndex) && Number.isFinite(nextIndex) && nextIndex !== previousWorkspaceIndex)
+            direction = nextIndex > previousWorkspaceIndex ? 1 : -1;
+
+        workspaceSlideResetTimer.stop();
+        workspaceSlideCleanupTimer.stop();
+        workspaceSlideBackAnimationActive = false;
+        workspaceSlideOffset = direction * workspaceSlideDistance;
+        workspaceSlideResetTimer.restart();
     }
 
     Timer {
@@ -577,6 +678,26 @@ Item {
         onTriggered: {
             if (root.activeEntryKey)
                 root.centerEntryAt(root.indexOfEntry(root.activeEntryKey));
+        }
+    }
+
+    Timer {
+        id: workspaceSlideResetTimer
+        interval: 1
+        repeat: false
+        onTriggered: {
+            root.workspaceSlideBackAnimationActive = true;
+            root.workspaceSlideOffset = 0;
+            workspaceSlideCleanupTimer.restart();
+        }
+    }
+
+    Timer {
+        id: workspaceSlideCleanupTimer
+        interval: 220
+        repeat: false
+        onTriggered: {
+            root.workspaceSlideBackAnimationActive = false;
         }
     }
 
@@ -721,130 +842,184 @@ Item {
         }
     }
 
+    NText {
+        id: workspaceLabelMeasure
+        visible: false
+        text: root.workspaceIndicatorText
+        family: root.workspaceIndicatorFamily
+        pointSize: root.workspaceIndicatorPointSize
+    }
+
     Item {
-        id: visualCapsule
+        id: widgetContent
         x: Style.pixelAlignCenter(parent.width, width)
         y: Style.pixelAlignCenter(parent.height, height)
-        width: root.contentWidth
-        height: root.contentHeight
+        width: root.layoutImplicitWidth
+        height: root.layoutImplicitHeight
+        z: 1
+
+        transform: Translate {
+            x: root.workspaceAnimationEnabled && root.workspaceAnimationAxis === "horizontal" ? root.workspaceSlideOffset : 0
+            y: root.workspaceAnimationEnabled && root.workspaceAnimationAxis === "vertical" ? root.workspaceSlideOffset : 0
+        }
+
+        NText {
+            id: leadingWorkspaceLabel
+            visible: root.showWorkspaceIndicator && root.indicatorBeforeStrip
+            text: root.workspaceIndicatorText
+            color: root.workspaceIndicatorTextColor
+            opacity: root.workspaceIndicatorOpacity
+            family: root.workspaceIndicatorFamily
+            pointSize: root.workspaceIndicatorPointSize
+            z: 20
+            x: root.isVertical ? Style.pixelAlignCenter(widgetContent.width, width) : root.workspaceIndicatorPadding
+            y: root.isVertical ? root.workspaceIndicatorPadding : Style.pixelAlignCenter(widgetContent.height, height)
+        }
 
         Item {
-            anchors.fill: parent
-            layer.enabled: true
-            layer.smooth: true
-            layer.effect: MultiEffect {
-                maskEnabled: root.useEdgeFadeMask
-                maskThresholdMin: 0.5
-                maskSpreadAtMin: 1.0
-                maskSource: fadeMask
-            }
-
-            Rectangle {
-                anchors.fill: parent
-                color: root.capsuleBaseColor
-                radius: Style.radiusL * root.radiusScale
-                border.color: Style.capsuleBorderColor
-                border.width: Style.capsuleBorderWidth
-            }
-
-            Rectangle {
-                visible: root.backgroundEnabled
-                anchors.fill: parent
-                color: root.backgroundColor
-                radius: Style.radiusL * root.radiusScale
-            }
+            id: stripContainer
+            visible: root.hasWindow
+            width: root.stripImplicitWidth
+            height: root.stripImplicitHeight
+            x: root.isVertical ? Style.pixelAlignCenter(widgetContent.width, width) : (root.showWorkspaceIndicator && root.indicatorBeforeStrip ? root.workspaceIndicatorPadding + workspaceLabelMeasure.implicitWidth + root.contentSpacing : root.workspaceIndicatorPadding)
+            y: root.isVertical ? (root.showWorkspaceIndicator && root.indicatorBeforeStrip ? root.workspaceIndicatorPadding + workspaceLabelMeasure.implicitHeight + root.contentSpacing : root.workspaceIndicatorPadding) : Style.pixelAlignCenter(widgetContent.height, height)
 
             Item {
+                id: visualCapsule
                 anchors.fill: parent
 
-                Flickable {
-                    id: flickable
+                Item {
                     anchors.fill: parent
-                    clip: true
-                    interactive: false
-                    boundsBehavior: Flickable.StopAtBounds
-                    contentWidth: root.isVertical ? width : root.stripContentExtent
-                    contentHeight: root.isVertical ? root.stripContentExtent : height
-
-                    Behavior on contentX {
-                        enabled: root.centerAnimationMs > 0
-                        NumberAnimation {
-                            duration: root.centerAnimationMs
-                            easing.type: Easing.OutCubic
-                        }
+                    layer.enabled: true
+                    layer.smooth: true
+                    layer.effect: MultiEffect {
+                        maskEnabled: root.useEdgeFadeMask
+                        maskThresholdMin: 0.5
+                        maskSpreadAtMin: 1.0
+                        maskSource: fadeMask
                     }
 
-                    Behavior on contentY {
-                        enabled: root.centerAnimationMs > 0
-                        NumberAnimation {
-                            duration: root.centerAnimationMs
-                            easing.type: Easing.OutCubic
-                        }
+                    Rectangle {
+                        anchors.fill: parent
+                        color: root.capsuleBaseColor
+                        radius: Style.radiusL * root.radiusScale
+                        border.color: Style.capsuleBorderColor
+                        border.width: Style.capsuleBorderWidth
                     }
 
-                    Loader {
-                        id: stripLoader
-                        sourceComponent: root.isVertical ? verticalStripComponent : horizontalStripComponent
+                    Rectangle {
+                        visible: root.backgroundEnabled
+                        anchors.fill: parent
+                        color: root.backgroundColor
+                        radius: Style.radiusL * root.radiusScale
+                    }
+
+                    Item {
+                        anchors.fill: parent
+
+                        Flickable {
+                            id: flickable
+                            anchors.fill: parent
+                            clip: true
+                            interactive: false
+                            boundsBehavior: Flickable.StopAtBounds
+                            contentWidth: root.isVertical ? width : root.stripContentExtent
+                            contentHeight: root.isVertical ? root.stripContentExtent : height
+
+                            Behavior on contentX {
+                                enabled: root.centerAnimationMs > 0
+                                NumberAnimation {
+                                    duration: root.centerAnimationMs
+                                    easing.type: Easing.OutCubic
+                                }
+                            }
+
+                            Behavior on contentY {
+                                enabled: root.centerAnimationMs > 0
+                                NumberAnimation {
+                                    duration: root.centerAnimationMs
+                                    easing.type: Easing.OutCubic
+                                }
+                            }
+
+                            Loader {
+                                id: stripLoader
+                                sourceComponent: root.isVertical ? verticalStripComponent : horizontalStripComponent
+                            }
+                        }
+
+                        TrackOverlay {
+                            barRoot: root
+                        }
                     }
                 }
 
-                TrackOverlay {
-                    barRoot: root
+                Rectangle {
+                    id: fadeMask
+                    readonly property real maskExtent: root.isVertical ? height : width
+                    readonly property real viewportExtent: root.logicalViewportExtent
+                    readonly property real requestedNormalizedFade: viewportExtent > 0 ? Math.min(0.49, root.edgeFadeSize / viewportExtent) : 0
+                    readonly property real normalizedLeadingFade: root.showLeadingFade ? requestedNormalizedFade : 0
+                    readonly property real normalizedTrailingFade: root.showTrailingFade ? requestedNormalizedFade : 0
+                    readonly property real normalizedTotalFade: normalizedLeadingFade + normalizedTrailingFade
+                    readonly property real fadeScale: normalizedTotalFade > 0.98 ? (0.98 / normalizedTotalFade) : 1.0
+                    readonly property real leadingFadeExtent: normalizedLeadingFade * fadeScale
+                    readonly property real trailingFadeExtent: normalizedTrailingFade * fadeScale
+                    readonly property real leadingFadeMidpoint: leadingFadeExtent * 0.4
+                    readonly property real trailingFadeMidpoint: 1.0 - trailingFadeExtent * 0.4
+
+                    width: parent.width
+                    height: parent.height
+                    radius: Style.radiusL * root.radiusScale
+                    color: "white"
+                    visible: true
+                    opacity: 0
+                    layer.enabled: true
+                    layer.smooth: true
+
+                    gradient: Gradient {
+                        orientation: root.isVertical ? Gradient.Vertical : Gradient.Horizontal
+
+                        GradientStop {
+                            position: 0.0
+                            color: root.showLeadingFade ? "transparent" : "white"
+                        }
+                        GradientStop {
+                            position: fadeMask.leadingFadeMidpoint
+                            color: root.showLeadingFade ? Qt.rgba(1, 1, 1, root.edgeFadeOpacityRatio) : "white"
+                        }
+                        GradientStop {
+                            position: fadeMask.leadingFadeExtent
+                            color: "white"
+                        }
+                        GradientStop {
+                            position: 1.0 - fadeMask.trailingFadeExtent
+                            color: "white"
+                        }
+                        GradientStop {
+                            position: fadeMask.trailingFadeMidpoint
+                            color: root.showTrailingFade ? Qt.rgba(1, 1, 1, root.edgeFadeOpacityRatio) : "white"
+                        }
+                        GradientStop {
+                            position: 1.0
+                            color: root.showTrailingFade ? "transparent" : "white"
+                        }
+                    }
                 }
             }
         }
 
-        Rectangle {
-            id: fadeMask
-            readonly property real maskExtent: root.isVertical ? height : width
-            readonly property real viewportExtent: root.logicalViewportExtent
-            readonly property real requestedNormalizedFade: viewportExtent > 0 ? Math.min(0.49, root.edgeFadeSize / viewportExtent) : 0
-            readonly property real normalizedLeadingFade: root.showLeadingFade ? requestedNormalizedFade : 0
-            readonly property real normalizedTrailingFade: root.showTrailingFade ? requestedNormalizedFade : 0
-            readonly property real normalizedTotalFade: normalizedLeadingFade + normalizedTrailingFade
-            readonly property real fadeScale: normalizedTotalFade > 0.98 ? (0.98 / normalizedTotalFade) : 1.0
-            readonly property real leadingFadeExtent: normalizedLeadingFade * fadeScale
-            readonly property real trailingFadeExtent: normalizedTrailingFade * fadeScale
-            readonly property real leadingFadeMidpoint: leadingFadeExtent * 0.4
-            readonly property real trailingFadeMidpoint: 1.0 - trailingFadeExtent * 0.4
-
-            width: visualCapsule.width
-            height: visualCapsule.height
-            radius: visualCapsule.radius
-            color: "white"
-            visible: true
-            opacity: 0
-            layer.enabled: true
-            layer.smooth: true
-
-            gradient: Gradient {
-                orientation: root.isVertical ? Gradient.Vertical : Gradient.Horizontal
-
-                GradientStop {
-                    position: 0.0
-                    color: root.showLeadingFade ? "transparent" : "white"
-                }
-                GradientStop {
-                    position: fadeMask.leadingFadeMidpoint
-                    color: root.showLeadingFade ? Qt.rgba(1, 1, 1, root.edgeFadeOpacityRatio) : "white"
-                }
-                GradientStop {
-                    position: fadeMask.leadingFadeExtent
-                    color: "white"
-                }
-                GradientStop {
-                    position: 1.0 - fadeMask.trailingFadeExtent
-                    color: "white"
-                }
-                GradientStop {
-                    position: fadeMask.trailingFadeMidpoint
-                    color: root.showTrailingFade ? Qt.rgba(1, 1, 1, root.edgeFadeOpacityRatio) : "white"
-                }
-                GradientStop {
-                    position: 1.0
-                    color: root.showTrailingFade ? "transparent" : "white"
-                }
-            }
+        NText {
+            id: trailingWorkspaceLabel
+            visible: root.showWorkspaceIndicator && !root.indicatorBeforeStrip
+            text: root.workspaceIndicatorText
+            color: root.workspaceIndicatorTextColor
+            opacity: root.workspaceIndicatorOpacity
+            family: root.workspaceIndicatorFamily
+            pointSize: root.workspaceIndicatorPointSize
+            z: 20
+            x: root.isVertical ? Style.pixelAlignCenter(widgetContent.width, width) : (root.hasWindow ? stripContainer.x + stripContainer.width + root.contentSpacing : root.workspaceIndicatorPadding)
+            y: root.isVertical ? (root.hasWindow ? stripContainer.y + stripContainer.height + root.contentSpacing : root.workspaceIndicatorPadding) : Style.pixelAlignCenter(widgetContent.height, height)
         }
     }
 }

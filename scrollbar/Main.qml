@@ -54,12 +54,15 @@ Item {
     property var allEntries: []
     property var liveEntriesByKey: ({})
     property string activeEntryKey: ""
+    property var compositorWorkspaces: []
     property int structureRevision: 0
     property int liveRevision: 0
+    property int workspaceRevision: 0
 
     property bool pendingStructuralRefresh: false
     property string lastStructureSignature: ""
     property string lastTitleSignature: ""
+    property string lastWorkspaceSignature: ""
     property var pendingLiveEntriesByKey: null
 
     function debugLog(message) {
@@ -127,6 +130,43 @@ Item {
         return windows;
     }
 
+    function collectWorkspaces() {
+        const workspaces = [];
+
+        try {
+            const total = CompositorService.workspaces?.count || 0;
+            for (let i = 0; i < total; i++) {
+                const workspace = CompositorService.workspaces.get(i);
+                if (workspace)
+                    workspaces.push(workspace);
+            }
+        } catch (error) {
+        }
+
+        return workspaces;
+    }
+
+    function workspaceOutputMatches(workspace, screenName) {
+        if (!workspace)
+            return false;
+        if (CompositorService.globalWorkspaces)
+            return true;
+        if (!screenName)
+            return true;
+        return String(workspace.output || "").toLowerCase() === String(screenName).toLowerCase();
+    }
+
+    function cloneWorkspaceData(workspace) {
+        return {
+            "id": workspace?.id,
+            "idx": workspace?.idx,
+            "name": workspace?.name || "",
+            "output": workspace?.output || "",
+            "isFocused": workspace?.isFocused === true,
+            "isActive": workspace?.isActive === true
+        };
+    }
+
     function buildStructuralEntries(windows) {
         return (windows || []).map(function (window) {
             return {
@@ -175,6 +215,12 @@ Item {
         }).join("||");
     }
 
+    function getWorkspaceSignature(workspaces) {
+        return (workspaces || []).map(function (workspace) {
+            return String(workspace.id ?? "") + "|" + String(workspace.idx ?? "") + "|" + String(workspace.name ?? "") + "|" + String(workspace.output ?? "") + "|" + String(workspace.isFocused === true) + "|" + String(workspace.isActive === true);
+        }).join("||");
+    }
+
     function getFocusedEntryKey(entries) {
         const source = entries || ({});
         for (const entryKey in source) {
@@ -199,6 +245,65 @@ Item {
         debugLog("applyLiveEntries(" + (reason || "unknown") + "): focus=" + activeEntryKey + " windows=" + allEntries.length);
     }
 
+    function refreshWorkspaceSnapshot(reason) {
+        const nextWorkspaces = collectWorkspaces().map(cloneWorkspaceData);
+        const nextWorkspaceSignature = getWorkspaceSignature(nextWorkspaces);
+
+        if (nextWorkspaceSignature === lastWorkspaceSignature)
+            return;
+
+        compositorWorkspaces = nextWorkspaces;
+        lastWorkspaceSignature = nextWorkspaceSignature;
+        workspaceRevision += 1;
+        debugLog("refreshWorkspaceSnapshot(" + (reason || "unknown") + "): workspaces=" + compositorWorkspaces.length);
+    }
+
+    function workspaceToken(workspace) {
+        if (!workspace)
+            return "";
+
+        if (workspace.id !== undefined && workspace.id !== null && String(workspace.id) !== "")
+            return String(workspace.id);
+        if (workspace.idx !== undefined && workspace.idx !== null && String(workspace.idx) !== "")
+            return String(workspace.idx);
+        if (workspace.name)
+            return String(workspace.name);
+        return "";
+    }
+
+    function resolveWorkspaceForScreen(screenName) {
+        const normalizedScreenName = String(screenName || "").toLowerCase();
+        const matchingWorkspaces = compositorWorkspaces.filter(function (workspace) {
+            return workspaceOutputMatches(workspace, normalizedScreenName);
+        });
+
+        for (let i = 0; i < matchingWorkspaces.length; i++) {
+            if (matchingWorkspaces[i].isFocused)
+                return matchingWorkspaces[i];
+        }
+
+        for (let i = 0; i < matchingWorkspaces.length; i++) {
+            if (matchingWorkspaces[i].isActive)
+                return matchingWorkspaces[i];
+        }
+
+        for (let i = 0; i < compositorWorkspaces.length; i++) {
+            if (compositorWorkspaces[i].isFocused)
+                return compositorWorkspaces[i];
+        }
+
+        for (let i = 0; i < compositorWorkspaces.length; i++) {
+            if (compositorWorkspaces[i].isActive)
+                return compositorWorkspaces[i];
+        }
+
+        if (matchingWorkspaces.length > 0)
+            return matchingWorkspaces[0];
+        if (compositorWorkspaces.length > 0)
+            return compositorWorkspaces[0];
+        return null;
+    }
+
     function flushPendingTitleUpdates(reason) {
         if (!pendingLiveEntriesByKey)
             return;
@@ -210,6 +315,8 @@ Item {
     }
 
     function updateSnapshots(reason, forceStructural) {
+        refreshWorkspaceSnapshot(reason);
+
         const windows = collectWindows();
         const nextEntries = buildStructuralEntries(windows);
         const nextStructureSignature = getStructureSignature(nextEntries);
@@ -373,6 +480,7 @@ Item {
 
     Component.onCompleted: {
         Qt.callLater(function () {
+            refreshWorkspaceSnapshot("init");
             updateSnapshots("init", true);
         });
     }

@@ -185,6 +185,91 @@ ColumnLayout {
 
     NHeader {
         Layout.fillWidth: true
+        label: rootSettings?.pluginApi?.tr("settings.section.workspaceIndicator.label")
+        description: rootSettings?.pluginApi?.tr("settings.section.workspaceIndicator.desc")
+    }
+    NDivider {}
+
+    NToggle {
+        Layout.fillWidth: true
+        label: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorEnabled.label")
+        description: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorEnabled.desc")
+        checked: rootSettings?.settingValue("workspaceIndicator", "enabled") ?? false
+        onToggled: checked => rootSettings?.setSetting("workspaceIndicator", "enabled", checked)
+        defaultValue: rootSettings?.defaultValue("workspaceIndicator", "enabled") ?? false
+    }
+
+    NComboBox {
+        Layout.fillWidth: true
+        label: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorLabelMode.label")
+        description: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorLabelMode.desc")
+        model: rootSettings?.workspaceIndicatorLabelModeModel
+        currentKey: rootSettings?.settingValue("workspaceIndicator", "labelMode") ?? "id"
+        defaultValue: rootSettings?.defaultValue("workspaceIndicator", "labelMode") ?? "id"
+        onSelected: key => rootSettings?.setSetting("workspaceIndicator", "labelMode", key)
+    }
+
+    NComboBox {
+        Layout.fillWidth: true
+        label: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorPosition.label")
+        description: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorPosition.desc")
+        model: rootSettings?.workspaceIndicatorPositionModel
+        currentKey: rootSettings?.settingValue("workspaceIndicator", "position") ?? "before"
+        defaultValue: rootSettings?.defaultValue("workspaceIndicator", "position") ?? "before"
+        onSelected: key => rootSettings?.setSetting("workspaceIndicator", "position", key)
+    }
+
+    NSearchableComboBox {
+        Layout.fillWidth: true
+        label: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorFontFamily.label")
+        description: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorFontFamily.desc")
+        model: FontService.availableFonts
+        currentKey: rootSettings?.settingValue("workspaceIndicator", "fontFamily") ?? ""
+        defaultValue: rootSettings?.defaultValue("workspaceIndicator", "fontFamily") ?? ""
+        onSelected: key => rootSettings?.setSetting("workspaceIndicator", "fontFamily", key)
+    }
+
+    NValueSlider {
+        label: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorFontSize.label")
+        description: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorFontSize.desc")
+        from: 0
+        to: 24
+        stepSize: 1
+        value: rootSettings?.settingValue("workspaceIndicator", "fontSize") ?? 0
+        text: value === 0 ? rootSettings?.pluginApi?.tr("common.auto") : (Math.round(value) + " pt")
+        defaultValue: rootSettings?.defaultValue("workspaceIndicator", "fontSize") ?? 0
+        showReset: true
+        onMoved: sliderValue => rootSettings?.setSetting("workspaceIndicator", "fontSize", Math.round(sliderValue))
+    }
+
+    NValueSlider {
+        label: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorSpacing.label")
+        description: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorSpacing.desc")
+        from: 0
+        to: 32
+        stepSize: 1
+        value: rootSettings?.settingValue("workspaceIndicator", "spacing") ?? 8
+        text: Math.round(value) + " px"
+        defaultValue: rootSettings?.defaultValue("workspaceIndicator", "spacing") ?? 8
+        showReset: true
+        onMoved: sliderValue => rootSettings?.setSetting("workspaceIndicator", "spacing", Math.round(sliderValue))
+    }
+
+    NValueSlider {
+        label: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorPadding.label")
+        description: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorPadding.desc")
+        from: 0
+        to: 24
+        stepSize: 1
+        value: rootSettings?.settingValue("workspaceIndicator", "padding") ?? 0
+        text: Math.round(value) + " px"
+        defaultValue: rootSettings?.defaultValue("workspaceIndicator", "padding") ?? 0
+        showReset: true
+        onMoved: sliderValue => rootSettings?.setSetting("workspaceIndicator", "padding", Math.round(sliderValue))
+    }
+
+    NHeader {
+        Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.section.edgeFade.label")
         description: rootSettings?.pluginApi?.tr("settings.section.edgeFade.desc")
     }
