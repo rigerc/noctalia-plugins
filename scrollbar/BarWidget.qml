@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Effects
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Widgets
@@ -128,7 +129,6 @@ Item {
     readonly property bool backgroundEnabled: backgroundColorKey !== "none" && backgroundOpacity > 0
     readonly property color backgroundBaseColor: backgroundColorKey !== "none" ? Color.resolveColorKey(backgroundColorKey) : "transparent"
     readonly property color backgroundColor: backgroundEnabled ? Qt.alpha(backgroundBaseColor, backgroundOpacity) : "transparent"
-    readonly property color fadeBaseColor: Color.mSurface
     readonly property color edgeBorderColor: Qt.alpha(Color.resolveColorKey(edgeBorderColorKey), edgeBorderOpacity)
     readonly property color focusedFillColor: Color.resolveColorKey(focusedFillColorKey)
     readonly property color focusedBorderColor: Color.resolveColorKey(focusedBorderColorKey)
@@ -203,6 +203,7 @@ Item {
     readonly property bool hasWindow: combinedModel.length > 0
     readonly property bool showLeadingFade: isVertical ? flickable.contentY > 0.5 : flickable.contentX > 0.5
     readonly property bool showTrailingFade: isVertical ? (flickable.contentY + flickable.height) < (flickable.contentHeight - 0.5) : (flickable.contentX + flickable.width) < (flickable.contentWidth - 0.5)
+    readonly property bool useEdgeFadeMask: edgeCueMode === "fade" && edgeFadeSize > 0 && (showLeadingFade || showTrailingFade)
     readonly property real contentWidth: isVertical ? crossExtent : Math.max(crossExtent, viewportExtent)
     readonly property real contentHeight: isVertical ? Math.max(crossExtent, viewportExtent) : crossExtent
     readonly property color capsuleBaseColor: Style.capsuleColor
@@ -231,6 +232,7 @@ Item {
             return (viewX + animatedIndicatorLength) > 0 && viewX < flickable.width;
         }
     }
+    readonly property real edgeFadeOpacityRatio: Math.max(0, Math.min(1, edgeFadeOpacity))
 
     onFocusedIndicatorOffsetChanged: animatedIndicatorOffset = focusedIndicatorOffset
     onFocusedIndicatorLengthChanged: animatedIndicatorLength = focusedIndicatorLength
@@ -689,6 +691,12 @@ Item {
         y: Style.pixelAlignCenter(parent.height, height)
         width: root.contentWidth
         height: root.contentHeight
+        layer.enabled: root.useEdgeFadeMask
+        layer.smooth: true
+        layer.effect: MultiEffect {
+            maskEnabled: true
+            maskSource: fadeMask
+        }
         color: root.capsuleBaseColor
         radius: Style.radiusL * root.radiusScale
         border.color: Style.capsuleBorderColor
@@ -748,6 +756,58 @@ Item {
             EdgeFadeOverlay {
                 barRoot: root
                 leading: false
+            }
+        }
+
+        Rectangle {
+            id: fadeMask
+            readonly property real maskExtent: root.isVertical ? height : width
+            readonly property real requestedNormalizedFade: maskExtent > 0 ? Math.min(0.49, root.edgeFadeSize / maskExtent) : 0
+            readonly property real normalizedLeadingFade: root.showLeadingFade ? requestedNormalizedFade : 0
+            readonly property real normalizedTrailingFade: root.showTrailingFade ? requestedNormalizedFade : 0
+            readonly property real normalizedTotalFade: normalizedLeadingFade + normalizedTrailingFade
+            readonly property real fadeScale: normalizedTotalFade > 0.98 ? (0.98 / normalizedTotalFade) : 1.0
+            readonly property real leadingFadeExtent: normalizedLeadingFade * fadeScale
+            readonly property real trailingFadeExtent: normalizedTrailingFade * fadeScale
+            readonly property real leadingFadeMidpoint: leadingFadeExtent * 0.4
+            readonly property real trailingFadeMidpoint: 1.0 - trailingFadeExtent * 0.4
+
+            width: visualCapsule.width
+            height: visualCapsule.height
+            radius: visualCapsule.radius
+            color: "white"
+            visible: root.useEdgeFadeMask
+            opacity: 0
+            layer.enabled: true
+            layer.smooth: true
+
+            gradient: Gradient {
+                orientation: root.isVertical ? Gradient.Vertical : Gradient.Horizontal
+
+                GradientStop {
+                    position: 0.0
+                    color: root.showLeadingFade ? "transparent" : "white"
+                }
+                GradientStop {
+                    position: fadeMask.leadingFadeMidpoint
+                    color: root.showLeadingFade ? Qt.rgba(1, 1, 1, root.edgeFadeOpacityRatio) : "white"
+                }
+                GradientStop {
+                    position: fadeMask.leadingFadeExtent
+                    color: "white"
+                }
+                GradientStop {
+                    position: 1.0 - fadeMask.trailingFadeExtent
+                    color: "white"
+                }
+                GradientStop {
+                    position: fadeMask.trailingFadeMidpoint
+                    color: root.showTrailingFade ? Qt.rgba(1, 1, 1, root.edgeFadeOpacityRatio) : "white"
+                }
+                GradientStop {
+                    position: 1.0
+                    color: root.showTrailingFade ? "transparent" : "white"
+                }
             }
         }
     }
