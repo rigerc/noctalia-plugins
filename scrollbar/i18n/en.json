@@ -2,6 +2,17 @@
   "menu": {
     "settings": "Widget settings"
   },
+  "common": {
+    "auto": "Auto"
+  },
+  "options": {
+    "fontWeightDefault": "Default",
+    "fontWeightLight": "Light",
+    "fontWeightNormal": "Normal",
+    "fontWeightMedium": "Medium",
+    "fontWeightSemibold": "Semibold",
+    "fontWeightBold": "Bold"
+  },
   "settings": {
     "tabs": {
       "layout": "Layout",

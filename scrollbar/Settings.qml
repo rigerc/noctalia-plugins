@@ -2,8 +2,8 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Commons
-import qs.Services.System
 import qs.Widgets
+import "./settings"
 
 ColumnLayout {
     id: root
@@ -13,178 +13,175 @@ ColumnLayout {
     property var defaults: pluginApi?.manifest?.metadata?.defaultSettings || ({})
     property real preferredWidth: 720 * Style.uiScaleRatio
 
-    // Filtering
-    property bool valueOnlySameOutput: cfg.onlySameOutput ?? defaults.onlySameOutput ?? true
-    property bool valueOnlyActiveWorkspaces: cfg.onlyActiveWorkspaces ?? defaults.onlyActiveWorkspaces ?? true
-
-    // Interaction
-    property bool valueEnableReorder: cfg.enableReorder ?? defaults.enableReorder ?? true
-    property bool valueEnableScrollWheel: cfg.enableScrollWheel ?? defaults.enableScrollWheel ?? true
-
-    // Auto-scroll
-    property bool valueCenterFocusedWindow: cfg.centerFocusedWindow ?? defaults.centerFocusedWindow ?? true
-    property int valueCenterAnimationMs: cfg.centerAnimationMs ?? defaults.centerAnimationMs ?? 200
-
-    // Debug
-    property bool valueDebugLogging: cfg.debugLogging ?? defaults.debugLogging ?? false
-
-    // Slot size & spacing
-    property int valueMaxWidgetWidth: cfg.maxWidgetWidth ?? defaults.maxWidgetWidth ?? 40
-    property int valueSlotWidth: cfg.slotWidth ?? defaults.slotWidth ?? 112
-    property int valueSlotSpacingUnits: cfg.slotSpacingUnits ?? defaults.slotSpacingUnits ?? 1
-    property real valueRadiusScale: cfg.radiusScale ?? defaults.radiusScale ?? 1.0
-    property real valueSlotCapsuleScale: cfg.slotCapsuleScale ?? defaults.slotCapsuleScale ?? 1.0
-
-    // Icons
-    property bool valueShowIcons: cfg.showIcons ?? defaults.showIcons ?? true
-    property real valueIconScale: cfg.iconScale ?? defaults.iconScale ?? 0.8
-    property string valueIconTintColor: cfg.iconTintColor ?? defaults.iconTintColor ?? "none"
-    property int valueIconTintOpacity: cfg.iconTintOpacity ?? defaults.iconTintOpacity ?? 100
-
-    // Window title
-    property bool valueShowTitle: cfg.showTitle ?? defaults.showTitle ?? true
-    property string valueTitleFontFamily: cfg.titleFontFamily ?? defaults.titleFontFamily ?? ""
-    property int valueTitleFontSize: cfg.titleFontSize ?? defaults.titleFontSize ?? 0
-    property string valueTitleFontWeight: cfg.titleFontWeight ?? defaults.titleFontWeight ?? "default"
-
-    // Edge fade
-    property int valueEdgeFadeSize: cfg.edgeFadeSize ?? defaults.edgeFadeSize ?? 18
-    property real valueEdgeFadeMidpoint: cfg.edgeFadeMidpoint ?? defaults.edgeFadeMidpoint ?? 0.45
-    property int valueEdgeFadeMidOpacity: cfg.edgeFadeMidOpacity ?? defaults.edgeFadeMidOpacity ?? 40
-
-    // Widget background
-    property string valueBackgroundColor: cfg.backgroundColor ?? defaults.backgroundColor ?? "none"
-    property int valueBackgroundOpacity: cfg.backgroundOpacity ?? defaults.backgroundOpacity ?? 0
-
-    // Active window
-    property bool valueShowFocusedFill: cfg.showFocusedFill ?? defaults.showFocusedFill ?? true
-    property string valueFocusedFillColor: cfg.focusedFillColor ?? defaults.focusedFillColor ?? "primary"
-    property int valueFocusedFillOpacity: cfg.focusedFillOpacity ?? defaults.focusedFillOpacity ?? 92
-    property bool valueShowFocusedBorder: cfg.showFocusedBorder ?? defaults.showFocusedBorder ?? true
-    property string valueFocusedBorderColor: cfg.focusedBorderColor ?? defaults.focusedBorderColor ?? "primary"
-    property int valueFocusedBorderOpacity: cfg.focusedBorderOpacity ?? defaults.focusedBorderOpacity ?? 100
-    property string valueFocusedTextColor: cfg.focusedTextColor ?? defaults.focusedTextColor ?? "on-primary"
-
-    // Inactive windows
-    property bool valueShowUnfocusedFill: cfg.showUnfocusedFill ?? defaults.showUnfocusedFill ?? true
-    property string valueUnfocusedFillColor: cfg.unfocusedFillColor ?? defaults.unfocusedFillColor ?? "surface-variant"
-    property int valueUnfocusedFillOpacity: cfg.unfocusedFillOpacity ?? defaults.unfocusedFillOpacity ?? 8
-    property bool valueShowUnfocusedBorder: cfg.showUnfocusedBorder ?? defaults.showUnfocusedBorder ?? true
-    property string valueUnfocusedBorderColor: cfg.unfocusedBorderColor ?? defaults.unfocusedBorderColor ?? "outline"
-    property int valueUnfocusedBorderOpacity: cfg.unfocusedBorderOpacity ?? defaults.unfocusedBorderOpacity ?? 45
-    property string valueUnfocusedTextColor: cfg.unfocusedTextColor ?? defaults.unfocusedTextColor ?? "on-surface"
-    property int valueInactiveOpacity: cfg.inactiveOpacity ?? defaults.inactiveOpacity ?? 45
-
-    // Hovered window
-    property string valueHoverFillColor: cfg.hoverFillColor ?? defaults.hoverFillColor ?? "hover"
-    property int valueHoverFillOpacity: cfg.hoverFillOpacity ?? defaults.hoverFillOpacity ?? 55
-    property bool valueShowHoverBorder: cfg.showHoverBorder ?? defaults.showHoverBorder ?? true
-    property string valueHoverBorderColor: cfg.hoverBorderColor ?? defaults.hoverBorderColor ?? "outline"
-    property int valueHoverBorderOpacity: cfg.hoverBorderOpacity ?? defaults.hoverBorderOpacity ?? 100
-    property string valueHoverTextColor: cfg.hoverTextColor ?? defaults.hoverTextColor ?? "on-hover"
-    property real valueHoverScalePercent: cfg.hoverScalePercent ?? defaults.hoverScalePercent ?? 2.5
-    property int valueHoverTransitionDurationMs: cfg.hoverTransitionDurationMs ?? defaults.hoverTransitionDurationMs ?? 120
-
-    // Track & focus indicator
-    property bool valueShowTrackLine: cfg.showTrackLine ?? defaults.showTrackLine ?? true
-    property int valueTrackOpacity: cfg.trackOpacity ?? defaults.trackOpacity ?? 35
-    property string valueTrackThumbColor: cfg.trackThumbColor ?? defaults.trackThumbColor ?? "primary"
-    property bool valueShowFocusLine: cfg.showFocusLine ?? defaults.showFocusLine ?? true
-    property string valueFocusLineColor: cfg.focusLineColor ?? defaults.focusLineColor ?? "secondary"
-    property int valueFocusLineOpacity: cfg.focusLineOpacity ?? defaults.focusLineOpacity ?? 96
-    property int valueFocusLineThickness: cfg.focusLineThickness ?? defaults.focusLineThickness ?? 2
-    property int valueFocusLineAnimationMs: cfg.focusLineAnimationMs ?? defaults.focusLineAnimationMs ?? 120
-
     readonly property var fontWeightModel: ListModel {
         ListElement {
             key: "default"
-            name: "Default"
+            name: QT_TR_NOOP("Default")
         }
         ListElement {
             key: "light"
-            name: "Light"
+            name: QT_TR_NOOP("Light")
         }
         ListElement {
             key: "normal"
-            name: "Normal"
+            name: QT_TR_NOOP("Normal")
         }
         ListElement {
             key: "medium"
-            name: "Medium"
+            name: QT_TR_NOOP("Medium")
         }
         ListElement {
             key: "semibold"
-            name: "Semibold"
+            name: QT_TR_NOOP("Semibold")
         }
         ListElement {
             key: "bold"
-            name: "Bold"
+            name: QT_TR_NOOP("Bold")
         }
     }
 
+    readonly property var defaultSettings: createSettingsSnapshot(defaults, ({}))
+    property var editSettings: createSettingsSnapshot(cfg, defaults)
+
     spacing: Style.marginM
     implicitWidth: preferredWidth
+
+    function deepCopy(value) {
+        return JSON.parse(JSON.stringify(value));
+    }
+
+    function readSetting(primary, secondary, groupKey, nestedKey, legacyKey, fallbackValue) {
+        const primaryGroup = primary ? primary[groupKey] : undefined;
+        const nestedPrimary = primaryGroup ? primaryGroup[nestedKey] : undefined;
+        if (nestedPrimary !== undefined)
+            return nestedPrimary;
+
+        const legacyPrimary = primary ? primary[legacyKey] : undefined;
+        if (legacyPrimary !== undefined)
+            return legacyPrimary;
+
+        const secondaryGroup = secondary ? secondary[groupKey] : undefined;
+        const nestedSecondary = secondaryGroup ? secondaryGroup[nestedKey] : undefined;
+        if (nestedSecondary !== undefined)
+            return nestedSecondary;
+
+        const legacySecondary = secondary ? secondary[legacyKey] : undefined;
+        if (legacySecondary !== undefined)
+            return legacySecondary;
+
+        return fallbackValue;
+    }
+
+    function createSettingsSnapshot(primary, secondary) {
+        return {
+            "filtering": {
+                "onlySameOutput": readSetting(primary, secondary, "filtering", "onlySameOutput", "onlySameOutput", true),
+                "onlyActiveWorkspaces": readSetting(primary, secondary, "filtering", "onlyActiveWorkspaces", "onlyActiveWorkspaces", true)
+            },
+            "interaction": {
+                "enableReorder": readSetting(primary, secondary, "interaction", "enableReorder", "enableReorder", true),
+                "enableScrollWheel": readSetting(primary, secondary, "interaction", "enableScrollWheel", "enableScrollWheel", true)
+            },
+            "autoScroll": {
+                "centerFocusedWindow": readSetting(primary, secondary, "autoScroll", "centerFocusedWindow", "centerFocusedWindow", true),
+                "centerAnimationMs": readSetting(primary, secondary, "autoScroll", "centerAnimationMs", "centerAnimationMs", 200)
+            },
+            "advanced": {
+                "debugLogging": readSetting(primary, secondary, "advanced", "debugLogging", "debugLogging", false)
+            },
+            "layout": {
+                "maxWidgetWidth": readSetting(primary, secondary, "layout", "maxWidgetWidth", "maxWidgetWidth", 40),
+                "slotWidth": readSetting(primary, secondary, "layout", "slotWidth", "slotWidth", 112),
+                "slotSpacingUnits": readSetting(primary, secondary, "layout", "slotSpacingUnits", "slotSpacingUnits", 1),
+                "radiusScale": readSetting(primary, secondary, "layout", "radiusScale", "radiusScale", 1.0),
+                "slotCapsuleScale": readSetting(primary, secondary, "layout", "slotCapsuleScale", "slotCapsuleScale", 1.0)
+            },
+            "icons": {
+                "showIcons": readSetting(primary, secondary, "icons", "showIcons", "showIcons", true),
+                "iconScale": readSetting(primary, secondary, "icons", "iconScale", "iconScale", 0.8),
+                "iconTintColor": readSetting(primary, secondary, "icons", "iconTintColor", "iconTintColor", "none"),
+                "iconTintOpacity": readSetting(primary, secondary, "icons", "iconTintOpacity", "iconTintOpacity", 100)
+            },
+            "title": {
+                "showTitle": readSetting(primary, secondary, "title", "showTitle", "showTitle", true),
+                "titleFontFamily": readSetting(primary, secondary, "title", "titleFontFamily", "titleFontFamily", ""),
+                "titleFontSize": readSetting(primary, secondary, "title", "titleFontSize", "titleFontSize", 0),
+                "titleFontWeight": readSetting(primary, secondary, "title", "titleFontWeight", "titleFontWeight", "default")
+            },
+            "edgeFade": {
+                "size": readSetting(primary, secondary, "edgeFade", "size", "edgeFadeSize", 18),
+                "midpoint": readSetting(primary, secondary, "edgeFade", "midpoint", "edgeFadeMidpoint", 0.45),
+                "midOpacity": readSetting(primary, secondary, "edgeFade", "midOpacity", "edgeFadeMidOpacity", 40)
+            },
+            "background": {
+                "color": readSetting(primary, secondary, "background", "color", "backgroundColor", "none"),
+                "opacity": readSetting(primary, secondary, "background", "opacity", "backgroundOpacity", 0)
+            },
+            "focused": {
+                "showFill": readSetting(primary, secondary, "focused", "showFill", "showFocusedFill", true),
+                "fillColor": readSetting(primary, secondary, "focused", "fillColor", "focusedFillColor", "primary"),
+                "fillOpacity": readSetting(primary, secondary, "focused", "fillOpacity", "focusedFillOpacity", 92),
+                "showBorder": readSetting(primary, secondary, "focused", "showBorder", "showFocusedBorder", true),
+                "borderColor": readSetting(primary, secondary, "focused", "borderColor", "focusedBorderColor", "primary"),
+                "borderOpacity": readSetting(primary, secondary, "focused", "borderOpacity", "focusedBorderOpacity", 100),
+                "textColor": readSetting(primary, secondary, "focused", "textColor", "focusedTextColor", "on-primary")
+            },
+            "unfocused": {
+                "showFill": readSetting(primary, secondary, "unfocused", "showFill", "showUnfocusedFill", true),
+                "fillColor": readSetting(primary, secondary, "unfocused", "fillColor", "unfocusedFillColor", "surface-variant"),
+                "fillOpacity": readSetting(primary, secondary, "unfocused", "fillOpacity", "unfocusedFillOpacity", 8),
+                "showBorder": readSetting(primary, secondary, "unfocused", "showBorder", "showUnfocusedBorder", true),
+                "borderColor": readSetting(primary, secondary, "unfocused", "borderColor", "unfocusedBorderColor", "outline"),
+                "borderOpacity": readSetting(primary, secondary, "unfocused", "borderOpacity", "unfocusedBorderOpacity", 45),
+                "textColor": readSetting(primary, secondary, "unfocused", "textColor", "unfocusedTextColor", "on-surface"),
+                "inactiveOpacity": readSetting(primary, secondary, "unfocused", "inactiveOpacity", "inactiveOpacity", 45)
+            },
+            "hover": {
+                "fillColor": readSetting(primary, secondary, "hover", "fillColor", "hoverFillColor", "hover"),
+                "fillOpacity": readSetting(primary, secondary, "hover", "fillOpacity", "hoverFillOpacity", 55),
+                "showBorder": readSetting(primary, secondary, "hover", "showBorder", "showHoverBorder", true),
+                "borderColor": readSetting(primary, secondary, "hover", "borderColor", "hoverBorderColor", "outline"),
+                "borderOpacity": readSetting(primary, secondary, "hover", "borderOpacity", "hoverBorderOpacity", 100),
+                "textColor": readSetting(primary, secondary, "hover", "textColor", "hoverTextColor", "on-hover"),
+                "scalePercent": readSetting(primary, secondary, "hover", "scalePercent", "hoverScalePercent", 2.5),
+                "transitionDurationMs": readSetting(primary, secondary, "hover", "transitionDurationMs", "hoverTransitionDurationMs", 120)
+            },
+            "indicators": {
+                "showTrackLine": readSetting(primary, secondary, "indicators", "showTrackLine", "showTrackLine", true),
+                "trackOpacity": readSetting(primary, secondary, "indicators", "trackOpacity", "trackOpacity", 35),
+                "trackThumbColor": readSetting(primary, secondary, "indicators", "trackThumbColor", "trackThumbColor", "primary"),
+                "showFocusLine": readSetting(primary, secondary, "indicators", "showFocusLine", "showFocusLine", true),
+                "focusLineColor": readSetting(primary, secondary, "indicators", "focusLineColor", "focusLineColor", "secondary"),
+                "focusLineOpacity": readSetting(primary, secondary, "indicators", "focusLineOpacity", "focusLineOpacity", 96),
+                "focusLineThickness": readSetting(primary, secondary, "indicators", "focusLineThickness", "focusLineThickness", 2),
+                "focusLineAnimationMs": readSetting(primary, secondary, "indicators", "focusLineAnimationMs", "focusLineAnimationMs", 120)
+            }
+        };
+    }
+
+    function settingValue(groupKey, nestedKey) {
+        const group = editSettings ? editSettings[groupKey] : undefined;
+        return group ? group[nestedKey] : undefined;
+    }
+
+    function defaultValue(groupKey, nestedKey) {
+        const group = defaultSettings ? defaultSettings[groupKey] : undefined;
+        return group ? group[nestedKey] : undefined;
+    }
+
+    function setSetting(groupKey, nestedKey, value) {
+        const next = deepCopy(editSettings);
+        if (!next[groupKey])
+            next[groupKey] = ({});
+        next[groupKey][nestedKey] = value;
+        editSettings = next;
+    }
 
     function saveSettings() {
         if (!pluginApi)
             return;
 
-        pluginApi.pluginSettings.onlySameOutput = root.valueOnlySameOutput;
-        pluginApi.pluginSettings.onlyActiveWorkspaces = root.valueOnlyActiveWorkspaces;
-        pluginApi.pluginSettings.enableReorder = root.valueEnableReorder;
-        pluginApi.pluginSettings.enableScrollWheel = root.valueEnableScrollWheel;
-        pluginApi.pluginSettings.centerFocusedWindow = root.valueCenterFocusedWindow;
-        pluginApi.pluginSettings.centerAnimationMs = root.valueCenterAnimationMs;
-        pluginApi.pluginSettings.debugLogging = root.valueDebugLogging;
-        pluginApi.pluginSettings.maxWidgetWidth = root.valueMaxWidgetWidth;
-        pluginApi.pluginSettings.slotWidth = root.valueSlotWidth;
-        pluginApi.pluginSettings.slotSpacingUnits = root.valueSlotSpacingUnits;
-        pluginApi.pluginSettings.radiusScale = root.valueRadiusScale;
-        pluginApi.pluginSettings.slotCapsuleScale = root.valueSlotCapsuleScale;
-        pluginApi.pluginSettings.showIcons = root.valueShowIcons;
-        pluginApi.pluginSettings.iconScale = root.valueIconScale;
-        pluginApi.pluginSettings.iconTintColor = root.valueIconTintColor;
-        pluginApi.pluginSettings.iconTintOpacity = root.valueIconTintOpacity;
-        pluginApi.pluginSettings.showTitle = root.valueShowTitle;
-        pluginApi.pluginSettings.titleFontFamily = root.valueTitleFontFamily;
-        pluginApi.pluginSettings.titleFontSize = root.valueTitleFontSize;
-        pluginApi.pluginSettings.titleFontWeight = root.valueTitleFontWeight;
-        pluginApi.pluginSettings.edgeFadeSize = root.valueEdgeFadeSize;
-        pluginApi.pluginSettings.edgeFadeMidpoint = root.valueEdgeFadeMidpoint;
-        pluginApi.pluginSettings.edgeFadeMidOpacity = root.valueEdgeFadeMidOpacity;
-        pluginApi.pluginSettings.backgroundColor = root.valueBackgroundColor;
-        pluginApi.pluginSettings.backgroundOpacity = root.valueBackgroundOpacity;
-        pluginApi.pluginSettings.showFocusedFill = root.valueShowFocusedFill;
-        pluginApi.pluginSettings.focusedFillColor = root.valueFocusedFillColor;
-        pluginApi.pluginSettings.focusedFillOpacity = root.valueFocusedFillOpacity;
-        pluginApi.pluginSettings.showFocusedBorder = root.valueShowFocusedBorder;
-        pluginApi.pluginSettings.focusedBorderColor = root.valueFocusedBorderColor;
-        pluginApi.pluginSettings.focusedBorderOpacity = root.valueFocusedBorderOpacity;
-        pluginApi.pluginSettings.focusedTextColor = root.valueFocusedTextColor;
-        pluginApi.pluginSettings.showUnfocusedFill = root.valueShowUnfocusedFill;
-        pluginApi.pluginSettings.unfocusedFillColor = root.valueUnfocusedFillColor;
-        pluginApi.pluginSettings.unfocusedFillOpacity = root.valueUnfocusedFillOpacity;
-        pluginApi.pluginSettings.showUnfocusedBorder = root.valueShowUnfocusedBorder;
-        pluginApi.pluginSettings.unfocusedBorderColor = root.valueUnfocusedBorderColor;
-        pluginApi.pluginSettings.unfocusedBorderOpacity = root.valueUnfocusedBorderOpacity;
-        pluginApi.pluginSettings.unfocusedTextColor = root.valueUnfocusedTextColor;
-        pluginApi.pluginSettings.inactiveOpacity = root.valueInactiveOpacity;
-        pluginApi.pluginSettings.hoverFillColor = root.valueHoverFillColor;
-        pluginApi.pluginSettings.hoverFillOpacity = root.valueHoverFillOpacity;
-        pluginApi.pluginSettings.showHoverBorder = root.valueShowHoverBorder;
-        pluginApi.pluginSettings.hoverBorderColor = root.valueHoverBorderColor;
-        pluginApi.pluginSettings.hoverBorderOpacity = root.valueHoverBorderOpacity;
-        pluginApi.pluginSettings.hoverTextColor = root.valueHoverTextColor;
-        pluginApi.pluginSettings.hoverScalePercent = root.valueHoverScalePercent;
-        pluginApi.pluginSettings.hoverTransitionDurationMs = root.valueHoverTransitionDurationMs;
-        pluginApi.pluginSettings.showTrackLine = root.valueShowTrackLine;
-        pluginApi.pluginSettings.trackOpacity = root.valueTrackOpacity;
-        pluginApi.pluginSettings.trackThumbColor = root.valueTrackThumbColor;
-        pluginApi.pluginSettings.showFocusLine = root.valueShowFocusLine;
-        pluginApi.pluginSettings.focusLineColor = root.valueFocusLineColor;
-        pluginApi.pluginSettings.focusLineOpacity = root.valueFocusLineOpacity;
-        pluginApi.pluginSettings.focusLineThickness = root.valueFocusLineThickness;
-        pluginApi.pluginSettings.focusLineAnimationMs = root.valueFocusLineAnimationMs;
+        pluginApi.pluginSettings = deepCopy(editSettings);
         pluginApi.saveSettings();
     }
 
@@ -218,710 +215,16 @@ ColumnLayout {
         id: tabView
         Layout.fillWidth: true
 
-        // ── Tab 1: Layout ────────────────────────────────────────────────────
-        ColumnLayout {
-            Layout.fillWidth: true
-            spacing: Style.marginM
-
-            NHeader {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.section.slotSize.label")
-                description: pluginApi?.tr("settings.section.slotSize.desc")
-            }
-            NDivider {}
-
-            NValueSlider {
-                label: pluginApi?.tr("settings.slotWidth.label")
-                description: pluginApi?.tr("settings.slotWidth.desc")
-                from: 72
-                to: 220
-                stepSize: 4
-                value: root.valueSlotWidth
-                text: Math.round(root.valueSlotWidth) + " px"
-                defaultValue: defaults.slotWidth ?? 112
-                showReset: true
-                onMoved: value => root.valueSlotWidth = Math.round(value)
-            }
-
-            NValueSlider {
-                label: pluginApi?.tr("settings.maxWidgetWidth.label")
-                description: pluginApi?.tr("settings.maxWidgetWidth.desc")
-                from: 20
-                to: 100
-                stepSize: 1
-                value: root.valueMaxWidgetWidth
-                text: Math.round(root.valueMaxWidgetWidth) + "%"
-                defaultValue: defaults.maxWidgetWidth ?? 40
-                showReset: true
-                onMoved: value => root.valueMaxWidgetWidth = Math.round(value)
-            }
-
-            NValueSlider {
-                label: pluginApi?.tr("settings.slotSpacingUnits.label")
-                description: pluginApi?.tr("settings.slotSpacingUnits.desc")
-                from: 0
-                to: 6
-                stepSize: 1
-                value: root.valueSlotSpacingUnits
-                text: Math.round(root.valueSlotSpacingUnits).toString()
-                defaultValue: defaults.slotSpacingUnits ?? 1
-                showReset: true
-                onMoved: value => root.valueSlotSpacingUnits = Math.round(value)
-            }
-
-            NValueSlider {
-                label: pluginApi?.tr("settings.radiusScale.label")
-                description: pluginApi?.tr("settings.radiusScale.desc")
-                from: 0.5
-                to: 1.5
-                stepSize: 0.05
-                value: root.valueRadiusScale
-                text: Math.round(root.valueRadiusScale * 100) + "%"
-                defaultValue: defaults.radiusScale ?? 1.0
-                showReset: true
-                onMoved: value => root.valueRadiusScale = Math.round(value * 100) / 100
-            }
-
-            NValueSlider {
-                label: pluginApi?.tr("settings.slotCapsuleScale.label")
-                description: pluginApi?.tr("settings.slotCapsuleScale.desc")
-                from: 0.3
-                to: 1.5
-                stepSize: 0.05
-                value: root.valueSlotCapsuleScale
-                text: Math.round(root.valueSlotCapsuleScale * 100) + "%"
-                defaultValue: defaults.slotCapsuleScale ?? 1.0
-                showReset: true
-                onMoved: value => root.valueSlotCapsuleScale = Math.round(value * 100) / 100
-            }
-
-            NHeader {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.section.icons.label")
-                description: pluginApi?.tr("settings.section.icons.desc")
-            }
-            NDivider {}
-
-            NToggle {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.showIcons.label")
-                description: pluginApi?.tr("settings.showIcons.desc")
-                checked: root.valueShowIcons
-                onToggled: checked => root.valueShowIcons = checked
-                defaultValue: defaults.showIcons ?? true
-            }
-
-            NValueSlider {
-                label: pluginApi?.tr("settings.iconScale.label")
-                description: pluginApi?.tr("settings.iconScale.desc")
-                from: 0.5
-                to: 1.2
-                stepSize: 0.05
-                value: root.valueIconScale
-                text: Math.round(root.valueIconScale * 100) + "%"
-                defaultValue: defaults.iconScale ?? 0.8
-                showReset: true
-                onMoved: value => root.valueIconScale = Math.round(value * 100) / 100
-            }
-
-            NColorChoice {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.iconTintColor.label")
-                description: pluginApi?.tr("settings.iconTintColor.desc")
-                currentKey: root.valueIconTintColor
-                onSelected: key => root.valueIconTintColor = key
-            }
-
-            NValueSlider {
-                label: pluginApi?.tr("settings.iconTintOpacity.label")
-                description: pluginApi?.tr("settings.iconTintOpacity.desc")
-                from: 0
-                to: 100
-                stepSize: 1
-                value: root.valueIconTintOpacity
-                text: Math.round(root.valueIconTintOpacity) + "%"
-                defaultValue: defaults.iconTintOpacity ?? 100
-                showReset: true
-                onMoved: value => root.valueIconTintOpacity = Math.round(value)
-            }
-
-            NHeader {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.section.windowTitle.label")
-                description: pluginApi?.tr("settings.section.windowTitle.desc")
-            }
-            NDivider {}
-
-            NToggle {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.showTitle.label")
-                description: pluginApi?.tr("settings.showTitle.desc")
-                checked: root.valueShowTitle
-                onToggled: checked => root.valueShowTitle = checked
-                defaultValue: defaults.showTitle ?? true
-            }
-
-            NSearchableComboBox {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.titleFontFamily.label")
-                description: pluginApi?.tr("settings.titleFontFamily.desc")
-                model: FontService.availableFonts
-                currentKey: root.valueTitleFontFamily
-                defaultValue: defaults.titleFontFamily ?? ""
-                onSelected: key => root.valueTitleFontFamily = key
-            }
-
-            NValueSlider {
-                label: pluginApi?.tr("settings.titleFontSize.label")
-                description: pluginApi?.tr("settings.titleFontSize.desc")
-                from: 0
-                to: 24
-                stepSize: 1
-                value: root.valueTitleFontSize
-                text: root.valueTitleFontSize === 0 ? "Auto" : (Math.round(root.valueTitleFontSize) + " pt")
-                defaultValue: defaults.titleFontSize ?? 0
-                showReset: true
-                onMoved: value => root.valueTitleFontSize = Math.round(value)
-            }
-
-            NSearchableComboBox {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.titleFontWeight.label")
-                description: pluginApi?.tr("settings.titleFontWeight.desc")
-                model: root.fontWeightModel
-                currentKey: root.valueTitleFontWeight
-                defaultValue: defaults.titleFontWeight ?? "default"
-                onSelected: key => root.valueTitleFontWeight = key
-            }
-
-            NHeader {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.section.edgeFade.label")
-                description: pluginApi?.tr("settings.section.edgeFade.desc")
-            }
-            NDivider {}
-
-            NValueSlider {
-                label: pluginApi?.tr("settings.edgeFadeSize.label")
-                description: pluginApi?.tr("settings.edgeFadeSize.desc")
-                from: 0
-                to: 48
-                stepSize: 1
-                value: root.valueEdgeFadeSize
-                text: Math.round(root.valueEdgeFadeSize) + " px"
-                defaultValue: defaults.edgeFadeSize ?? 18
-                showReset: true
-                onMoved: value => root.valueEdgeFadeSize = Math.round(value)
-            }
-
-            NValueSlider {
-                label: pluginApi?.tr("settings.edgeFadeMidpoint.label")
-                description: pluginApi?.tr("settings.edgeFadeMidpoint.desc")
-                from: 0.05
-                to: 0.95
-                stepSize: 0.05
-                value: root.valueEdgeFadeMidpoint
-                text: Math.round(root.valueEdgeFadeMidpoint * 100) + "%"
-                defaultValue: defaults.edgeFadeMidpoint ?? 0.45
-                showReset: true
-                onMoved: value => root.valueEdgeFadeMidpoint = Math.round(value * 100) / 100
-            }
-
-            NValueSlider {
-                label: pluginApi?.tr("settings.edgeFadeMidOpacity.label")
-                description: pluginApi?.tr("settings.edgeFadeMidOpacity.desc")
-                from: 0
-                to: 100
-                stepSize: 1
-                value: root.valueEdgeFadeMidOpacity
-                text: Math.round(root.valueEdgeFadeMidOpacity) + "%"
-                defaultValue: defaults.edgeFadeMidOpacity ?? 40
-                showReset: true
-                onMoved: value => root.valueEdgeFadeMidOpacity = Math.round(value)
-            }
+        LayoutSettingsTab {
+            rootSettings: root
         }
 
-        // ── Tab 2: Colors & Style ────────────────────────────────────────────
-        ColumnLayout {
-            Layout.fillWidth: true
-            spacing: Style.marginM
-
-            NHeader {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.section.background.label")
-                description: pluginApi?.tr("settings.section.background.desc")
-            }
-            NDivider {}
-
-            NColorChoice {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.backgroundColor.label")
-                description: pluginApi?.tr("settings.backgroundColor.desc")
-                currentKey: root.valueBackgroundColor
-                onSelected: key => root.valueBackgroundColor = key
-            }
-
-            NValueSlider {
-                label: pluginApi?.tr("settings.backgroundOpacity.label")
-                description: pluginApi?.tr("settings.backgroundOpacity.desc")
-                from: 0
-                to: 100
-                stepSize: 1
-                value: root.valueBackgroundOpacity
-                text: Math.round(root.valueBackgroundOpacity) + "%"
-                defaultValue: defaults.backgroundOpacity ?? 0
-                showReset: true
-                onMoved: value => root.valueBackgroundOpacity = Math.round(value)
-            }
-
-            NHeader {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.section.activeWindow.label")
-                description: pluginApi?.tr("settings.section.activeWindow.desc")
-            }
-            NDivider {}
-
-            NToggle {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.showFocusedFill.label")
-                description: pluginApi?.tr("settings.showFocusedFill.desc")
-                checked: root.valueShowFocusedFill
-                onToggled: checked => root.valueShowFocusedFill = checked
-                defaultValue: defaults.showFocusedFill ?? true
-            }
-
-            NColorChoice {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.focusedFillColor.label")
-                description: pluginApi?.tr("settings.focusedFillColor.desc")
-                currentKey: root.valueFocusedFillColor
-                onSelected: key => root.valueFocusedFillColor = key
-            }
-
-            NValueSlider {
-                label: pluginApi?.tr("settings.focusedFillOpacity.label")
-                description: pluginApi?.tr("settings.focusedFillOpacity.desc")
-                from: 20
-                to: 100
-                stepSize: 1
-                value: root.valueFocusedFillOpacity
-                text: Math.round(root.valueFocusedFillOpacity) + "%"
-                defaultValue: defaults.focusedFillOpacity ?? 92
-                showReset: true
-                onMoved: value => root.valueFocusedFillOpacity = Math.round(value)
-            }
-
-            NToggle {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.showFocusedBorder.label")
-                description: pluginApi?.tr("settings.showFocusedBorder.desc")
-                checked: root.valueShowFocusedBorder
-                onToggled: checked => root.valueShowFocusedBorder = checked
-                defaultValue: defaults.showFocusedBorder ?? true
-            }
-
-            NColorChoice {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.focusedBorderColor.label")
-                description: pluginApi?.tr("settings.focusedBorderColor.desc")
-                currentKey: root.valueFocusedBorderColor
-                onSelected: key => root.valueFocusedBorderColor = key
-            }
-
-            NValueSlider {
-                label: pluginApi?.tr("settings.focusedBorderOpacity.label")
-                description: pluginApi?.tr("settings.focusedBorderOpacity.desc")
-                from: 0
-                to: 100
-                stepSize: 1
-                value: root.valueFocusedBorderOpacity
-                text: Math.round(root.valueFocusedBorderOpacity) + "%"
-                defaultValue: defaults.focusedBorderOpacity ?? 100
-                showReset: true
-                onMoved: value => root.valueFocusedBorderOpacity = Math.round(value)
-            }
-
-            NColorChoice {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.focusedTextColor.label")
-                description: pluginApi?.tr("settings.focusedTextColor.desc")
-                currentKey: root.valueFocusedTextColor
-                onSelected: key => root.valueFocusedTextColor = key
-            }
-
-            NHeader {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.section.inactiveWindows.label")
-                description: pluginApi?.tr("settings.section.inactiveWindows.desc")
-            }
-            NDivider {}
-
-            NToggle {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.showUnfocusedFill.label")
-                description: pluginApi?.tr("settings.showUnfocusedFill.desc")
-                checked: root.valueShowUnfocusedFill
-                onToggled: checked => root.valueShowUnfocusedFill = checked
-                defaultValue: defaults.showUnfocusedFill ?? true
-            }
-
-            NColorChoice {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.unfocusedFillColor.label")
-                description: pluginApi?.tr("settings.unfocusedFillColor.desc")
-                currentKey: root.valueUnfocusedFillColor
-                onSelected: key => root.valueUnfocusedFillColor = key
-            }
-
-            NValueSlider {
-                label: pluginApi?.tr("settings.unfocusedFillOpacity.label")
-                description: pluginApi?.tr("settings.unfocusedFillOpacity.desc")
-                from: 0
-                to: 60
-                stepSize: 1
-                value: root.valueUnfocusedFillOpacity
-                text: Math.round(root.valueUnfocusedFillOpacity) + "%"
-                defaultValue: defaults.unfocusedFillOpacity ?? 8
-                showReset: true
-                onMoved: value => root.valueUnfocusedFillOpacity = Math.round(value)
-            }
-
-            NToggle {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.showUnfocusedBorder.label")
-                description: pluginApi?.tr("settings.showUnfocusedBorder.desc")
-                checked: root.valueShowUnfocusedBorder
-                onToggled: checked => root.valueShowUnfocusedBorder = checked
-                defaultValue: defaults.showUnfocusedBorder ?? true
-            }
-
-            NColorChoice {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.unfocusedBorderColor.label")
-                description: pluginApi?.tr("settings.unfocusedBorderColor.desc")
-                currentKey: root.valueUnfocusedBorderColor
-                onSelected: key => root.valueUnfocusedBorderColor = key
-            }
-
-            NValueSlider {
-                label: pluginApi?.tr("settings.unfocusedBorderOpacity.label")
-                description: pluginApi?.tr("settings.unfocusedBorderOpacity.desc")
-                from: 0
-                to: 100
-                stepSize: 1
-                value: root.valueUnfocusedBorderOpacity
-                text: Math.round(root.valueUnfocusedBorderOpacity) + "%"
-                defaultValue: defaults.unfocusedBorderOpacity ?? 45
-                showReset: true
-                onMoved: value => root.valueUnfocusedBorderOpacity = Math.round(value)
-            }
-
-            NColorChoice {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.unfocusedTextColor.label")
-                description: pluginApi?.tr("settings.unfocusedTextColor.desc")
-                currentKey: root.valueUnfocusedTextColor
-                onSelected: key => root.valueUnfocusedTextColor = key
-            }
-
-            NValueSlider {
-                label: pluginApi?.tr("settings.inactiveOpacity.label")
-                description: pluginApi?.tr("settings.inactiveOpacity.desc")
-                from: 10
-                to: 100
-                stepSize: 1
-                value: root.valueInactiveOpacity
-                text: Math.round(root.valueInactiveOpacity) + "%"
-                defaultValue: defaults.inactiveOpacity ?? 45
-                showReset: true
-                onMoved: value => root.valueInactiveOpacity = Math.round(value)
-            }
-
-            NHeader {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.section.hoveredWindow.label")
-                description: pluginApi?.tr("settings.section.hoveredWindow.desc")
-            }
-            NDivider {}
-
-            NColorChoice {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.hoverFillColor.label")
-                description: pluginApi?.tr("settings.hoverFillColor.desc")
-                currentKey: root.valueHoverFillColor
-                onSelected: key => root.valueHoverFillColor = key
-            }
-
-            NValueSlider {
-                label: pluginApi?.tr("settings.hoverFillOpacity.label")
-                description: pluginApi?.tr("settings.hoverFillOpacity.desc")
-                from: 0
-                to: 100
-                stepSize: 1
-                value: root.valueHoverFillOpacity
-                text: Math.round(root.valueHoverFillOpacity) + "%"
-                defaultValue: defaults.hoverFillOpacity ?? 55
-                showReset: true
-                onMoved: value => root.valueHoverFillOpacity = Math.round(value)
-            }
-
-            NToggle {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.showHoverBorder.label")
-                description: pluginApi?.tr("settings.showHoverBorder.desc")
-                checked: root.valueShowHoverBorder
-                onToggled: checked => root.valueShowHoverBorder = checked
-                defaultValue: defaults.showHoverBorder ?? true
-            }
-
-            NColorChoice {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.hoverBorderColor.label")
-                description: pluginApi?.tr("settings.hoverBorderColor.desc")
-                currentKey: root.valueHoverBorderColor
-                onSelected: key => root.valueHoverBorderColor = key
-            }
-
-            NValueSlider {
-                label: pluginApi?.tr("settings.hoverBorderOpacity.label")
-                description: pluginApi?.tr("settings.hoverBorderOpacity.desc")
-                from: 0
-                to: 100
-                stepSize: 1
-                value: root.valueHoverBorderOpacity
-                text: Math.round(root.valueHoverBorderOpacity) + "%"
-                defaultValue: defaults.hoverBorderOpacity ?? 100
-                showReset: true
-                onMoved: value => root.valueHoverBorderOpacity = Math.round(value)
-            }
-
-            NColorChoice {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.hoverTextColor.label")
-                description: pluginApi?.tr("settings.hoverTextColor.desc")
-                currentKey: root.valueHoverTextColor
-                onSelected: key => root.valueHoverTextColor = key
-            }
-
-            NValueSlider {
-                label: pluginApi?.tr("settings.hoverScalePercent.label")
-                description: pluginApi?.tr("settings.hoverScalePercent.desc")
-                from: 0
-                to: 10
-                stepSize: 0.1
-                value: root.valueHoverScalePercent
-                text: root.valueHoverScalePercent.toFixed(1) + "%"
-                defaultValue: defaults.hoverScalePercent ?? 2.5
-                showReset: true
-                onMoved: value => root.valueHoverScalePercent = Math.round(value * 10) / 10
-            }
-
-            NValueSlider {
-                label: pluginApi?.tr("settings.hoverTransitionDurationMs.label")
-                description: pluginApi?.tr("settings.hoverTransitionDurationMs.desc")
-                from: 0
-                to: 400
-                stepSize: 10
-                value: root.valueHoverTransitionDurationMs
-                text: Math.round(root.valueHoverTransitionDurationMs) + " ms"
-                defaultValue: defaults.hoverTransitionDurationMs ?? 120
-                showReset: true
-                onMoved: value => root.valueHoverTransitionDurationMs = Math.round(value)
-            }
-
-            NHeader {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.section.indicators.label")
-                description: pluginApi?.tr("settings.section.indicators.desc")
-            }
-            NDivider {}
-
-            NToggle {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.showTrackLine.label")
-                description: pluginApi?.tr("settings.showTrackLine.desc")
-                checked: root.valueShowTrackLine
-                onToggled: checked => root.valueShowTrackLine = checked
-                defaultValue: defaults.showTrackLine ?? true
-            }
-
-            NValueSlider {
-                label: pluginApi?.tr("settings.trackOpacity.label")
-                description: pluginApi?.tr("settings.trackOpacity.desc")
-                from: 0
-                to: 100
-                stepSize: 1
-                value: root.valueTrackOpacity
-                text: Math.round(root.valueTrackOpacity) + "%"
-                defaultValue: defaults.trackOpacity ?? 35
-                showReset: true
-                onMoved: value => root.valueTrackOpacity = Math.round(value)
-            }
-
-            NColorChoice {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.trackThumbColor.label")
-                description: pluginApi?.tr("settings.trackThumbColor.desc")
-                currentKey: root.valueTrackThumbColor
-                onSelected: key => root.valueTrackThumbColor = key
-            }
-
-            NToggle {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.showFocusLine.label")
-                description: pluginApi?.tr("settings.showFocusLine.desc")
-                checked: root.valueShowFocusLine
-                onToggled: checked => root.valueShowFocusLine = checked
-                defaultValue: defaults.showFocusLine ?? true
-            }
-
-            NColorChoice {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.focusLineColor.label")
-                description: pluginApi?.tr("settings.focusLineColor.desc")
-                currentKey: root.valueFocusLineColor
-                onSelected: key => root.valueFocusLineColor = key
-            }
-
-            NValueSlider {
-                label: pluginApi?.tr("settings.focusLineOpacity.label")
-                description: pluginApi?.tr("settings.focusLineOpacity.desc")
-                from: 0
-                to: 100
-                stepSize: 1
-                value: root.valueFocusLineOpacity
-                text: Math.round(root.valueFocusLineOpacity) + "%"
-                defaultValue: defaults.focusLineOpacity ?? 96
-                showReset: true
-                onMoved: value => root.valueFocusLineOpacity = Math.round(value)
-            }
-
-            NValueSlider {
-                label: pluginApi?.tr("settings.focusLineThickness.label")
-                description: pluginApi?.tr("settings.focusLineThickness.desc")
-                from: 1
-                to: 6
-                stepSize: 1
-                value: root.valueFocusLineThickness
-                text: Math.round(root.valueFocusLineThickness) + " px"
-                defaultValue: defaults.focusLineThickness ?? 2
-                showReset: true
-                onMoved: value => root.valueFocusLineThickness = Math.round(value)
-            }
-
-            NValueSlider {
-                label: pluginApi?.tr("settings.focusLineAnimationMs.label")
-                description: pluginApi?.tr("settings.focusLineAnimationMs.desc")
-                from: 0
-                to: 400
-                stepSize: 10
-                value: root.valueFocusLineAnimationMs
-                text: Math.round(root.valueFocusLineAnimationMs) + " ms"
-                defaultValue: defaults.focusLineAnimationMs ?? 120
-                showReset: true
-                onMoved: value => root.valueFocusLineAnimationMs = Math.round(value)
-            }
+        ColorsSettingsTab {
+            rootSettings: root
         }
 
-        // ── Tab 3: Behavior ──────────────────────────────────────────────────
-        ColumnLayout {
-            Layout.fillWidth: true
-            spacing: Style.marginM
-
-            NHeader {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.section.windowFiltering.label")
-                description: pluginApi?.tr("settings.section.windowFiltering.desc")
-            }
-            NDivider {}
-
-            NToggle {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.onlySameOutput.label")
-                description: pluginApi?.tr("settings.onlySameOutput.desc")
-                checked: root.valueOnlySameOutput
-                onToggled: checked => root.valueOnlySameOutput = checked
-                defaultValue: defaults.onlySameOutput ?? true
-            }
-
-            NToggle {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.onlyActiveWorkspaces.label")
-                description: pluginApi?.tr("settings.onlyActiveWorkspaces.desc")
-                checked: root.valueOnlyActiveWorkspaces
-                onToggled: checked => root.valueOnlyActiveWorkspaces = checked
-                defaultValue: defaults.onlyActiveWorkspaces ?? true
-            }
-
-            NHeader {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.section.interaction.label")
-                description: pluginApi?.tr("settings.section.interaction.desc")
-            }
-            NDivider {}
-
-            NToggle {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.enableReorder.label")
-                description: pluginApi?.tr("settings.enableReorder.desc")
-                checked: root.valueEnableReorder
-                onToggled: checked => root.valueEnableReorder = checked
-                defaultValue: defaults.enableReorder ?? true
-            }
-
-            NToggle {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.enableScrollWheel.label")
-                description: pluginApi?.tr("settings.enableScrollWheel.desc")
-                checked: root.valueEnableScrollWheel
-                onToggled: checked => root.valueEnableScrollWheel = checked
-                defaultValue: defaults.enableScrollWheel ?? true
-            }
-
-            NHeader {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.section.autoScroll.label")
-                description: pluginApi?.tr("settings.section.autoScroll.desc")
-            }
-            NDivider {}
-
-            NToggle {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.centerFocusedWindow.label")
-                description: pluginApi?.tr("settings.centerFocusedWindow.desc")
-                checked: root.valueCenterFocusedWindow
-                onToggled: checked => root.valueCenterFocusedWindow = checked
-                defaultValue: defaults.centerFocusedWindow ?? true
-            }
-
-            NValueSlider {
-                label: pluginApi?.tr("settings.centerAnimationMs.label")
-                description: pluginApi?.tr("settings.centerAnimationMs.desc")
-                from: 0
-                to: 500
-                stepSize: 10
-                value: root.valueCenterAnimationMs
-                text: Math.round(root.valueCenterAnimationMs) + " ms"
-                defaultValue: defaults.centerAnimationMs ?? 200
-                showReset: true
-                onMoved: value => root.valueCenterAnimationMs = Math.round(value)
-            }
-
-            NHeader {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.section.advanced.label")
-                description: pluginApi?.tr("settings.section.advanced.desc")
-            }
-            NDivider {}
-
-            NToggle {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.debugLogging.label")
-                description: pluginApi?.tr("settings.debugLogging.desc")
-                checked: root.valueDebugLogging
-                onToggled: checked => root.valueDebugLogging = checked
-                defaultValue: defaults.debugLogging ?? false
-            }
+        BehaviorSettingsTab {
+            rootSettings: root
         }
     }
 }

@@ -13,7 +13,29 @@ Item {
     property var cfg: pluginApi?.pluginSettings || ({})
     property var defaults: pluginApi?.manifest?.metadata?.defaultSettings || ({})
 
-    readonly property bool debugLogging: cfg.debugLogging ?? defaults.debugLogging ?? false
+    function settingValue(groupKey, nestedKey, legacyKey, fallbackValue) {
+        const configGroup = cfg ? cfg[groupKey] : undefined;
+        const nestedConfig = configGroup ? configGroup[nestedKey] : undefined;
+        if (nestedConfig !== undefined)
+            return nestedConfig;
+
+        const legacyConfig = cfg ? cfg[legacyKey] : undefined;
+        if (legacyConfig !== undefined)
+            return legacyConfig;
+
+        const defaultsGroup = defaults ? defaults[groupKey] : undefined;
+        const nestedDefault = defaultsGroup ? defaultsGroup[nestedKey] : undefined;
+        if (nestedDefault !== undefined)
+            return nestedDefault;
+
+        const legacyDefault = defaults ? defaults[legacyKey] : undefined;
+        if (legacyDefault !== undefined)
+            return legacyDefault;
+
+        return fallbackValue;
+    }
+
+    readonly property bool debugLogging: settingValue("advanced", "debugLogging", "debugLogging", false)
     readonly property bool supportsLiveReorder: CompositorService.isNiri || CompositorService.isHyprland
 
     property var allEntries: []
@@ -135,7 +157,7 @@ Item {
 
     function getTitleSignature(entries, liveEntries) {
         return (entries || []).map(function (entry) {
-            const liveEntry = liveEntries?.[entry.entryKey];
+            const liveEntry = liveEntries ? liveEntries[entry.entryKey] : undefined;
             return entry.entryKey + "|" + (liveEntry?.title || "");
         }).join("||");
     }

@@ -1,9 +1,9 @@
 {
   "id": "scrollbar",
   "name": "Scrollbar",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "minNoctaliaVersion": "4.6.6",
-  "author": "OpenAI",
+  "author": "rigerc",
   "license": "MIT",
   "repository": "https://github.com/noctalia-dev/noctalia-plugins",
   "description": "A focused, scrolling window strip for the bar with centered selection and passive overflow fades.",
@@ -21,62 +21,88 @@
   },
   "metadata": {
     "defaultSettings": {
-      "onlySameOutput": true,
-      "onlyActiveWorkspaces": true,
-      "enableReorder": true,
-      "debugLogging": false,
-      "maxWidgetWidth": 40,
-      "slotWidth": 112,
-      "slotCapsuleScale": 1.0,
-      "showTitle": true,
-      "iconScale": 0.8,
-      "edgeFadeSize": 18,
-      "edgeFadeMidpoint": 0.45,
-      "edgeFadeMidOpacity": 40,
-      "showTrackLine": true,
-      "trackThumbColor": "primary",
-      "inactiveOpacity": 45,
-      "slotSpacingUnits": 1,
-      "radiusScale": 1.0,
-      "hoverFillColor": "hover",
-      "hoverBorderColor": "outline",
-      "hoverTextColor": "on-hover",
-      "hoverFillOpacity": 55,
-      "hoverScalePercent": 2.5,
-      "hoverTransitionDurationMs": 120,
-      "focusedFillOpacity": 92,
-      "focusedFillColor": "primary",
-      "focusedBorderColor": "primary",
-      "focusedTextColor": "on-primary",
-      "showFocusedFill": true,
-      "unfocusedFillOpacity": 8,
-      "unfocusedBorderOpacity": 45,
-      "unfocusedFillColor": "surface-variant",
-      "unfocusedBorderColor": "outline",
-      "unfocusedTextColor": "on-surface",
-      "showUnfocusedFill": true,
-      "showFocusedBorder": true,
-      "focusedBorderOpacity": 100,
-      "showHoverBorder": true,
-      "hoverBorderOpacity": 100,
-      "showUnfocusedBorder": true,
-      "trackOpacity": 35,
-      "showFocusLine": true,
-      "focusLineColor": "secondary",
-      "focusLineOpacity": 96,
-      "focusLineThickness": 2,
-      "focusLineAnimationMs": 120,
-      "enableScrollWheel": true,
-      "centerFocusedWindow": true,
-      "centerAnimationMs": 200,
-      "showIcons": true,
-      "titleFontFamily": "",
-      "titleFontSize": 0,
-      "titleFontWeight": "default",
-      "iconTintColor": "none",
-      "iconTintOpacity": 100,
-      "backgroundColor": "none",
-      "backgroundOpacity": 0
+      "filtering": {
+        "onlySameOutput": true,
+        "onlyActiveWorkspaces": true
+      },
+      "interaction": {
+        "enableReorder": true,
+        "enableScrollWheel": true
+      },
+      "autoScroll": {
+        "centerFocusedWindow": true,
+        "centerAnimationMs": 200
+      },
+      "advanced": {
+        "debugLogging": false
+      },
+      "layout": {
+        "maxWidgetWidth": 20,
+        "slotWidth": 100,
+        "slotSpacingUnits": 5,
+        "radiusScale": 1,
+        "slotCapsuleScale": 0.8
+      },
+      "icons": {
+        "showIcons": true,
+        "iconScale": 0.7,
+        "iconTintColor": "none",
+        "iconTintOpacity": 100
+      },
+      "title": {
+        "showTitle": true,
+        "titleFontFamily": "",
+        "titleFontSize": 0,
+        "titleFontWeight": "default"
+      },
+      "edgeFade": {
+        "size": 30,
+        "midpoint": 0.05,
+        "midOpacity": 0
+      },
+      "background": {
+        "color": "none",
+        "opacity": 0
+      },
+      "focused": {
+        "showFill": true,
+        "fillColor": "primary",
+        "fillOpacity": 55,
+        "showBorder": false,
+        "borderColor": "primary",
+        "borderOpacity": 100,
+        "textColor": "on-primary"
+      },
+      "unfocused": {
+        "showFill": true,
+        "fillColor": "surface-variant",
+        "fillOpacity": 8,
+        "showBorder": false,
+        "borderColor": "outline",
+        "borderOpacity": 45,
+        "textColor": "on-surface",
+        "inactiveOpacity": 45
+      },
+      "hover": {
+        "fillColor": "secondary",
+        "fillOpacity": 25,
+        "showBorder": false,
+        "borderColor": "outline",
+        "borderOpacity": 100,
+        "textColor": "on-hover",
+        "scalePercent": 2.5,
+        "transitionDurationMs": 400
+      },
+      "indicators": {
+        "showTrackLine": true,
+        "trackOpacity": 35,
+        "trackThumbColor": "primary",
+        "showFocusLine": true,
+        "focusLineColor": "secondary",
+        "focusLineOpacity": 96,
+        "focusLineThickness": 3,
+        "focusLineAnimationMs": 400
+      }
     }
   }
 }

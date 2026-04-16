@@ -5,6 +5,7 @@ import Quickshell.Widgets
 import qs.Commons
 import qs.Services.UI
 import qs.Widgets
+import "./components"
 
 Item {
     id: root
@@ -20,76 +21,109 @@ Item {
     property var defaults: pluginApi?.manifest?.metadata?.defaultSettings || ({})
     readonly property var mainInstance: pluginApi?.mainInstance ?? null
 
+    function settingValue(groupKey, nestedKey, legacyKey, fallbackValue) {
+        const configGroup = cfg ? cfg[groupKey] : undefined;
+        const nestedConfig = configGroup ? configGroup[nestedKey] : undefined;
+        if (nestedConfig !== undefined)
+            return nestedConfig;
+
+        const legacyConfig = cfg ? cfg[legacyKey] : undefined;
+        if (legacyConfig !== undefined)
+            return legacyConfig;
+
+        const defaultsGroup = defaults ? defaults[groupKey] : undefined;
+        const nestedDefault = defaultsGroup ? defaultsGroup[nestedKey] : undefined;
+        if (nestedDefault !== undefined)
+            return nestedDefault;
+
+        const legacyDefault = defaults ? defaults[legacyKey] : undefined;
+        if (legacyDefault !== undefined)
+            return legacyDefault;
+
+        return fallbackValue;
+    }
+
     readonly property string screenName: screen?.name ?? ""
     readonly property string barPosition: Settings.getBarPositionForScreen(screenName)
     readonly property bool isVertical: barPosition === "left" || barPosition === "right"
     readonly property real capsuleHeight: Style.getCapsuleHeightForScreen(screenName)
     readonly property real barFontSize: Style.getBarFontSizeForScreen(screenName)
 
-    readonly property bool onlySameOutput: cfg.onlySameOutput ?? defaults.onlySameOutput ?? true
-    readonly property bool onlyActiveWorkspaces: cfg.onlyActiveWorkspaces ?? defaults.onlyActiveWorkspaces ?? true
-    readonly property bool enableReorder: cfg.enableReorder ?? defaults.enableReorder ?? true
-    readonly property bool debugLogging: cfg.debugLogging ?? defaults.debugLogging ?? false
-    readonly property int maxWidgetWidthPercent: cfg.maxWidgetWidth ?? defaults.maxWidgetWidth ?? 40
-    readonly property real baseSlotLength: cfg.slotWidth ?? defaults.slotWidth ?? 112
-    readonly property real slotCapsuleScale: Math.max(0.3, cfg.slotCapsuleScale ?? defaults.slotCapsuleScale ?? 1.0)
-    readonly property bool showTitle: !isVertical && (cfg.showTitle ?? defaults.showTitle ?? true)
-    readonly property real iconScale: cfg.iconScale ?? defaults.iconScale ?? 0.8
-    readonly property real edgeFadeSize: Math.max(0, Math.round((cfg.edgeFadeSize ?? defaults.edgeFadeSize ?? 18) * Style.uiScaleRatio))
-    readonly property real edgeFadeMidpoint: Math.max(0.05, Math.min(0.95, cfg.edgeFadeMidpoint ?? defaults.edgeFadeMidpoint ?? 0.45))
-    readonly property real edgeFadeMidOpacity: Math.max(0, Math.min(1, (cfg.edgeFadeMidOpacity ?? defaults.edgeFadeMidOpacity ?? 40) / 100))
-    readonly property bool showTrackLine: cfg.showTrackLine ?? defaults.showTrackLine ?? true
-    readonly property string trackThumbColorKey: cfg.trackThumbColor ?? defaults.trackThumbColor ?? "primary"
+    readonly property bool onlySameOutput: settingValue("filtering", "onlySameOutput", "onlySameOutput", true)
+    readonly property bool onlyActiveWorkspaces: settingValue("filtering", "onlyActiveWorkspaces", "onlyActiveWorkspaces", true)
+    readonly property bool enableReorder: settingValue("interaction", "enableReorder", "enableReorder", true)
+    readonly property bool debugLogging: settingValue("advanced", "debugLogging", "debugLogging", false)
+    readonly property int maxWidgetWidthPercent: settingValue("layout", "maxWidgetWidth", "maxWidgetWidth", 40)
+    readonly property real baseSlotLength: settingValue("layout", "slotWidth", "slotWidth", 112)
+    readonly property real slotCapsuleScale: Math.max(0.3, settingValue("layout", "slotCapsuleScale", "slotCapsuleScale", 1.0))
+    readonly property bool showTitle: !isVertical && settingValue("title", "showTitle", "showTitle", true)
+    readonly property real iconScale: settingValue("icons", "iconScale", "iconScale", 0.8)
+    readonly property real edgeFadeSize: Math.max(0, Math.round(settingValue("edgeFade", "size", "edgeFadeSize", 18) * Style.uiScaleRatio))
+    readonly property real edgeFadeMidpoint: Math.max(0.05, Math.min(0.95, settingValue("edgeFade", "midpoint", "edgeFadeMidpoint", 0.45)))
+    readonly property real edgeFadeMidOpacity: Math.max(0, Math.min(1, settingValue("edgeFade", "midOpacity", "edgeFadeMidOpacity", 40) / 100))
+    readonly property bool showTrackLine: settingValue("indicators", "showTrackLine", "showTrackLine", true)
+    readonly property string trackThumbColorKey: settingValue("indicators", "trackThumbColor", "trackThumbColor", "primary")
     readonly property color trackThumbColor: Color.resolveColorKey(trackThumbColorKey)
-    readonly property real inactiveOpacity: Math.max(0.05, Math.min(1, (cfg.inactiveOpacity ?? defaults.inactiveOpacity ?? 45) / 100))
-    readonly property int slotSpacingUnits: cfg.slotSpacingUnits ?? defaults.slotSpacingUnits ?? 1
-    readonly property real radiusScale: cfg.radiusScale ?? defaults.radiusScale ?? 1.0
-    readonly property string hoverFillColorKey: cfg.hoverFillColor ?? defaults.hoverFillColor ?? "hover"
-    readonly property string hoverBorderColorKey: cfg.hoverBorderColor ?? defaults.hoverBorderColor ?? "outline"
-    readonly property string hoverTextColorKey: cfg.hoverTextColor ?? defaults.hoverTextColor ?? "on-hover"
-    readonly property real hoverFillOpacity: Math.max(0, Math.min(1, (cfg.hoverFillOpacity ?? defaults.hoverFillOpacity ?? 55) / 100))
-    readonly property real hoverScalePercent: Math.max(0, cfg.hoverScalePercent ?? defaults.hoverScalePercent ?? 2.5)
-    readonly property int hoverTransitionDurationMs: Math.max(0, cfg.hoverTransitionDurationMs ?? defaults.hoverTransitionDurationMs ?? 120)
-    readonly property real focusedFillOpacity: Math.max(0, Math.min(1, (cfg.focusedFillOpacity ?? defaults.focusedFillOpacity ?? 92) / 100))
-    readonly property string focusedFillColorKey: cfg.focusedFillColor ?? defaults.focusedFillColor ?? "primary"
-    readonly property string focusedBorderColorKey: cfg.focusedBorderColor ?? defaults.focusedBorderColor ?? "primary"
-    readonly property string focusedTextColorKey: cfg.focusedTextColor ?? defaults.focusedTextColor ?? "on-primary"
-    readonly property bool showFocusedFill: cfg.showFocusedFill ?? defaults.showFocusedFill ?? true
-    readonly property real unfocusedFillOpacity: Math.max(0, Math.min(1, (cfg.unfocusedFillOpacity ?? defaults.unfocusedFillOpacity ?? 8) / 100))
-    readonly property real unfocusedBorderOpacity: Math.max(0, Math.min(1, (cfg.unfocusedBorderOpacity ?? defaults.unfocusedBorderOpacity ?? 45) / 100))
-    readonly property string unfocusedFillColorKey: cfg.unfocusedFillColor ?? defaults.unfocusedFillColor ?? "surface-variant"
-    readonly property string unfocusedBorderColorKey: cfg.unfocusedBorderColor ?? defaults.unfocusedBorderColor ?? "outline"
-    readonly property string unfocusedTextColorKey: cfg.unfocusedTextColor ?? defaults.unfocusedTextColor ?? "on-surface"
-    readonly property bool showUnfocusedFill: cfg.showUnfocusedFill ?? defaults.showUnfocusedFill ?? true
-    readonly property bool showFocusedBorder: cfg.showFocusedBorder ?? defaults.showFocusedBorder ?? true
-    readonly property real focusedBorderOpacity: Math.max(0, Math.min(1, (cfg.focusedBorderOpacity ?? defaults.focusedBorderOpacity ?? 100) / 100))
-    readonly property bool showHoverBorder: cfg.showHoverBorder ?? defaults.showHoverBorder ?? true
-    readonly property real hoverBorderOpacity: Math.max(0, Math.min(1, (cfg.hoverBorderOpacity ?? defaults.hoverBorderOpacity ?? 100) / 100))
-    readonly property bool showUnfocusedBorder: cfg.showUnfocusedBorder ?? defaults.showUnfocusedBorder ?? true
-    readonly property real trackOpacity: Math.max(0, Math.min(1, (cfg.trackOpacity ?? defaults.trackOpacity ?? 35) / 100))
-    readonly property bool showFocusLine: cfg.showFocusLine ?? defaults.showFocusLine ?? true
-    readonly property string focusLineColorKey: cfg.focusLineColor ?? defaults.focusLineColor ?? "secondary"
+    readonly property real inactiveOpacity: Math.max(0.05, Math.min(1, settingValue("unfocused", "inactiveOpacity", "inactiveOpacity", 45) / 100))
+    readonly property int slotSpacingUnits: settingValue("layout", "slotSpacingUnits", "slotSpacingUnits", 1)
+    readonly property real radiusScale: settingValue("layout", "radiusScale", "radiusScale", 1.0)
+    readonly property string hoverFillColorKey: settingValue("hover", "fillColor", "hoverFillColor", "hover")
+    readonly property string hoverBorderColorKey: settingValue("hover", "borderColor", "hoverBorderColor", "outline")
+    readonly property string hoverTextColorKey: settingValue("hover", "textColor", "hoverTextColor", "on-hover")
+    readonly property real hoverFillOpacity: Math.max(0, Math.min(1, settingValue("hover", "fillOpacity", "hoverFillOpacity", 55) / 100))
+    readonly property real hoverScalePercent: Math.max(0, settingValue("hover", "scalePercent", "hoverScalePercent", 2.5))
+    readonly property int hoverTransitionDurationMs: Math.max(0, settingValue("hover", "transitionDurationMs", "hoverTransitionDurationMs", 120))
+    readonly property real focusedFillOpacity: Math.max(0, Math.min(1, settingValue("focused", "fillOpacity", "focusedFillOpacity", 92) / 100))
+    readonly property string focusedFillColorKey: settingValue("focused", "fillColor", "focusedFillColor", "primary")
+    readonly property string focusedBorderColorKey: settingValue("focused", "borderColor", "focusedBorderColor", "primary")
+    readonly property string focusedTextColorKey: settingValue("focused", "textColor", "focusedTextColor", "on-primary")
+    readonly property bool showFocusedFill: settingValue("focused", "showFill", "showFocusedFill", true)
+    readonly property real unfocusedFillOpacity: Math.max(0, Math.min(1, settingValue("unfocused", "fillOpacity", "unfocusedFillOpacity", 8) / 100))
+    readonly property real unfocusedBorderOpacity: Math.max(0, Math.min(1, settingValue("unfocused", "borderOpacity", "unfocusedBorderOpacity", 45) / 100))
+    readonly property string unfocusedFillColorKey: settingValue("unfocused", "fillColor", "unfocusedFillColor", "surface-variant")
+    readonly property string unfocusedBorderColorKey: settingValue("unfocused", "borderColor", "unfocusedBorderColor", "outline")
+    readonly property string unfocusedTextColorKey: settingValue("unfocused", "textColor", "unfocusedTextColor", "on-surface")
+    readonly property bool showUnfocusedFill: settingValue("unfocused", "showFill", "showUnfocusedFill", true)
+    readonly property bool showFocusedBorder: settingValue("focused", "showBorder", "showFocusedBorder", true)
+    readonly property real focusedBorderOpacity: Math.max(0, Math.min(1, settingValue("focused", "borderOpacity", "focusedBorderOpacity", 100) / 100))
+    readonly property bool showHoverBorder: settingValue("hover", "showBorder", "showHoverBorder", true)
+    readonly property real hoverBorderOpacity: Math.max(0, Math.min(1, settingValue("hover", "borderOpacity", "hoverBorderOpacity", 100) / 100))
+    readonly property bool showUnfocusedBorder: settingValue("unfocused", "showBorder", "showUnfocusedBorder", true)
+    readonly property real trackOpacity: Math.max(0, Math.min(1, settingValue("indicators", "trackOpacity", "trackOpacity", 35) / 100))
+    readonly property bool showFocusLine: settingValue("indicators", "showFocusLine", "showFocusLine", true)
+    readonly property string focusLineColorKey: settingValue("indicators", "focusLineColor", "focusLineColor", "secondary")
     readonly property color focusLineColor: Color.resolveColorKey(focusLineColorKey)
-    readonly property real focusLineOpacity: Math.max(0, Math.min(1, (cfg.focusLineOpacity ?? defaults.focusLineOpacity ?? 96) / 100))
-    readonly property int focusLineThickness: Math.max(1, cfg.focusLineThickness ?? defaults.focusLineThickness ?? 2)
-    readonly property int focusLineAnimationMs: Math.max(0, cfg.focusLineAnimationMs ?? defaults.focusLineAnimationMs ?? 120)
-    readonly property bool enableScrollWheel: cfg.enableScrollWheel ?? defaults.enableScrollWheel ?? true
-    readonly property bool centerFocusedWindow: cfg.centerFocusedWindow ?? defaults.centerFocusedWindow ?? true
-    readonly property int centerAnimationMs: Math.max(0, cfg.centerAnimationMs ?? defaults.centerAnimationMs ?? 200)
+    readonly property real focusLineOpacity: Math.max(0, Math.min(1, settingValue("indicators", "focusLineOpacity", "focusLineOpacity", 96) / 100))
+    readonly property int focusLineThickness: Math.max(1, settingValue("indicators", "focusLineThickness", "focusLineThickness", 2))
+    readonly property int focusLineAnimationMs: Math.max(0, settingValue("indicators", "focusLineAnimationMs", "focusLineAnimationMs", 120))
+    readonly property bool enableScrollWheel: settingValue("interaction", "enableScrollWheel", "enableScrollWheel", true)
+    readonly property bool centerFocusedWindow: settingValue("autoScroll", "centerFocusedWindow", "centerFocusedWindow", true)
+    readonly property int centerAnimationMs: Math.max(0, settingValue("autoScroll", "centerAnimationMs", "centerAnimationMs", 200))
     readonly property bool supportsLiveReorder: enableReorder && (mainInstance?.supportsLiveReorder ?? false)
 
-    readonly property bool showIcons: cfg.showIcons ?? defaults.showIcons ?? true
-    readonly property string titleFontFamily: cfg.titleFontFamily ?? defaults.titleFontFamily ?? ""
-    readonly property int titleFontSize: Math.max(0, cfg.titleFontSize ?? defaults.titleFontSize ?? 0)
-    readonly property string titleFontWeightKey: cfg.titleFontWeight ?? defaults.titleFontWeight ?? "default"
-    readonly property string iconTintColorKey: cfg.iconTintColor ?? defaults.iconTintColor ?? "none"
-    readonly property real iconTintOpacity: Math.max(0, Math.min(1, (cfg.iconTintOpacity ?? defaults.iconTintOpacity ?? 100) / 100))
-    readonly property string backgroundColorKey: cfg.backgroundColor ?? defaults.backgroundColor ?? "none"
-    readonly property real backgroundOpacity: Math.max(0, Math.min(1, (cfg.backgroundOpacity ?? defaults.backgroundOpacity ?? 0) / 100))
+    readonly property bool showIcons: settingValue("icons", "showIcons", "showIcons", true)
+    readonly property string titleFontFamily: settingValue("title", "titleFontFamily", "titleFontFamily", "")
+    readonly property int titleFontSize: Math.max(0, settingValue("title", "titleFontSize", "titleFontSize", 0))
+    readonly property string titleFontWeightKey: settingValue("title", "titleFontWeight", "titleFontWeight", "default")
+    readonly property string iconTintColorKey: settingValue("icons", "iconTintColor", "iconTintColor", "none")
+    readonly property real iconTintOpacity: Math.max(0, Math.min(1, settingValue("icons", "iconTintOpacity", "iconTintOpacity", 100) / 100))
+    readonly property string backgroundColorKey: settingValue("background", "color", "backgroundColor", "none")
+    readonly property real backgroundOpacity: Math.max(0, Math.min(1, settingValue("background", "opacity", "backgroundOpacity", 0) / 100))
     readonly property color iconTintColor: iconTintColorKey !== "none" ? Color.resolveColorKey(iconTintColorKey) : "transparent"
     readonly property bool iconTintEnabled: iconTintColorKey !== "none"
     readonly property bool backgroundEnabled: backgroundColorKey !== "none" && backgroundOpacity > 0
-    readonly property color backgroundColor: backgroundEnabled ? Qt.rgba(Color.resolveColorKey(backgroundColorKey).r, Color.resolveColorKey(backgroundColorKey).g, Color.resolveColorKey(backgroundColorKey).b, backgroundOpacity) : "transparent"
+    readonly property color backgroundBaseColor: backgroundColorKey !== "none" ? Color.resolveColorKey(backgroundColorKey) : "transparent"
+    readonly property color backgroundColor: backgroundEnabled ? Qt.alpha(backgroundBaseColor, backgroundOpacity) : "transparent"
+    readonly property color fadeBaseColor: backgroundEnabled ? backgroundColor : Color.mSurface
+    readonly property color focusedFillColor: Color.resolveColorKey(focusedFillColorKey)
+    readonly property color focusedBorderColor: Color.resolveColorKey(focusedBorderColorKey)
+    readonly property color focusedTextColor: Color.resolveColorKey(focusedTextColorKey)
+    readonly property color hoverFillColor: Color.resolveColorKey(hoverFillColorKey)
+    readonly property color hoverBorderColor: Color.resolveColorKey(hoverBorderColorKey)
+    readonly property color hoverTextColor: Color.resolveColorKey(hoverTextColorKey)
+    readonly property color unfocusedFillColor: Color.resolveColorKey(unfocusedFillColorKey)
+    readonly property color unfocusedBorderColor: Color.resolveColorKey(unfocusedBorderColorKey)
+    readonly property color unfocusedTextColor: Color.resolveColorKey(unfocusedTextColorKey)
 
     readonly property int titleFontWeightValue: {
         if (titleFontWeightKey === "light")
@@ -131,6 +165,7 @@ Item {
     readonly property int structureRevision: mainInstance?.structureRevision ?? 0
     readonly property int liveRevision: mainInstance?.liveRevision ?? 0
     readonly property real contentExtent: stripLoader.item?.contentExtent ?? 0
+    readonly property var flickableRef: flickable
 
     readonly property real maxWidgetExtent: {
         if (!screen || maxWidgetWidthPercent <= 0)
@@ -165,6 +200,14 @@ Item {
     property bool focusedIndicatorVisible: false
     property real animatedIndicatorOffset: 0
     property real animatedIndicatorLength: 0
+    readonly property var contextMenuModel: [
+        {
+            "label": pluginApi?.tr("menu.settings"),
+            "action": "settings",
+            "icon": "settings",
+            "visible": true
+        }
+    ]
     readonly property bool focusedIndicatorInView: {
         if (!focusedIndicatorVisible)
             return false;
@@ -433,13 +476,7 @@ Item {
     NPopupContextMenu {
         id: contextMenu
 
-        model: [
-            {
-                "label": pluginApi?.tr("menu.settings"),
-                "action": "settings",
-                "icon": "settings"
-            }
-        ]
+        model: root.contextMenuModel
 
         onTriggered: action => {
             contextMenu.close();
@@ -448,6 +485,20 @@ Item {
 
             if (action === "settings")
                 BarService.openPluginSettings(root.screen, pluginApi.manifest);
+        }
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.RightButton
+        hoverEnabled: false
+        propagateComposedEvents: true
+
+        onClicked: mouse => {
+            if (mouse.button !== Qt.RightButton)
+                return;
+            PanelService.showContextMenu(contextMenu, root, root.screen);
+            mouse.accepted = true;
         }
     }
 
@@ -463,309 +514,9 @@ Item {
     Component {
         id: entryDelegateComponent
 
-        Item {
-            id: delegateRoot
-            objectName: "scrollbarDelegateRoot"
-
-            required property var modelData
-            required property int index
-
-            readonly property var liveEntry: root.liveEntriesByKey[modelData.entryKey] || ({})
-            readonly property string liveTitle: liveEntry.title || modelData.fallbackTitle || ""
-            readonly property bool isFocused: !!liveEntry.isFocused
-            readonly property bool isHovered: root.hoveredEntryKey === modelData.entryKey
-            readonly property bool reorderEnabled: root.supportsLiveReorder
-            readonly property bool showTooltip: root.showTitle ? textLabel.truncated : true
-            readonly property color focusedFillBaseColor: Color.resolveColorKey(root.focusedFillColorKey)
-            readonly property color focusedBorderBaseColor: Color.resolveColorKey(root.focusedBorderColorKey)
-            readonly property color focusedTextColor: Color.resolveColorKey(root.focusedTextColorKey)
-            readonly property color accentFill: root.showFocusedFill ? Qt.rgba(focusedFillBaseColor.r, focusedFillBaseColor.g, focusedFillBaseColor.b, root.focusedFillOpacity) : "transparent"
-            readonly property color accentOutline: Qt.rgba(focusedBorderBaseColor.r, focusedBorderBaseColor.g, focusedBorderBaseColor.b, root.focusedBorderOpacity)
-            readonly property color hoverFillBaseColor: Color.resolveColorKey(root.hoverFillColorKey)
-            readonly property color hoverBorderBaseColor: Color.resolveColorKey(root.hoverBorderColorKey)
-            readonly property color hoverTextColor: Color.resolveColorKey(root.hoverTextColorKey)
-            readonly property color unfocusedFillBaseColor: Color.resolveColorKey(root.unfocusedFillColorKey)
-            readonly property color unfocusedBorderBaseColor: Color.resolveColorKey(root.unfocusedBorderColorKey)
-            readonly property color unfocusedTextColor: Color.resolveColorKey(root.unfocusedTextColorKey)
-            readonly property color mutedOutline: Qt.rgba(unfocusedBorderBaseColor.r, unfocusedBorderBaseColor.g, unfocusedBorderBaseColor.b, root.unfocusedBorderOpacity)
-            readonly property color mutedFill: root.showUnfocusedFill ? Qt.rgba(unfocusedFillBaseColor.r, unfocusedFillBaseColor.g, unfocusedFillBaseColor.b, root.unfocusedFillOpacity) : "transparent"
-            readonly property color hoverFill: Qt.rgba(hoverFillBaseColor.r, hoverFillBaseColor.g, hoverFillBaseColor.b, root.hoverFillOpacity)
-            readonly property color hoverOutline: Qt.rgba(hoverBorderBaseColor.r, hoverBorderBaseColor.g, hoverBorderBaseColor.b, root.hoverBorderOpacity)
-            readonly property color slotTextColor: isFocused ? focusedTextColor : (isHovered ? hoverTextColor : unfocusedTextColor)
-            readonly property real hoverScaleMultiplier: 1 + (root.hoverScalePercent / 100)
-            readonly property real neighborShift: {
-                if (root.dragSourceIndex === -1 || root.dragTargetIndex === -1 || root.dragSourceIndex === index)
-                    return 0;
-                if (root.dragSourceIndex < root.dragTargetIndex && index > root.dragSourceIndex && index <= root.dragTargetIndex)
-                    return -(root.isVertical ? (delegateRoot.height + root.slotSpacing) : (delegateRoot.width + root.slotSpacing));
-                if (root.dragSourceIndex > root.dragTargetIndex && index >= root.dragTargetIndex && index < root.dragSourceIndex)
-                    return root.isVertical ? (delegateRoot.height + root.slotSpacing) : (delegateRoot.width + root.slotSpacing);
-                return 0;
-            }
-            property bool hadDragDuringPress: false
-
-            Layout.preferredWidth: root.isVertical ? root.slotCrossExtent : root.effectiveSlotLength
-            Layout.preferredHeight: root.isVertical ? root.effectiveSlotLength : root.slotCrossExtent
-            Layout.alignment: root.isVertical ? Qt.AlignHCenter : Qt.AlignVCenter
-            width: Layout.preferredWidth
-            height: Layout.preferredHeight
-            z: root.dragSourceIndex === index ? 1000 : 1
-
-            Item {
-                id: draggableContent
-                anchors.fill: dragArea.drag.active ? undefined : parent
-                z: dragArea.drag.active ? 1000 : 0
-                scale: (dragArea.drag.active ? 1.03 : 1.0) * ((delegateRoot.isHovered && !delegateRoot.isFocused) ? delegateRoot.hoverScaleMultiplier : 1.0)
-                opacity: (delegateRoot.isFocused || delegateRoot.isHovered) ? 1.0 : root.inactiveOpacity
-
-                transform: Translate {
-                    x: !root.isVertical ? delegateRoot.neighborShift : 0
-                    y: root.isVertical ? delegateRoot.neighborShift : 0
-
-                    Behavior on x {
-                        NumberAnimation {
-                            duration: Style.animationFast
-                            easing.type: Easing.OutQuad
-                        }
-                    }
-
-                    Behavior on y {
-                        NumberAnimation {
-                            duration: Style.animationFast
-                            easing.type: Easing.OutQuad
-                        }
-                    }
-                }
-
-                Behavior on scale {
-                    NumberAnimation {
-                        duration: root.hoverTransitionDurationMs
-                        easing.type: Easing.OutQuad
-                    }
-                }
-
-                Behavior on opacity {
-                    NumberAnimation {
-                        duration: Style.animationFast
-                        easing.type: Easing.OutQuad
-                    }
-                }
-
-                Rectangle {
-                    anchors.fill: parent
-                    radius: Style.radiusM * root.radiusScale
-                    color: delegateRoot.isFocused ? delegateRoot.accentFill : (delegateRoot.isHovered ? delegateRoot.hoverFill : delegateRoot.mutedFill)
-                    border.color: delegateRoot.isFocused ? delegateRoot.accentOutline : (delegateRoot.isHovered ? delegateRoot.hoverOutline : delegateRoot.mutedOutline)
-                    border.width: {
-                        if (delegateRoot.isFocused)
-                            return root.showFocusedBorder ? Style.borderS : 0;
-                        if (delegateRoot.isHovered)
-                            return root.showHoverBorder ? Style.borderS : 0;
-                        return root.showUnfocusedBorder ? Style.borderS : 0;
-                    }
-
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: root.hoverTransitionDurationMs
-                            easing.type: Easing.OutQuad
-                        }
-                    }
-
-                    Behavior on border.color {
-                        ColorAnimation {
-                            duration: root.hoverTransitionDurationMs
-                            easing.type: Easing.OutQuad
-                        }
-                    }
-                }
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: Style.marginM
-                    anchors.rightMargin: Style.marginM
-                    anchors.topMargin: Style.marginS * root.slotCapsuleScale
-                    anchors.bottomMargin: Style.marginS * root.slotCapsuleScale
-                    spacing: Style.marginS
-                    visible: !root.isVertical
-
-                    Item {
-                        Layout.preferredWidth: root.itemSize
-                        Layout.preferredHeight: root.itemSize
-                        Layout.alignment: Qt.AlignVCenter
-                        visible: root.showIcons
-
-                        IconImage {
-                            id: appIcon
-                            anchors.fill: parent
-                            source: ThemeIcons.iconForAppId(delegateRoot.modelData.appId)
-                            smooth: true
-                            asynchronous: true
-                            visible: status === Image.Ready
-
-                            layer.enabled: root.iconTintEnabled && visible
-                            layer.effect: ShaderEffect {
-                                property color targetColor: Qt.rgba(root.iconTintColor.r, root.iconTintColor.g, root.iconTintColor.b, root.iconTintOpacity)
-                                property real colorizeMode: 0.0
-
-                                fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/appicon_colorize.frag.qsb")
-                            }
-                        }
-
-                        NText {
-                            anchors.centerIn: parent
-                            visible: root.showIcons && !appIcon.visible
-                            text: delegateRoot.liveTitle.charAt(0).toUpperCase()
-                            font.weight: Style.fontWeightBold
-                            pointSize: Math.max(Style.fontSizeXS, root.barFontSize - 1)
-                            color: delegateRoot.slotTextColor
-                        }
-                    }
-
-                    NText {
-                        id: textLabel
-                        Layout.fillWidth: root.showTitle
-                        Layout.preferredWidth: root.showTitle ? -1 : 0
-                        Layout.alignment: Qt.AlignVCenter
-                        text: delegateRoot.liveTitle
-                        elide: Text.ElideRight
-                        maximumLineCount: 1
-                        visible: root.showTitle
-                        color: delegateRoot.slotTextColor
-                        font.family: root.titleFontFamily || Qt.application.font.family
-                        pointSize: root.titleFontSize > 0 ? root.titleFontSize : Math.max(Style.fontSizeXS, root.barFontSize * root.slotCapsuleScale)
-                        font.weight: root.titleFontWeightValue >= 0 ? root.titleFontWeightValue : (delegateRoot.isFocused ? Style.fontWeightSemiBold : Style.fontWeightMedium)
-                    }
-                }
-
-                ColumnLayout {
-                    anchors.fill: parent
-                    anchors.topMargin: Style.marginS
-                    anchors.bottomMargin: Style.marginS
-                    anchors.leftMargin: Style.marginS * root.slotCapsuleScale
-                    anchors.rightMargin: Style.marginS * root.slotCapsuleScale
-                    spacing: Style.marginXS
-                    visible: root.isVertical
-
-                    Item {
-                        Layout.alignment: Qt.AlignHCenter
-                        Layout.preferredWidth: root.itemSize
-                        Layout.preferredHeight: root.itemSize
-                        visible: root.showIcons
-
-                        IconImage {
-                            id: appIconVertical
-                            anchors.fill: parent
-                            source: ThemeIcons.iconForAppId(delegateRoot.modelData.appId)
-                            smooth: true
-                            asynchronous: true
-                            visible: status === Image.Ready
-
-                            layer.enabled: root.iconTintEnabled && visible
-                            layer.effect: ShaderEffect {
-                                property color targetColor: Qt.rgba(root.iconTintColor.r, root.iconTintColor.g, root.iconTintColor.b, root.iconTintOpacity)
-                                property real colorizeMode: 0.0
-
-                                fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/appicon_colorize.frag.qsb")
-                            }
-                        }
-
-                        NText {
-                            anchors.centerIn: parent
-                            visible: root.showIcons && !appIconVertical.visible
-                            text: delegateRoot.liveTitle.charAt(0).toUpperCase()
-                            font.weight: Style.fontWeightBold
-                            pointSize: Math.max(Style.fontSizeXS, root.barFontSize - 1)
-                            color: delegateRoot.slotTextColor
-                        }
-                    }
-
-                    NText {
-                        Layout.fillWidth: true
-                        text: delegateRoot.isFocused ? "\u2022" : ""
-                        horizontalAlignment: Text.AlignHCenter
-                        color: delegateRoot.slotTextColor
-                        pointSize: root.barFontSize
-                    }
-                }
-            }
-
-            MouseArea {
-                id: dragArea
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
-                preventStealing: true
-                drag.target: delegateRoot.reorderEnabled ? draggableContent : null
-                drag.axis: root.isVertical ? Drag.YAxis : Drag.XAxis
-
-                onEntered: {
-                    root.hoveredEntryKey = delegateRoot.modelData.entryKey;
-                    root.debugLog("Hover enter " + delegateRoot.modelData.entryKey);
-                    if (delegateRoot.showTooltip)
-                        TooltipService.show(delegateRoot, delegateRoot.liveTitle, BarService.getTooltipDirection(root.screen?.name));
-                }
-
-                onExited: {
-                    if (root.hoveredEntryKey === delegateRoot.modelData.entryKey)
-                        root.hoveredEntryKey = "";
-                    TooltipService.hide();
-                }
-
-                onPressed: mouse => {
-                    delegateRoot.hadDragDuringPress = false;
-                    if (mouse.button === Qt.RightButton)
-                        root.selectedEntryKey = delegateRoot.modelData.entryKey;
-                }
-
-                onPositionChanged: {
-                    if (drag.active) {
-                        delegateRoot.hadDragDuringPress = true;
-                        root.dragSourceIndex = index;
-                        root.updateDragTargetForItem(index, draggableContent);
-                    }
-                }
-
-                onReleased: mouse => {
-                    if (mouse.button === Qt.MiddleButton) {
-                        root.mainInstance?.closeEntry(delegateRoot.modelData.entryKey);
-                        return;
-                    }
-
-                    if (mouse.button === Qt.RightButton) {
-                        TooltipService.hide();
-                        root.debugLog("Open context menu for " + delegateRoot.modelData.entryKey);
-                        PanelService.showContextMenu(contextMenu, delegateRoot, root.screen);
-                        return;
-                    }
-
-                    if (delegateRoot.hadDragDuringPress || root.dragSourceIndex === index) {
-                        root.completeDragReorder();
-                    } else {
-                        root.mainInstance?.focusEntry(delegateRoot.modelData.entryKey);
-                        Qt.callLater(function () {
-                            root.centerEntryAt(index);
-                        });
-                    }
-                }
-
-                onWheel: wheel => {
-                    if (!root.enableScrollWheel || !root.hasWindow) {
-                        wheel.accepted = false;
-                        return;
-                    }
-                    root.debugLog("delegate onWheel delta=" + wheel.angleDelta.y);
-                    const step = wheel.angleDelta.y / 120 * root.effectiveSlotLength;
-                    if (root.isVertical) {
-                        const maxY = Math.max(0, flickable.contentHeight - flickable.height);
-                        flickable.contentY = Math.max(0, Math.min(maxY, flickable.contentY - step));
-                    } else {
-                        const maxX = Math.max(0, flickable.contentWidth - flickable.width);
-                        flickable.contentX = Math.max(0, Math.min(maxX, flickable.contentX - step));
-                    }
-                    wheel.accepted = true;
-                }
-            }
+        WindowSlot {
+            barRoot: root
+            contextMenu: contextMenu
         }
     }
 
@@ -869,176 +620,17 @@ Item {
         }
     }
 
-    Item {
-        anchors.fill: parent
-        visible: root.showTrackLine
-
-        Rectangle {
-            visible: !root.isVertical
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 1
-            height: root.trackThickness
-            radius: height / 2
-            color: Qt.rgba(Color.mOutline.r, Color.mOutline.g, Color.mOutline.b, root.trackOpacity)
-        }
-
-        Rectangle {
-            visible: !root.isVertical && flickable.contentWidth > 0
-            anchors.bottom: parent.bottom
-            height: root.trackThickness
-            radius: height / 2
-            width: Math.max(Style.marginXL, Math.round((flickable.width / flickable.contentWidth) * parent.width))
-            x: flickable.contentWidth > flickable.width ? Math.round((flickable.contentX / Math.max(1, flickable.contentWidth - flickable.width)) * Math.max(0, parent.width - width)) : 0
-            color: Qt.rgba(root.trackThumbColor.r, root.trackThumbColor.g, root.trackThumbColor.b, 0.85)
-            z: 0
-        }
-
-        Rectangle {
-            visible: !root.isVertical && root.focusedIndicatorInView
-            anchors.bottom: parent.bottom
-            height: root.focusLineThickness
-            radius: height / 2
-            width: root.animatedIndicatorLength
-            x: root.animatedIndicatorOffset - flickable.contentX
-            color: Qt.rgba(root.focusLineColor.r, root.focusLineColor.g, root.focusLineColor.b, root.focusLineOpacity)
-            z: 0
-        }
-
-        Rectangle {
-            visible: root.isVertical
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            anchors.right: parent.right
-            anchors.rightMargin: 1
-            width: root.trackThickness
-            radius: width / 2
-            color: Qt.rgba(Color.mOutline.r, Color.mOutline.g, Color.mOutline.b, root.trackOpacity)
-            z: 0
-        }
-
-        Rectangle {
-            visible: root.isVertical && flickable.contentHeight > 0
-            anchors.right: parent.right
-            anchors.rightMargin: 1
-            width: root.trackThickness
-            radius: width / 2
-            height: Math.max(Style.marginXL, Math.round((flickable.height / flickable.contentHeight) * parent.height))
-            y: flickable.contentHeight > flickable.height ? Math.round((flickable.contentY / Math.max(1, flickable.contentHeight - flickable.height)) * Math.max(0, parent.height - height)) : 0
-            color: Qt.rgba(root.trackThumbColor.r, root.trackThumbColor.g, root.trackThumbColor.b, 0.85)
-            z: 0
-        }
-
-        Rectangle {
-            visible: root.isVertical && root.focusedIndicatorInView
-            anchors.right: parent.right
-            width: root.focusLineThickness
-            radius: width / 2
-            height: root.animatedIndicatorLength
-            y: root.animatedIndicatorOffset - flickable.contentY
-            color: Qt.rgba(root.focusLineColor.r, root.focusLineColor.g, root.focusLineColor.b, root.focusLineOpacity)
-            z: 0
-        }
+    TrackOverlay {
+        barRoot: root
     }
 
-    Rectangle {
-        visible: !root.isVertical && root.edgeFadeSize > 0 && root.showLeadingFade
-        z: 10
-        anchors.left: parent.left
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        width: root.edgeFadeSize
-        color: "transparent"
-        gradient: Gradient {
-            orientation: Gradient.Horizontal
-            GradientStop {
-                position: 0.0
-                color: Color.mSurface
-            }
-            GradientStop {
-                position: root.edgeFadeMidpoint
-                color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, root.edgeFadeMidOpacity)
-            }
-            GradientStop {
-                position: 1.0
-                color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, 0.0)
-            }
-        }
+    EdgeFadeOverlay {
+        barRoot: root
+        leading: true
     }
 
-    Rectangle {
-        visible: !root.isVertical && root.edgeFadeSize > 0 && root.showTrailingFade
-        z: 10
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.bottom: parent.bottom
-        width: root.edgeFadeSize
-        color: "transparent"
-        gradient: Gradient {
-            orientation: Gradient.Horizontal
-            GradientStop {
-                position: 0.0
-                color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, 0.0)
-            }
-            GradientStop {
-                position: 1.0 - root.edgeFadeMidpoint
-                color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, root.edgeFadeMidOpacity)
-            }
-            GradientStop {
-                position: 1.0
-                color: Color.mSurface
-            }
-        }
-    }
-
-    Rectangle {
-        visible: root.isVertical && root.edgeFadeSize > 0 && root.showLeadingFade
-        z: 10
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-        height: root.edgeFadeSize
-        color: "transparent"
-        gradient: Gradient {
-            orientation: Gradient.Vertical
-            GradientStop {
-                position: 0.0
-                color: Color.mSurface
-            }
-            GradientStop {
-                position: root.edgeFadeMidpoint
-                color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, root.edgeFadeMidOpacity)
-            }
-            GradientStop {
-                position: 1.0
-                color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, 0.0)
-            }
-        }
-    }
-
-    Rectangle {
-        visible: root.isVertical && root.edgeFadeSize > 0 && root.showTrailingFade
-        z: 10
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        height: root.edgeFadeSize
-        color: "transparent"
-        gradient: Gradient {
-            orientation: Gradient.Vertical
-            GradientStop {
-                position: 0.0
-                color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, 0.0)
-            }
-            GradientStop {
-                position: 1.0 - root.edgeFadeMidpoint
-                color: Qt.rgba(Color.mSurface.r, Color.mSurface.g, Color.mSurface.b, root.edgeFadeMidOpacity)
-            }
-            GradientStop {
-                position: 1.0
-                color: Color.mSurface
-            }
-        }
+    EdgeFadeOverlay {
+        barRoot: root
+        leading: false
     }
 }
