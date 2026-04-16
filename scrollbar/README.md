@@ -19,7 +19,7 @@ The bar is not manually scrollable — it only moves when focus changes, so its 
 - **Focused slot**: filled accent background with icon + title
 - **Unfocused slots**: dim outlines, subordinate but countable
 - **Edge fades**: gradient masks at both ends signal overflow — a hard edge means you're at the boundary
-- **Track line**: thin accent bar showing your global position in the strip
+- **Track line**: segmented line showing each window position, plus a thumb for the visible region
 - **Workspace indicator**: optional active-workspace label rendered outside the strip so it remains visible past the fade
 
 ## Settings
@@ -32,6 +32,8 @@ The bar is not manually scrollable — it only moves when focus changes, so its 
 | Active workspaces only | On | Only show windows on active workspaces |
 | Enable reorder | On | Allow drag-to-reorder (Hyprland & Niri) |
 | Animate on workspace changes | Off | Slide the whole widget when the active workspace changes |
+| Track line position | Bottom / Right | Move the track and focus line to top, center, or bottom on horizontal bars, and left, center, or right on vertical bars |
+| Track segment gap | 1 px | Separate each per-window track segment |
 | Debug logging | Off | Verbose log output |
 
 ### Layout

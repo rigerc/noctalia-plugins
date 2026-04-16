@@ -68,6 +68,20 @@ ColumnLayout {
             "name": pluginApi?.tr("options.workspaceAnimationVertical")
         }
     ]
+    readonly property var trackLinePositionModel: [
+        {
+            "key": "start",
+            "name": pluginApi?.tr("options.trackLinePositionStart")
+        },
+        {
+            "key": "center",
+            "name": pluginApi?.tr("options.trackLinePositionCenter")
+        },
+        {
+            "key": "end",
+            "name": pluginApi?.tr("options.trackLinePositionEnd")
+        }
+    ]
     readonly property var defaultSettings: createSettingsSnapshot(defaults, ({}))
     property var editSettings: createSettingsSnapshot(pluginApi?.pluginSettings || ({}), defaults)
 
@@ -208,6 +222,8 @@ ColumnLayout {
             "indicators": {
                 "showTrackLine": readSetting(primary, secondary, "indicators", "showTrackLine", "showTrackLine", true),
                 "trackOpacity": readSetting(primary, secondary, "indicators", "trackOpacity", "trackOpacity", 35),
+                "trackLinePosition": readSetting(primary, secondary, "indicators", "trackLinePosition", "trackLinePosition", "end"),
+                "trackSegmentGap": readSetting(primary, secondary, "indicators", "trackSegmentGap", "trackSegmentGap", 1),
                 "trackThumbColor": readSetting(primary, secondary, "indicators", "trackThumbColor", "trackThumbColor", "primary"),
                 "showFocusLine": readSetting(primary, secondary, "indicators", "showFocusLine", "showFocusLine", true),
                 "focusLineColor": readSetting(primary, secondary, "indicators", "focusLineColor", "focusLineColor", "secondary"),

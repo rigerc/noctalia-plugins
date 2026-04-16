@@ -1,7 +1,7 @@
 {
   "id": "scrollbar",
   "name": "Scrollbar",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "minNoctaliaVersion": "4.6.6",
   "author": "rigerc",
   "license": "MIT",
@@ -108,6 +108,8 @@
       "indicators": {
         "showTrackLine": true,
         "trackOpacity": 35,
+        "trackLinePosition": "end",
+        "trackSegmentGap": 1,
         "trackThumbColor": "primary",
         "showFocusLine": true,
         "focusLineColor": "secondary",

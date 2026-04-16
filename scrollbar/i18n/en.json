@@ -17,7 +17,10 @@
     "workspaceIndicatorBefore": "Before strip",
     "workspaceIndicatorAfter": "After strip",
     "workspaceAnimationHorizontal": "Horizontal",
-    "workspaceAnimationVertical": "Vertical"
+    "workspaceAnimationVertical": "Vertical",
+    "trackLinePositionStart": "Top / Left",
+    "trackLinePositionCenter": "Center",
+    "trackLinePositionEnd": "Bottom / Right"
   },
   "settings": {
     "tabs": {
@@ -174,6 +177,14 @@
     "showTrackLine": {
       "label": "Show track line",
       "desc": "Render the passive position track and thumb behind the strip."
+    },
+    "trackLinePosition": {
+      "label": "Track line position",
+      "desc": "Place the track and focus line at the top, center, or bottom on horizontal bars, and left, center, or right on vertical bars."
+    },
+    "trackSegmentGap": {
+      "label": "Track segment gap",
+      "desc": "Gap between each per-window track segment."
     },
     "trackOpacity": {
       "label": "Track opacity",

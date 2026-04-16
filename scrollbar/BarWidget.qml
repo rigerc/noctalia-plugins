@@ -92,6 +92,8 @@ Item {
     readonly property real edgeFadeSize: Math.max(0, Math.round(settingValue("edgeFade", "fadeSize", "edgeFadeSize", 48) * Style.uiScaleRatio))
     readonly property real edgeFadeOpacity: Math.max(0, Math.min(1, settingValue("edgeFade", "fadeOpacity", "edgeFadeOpacity", 100) / 100))
     readonly property bool showTrackLine: settingValue("indicators", "showTrackLine", "showTrackLine", true)
+    readonly property string trackLinePosition: settingValue("indicators", "trackLinePosition", "trackLinePosition", "end")
+    readonly property int trackSegmentGap: Math.max(1, Math.min(5, Math.round(settingValue("indicators", "trackSegmentGap", "trackSegmentGap", 1))))
     readonly property string trackThumbColorKey: settingValue("indicators", "trackThumbColor", "trackThumbColor", "primary")
     readonly property color trackThumbColor: Color.resolveColorKey(trackThumbColorKey)
     readonly property real inactiveOpacity: Math.max(0.05, Math.min(1, settingValue("unfocused", "inactiveOpacity", "inactiveOpacity", 45) / 100))
@@ -288,6 +290,7 @@ Item {
     readonly property real contentWidth: isVertical ? crossExtent : Math.max(crossExtent, viewportExtent)
     readonly property real contentHeight: isVertical ? Math.max(crossExtent, viewportExtent) : crossExtent
     readonly property color capsuleBaseColor: Style.capsuleColor
+    readonly property real indicatorAnchorInset: 1
 
     property var combinedModel: []
     property string combinedSignature: ""
@@ -475,6 +478,45 @@ Item {
         return stripLoader.item?.delegateItemAt(index) ?? null;
     }
 
+    function indicatorCrossOffset(lineThickness) {
+        const thickness = Math.max(1, Math.round(lineThickness || 1));
+        const available = isVertical ? contentWidth : contentHeight;
+        const maxOffset = Math.max(0, Math.round(available - thickness));
+        if (trackLinePosition === "center")
+            return Math.round(maxOffset / 2);
+        if (trackLinePosition === "start")
+            return Math.min(indicatorAnchorInset, maxOffset);
+        return Math.max(0, maxOffset - indicatorAnchorInset);
+    }
+
+    function indicatorGeometryForIndex(index) {
+        const item = getDelegateItem(index);
+        const container = stripLoader.item;
+        if (!item || !container)
+            return null;
+
+        const point = item.mapToItem(container, 0, 0);
+        const gap = Math.max(0, Math.round(trackSegmentGap));
+        const startInset = Math.floor(gap / 2);
+        const endInset = Math.ceil(gap / 2);
+
+        if (isVertical) {
+            const start = Math.round(point.y + startInset);
+            const length = Math.max(1, Math.round(item.height - startInset - endInset));
+            return {
+                "offset": start,
+                "length": length
+            };
+        }
+
+        const start = Math.round(point.x + startInset);
+        const length = Math.max(1, Math.round(item.width - startInset - endInset));
+        return {
+            "offset": start,
+            "length": length
+        };
+    }
+
     function centerEntryAt(index) {
         if (index < 0 || index >= combinedModel.length)
             return false;
@@ -530,24 +572,15 @@ Item {
             return;
         }
 
-        const item = getDelegateItem(indexOfEntry(activeEntryKey));
-        const container = stripLoader.item;
-        if (!item || !container) {
+        const geometry = indicatorGeometryForIndex(indexOfEntry(activeEntryKey));
+        if (!geometry) {
             focusedIndicatorVisible = false;
             focusedIndicatorLength = 0;
             return;
         }
 
-        const point = item.mapToItem(container, 0, 0);
-        const inset = Math.max(2, Math.round(Style.marginXS));
-
-        if (isVertical) {
-            focusedIndicatorOffset = Math.round(point.y + inset);
-            focusedIndicatorLength = Math.max(0, Math.round(item.height - inset * 2));
-        } else {
-            focusedIndicatorOffset = Math.round(point.x + inset);
-            focusedIndicatorLength = Math.max(0, Math.round(item.width - inset * 2));
-        }
+        focusedIndicatorOffset = geometry.offset;
+        focusedIndicatorLength = geometry.length;
 
         focusedIndicatorVisible = focusedIndicatorLength > 0;
     }
@@ -639,6 +672,7 @@ Item {
     onContentHeightChanged: Qt.callLater(clampScrollPosition)
     onLiveRevisionChanged: Qt.callLater(updateFocusedIndicator)
     onShowFocusLineChanged: Qt.callLater(updateFocusedIndicator)
+    onTrackSegmentGapChanged: Qt.callLater(updateFocusedIndicator)
 
     Component.onCompleted: {
         rebuildCombinedModel("init");

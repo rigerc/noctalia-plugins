@@ -106,6 +106,29 @@ ColumnLayout {
         defaultValue: rootSettings?.defaultValue("indicators", "showTrackLine") ?? true
     }
 
+    NComboBox {
+        Layout.fillWidth: true
+        label: rootSettings?.pluginApi?.tr("settings.trackLinePosition.label")
+        description: rootSettings?.pluginApi?.tr("settings.trackLinePosition.desc")
+        model: rootSettings?.trackLinePositionModel
+        currentKey: rootSettings?.settingValue("indicators", "trackLinePosition") ?? "end"
+        defaultValue: rootSettings?.defaultValue("indicators", "trackLinePosition") ?? "end"
+        onSelected: key => rootSettings?.setSetting("indicators", "trackLinePosition", key)
+    }
+
+    NValueSlider {
+        label: rootSettings?.pluginApi?.tr("settings.trackSegmentGap.label")
+        description: rootSettings?.pluginApi?.tr("settings.trackSegmentGap.desc")
+        from: 1
+        to: 5
+        stepSize: 1
+        value: rootSettings?.settingValue("indicators", "trackSegmentGap") ?? 1
+        text: Math.round(value) + " px"
+        defaultValue: rootSettings?.defaultValue("indicators", "trackSegmentGap") ?? 1
+        showReset: true
+        onMoved: sliderValue => rootSettings?.setSetting("indicators", "trackSegmentGap", Math.round(sliderValue))
+    }
+
     NToggle {
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.showFocusLine.label")
