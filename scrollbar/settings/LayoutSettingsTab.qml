@@ -84,15 +84,6 @@ ColumnLayout {
         onMoved: sliderValue => rootSettings?.setSetting("layout", "slotCapsuleScale", Math.round(sliderValue * 100) / 100)
     }
 
-    NToggle {
-        Layout.fillWidth: true
-        label: rootSettings?.pluginApi?.tr("settings.clipToBarBounds.label")
-        description: rootSettings?.pluginApi?.tr("settings.clipToBarBounds.desc")
-        checked: rootSettings?.settingValue("layout", "clipToBarBounds") ?? true
-        onToggled: checked => rootSettings?.setSetting("layout", "clipToBarBounds", checked)
-        defaultValue: rootSettings?.defaultValue("layout", "clipToBarBounds") ?? true
-    }
-
     NHeader {
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.section.icons.label")

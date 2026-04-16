@@ -22,12 +22,12 @@ Item {
     }
 
     Rectangle {
-        visible: (barRoot?.showTrackLine ?? false) && !(barRoot?.isVertical ?? false) && (barRoot?.flickableRef?.contentWidth ?? 0) > 0
+        visible: (barRoot?.showTrackLine ?? false) && !(barRoot?.isVertical ?? false) && (barRoot?.logicalContentExtent ?? 0) > 0
         anchors.bottom: parent.bottom
         height: barRoot?.trackThickness ?? 1
         radius: height / 2
-        width: Math.max(Style.marginXL, Math.round(((barRoot?.flickableRef?.width ?? 0) / Math.max(1, barRoot?.flickableRef?.contentWidth ?? 1)) * parent.width))
-        x: (barRoot?.flickableRef?.contentWidth ?? 0) > (barRoot?.flickableRef?.width ?? 0) ? Math.round(((barRoot?.flickableRef?.contentX ?? 0) / Math.max(1, (barRoot?.flickableRef?.contentWidth ?? 0) - (barRoot?.flickableRef?.width ?? 0))) * Math.max(0, parent.width - width)) : 0
+        width: Math.min(parent.width, Math.max(Style.marginXL, Math.round(((barRoot?.logicalViewportExtent ?? 0) / Math.max(1, barRoot?.logicalContentExtent ?? 1)) * parent.width)))
+        x: (barRoot?.logicalOverflowRange ?? 0) > 0 ? Math.round(((barRoot?.logicalScrollOffset ?? 0) / Math.max(1, barRoot?.logicalOverflowRange ?? 1)) * Math.max(0, parent.width - width)) : 0
         color: Qt.alpha(barRoot?.trackThumbColor ?? Color.mPrimary, 0.85)
         z: 0
     }
@@ -56,13 +56,13 @@ Item {
     }
 
     Rectangle {
-        visible: (barRoot?.showTrackLine ?? false) && (barRoot?.isVertical ?? false) && (barRoot?.flickableRef?.contentHeight ?? 0) > 0
+        visible: (barRoot?.showTrackLine ?? false) && (barRoot?.isVertical ?? false) && (barRoot?.logicalContentExtent ?? 0) > 0
         anchors.right: parent.right
         anchors.rightMargin: 1
         width: barRoot?.trackThickness ?? 1
         radius: width / 2
-        height: Math.max(Style.marginXL, Math.round(((barRoot?.flickableRef?.height ?? 0) / Math.max(1, barRoot?.flickableRef?.contentHeight ?? 1)) * parent.height))
-        y: (barRoot?.flickableRef?.contentHeight ?? 0) > (barRoot?.flickableRef?.height ?? 0) ? Math.round(((barRoot?.flickableRef?.contentY ?? 0) / Math.max(1, (barRoot?.flickableRef?.contentHeight ?? 0) - (barRoot?.flickableRef?.height ?? 0))) * Math.max(0, parent.height - height)) : 0
+        height: Math.min(parent.height, Math.max(Style.marginXL, Math.round(((barRoot?.logicalViewportExtent ?? 0) / Math.max(1, barRoot?.logicalContentExtent ?? 1)) * parent.height)))
+        y: (barRoot?.logicalOverflowRange ?? 0) > 0 ? Math.round(((barRoot?.logicalScrollOffset ?? 0) / Math.max(1, barRoot?.logicalOverflowRange ?? 1)) * Math.max(0, parent.height - height)) : 0
         color: Qt.alpha(barRoot?.trackThumbColor ?? Color.mPrimary, 0.85)
         z: 0
     }

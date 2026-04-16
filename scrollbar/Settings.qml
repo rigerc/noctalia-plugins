@@ -9,7 +9,6 @@ ColumnLayout {
     id: root
 
     property var pluginApi: null
-    property var cfg: pluginApi?.pluginSettings || ({})
     property var defaults: pluginApi?.manifest?.metadata?.defaultSettings || ({})
     property real preferredWidth: 720 * Style.uiScaleRatio
 
@@ -54,7 +53,7 @@ ColumnLayout {
         }
     }
     readonly property var defaultSettings: createSettingsSnapshot(defaults, ({}))
-    property var editSettings: createSettingsSnapshot(cfg, defaults)
+    property var editSettings: createSettingsSnapshot(pluginApi?.pluginSettings || ({}), defaults)
 
     spacing: Style.marginM
     implicitWidth: preferredWidth
@@ -107,8 +106,7 @@ ColumnLayout {
                 "slotWidth": readSetting(primary, secondary, "layout", "slotWidth", "slotWidth", 112),
                 "slotSpacingUnits": readSetting(primary, secondary, "layout", "slotSpacingUnits", "slotSpacingUnits", 1),
                 "radiusScale": readSetting(primary, secondary, "layout", "radiusScale", "radiusScale", 1.0),
-                "slotCapsuleScale": readSetting(primary, secondary, "layout", "slotCapsuleScale", "slotCapsuleScale", 1.0),
-                "clipToBarBounds": readSetting(primary, secondary, "layout", "clipToBarBounds", "clipToBarBounds", true)
+                "slotCapsuleScale": readSetting(primary, secondary, "layout", "slotCapsuleScale", "slotCapsuleScale", 1.0)
             },
             "icons": {
                 "showIcons": readSetting(primary, secondary, "icons", "showIcons", "showIcons", true),
@@ -207,6 +205,20 @@ ColumnLayout {
             next[groupKey] = ({});
         next[groupKey][nestedKey] = value;
         editSettings = next;
+    }
+
+    function refreshEditSettings() {
+        editSettings = createSettingsSnapshot(pluginApi?.pluginSettings || ({}), defaults);
+    }
+
+    onPluginApiChanged: refreshEditSettings()
+
+    Connections {
+        target: pluginApi
+
+        function onPluginSettingsChanged() {
+            root.refreshEditSettings();
+        }
     }
 
     function saveSettings() {

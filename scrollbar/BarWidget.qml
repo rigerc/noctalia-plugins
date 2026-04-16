@@ -18,17 +18,45 @@ Item {
     property int sectionWidgetIndex: -1
     property int sectionWidgetsCount: 0
 
-    property var cfg: pluginApi?.pluginSettings || ({})
+    property var currentSettings: pluginApi?.pluginSettings || ({})
     property var defaults: pluginApi?.manifest?.metadata?.defaultSettings || ({})
     readonly property var mainInstance: pluginApi?.mainInstance ?? null
 
+    function refreshSettingsSnapshot() {
+        currentSettings = pluginApi?.pluginSettings || ({});
+    }
+
+    function clampScrollOffset(value) {
+        return Math.max(minScrollOffset, Math.min(maxScrollOffset, value));
+    }
+
+    function clampScrollPosition() {
+        if (!flickable)
+            return;
+
+        if (isVertical)
+            flickable.contentY = clampScrollOffset(flickable.contentY);
+        else
+            flickable.contentX = clampScrollOffset(flickable.contentX);
+    }
+
+    onPluginApiChanged: refreshSettingsSnapshot()
+
+    Connections {
+        target: pluginApi
+
+        function onPluginSettingsChanged() {
+            root.refreshSettingsSnapshot();
+        }
+    }
+
     function settingValue(groupKey, nestedKey, legacyKey, fallbackValue) {
-        const configGroup = cfg ? cfg[groupKey] : undefined;
+        const configGroup = currentSettings ? currentSettings[groupKey] : undefined;
         const nestedConfig = configGroup ? configGroup[nestedKey] : undefined;
         if (nestedConfig !== undefined)
             return nestedConfig;
 
-        const legacyConfig = cfg ? cfg[legacyKey] : undefined;
+        const legacyConfig = currentSettings ? currentSettings[legacyKey] : undefined;
         if (legacyConfig !== undefined)
             return legacyConfig;
 
@@ -57,20 +85,19 @@ Item {
     readonly property int maxWidgetWidthPercent: settingValue("layout", "maxWidgetWidth", "maxWidgetWidth", 40)
     readonly property real baseSlotLength: settingValue("layout", "slotWidth", "slotWidth", 112)
     readonly property real slotCapsuleScale: Math.max(0.3, settingValue("layout", "slotCapsuleScale", "slotCapsuleScale", 1.0))
-    readonly property bool clipToBarBounds: settingValue("layout", "clipToBarBounds", "clipToBarBounds", true)
     readonly property bool showTitle: !isVertical && settingValue("title", "showTitle", "showTitle", true)
     readonly property real iconScale: settingValue("icons", "iconScale", "iconScale", 0.8)
     readonly property string edgeCueMode: (() => {
-        const configuredMode = settingValue("edgeFade", "mode", "edgeFadeMode", undefined);
-        if (configuredMode !== undefined)
-            return configuredMode;
+            const configuredMode = settingValue("edgeFade", "mode", "edgeFadeMode", undefined);
+            if (configuredMode !== undefined)
+                return configuredMode;
 
-        const legacySize = settingValue("edgeFade", "size", "edgeFadeSize", undefined);
-        if (legacySize !== undefined)
-            return legacySize > 0 ? "fade" : "off";
+            const legacySize = settingValue("edgeFade", "size", "edgeFadeSize", undefined);
+            if (legacySize !== undefined)
+                return legacySize > 0 ? "fade" : "off";
 
-        return "fade";
-    })()
+            return "fade";
+        })()
     readonly property real edgeFadeSize: Math.max(0, Math.round(settingValue("edgeFade", "fadeSize", "edgeFadeSize", 18) * Style.uiScaleRatio))
     readonly property real edgeFadeOpacity: Math.max(0, Math.min(1, settingValue("edgeFade", "fadeOpacity", "edgeFadeOpacity", 100) / 100))
     readonly property string edgeBorderColorKey: settingValue("edgeFade", "borderColor", "edgeFadeBorderColor", "outline")
@@ -155,7 +182,9 @@ Item {
     }
 
     readonly property int slotLength: Math.max(Math.round(baseSlotLength * Style.uiScaleRatio), Math.round(capsuleHeight * 1.4))
-    readonly property int effectiveSlotLength: isVertical ? slotLength : (showTitle ? slotLength : Math.round(itemSize + 2 * Math.max(Style.marginM, Style.marginS * slotCapsuleScale)))
+    readonly property real hoverScaleMultiplier: 1 + (hoverScalePercent / 100)
+    readonly property real dragScaleMultiplier: supportsLiveReorder ? 1.03 : 1.0
+    readonly property real maxVisualScaleMultiplier: Math.max(1.0, hoverScaleMultiplier, dragScaleMultiplier)
     readonly property real slotSpacing: Math.max(0, Math.round(slotSpacingUnits * Style.marginS))
     readonly property real indicatorSpace: {
         let space = 0;
@@ -172,14 +201,17 @@ Item {
             return capsuleHeight;
         return widgetSize - indicatorSpace;
     }
-    readonly property real slotCrossExtent: clipToBarBounds ? Math.min(crossExtent, scaledCapsuleHeight) : scaledCapsuleHeight
+    readonly property real slotCrossExtent: scaledCapsuleHeight
     readonly property real trackThickness: Math.max(1, Math.round(Style.borderS))
     readonly property int itemSize: Style.toOdd(slotCrossExtent * Math.max(0.1, iconScale))
+    readonly property int effectiveSlotLength: isVertical ? slotLength : (showTitle ? slotLength : Math.round(itemSize + 2 * Math.max(Style.marginM, Style.marginS * slotCapsuleScale)))
+    readonly property real paintOverflowInset: hasWindow ? Math.max(0, Math.ceil(Math.max(effectiveSlotLength, slotCrossExtent) * (maxVisualScaleMultiplier - 1.0) / 2)) : 0
     readonly property var liveEntriesByKey: mainInstance?.liveEntriesByKey ?? ({})
     readonly property string activeEntryKey: mainInstance?.activeEntryKey ?? ""
     readonly property int structureRevision: mainInstance?.structureRevision ?? 0
     readonly property int liveRevision: mainInstance?.liveRevision ?? 0
-    readonly property real contentExtent: stripLoader.item?.contentExtent ?? 0
+    readonly property real logicalContentExtent: stripLoader.item?.logicalExtent ?? 0
+    readonly property real stripContentExtent: stripLoader.item?.contentExtent ?? 0
     readonly property var flickableRef: flickable
 
     readonly property real maxWidgetExtent: {
@@ -193,16 +225,30 @@ Item {
     }
 
     readonly property real viewportExtent: {
-        if (contentExtent <= 0)
+        if (logicalContentExtent <= 0)
             return 0;
         if (maxWidgetExtent > 0)
-            return Math.min(contentExtent, maxWidgetExtent);
-        return contentExtent;
+            return Math.min(logicalContentExtent, maxWidgetExtent);
+        return logicalContentExtent;
     }
 
     readonly property bool hasWindow: combinedModel.length > 0
-    readonly property bool showLeadingFade: isVertical ? flickable.contentY > 0.5 : flickable.contentX > 0.5
-    readonly property bool showTrailingFade: isVertical ? (flickable.contentY + flickable.height) < (flickable.contentHeight - 0.5) : (flickable.contentX + flickable.width) < (flickable.contentWidth - 0.5)
+    readonly property real logicalViewportExtent: isVertical ? flickable.height : flickable.width
+    readonly property real minScrollOffset: hasWindow ? paintOverflowInset : 0
+    readonly property real maxScrollOffset: {
+        const totalExtent = stripContentExtent;
+        const viewport = logicalViewportExtent;
+        if (totalExtent <= 0 || viewport <= 0)
+            return minScrollOffset;
+        return Math.max(minScrollOffset, totalExtent - viewport - paintOverflowInset);
+    }
+    readonly property real logicalScrollOffset: {
+        const rawOffset = isVertical ? flickable.contentY : flickable.contentX;
+        return Math.max(0, rawOffset - minScrollOffset);
+    }
+    readonly property real logicalOverflowRange: Math.max(0, logicalContentExtent - logicalViewportExtent)
+    readonly property bool showLeadingFade: logicalScrollOffset > 0.5
+    readonly property bool showTrailingFade: (logicalScrollOffset + logicalViewportExtent) < (logicalContentExtent - 0.5)
     readonly property bool useEdgeFadeMask: edgeCueMode === "fade" && edgeFadeSize > 0 && (showLeadingFade || showTrailingFade)
     readonly property real contentWidth: isVertical ? crossExtent : Math.max(crossExtent, viewportExtent)
     readonly property real contentHeight: isVertical ? Math.max(crossExtent, viewportExtent) : crossExtent
@@ -264,11 +310,9 @@ Item {
 
         const step = delta / 120 * effectiveSlotLength;
         if (isVertical) {
-            const maxY = Math.max(0, flickable.contentHeight - flickable.height);
-            flickable.contentY = Math.max(0, Math.min(maxY, flickable.contentY - step));
+            flickable.contentY = clampScrollOffset(flickable.contentY - step);
         } else {
-            const maxX = Math.max(0, flickable.contentWidth - flickable.width);
-            flickable.contentX = Math.max(0, Math.min(maxX, flickable.contentX - step));
+            flickable.contentX = clampScrollOffset(flickable.contentX - step);
         }
 
         return true;
@@ -400,12 +444,10 @@ Item {
         const centerPoint = item.mapToItem(container, item.width / 2, item.height / 2);
         if (isVertical) {
             const desiredY = centerPoint.y - flickable.height / 2;
-            const maxY = Math.max(0, flickable.contentHeight - flickable.height);
-            flickable.contentY = Math.max(0, Math.min(maxY, desiredY));
+            flickable.contentY = clampScrollOffset(desiredY);
         } else {
             const desiredX = centerPoint.x - flickable.width / 2;
-            const maxX = Math.max(0, flickable.contentWidth - flickable.width);
-            flickable.contentX = Math.max(0, Math.min(maxX, desiredX));
+            flickable.contentX = clampScrollOffset(desiredX);
         }
         return true;
     }
@@ -531,6 +573,10 @@ Item {
     onActiveEntryKeyChanged: {
         scheduleCenterActive(false);
     }
+    onStripContentExtentChanged: Qt.callLater(clampScrollPosition)
+    onPaintOverflowInsetChanged: Qt.callLater(clampScrollPosition)
+    onContentWidthChanged: Qt.callLater(clampScrollPosition)
+    onContentHeightChanged: Qt.callLater(clampScrollPosition)
     onLiveRevisionChanged: Qt.callLater(updateFocusedIndicator)
     onShowFocusLineChanged: Qt.callLater(updateFocusedIndicator)
 
@@ -626,7 +672,8 @@ Item {
         id: horizontalStripComponent
 
         Item {
-            readonly property real contentExtent: rowLayout.implicitWidth
+            readonly property real logicalExtent: rowLayout.implicitWidth
+            readonly property real contentExtent: logicalExtent + root.paintOverflowInset * 2
 
             width: contentExtent
             height: root.crossExtent
@@ -643,7 +690,8 @@ Item {
 
             RowLayout {
                 id: rowLayout
-                anchors.fill: parent
+                x: root.paintOverflowInset
+                anchors.verticalCenter: parent.verticalCenter
                 spacing: root.slotSpacing
 
                 Repeater {
@@ -658,7 +706,8 @@ Item {
         id: verticalStripComponent
 
         Item {
-            readonly property real contentExtent: columnLayout.implicitHeight
+            readonly property real logicalExtent: columnLayout.implicitHeight
+            readonly property real contentExtent: logicalExtent + root.paintOverflowInset * 2
 
             width: root.crossExtent
             height: contentExtent
@@ -674,7 +723,8 @@ Item {
 
             ColumnLayout {
                 id: columnLayout
-                anchors.fill: parent
+                y: root.paintOverflowInset
+                anchors.horizontalCenter: parent.horizontalCenter
                 spacing: root.slotSpacing
 
                 Repeater {
@@ -685,77 +735,88 @@ Item {
         }
     }
 
-    Rectangle {
+    Item {
         id: visualCapsule
         x: Style.pixelAlignCenter(parent.width, width)
         y: Style.pixelAlignCenter(parent.height, height)
         width: root.contentWidth
         height: root.contentHeight
-        layer.enabled: root.useEdgeFadeMask
-        layer.smooth: true
-        layer.effect: MultiEffect {
-            maskEnabled: true
-            maskSource: fadeMask
-        }
-        color: root.capsuleBaseColor
-        radius: Style.radiusL * root.radiusScale
-        border.color: Style.capsuleBorderColor
-        border.width: Style.capsuleBorderWidth
-
-        Rectangle {
-            visible: root.backgroundEnabled
-            anchors.fill: parent
-            color: root.backgroundColor
-            radius: visualCapsule.radius
-        }
-
+        
         Item {
             anchors.fill: parent
+            layer.enabled: root.useEdgeFadeMask
+            layer.smooth: true
+            layer.effect: MultiEffect {
+                maskEnabled: true
+                maskThresholdMin: 0.5
+                maskSpreadAtMin: 1.0
+                maskSource: ShaderEffectSource {
+                    sourceItem: fadeMask
+                }
+            }
 
-            Flickable {
-                id: flickable
+            Rectangle {
                 anchors.fill: parent
-                clip: root.clipToBarBounds
+                color: root.capsuleBaseColor
+                radius: Style.radiusL * root.radiusScale
+                border.color: Style.capsuleBorderColor
+                border.width: Style.capsuleBorderWidth
+            }
 
-                interactive: false
-                boundsBehavior: Flickable.StopAtBounds
-                contentWidth: root.isVertical ? width : root.contentExtent
-                contentHeight: root.isVertical ? root.contentExtent : height
+            Rectangle {
+                visible: root.backgroundEnabled
+                anchors.fill: parent
+                color: root.backgroundColor
+                radius: Style.radiusL * root.radiusScale
+            }
 
-                Behavior on contentX {
-                    enabled: root.centerAnimationMs > 0
-                    NumberAnimation {
-                        duration: root.centerAnimationMs
-                        easing.type: Easing.OutCubic
+            Item {
+                anchors.fill: parent
+
+                Flickable {
+                    id: flickable
+                    anchors.fill: parent
+                    clip: false
+                    interactive: false
+                    boundsBehavior: Flickable.StopAtBounds
+                    contentWidth: root.isVertical ? width : root.stripContentExtent
+                    contentHeight: root.isVertical ? root.stripContentExtent : height
+
+                    Behavior on contentX {
+                        enabled: root.centerAnimationMs > 0
+                        NumberAnimation {
+                            duration: root.centerAnimationMs
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+
+                    Behavior on contentY {
+                        enabled: root.centerAnimationMs > 0
+                        NumberAnimation {
+                            duration: root.centerAnimationMs
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+
+                    Loader {
+                        id: stripLoader
+                        sourceComponent: root.isVertical ? verticalStripComponent : horizontalStripComponent
                     }
                 }
 
-                Behavior on contentY {
-                    enabled: root.centerAnimationMs > 0
-                    NumberAnimation {
-                        duration: root.centerAnimationMs
-                        easing.type: Easing.OutCubic
-                    }
+                TrackOverlay {
+                    barRoot: root
                 }
 
-                Loader {
-                    id: stripLoader
-                    sourceComponent: root.isVertical ? verticalStripComponent : horizontalStripComponent
+                EdgeFadeOverlay {
+                    barRoot: root
+                    leading: true
                 }
-            }
 
-            TrackOverlay {
-                barRoot: root
-            }
-
-            EdgeFadeOverlay {
-                barRoot: root
-                leading: true
-            }
-
-            EdgeFadeOverlay {
-                barRoot: root
-                leading: false
+                EdgeFadeOverlay {
+                    barRoot: root
+                    leading: false
+                }
             }
         }
 

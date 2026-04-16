@@ -55,12 +55,12 @@ Item {
     Layout.alignment: barRoot?.isVertical ? Qt.AlignHCenter : Qt.AlignVCenter
     width: Layout.preferredWidth
     height: Layout.preferredHeight
-    z: barRoot?.dragSourceIndex === index ? 1000 : 1
+    z: barRoot?.dragSourceIndex === index ? 1000 : (delegateRoot.isHovered ? 10 : 1)
 
     Item {
         id: draggableContent
         anchors.fill: dragArea.drag.active ? undefined : parent
-        z: dragArea.drag.active ? 1000 : 0
+        z: dragArea.drag.active ? 1000 : (delegateRoot.isHovered ? 1 : 0)
         scale: (dragArea.drag.active ? 1.03 : 1.0) * ((delegateRoot.isHovered && !delegateRoot.isFocused) ? delegateRoot.hoverScaleMultiplier : 1.0)
         opacity: (delegateRoot.isFocused || delegateRoot.isHovered) ? 1.0 : (barRoot?.inactiveOpacity ?? 1.0)
 

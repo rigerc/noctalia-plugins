@@ -9,17 +9,30 @@ Item {
     id: root
 
     property var pluginApi: null
-
-    property var cfg: pluginApi?.pluginSettings || ({})
+    property var currentSettings: pluginApi?.pluginSettings || ({})
     property var defaults: pluginApi?.manifest?.metadata?.defaultSettings || ({})
 
+    function refreshSettingsSnapshot() {
+        currentSettings = pluginApi?.pluginSettings || ({});
+    }
+
+    onPluginApiChanged: refreshSettingsSnapshot()
+
+    Connections {
+        target: pluginApi
+
+        function onPluginSettingsChanged() {
+            root.refreshSettingsSnapshot();
+        }
+    }
+
     function settingValue(groupKey, nestedKey, legacyKey, fallbackValue) {
-        const configGroup = cfg ? cfg[groupKey] : undefined;
+        const configGroup = currentSettings ? currentSettings[groupKey] : undefined;
         const nestedConfig = configGroup ? configGroup[nestedKey] : undefined;
         if (nestedConfig !== undefined)
             return nestedConfig;
 
-        const legacyConfig = cfg ? cfg[legacyKey] : undefined;
+        const legacyConfig = currentSettings ? currentSettings[legacyKey] : undefined;
         if (legacyConfig !== undefined)
             return legacyConfig;
 

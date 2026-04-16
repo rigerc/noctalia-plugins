@@ -5,3 +5,4 @@ docs/
 CLAUDE.md
 */settings.json
 .notes/
+.fuse*
