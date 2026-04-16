@@ -9,7 +9,7 @@ ColumnLayout {
     property var rootSettings: null
 
     Layout.fillWidth: true
-    spacing: Style.marginM
+    spacing: Style.marginXL
 
     NHeader {
         Layout.fillWidth: true

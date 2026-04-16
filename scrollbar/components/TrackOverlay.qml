@@ -7,10 +7,10 @@ Item {
     property var barRoot: null
 
     anchors.fill: parent
-    visible: barRoot?.showTrackLine ?? false
+    visible: (barRoot?.showTrackLine ?? false) || (barRoot?.showFocusLine ?? false)
 
     Rectangle {
-        visible: !(barRoot?.isVertical ?? false)
+        visible: (barRoot?.showTrackLine ?? false) && !(barRoot?.isVertical ?? false)
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
@@ -21,7 +21,7 @@ Item {
     }
 
     Rectangle {
-        visible: !(barRoot?.isVertical ?? false) && (barRoot?.flickableRef?.contentWidth ?? 0) > 0
+        visible: (barRoot?.showTrackLine ?? false) && !(barRoot?.isVertical ?? false) && (barRoot?.flickableRef?.contentWidth ?? 0) > 0
         anchors.bottom: parent.bottom
         height: barRoot?.trackThickness ?? 1
         radius: height / 2
@@ -32,7 +32,7 @@ Item {
     }
 
     Rectangle {
-        visible: !(barRoot?.isVertical ?? false) && (barRoot?.focusedIndicatorInView ?? false)
+        visible: (barRoot?.showFocusLine ?? false) && !(barRoot?.isVertical ?? false) && (barRoot?.focusedIndicatorInView ?? false)
         anchors.bottom: parent.bottom
         height: barRoot?.focusLineThickness ?? 1
         radius: height / 2
@@ -43,7 +43,7 @@ Item {
     }
 
     Rectangle {
-        visible: barRoot?.isVertical ?? false
+        visible: (barRoot?.showTrackLine ?? false) && (barRoot?.isVertical ?? false)
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         anchors.right: parent.right
@@ -55,7 +55,7 @@ Item {
     }
 
     Rectangle {
-        visible: (barRoot?.isVertical ?? false) && (barRoot?.flickableRef?.contentHeight ?? 0) > 0
+        visible: (barRoot?.showTrackLine ?? false) && (barRoot?.isVertical ?? false) && (barRoot?.flickableRef?.contentHeight ?? 0) > 0
         anchors.right: parent.right
         anchors.rightMargin: 1
         width: barRoot?.trackThickness ?? 1
@@ -67,7 +67,7 @@ Item {
     }
 
     Rectangle {
-        visible: (barRoot?.isVertical ?? false) && (barRoot?.focusedIndicatorInView ?? false)
+        visible: (barRoot?.showFocusLine ?? false) && (barRoot?.isVertical ?? false) && (barRoot?.focusedIndicatorInView ?? false)
         anchors.right: parent.right
         width: barRoot?.focusLineThickness ?? 1
         radius: width / 2
