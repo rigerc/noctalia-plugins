@@ -13,69 +13,112 @@ ColumnLayout {
     property var defaults: pluginApi?.manifest?.metadata?.defaultSettings || ({})
     property real preferredWidth: 720 * Style.uiScaleRatio
 
+    // Filtering
     property bool valueOnlySameOutput: cfg.onlySameOutput ?? defaults.onlySameOutput ?? true
     property bool valueOnlyActiveWorkspaces: cfg.onlyActiveWorkspaces ?? defaults.onlyActiveWorkspaces ?? true
+
+    // Interaction
     property bool valueEnableReorder: cfg.enableReorder ?? defaults.enableReorder ?? true
+    property bool valueEnableScrollWheel: cfg.enableScrollWheel ?? defaults.enableScrollWheel ?? true
+
+    // Auto-scroll
+    property bool valueCenterFocusedWindow: cfg.centerFocusedWindow ?? defaults.centerFocusedWindow ?? true
+    property int valueCenterAnimationMs: cfg.centerAnimationMs ?? defaults.centerAnimationMs ?? 200
+
+    // Debug
     property bool valueDebugLogging: cfg.debugLogging ?? defaults.debugLogging ?? false
+
+    // Slot size & spacing
     property int valueMaxWidgetWidth: cfg.maxWidgetWidth ?? defaults.maxWidgetWidth ?? 40
     property int valueSlotWidth: cfg.slotWidth ?? defaults.slotWidth ?? 112
-    property bool valueShowTitle: cfg.showTitle ?? defaults.showTitle ?? true
+    property int valueSlotSpacingUnits: cfg.slotSpacingUnits ?? defaults.slotSpacingUnits ?? 1
+    property real valueRadiusScale: cfg.radiusScale ?? defaults.radiusScale ?? 1.0
+
+    // Icons
+    property bool valueShowIcons: cfg.showIcons ?? defaults.showIcons ?? true
     property real valueIconScale: cfg.iconScale ?? defaults.iconScale ?? 0.8
+    property string valueIconTintColor: cfg.iconTintColor ?? defaults.iconTintColor ?? "none"
+    property int valueIconTintOpacity: cfg.iconTintOpacity ?? defaults.iconTintOpacity ?? 100
+
+    // Window title
+    property bool valueShowTitle: cfg.showTitle ?? defaults.showTitle ?? true
+    property string valueTitleFontFamily: cfg.titleFontFamily ?? defaults.titleFontFamily ?? ""
+    property int valueTitleFontSize: cfg.titleFontSize ?? defaults.titleFontSize ?? 0
+    property string valueTitleFontWeight: cfg.titleFontWeight ?? defaults.titleFontWeight ?? "default"
+
+    // Edge fade
     property int valueEdgeFadeSize: cfg.edgeFadeSize ?? defaults.edgeFadeSize ?? 18
     property real valueEdgeFadeMidpoint: cfg.edgeFadeMidpoint ?? defaults.edgeFadeMidpoint ?? 0.45
     property int valueEdgeFadeMidOpacity: cfg.edgeFadeMidOpacity ?? defaults.edgeFadeMidOpacity ?? 40
-    property bool valueShowTrackLine: cfg.showTrackLine ?? defaults.showTrackLine ?? true
-    property string valueTrackThumbColor: cfg.trackThumbColor ?? defaults.trackThumbColor ?? "primary"
+
+    // Widget background
+    property string valueBackgroundColor: cfg.backgroundColor ?? defaults.backgroundColor ?? "none"
+    property int valueBackgroundOpacity: cfg.backgroundOpacity ?? defaults.backgroundOpacity ?? 0
+
+    // Active window
+    property bool valueShowFocusedFill: cfg.showFocusedFill ?? defaults.showFocusedFill ?? true
+    property string valueFocusedFillColor: cfg.focusedFillColor ?? defaults.focusedFillColor ?? "primary"
+    property int valueFocusedFillOpacity: cfg.focusedFillOpacity ?? defaults.focusedFillOpacity ?? 92
+    property bool valueShowFocusedBorder: cfg.showFocusedBorder ?? defaults.showFocusedBorder ?? true
+    property string valueFocusedBorderColor: cfg.focusedBorderColor ?? defaults.focusedBorderColor ?? "primary"
+    property int valueFocusedBorderOpacity: cfg.focusedBorderOpacity ?? defaults.focusedBorderOpacity ?? 100
+    property string valueFocusedTextColor: cfg.focusedTextColor ?? defaults.focusedTextColor ?? "on-primary"
+
+    // Inactive windows
+    property bool valueShowUnfocusedFill: cfg.showUnfocusedFill ?? defaults.showUnfocusedFill ?? true
+    property string valueUnfocusedFillColor: cfg.unfocusedFillColor ?? defaults.unfocusedFillColor ?? "surface-variant"
+    property int valueUnfocusedFillOpacity: cfg.unfocusedFillOpacity ?? defaults.unfocusedFillOpacity ?? 8
+    property bool valueShowUnfocusedBorder: cfg.showUnfocusedBorder ?? defaults.showUnfocusedBorder ?? true
+    property string valueUnfocusedBorderColor: cfg.unfocusedBorderColor ?? defaults.unfocusedBorderColor ?? "outline"
+    property int valueUnfocusedBorderOpacity: cfg.unfocusedBorderOpacity ?? defaults.unfocusedBorderOpacity ?? 45
+    property string valueUnfocusedTextColor: cfg.unfocusedTextColor ?? defaults.unfocusedTextColor ?? "on-surface"
     property int valueInactiveOpacity: cfg.inactiveOpacity ?? defaults.inactiveOpacity ?? 45
-    property int valueSlotSpacingUnits: cfg.slotSpacingUnits ?? defaults.slotSpacingUnits ?? 1
-    property real valueRadiusScale: cfg.radiusScale ?? defaults.radiusScale ?? 1.0
+
+    // Hovered window
     property string valueHoverFillColor: cfg.hoverFillColor ?? defaults.hoverFillColor ?? "hover"
-    property string valueHoverBorderColor: cfg.hoverBorderColor ?? defaults.hoverBorderColor ?? "outline"
-    property string valueHoverTextColor: cfg.hoverTextColor ?? defaults.hoverTextColor ?? "on-hover"
     property int valueHoverFillOpacity: cfg.hoverFillOpacity ?? defaults.hoverFillOpacity ?? 55
+    property bool valueShowHoverBorder: cfg.showHoverBorder ?? defaults.showHoverBorder ?? true
+    property string valueHoverBorderColor: cfg.hoverBorderColor ?? defaults.hoverBorderColor ?? "outline"
+    property int valueHoverBorderOpacity: cfg.hoverBorderOpacity ?? defaults.hoverBorderOpacity ?? 100
+    property string valueHoverTextColor: cfg.hoverTextColor ?? defaults.hoverTextColor ?? "on-hover"
     property real valueHoverScalePercent: cfg.hoverScalePercent ?? defaults.hoverScalePercent ?? 2.5
     property int valueHoverTransitionDurationMs: cfg.hoverTransitionDurationMs ?? defaults.hoverTransitionDurationMs ?? 120
-    property int valueFocusedFillOpacity: cfg.focusedFillOpacity ?? defaults.focusedFillOpacity ?? 92
-    property string valueFocusedFillColor: cfg.focusedFillColor ?? defaults.focusedFillColor ?? "primary"
-    property string valueFocusedBorderColor: cfg.focusedBorderColor ?? defaults.focusedBorderColor ?? "primary"
-    property string valueFocusedTextColor: cfg.focusedTextColor ?? defaults.focusedTextColor ?? "on-primary"
-    property bool valueShowFocusedFill: cfg.showFocusedFill ?? defaults.showFocusedFill ?? true
-    property int valueUnfocusedFillOpacity: cfg.unfocusedFillOpacity ?? defaults.unfocusedFillOpacity ?? 8
-    property int valueUnfocusedBorderOpacity: cfg.unfocusedBorderOpacity ?? defaults.unfocusedBorderOpacity ?? 45
-    property string valueUnfocusedFillColor: cfg.unfocusedFillColor ?? defaults.unfocusedFillColor ?? "surface-variant"
-    property string valueUnfocusedBorderColor: cfg.unfocusedBorderColor ?? defaults.unfocusedBorderColor ?? "outline"
-    property string valueUnfocusedTextColor: cfg.unfocusedTextColor ?? defaults.unfocusedTextColor ?? "on-surface"
-    property bool valueShowUnfocusedFill: cfg.showUnfocusedFill ?? defaults.showUnfocusedFill ?? true
-    property bool valueShowFocusedBorder: cfg.showFocusedBorder ?? defaults.showFocusedBorder ?? true
-    property int valueFocusedBorderOpacity: cfg.focusedBorderOpacity ?? defaults.focusedBorderOpacity ?? 100
-    property bool valueShowHoverBorder: cfg.showHoverBorder ?? defaults.showHoverBorder ?? true
-    property int valueHoverBorderOpacity: cfg.hoverBorderOpacity ?? defaults.hoverBorderOpacity ?? 100
-    property bool valueShowUnfocusedBorder: cfg.showUnfocusedBorder ?? defaults.showUnfocusedBorder ?? true
+
+    // Track & focus indicator
+    property bool valueShowTrackLine: cfg.showTrackLine ?? defaults.showTrackLine ?? true
     property int valueTrackOpacity: cfg.trackOpacity ?? defaults.trackOpacity ?? 35
+    property string valueTrackThumbColor: cfg.trackThumbColor ?? defaults.trackThumbColor ?? "primary"
     property bool valueShowFocusLine: cfg.showFocusLine ?? defaults.showFocusLine ?? true
     property string valueFocusLineColor: cfg.focusLineColor ?? defaults.focusLineColor ?? "secondary"
     property int valueFocusLineOpacity: cfg.focusLineOpacity ?? defaults.focusLineOpacity ?? 96
     property int valueFocusLineThickness: cfg.focusLineThickness ?? defaults.focusLineThickness ?? 2
     property int valueFocusLineAnimationMs: cfg.focusLineAnimationMs ?? defaults.focusLineAnimationMs ?? 120
-    property bool valueCenterFocusedWindow: cfg.centerFocusedWindow ?? defaults.centerFocusedWindow ?? true
-    property bool valueEnableScrollWheel: cfg.enableScrollWheel ?? defaults.enableScrollWheel ?? true
-    property int valueCenterAnimationMs: cfg.centerAnimationMs ?? defaults.centerAnimationMs ?? 200
-    property bool valueShowIcons: cfg.showIcons ?? defaults.showIcons ?? true
-    property string valueTitleFontFamily: cfg.titleFontFamily ?? defaults.titleFontFamily ?? ""
-    property int valueTitleFontSize: cfg.titleFontSize ?? defaults.titleFontSize ?? 0
-    property string valueTitleFontWeight: cfg.titleFontWeight ?? defaults.titleFontWeight ?? "default"
-    property string valueIconTintColor: cfg.iconTintColor ?? defaults.iconTintColor ?? "none"
-    property int valueIconTintOpacity: cfg.iconTintOpacity ?? defaults.iconTintOpacity ?? 100
-    property string valueBackgroundColor: cfg.backgroundColor ?? defaults.backgroundColor ?? "none"
-    property int valueBackgroundOpacity: cfg.backgroundOpacity ?? defaults.backgroundOpacity ?? 0
 
     readonly property var fontWeightModel: ListModel {
-        ListElement { key: "default"; name: "Default" }
-        ListElement { key: "light"; name: "Light" }
-        ListElement { key: "normal"; name: "Normal" }
-        ListElement { key: "medium"; name: "Medium" }
-        ListElement { key: "semibold"; name: "Semibold" }
-        ListElement { key: "bold"; name: "Bold" }
+        ListElement {
+            key: "default"
+            name: "Default"
+        }
+        ListElement {
+            key: "light"
+            name: "Light"
+        }
+        ListElement {
+            key: "normal"
+            name: "Normal"
+        }
+        ListElement {
+            key: "medium"
+            name: "Medium"
+        }
+        ListElement {
+            key: "semibold"
+            name: "Semibold"
+        }
+        ListElement {
+            key: "bold"
+            name: "Bold"
+        }
     }
 
     spacing: Style.marginM
@@ -88,58 +131,58 @@ ColumnLayout {
         pluginApi.pluginSettings.onlySameOutput = root.valueOnlySameOutput;
         pluginApi.pluginSettings.onlyActiveWorkspaces = root.valueOnlyActiveWorkspaces;
         pluginApi.pluginSettings.enableReorder = root.valueEnableReorder;
+        pluginApi.pluginSettings.enableScrollWheel = root.valueEnableScrollWheel;
+        pluginApi.pluginSettings.centerFocusedWindow = root.valueCenterFocusedWindow;
+        pluginApi.pluginSettings.centerAnimationMs = root.valueCenterAnimationMs;
         pluginApi.pluginSettings.debugLogging = root.valueDebugLogging;
         pluginApi.pluginSettings.maxWidgetWidth = root.valueMaxWidgetWidth;
         pluginApi.pluginSettings.slotWidth = root.valueSlotWidth;
-        pluginApi.pluginSettings.showTitle = root.valueShowTitle;
+        pluginApi.pluginSettings.slotSpacingUnits = root.valueSlotSpacingUnits;
+        pluginApi.pluginSettings.radiusScale = root.valueRadiusScale;
+        pluginApi.pluginSettings.showIcons = root.valueShowIcons;
         pluginApi.pluginSettings.iconScale = root.valueIconScale;
+        pluginApi.pluginSettings.iconTintColor = root.valueIconTintColor;
+        pluginApi.pluginSettings.iconTintOpacity = root.valueIconTintOpacity;
+        pluginApi.pluginSettings.showTitle = root.valueShowTitle;
+        pluginApi.pluginSettings.titleFontFamily = root.valueTitleFontFamily;
+        pluginApi.pluginSettings.titleFontSize = root.valueTitleFontSize;
+        pluginApi.pluginSettings.titleFontWeight = root.valueTitleFontWeight;
         pluginApi.pluginSettings.edgeFadeSize = root.valueEdgeFadeSize;
         pluginApi.pluginSettings.edgeFadeMidpoint = root.valueEdgeFadeMidpoint;
         pluginApi.pluginSettings.edgeFadeMidOpacity = root.valueEdgeFadeMidOpacity;
-        pluginApi.pluginSettings.showTrackLine = root.valueShowTrackLine;
-        pluginApi.pluginSettings.trackThumbColor = root.valueTrackThumbColor;
+        pluginApi.pluginSettings.backgroundColor = root.valueBackgroundColor;
+        pluginApi.pluginSettings.backgroundOpacity = root.valueBackgroundOpacity;
+        pluginApi.pluginSettings.showFocusedFill = root.valueShowFocusedFill;
+        pluginApi.pluginSettings.focusedFillColor = root.valueFocusedFillColor;
+        pluginApi.pluginSettings.focusedFillOpacity = root.valueFocusedFillOpacity;
+        pluginApi.pluginSettings.showFocusedBorder = root.valueShowFocusedBorder;
+        pluginApi.pluginSettings.focusedBorderColor = root.valueFocusedBorderColor;
+        pluginApi.pluginSettings.focusedBorderOpacity = root.valueFocusedBorderOpacity;
+        pluginApi.pluginSettings.focusedTextColor = root.valueFocusedTextColor;
+        pluginApi.pluginSettings.showUnfocusedFill = root.valueShowUnfocusedFill;
+        pluginApi.pluginSettings.unfocusedFillColor = root.valueUnfocusedFillColor;
+        pluginApi.pluginSettings.unfocusedFillOpacity = root.valueUnfocusedFillOpacity;
+        pluginApi.pluginSettings.showUnfocusedBorder = root.valueShowUnfocusedBorder;
+        pluginApi.pluginSettings.unfocusedBorderColor = root.valueUnfocusedBorderColor;
+        pluginApi.pluginSettings.unfocusedBorderOpacity = root.valueUnfocusedBorderOpacity;
+        pluginApi.pluginSettings.unfocusedTextColor = root.valueUnfocusedTextColor;
         pluginApi.pluginSettings.inactiveOpacity = root.valueInactiveOpacity;
-        pluginApi.pluginSettings.slotSpacingUnits = root.valueSlotSpacingUnits;
-        pluginApi.pluginSettings.radiusScale = root.valueRadiusScale;
         pluginApi.pluginSettings.hoverFillColor = root.valueHoverFillColor;
-        pluginApi.pluginSettings.hoverBorderColor = root.valueHoverBorderColor;
-        pluginApi.pluginSettings.hoverTextColor = root.valueHoverTextColor;
         pluginApi.pluginSettings.hoverFillOpacity = root.valueHoverFillOpacity;
+        pluginApi.pluginSettings.showHoverBorder = root.valueShowHoverBorder;
+        pluginApi.pluginSettings.hoverBorderColor = root.valueHoverBorderColor;
+        pluginApi.pluginSettings.hoverBorderOpacity = root.valueHoverBorderOpacity;
+        pluginApi.pluginSettings.hoverTextColor = root.valueHoverTextColor;
         pluginApi.pluginSettings.hoverScalePercent = root.valueHoverScalePercent;
         pluginApi.pluginSettings.hoverTransitionDurationMs = root.valueHoverTransitionDurationMs;
-        pluginApi.pluginSettings.focusedFillOpacity = root.valueFocusedFillOpacity;
-        pluginApi.pluginSettings.focusedFillColor = root.valueFocusedFillColor;
-        pluginApi.pluginSettings.focusedBorderColor = root.valueFocusedBorderColor;
-        pluginApi.pluginSettings.focusedTextColor = root.valueFocusedTextColor;
-        pluginApi.pluginSettings.showFocusedFill = root.valueShowFocusedFill;
-        pluginApi.pluginSettings.unfocusedFillOpacity = root.valueUnfocusedFillOpacity;
-        pluginApi.pluginSettings.unfocusedBorderOpacity = root.valueUnfocusedBorderOpacity;
-        pluginApi.pluginSettings.unfocusedFillColor = root.valueUnfocusedFillColor;
-        pluginApi.pluginSettings.unfocusedBorderColor = root.valueUnfocusedBorderColor;
-        pluginApi.pluginSettings.unfocusedTextColor = root.valueUnfocusedTextColor;
-        pluginApi.pluginSettings.showUnfocusedFill = root.valueShowUnfocusedFill;
-        pluginApi.pluginSettings.showFocusedBorder = root.valueShowFocusedBorder;
-        pluginApi.pluginSettings.focusedBorderOpacity = root.valueFocusedBorderOpacity;
-        pluginApi.pluginSettings.showHoverBorder = root.valueShowHoverBorder;
-        pluginApi.pluginSettings.hoverBorderOpacity = root.valueHoverBorderOpacity;
-        pluginApi.pluginSettings.showUnfocusedBorder = root.valueShowUnfocusedBorder;
+        pluginApi.pluginSettings.showTrackLine = root.valueShowTrackLine;
         pluginApi.pluginSettings.trackOpacity = root.valueTrackOpacity;
+        pluginApi.pluginSettings.trackThumbColor = root.valueTrackThumbColor;
         pluginApi.pluginSettings.showFocusLine = root.valueShowFocusLine;
         pluginApi.pluginSettings.focusLineColor = root.valueFocusLineColor;
         pluginApi.pluginSettings.focusLineOpacity = root.valueFocusLineOpacity;
         pluginApi.pluginSettings.focusLineThickness = root.valueFocusLineThickness;
         pluginApi.pluginSettings.focusLineAnimationMs = root.valueFocusLineAnimationMs;
-        pluginApi.pluginSettings.centerFocusedWindow = root.valueCenterFocusedWindow;
-        pluginApi.pluginSettings.centerAnimationMs = root.valueCenterAnimationMs;
-        pluginApi.pluginSettings.enableScrollWheel = root.valueEnableScrollWheel;
-        pluginApi.pluginSettings.showIcons = root.valueShowIcons;
-        pluginApi.pluginSettings.titleFontFamily = root.valueTitleFontFamily;
-        pluginApi.pluginSettings.titleFontSize = root.valueTitleFontSize;
-        pluginApi.pluginSettings.titleFontWeight = root.valueTitleFontWeight;
-        pluginApi.pluginSettings.iconTintColor = root.valueIconTintColor;
-        pluginApi.pluginSettings.iconTintOpacity = root.valueIconTintOpacity;
-        pluginApi.pluginSettings.backgroundColor = root.valueBackgroundColor;
-        pluginApi.pluginSettings.backgroundOpacity = root.valueBackgroundOpacity;
         pluginApi.saveSettings();
     }
 
@@ -150,21 +193,19 @@ ColumnLayout {
         currentIndex: tabView.currentIndex
 
         NTabButton {
-            text: pluginApi?.tr("settings.tabs.general")
+            text: pluginApi?.tr("settings.tabs.layout")
             tabIndex: 0
             checked: tabView.currentIndex === 0
             onClicked: tabView.currentIndex = 0
         }
-
         NTabButton {
-            text: pluginApi?.tr("settings.tabs.behavior")
+            text: pluginApi?.tr("settings.tabs.colors")
             tabIndex: 1
             checked: tabView.currentIndex === 1
             onClicked: tabView.currentIndex = 1
         }
-
         NTabButton {
-            text: pluginApi?.tr("settings.tabs.appearance")
+            text: pluginApi?.tr("settings.tabs.behavior")
             tabIndex: 2
             checked: tabView.currentIndex === 2
             onClicked: tabView.currentIndex = 2
@@ -175,146 +216,17 @@ ColumnLayout {
         id: tabView
         Layout.fillWidth: true
 
-        // ── General ──
+        // ── Tab 1: Layout ────────────────────────────────────────────────────
         ColumnLayout {
             Layout.fillWidth: true
             spacing: Style.marginM
 
             NHeader {
                 Layout.fillWidth: true
-                label: pluginApi?.tr("settings.section.filtering.label")
-                description: pluginApi?.tr("settings.section.filtering.desc")
+                label: pluginApi?.tr("settings.section.slotSize.label")
+                description: pluginApi?.tr("settings.section.slotSize.desc")
             }
             NDivider {}
-
-            NToggle {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.onlySameOutput.label")
-                description: pluginApi?.tr("settings.onlySameOutput.desc")
-                checked: root.valueOnlySameOutput
-                onToggled: checked => root.valueOnlySameOutput = checked
-                defaultValue: defaults.onlySameOutput ?? true
-            }
-
-            NToggle {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.onlyActiveWorkspaces.label")
-                description: pluginApi?.tr("settings.onlyActiveWorkspaces.desc")
-                checked: root.valueOnlyActiveWorkspaces
-                onToggled: checked => root.valueOnlyActiveWorkspaces = checked
-                defaultValue: defaults.onlyActiveWorkspaces ?? true
-            }
-
-            NHeader {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.section.debug.label")
-                description: pluginApi?.tr("settings.section.debug.desc")
-            }
-            NDivider {}
-
-            NToggle {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.debugLogging.label")
-                description: pluginApi?.tr("settings.debugLogging.desc")
-                checked: root.valueDebugLogging
-                onToggled: checked => root.valueDebugLogging = checked
-                defaultValue: defaults.debugLogging ?? false
-            }
-        }
-
-        // ── Behavior ──
-        ColumnLayout {
-            Layout.fillWidth: true
-            spacing: Style.marginM
-
-            NHeader {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.section.interaction.label")
-                description: pluginApi?.tr("settings.section.interaction.desc")
-            }
-            NDivider {}
-
-            NToggle {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.enableReorder.label")
-                description: pluginApi?.tr("settings.enableReorder.desc")
-                checked: root.valueEnableReorder
-                onToggled: checked => root.valueEnableReorder = checked
-                defaultValue: defaults.enableReorder ?? true
-            }
-
-            NHeader {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.section.scrollCentering.label")
-                description: pluginApi?.tr("settings.section.scrollCentering.desc")
-            }
-            NDivider {}
-
-            NToggle {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.centerFocusedWindow.label")
-                description: pluginApi?.tr("settings.centerFocusedWindow.desc")
-                checked: root.valueCenterFocusedWindow
-                onToggled: checked => root.valueCenterFocusedWindow = checked
-                defaultValue: defaults.centerFocusedWindow ?? true
-            }
-
-            NValueSlider {
-                label: pluginApi?.tr("settings.centerAnimationMs.label")
-                description: pluginApi?.tr("settings.centerAnimationMs.desc")
-                from: 0
-                to: 500
-                stepSize: 10
-                value: root.valueCenterAnimationMs
-                text: Math.round(root.valueCenterAnimationMs) + " ms"
-                defaultValue: defaults.centerAnimationMs ?? 200
-                showReset: true
-                onMoved: value => root.valueCenterAnimationMs = Math.round(value)
-            }
-
-            NToggle {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.enableScrollWheel.label")
-                description: pluginApi?.tr("settings.enableScrollWheel.desc")
-                checked: root.valueEnableScrollWheel
-                onToggled: checked => root.valueEnableScrollWheel = checked
-                defaultValue: defaults.enableScrollWheel ?? true
-            }
-        }
-
-        // ── Appearance ──
-        ColumnLayout {
-            Layout.fillWidth: true
-            spacing: Style.marginM
-
-            NHeader {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.section.slotLayout.label")
-                description: pluginApi?.tr("settings.section.slotLayout.desc")
-            }
-            NDivider {}
-
-            NToggle {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.showIcons.label")
-                description: pluginApi?.tr("settings.showIcons.desc")
-                checked: root.valueShowIcons
-                onToggled: checked => root.valueShowIcons = checked
-                defaultValue: defaults.showIcons ?? true
-            }
-
-            NValueSlider {
-                label: pluginApi?.tr("settings.maxWidgetWidth.label")
-                description: pluginApi?.tr("settings.maxWidgetWidth.desc")
-                from: 20
-                to: 100
-                stepSize: 1
-                value: root.valueMaxWidgetWidth
-                text: Math.round(root.valueMaxWidgetWidth) + "%"
-                defaultValue: defaults.maxWidgetWidth ?? 40
-                showReset: true
-                onMoved: value => root.valueMaxWidgetWidth = Math.round(value)
-            }
 
             NValueSlider {
                 label: pluginApi?.tr("settings.slotWidth.label")
@@ -329,26 +241,17 @@ ColumnLayout {
                 onMoved: value => root.valueSlotWidth = Math.round(value)
             }
 
-            NToggle {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.showTitle.label")
-                description: pluginApi?.tr("settings.showTitle.desc")
-                checked: root.valueShowTitle
-                onToggled: checked => root.valueShowTitle = checked
-                defaultValue: defaults.showTitle ?? true
-            }
-
             NValueSlider {
-                label: pluginApi?.tr("settings.iconScale.label")
-                description: pluginApi?.tr("settings.iconScale.desc")
-                from: 0.5
-                to: 1.2
-                stepSize: 0.05
-                value: root.valueIconScale
-                text: Math.round(root.valueIconScale * 100) + "%"
-                defaultValue: defaults.iconScale ?? 0.8
+                label: pluginApi?.tr("settings.maxWidgetWidth.label")
+                description: pluginApi?.tr("settings.maxWidgetWidth.desc")
+                from: 20
+                to: 100
+                stepSize: 1
+                value: root.valueMaxWidgetWidth
+                text: Math.round(root.valueMaxWidgetWidth) + "%"
+                defaultValue: defaults.maxWidgetWidth ?? 40
                 showReset: true
-                onMoved: value => root.valueIconScale = Math.round(value * 100) / 100
+                onMoved: value => root.valueMaxWidgetWidth = Math.round(value)
             }
 
             NValueSlider {
@@ -376,6 +279,112 @@ ColumnLayout {
                 showReset: true
                 onMoved: value => root.valueRadiusScale = Math.round(value * 100) / 100
             }
+
+            NHeader {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.section.icons.label")
+                description: pluginApi?.tr("settings.section.icons.desc")
+            }
+            NDivider {}
+
+            NToggle {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.showIcons.label")
+                description: pluginApi?.tr("settings.showIcons.desc")
+                checked: root.valueShowIcons
+                onToggled: checked => root.valueShowIcons = checked
+                defaultValue: defaults.showIcons ?? true
+            }
+
+            NValueSlider {
+                label: pluginApi?.tr("settings.iconScale.label")
+                description: pluginApi?.tr("settings.iconScale.desc")
+                from: 0.5
+                to: 1.2
+                stepSize: 0.05
+                value: root.valueIconScale
+                text: Math.round(root.valueIconScale * 100) + "%"
+                defaultValue: defaults.iconScale ?? 0.8
+                showReset: true
+                onMoved: value => root.valueIconScale = Math.round(value * 100) / 100
+            }
+
+            NColorChoice {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.iconTintColor.label")
+                description: pluginApi?.tr("settings.iconTintColor.desc")
+                currentKey: root.valueIconTintColor
+                onSelected: key => root.valueIconTintColor = key
+            }
+
+            NValueSlider {
+                label: pluginApi?.tr("settings.iconTintOpacity.label")
+                description: pluginApi?.tr("settings.iconTintOpacity.desc")
+                from: 0
+                to: 100
+                stepSize: 1
+                value: root.valueIconTintOpacity
+                text: Math.round(root.valueIconTintOpacity) + "%"
+                defaultValue: defaults.iconTintOpacity ?? 100
+                showReset: true
+                onMoved: value => root.valueIconTintOpacity = Math.round(value)
+            }
+
+            NHeader {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.section.windowTitle.label")
+                description: pluginApi?.tr("settings.section.windowTitle.desc")
+            }
+            NDivider {}
+
+            NToggle {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.showTitle.label")
+                description: pluginApi?.tr("settings.showTitle.desc")
+                checked: root.valueShowTitle
+                onToggled: checked => root.valueShowTitle = checked
+                defaultValue: defaults.showTitle ?? true
+            }
+
+            NSearchableComboBox {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.titleFontFamily.label")
+                description: pluginApi?.tr("settings.titleFontFamily.desc")
+                model: FontService.availableFonts
+                currentKey: root.valueTitleFontFamily
+                defaultValue: defaults.titleFontFamily ?? ""
+                onSelected: key => root.valueTitleFontFamily = key
+            }
+
+            NValueSlider {
+                label: pluginApi?.tr("settings.titleFontSize.label")
+                description: pluginApi?.tr("settings.titleFontSize.desc")
+                from: 0
+                to: 24
+                stepSize: 1
+                value: root.valueTitleFontSize
+                text: root.valueTitleFontSize === 0 ? "Auto" : (Math.round(root.valueTitleFontSize) + " pt")
+                defaultValue: defaults.titleFontSize ?? 0
+                showReset: true
+                onMoved: value => root.valueTitleFontSize = Math.round(value)
+            }
+
+            NSearchableComboBox {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.titleFontWeight.label")
+                description: pluginApi?.tr("settings.titleFontWeight.desc")
+                model: root.fontWeightModel
+                currentKey: root.valueTitleFontWeight
+                defaultValue: defaults.titleFontWeight ?? "default"
+                onSelected: key => root.valueTitleFontWeight = key
+            }
+
+            NHeader {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.section.edgeFade.label")
+                description: pluginApi?.tr("settings.section.edgeFade.desc")
+            }
+            NDivider {}
 
             NValueSlider {
                 label: pluginApi?.tr("settings.edgeFadeSize.label")
@@ -415,60 +424,12 @@ ColumnLayout {
                 showReset: true
                 onMoved: value => root.valueEdgeFadeMidOpacity = Math.round(value)
             }
+        }
 
-            NColorChoice {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.iconTintColor.label")
-                description: pluginApi?.tr("settings.iconTintColor.desc")
-                currentKey: root.valueIconTintColor
-                onSelected: key => root.valueIconTintColor = key
-            }
-
-            NValueSlider {
-                label: pluginApi?.tr("settings.iconTintOpacity.label")
-                description: pluginApi?.tr("settings.iconTintOpacity.desc")
-                from: 0
-                to: 100
-                stepSize: 1
-                value: root.valueIconTintOpacity
-                text: Math.round(root.valueIconTintOpacity) + "%"
-                defaultValue: defaults.iconTintOpacity ?? 100
-                showReset: true
-                onMoved: value => root.valueIconTintOpacity = Math.round(value)
-            }
-
-            NSearchableComboBox {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.titleFontFamily.label")
-                description: pluginApi?.tr("settings.titleFontFamily.desc")
-                model: FontService.availableFonts
-                currentKey: root.valueTitleFontFamily
-                defaultValue: defaults.titleFontFamily ?? ""
-                onSelected: key => root.valueTitleFontFamily = key
-            }
-
-            NValueSlider {
-                label: pluginApi?.tr("settings.titleFontSize.label")
-                description: pluginApi?.tr("settings.titleFontSize.desc")
-                from: 0
-                to: 24
-                stepSize: 1
-                value: root.valueTitleFontSize
-                text: root.valueTitleFontSize === 0 ? "Auto" : (Math.round(root.valueTitleFontSize) + " pt")
-                defaultValue: defaults.titleFontSize ?? 0
-                showReset: true
-                onMoved: value => root.valueTitleFontSize = Math.round(value)
-            }
-
-            NSearchableComboBox {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.titleFontWeight.label")
-                description: pluginApi?.tr("settings.titleFontWeight.desc")
-                model: root.fontWeightModel
-                currentKey: root.valueTitleFontWeight
-                defaultValue: defaults.titleFontWeight ?? "default"
-                onSelected: key => root.valueTitleFontWeight = key
-            }
+        // ── Tab 2: Colors & Style ────────────────────────────────────────────
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: Style.marginM
 
             NHeader {
                 Layout.fillWidth: true
@@ -500,8 +461,8 @@ ColumnLayout {
 
             NHeader {
                 Layout.fillWidth: true
-                label: pluginApi?.tr("settings.section.focusedSlot.label")
-                description: pluginApi?.tr("settings.section.focusedSlot.desc")
+                label: pluginApi?.tr("settings.section.activeWindow.label")
+                description: pluginApi?.tr("settings.section.activeWindow.desc")
             }
             NDivider {}
 
@@ -535,14 +496,6 @@ ColumnLayout {
                 onMoved: value => root.valueFocusedFillOpacity = Math.round(value)
             }
 
-            NColorChoice {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.focusedBorderColor.label")
-                description: pluginApi?.tr("settings.focusedBorderColor.desc")
-                currentKey: root.valueFocusedBorderColor
-                onSelected: key => root.valueFocusedBorderColor = key
-            }
-
             NToggle {
                 Layout.fillWidth: true
                 label: pluginApi?.tr("settings.showFocusedBorder.label")
@@ -550,6 +503,14 @@ ColumnLayout {
                 checked: root.valueShowFocusedBorder
                 onToggled: checked => root.valueShowFocusedBorder = checked
                 defaultValue: defaults.showFocusedBorder ?? true
+            }
+
+            NColorChoice {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.focusedBorderColor.label")
+                description: pluginApi?.tr("settings.focusedBorderColor.desc")
+                currentKey: root.valueFocusedBorderColor
+                onSelected: key => root.valueFocusedBorderColor = key
             }
 
             NValueSlider {
@@ -575,8 +536,8 @@ ColumnLayout {
 
             NHeader {
                 Layout.fillWidth: true
-                label: pluginApi?.tr("settings.section.unfocusedSlot.label")
-                description: pluginApi?.tr("settings.section.unfocusedSlot.desc")
+                label: pluginApi?.tr("settings.section.inactiveWindows.label")
+                description: pluginApi?.tr("settings.section.inactiveWindows.desc")
             }
             NDivider {}
 
@@ -610,14 +571,6 @@ ColumnLayout {
                 onMoved: value => root.valueUnfocusedFillOpacity = Math.round(value)
             }
 
-            NColorChoice {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.unfocusedBorderColor.label")
-                description: pluginApi?.tr("settings.unfocusedBorderColor.desc")
-                currentKey: root.valueUnfocusedBorderColor
-                onSelected: key => root.valueUnfocusedBorderColor = key
-            }
-
             NToggle {
                 Layout.fillWidth: true
                 label: pluginApi?.tr("settings.showUnfocusedBorder.label")
@@ -625,6 +578,14 @@ ColumnLayout {
                 checked: root.valueShowUnfocusedBorder
                 onToggled: checked => root.valueShowUnfocusedBorder = checked
                 defaultValue: defaults.showUnfocusedBorder ?? true
+            }
+
+            NColorChoice {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.unfocusedBorderColor.label")
+                description: pluginApi?.tr("settings.unfocusedBorderColor.desc")
+                currentKey: root.valueUnfocusedBorderColor
+                onSelected: key => root.valueUnfocusedBorderColor = key
             }
 
             NValueSlider {
@@ -663,8 +624,8 @@ ColumnLayout {
 
             NHeader {
                 Layout.fillWidth: true
-                label: pluginApi?.tr("settings.section.hoveredSlot.label")
-                description: pluginApi?.tr("settings.section.hoveredSlot.desc")
+                label: pluginApi?.tr("settings.section.hoveredWindow.label")
+                description: pluginApi?.tr("settings.section.hoveredWindow.desc")
             }
             NDivider {}
 
@@ -674,22 +635,6 @@ ColumnLayout {
                 description: pluginApi?.tr("settings.hoverFillColor.desc")
                 currentKey: root.valueHoverFillColor
                 onSelected: key => root.valueHoverFillColor = key
-            }
-
-            NColorChoice {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.hoverBorderColor.label")
-                description: pluginApi?.tr("settings.hoverBorderColor.desc")
-                currentKey: root.valueHoverBorderColor
-                onSelected: key => root.valueHoverBorderColor = key
-            }
-
-            NColorChoice {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.hoverTextColor.label")
-                description: pluginApi?.tr("settings.hoverTextColor.desc")
-                currentKey: root.valueHoverTextColor
-                onSelected: key => root.valueHoverTextColor = key
             }
 
             NValueSlider {
@@ -714,6 +659,14 @@ ColumnLayout {
                 defaultValue: defaults.showHoverBorder ?? true
             }
 
+            NColorChoice {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.hoverBorderColor.label")
+                description: pluginApi?.tr("settings.hoverBorderColor.desc")
+                currentKey: root.valueHoverBorderColor
+                onSelected: key => root.valueHoverBorderColor = key
+            }
+
             NValueSlider {
                 label: pluginApi?.tr("settings.hoverBorderOpacity.label")
                 description: pluginApi?.tr("settings.hoverBorderOpacity.desc")
@@ -725,6 +678,14 @@ ColumnLayout {
                 defaultValue: defaults.hoverBorderOpacity ?? 100
                 showReset: true
                 onMoved: value => root.valueHoverBorderOpacity = Math.round(value)
+            }
+
+            NColorChoice {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.hoverTextColor.label")
+                description: pluginApi?.tr("settings.hoverTextColor.desc")
+                currentKey: root.valueHoverTextColor
+                onSelected: key => root.valueHoverTextColor = key
             }
 
             NValueSlider {
@@ -755,8 +716,8 @@ ColumnLayout {
 
             NHeader {
                 Layout.fillWidth: true
-                label: pluginApi?.tr("settings.section.trackFocusLine.label")
-                description: pluginApi?.tr("settings.section.trackFocusLine.desc")
+                label: pluginApi?.tr("settings.section.indicators.label")
+                description: pluginApi?.tr("settings.section.indicators.desc")
             }
             NDivider {}
 
@@ -792,8 +753,8 @@ ColumnLayout {
 
             NToggle {
                 Layout.fillWidth: true
-                label: pluginApi?.tr("settings.focusLine.label")
-                description: pluginApi?.tr("settings.focusLine.desc")
+                label: pluginApi?.tr("settings.showFocusLine.label")
+                description: pluginApi?.tr("settings.showFocusLine.desc")
                 checked: root.valueShowFocusLine
                 onToggled: checked => root.valueShowFocusLine = checked
                 defaultValue: defaults.showFocusLine ?? true
@@ -844,6 +805,107 @@ ColumnLayout {
                 defaultValue: defaults.focusLineAnimationMs ?? 120
                 showReset: true
                 onMoved: value => root.valueFocusLineAnimationMs = Math.round(value)
+            }
+        }
+
+        // ── Tab 3: Behavior ──────────────────────────────────────────────────
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: Style.marginM
+
+            NHeader {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.section.windowFiltering.label")
+                description: pluginApi?.tr("settings.section.windowFiltering.desc")
+            }
+            NDivider {}
+
+            NToggle {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.onlySameOutput.label")
+                description: pluginApi?.tr("settings.onlySameOutput.desc")
+                checked: root.valueOnlySameOutput
+                onToggled: checked => root.valueOnlySameOutput = checked
+                defaultValue: defaults.onlySameOutput ?? true
+            }
+
+            NToggle {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.onlyActiveWorkspaces.label")
+                description: pluginApi?.tr("settings.onlyActiveWorkspaces.desc")
+                checked: root.valueOnlyActiveWorkspaces
+                onToggled: checked => root.valueOnlyActiveWorkspaces = checked
+                defaultValue: defaults.onlyActiveWorkspaces ?? true
+            }
+
+            NHeader {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.section.interaction.label")
+                description: pluginApi?.tr("settings.section.interaction.desc")
+            }
+            NDivider {}
+
+            NToggle {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.enableReorder.label")
+                description: pluginApi?.tr("settings.enableReorder.desc")
+                checked: root.valueEnableReorder
+                onToggled: checked => root.valueEnableReorder = checked
+                defaultValue: defaults.enableReorder ?? true
+            }
+
+            NToggle {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.enableScrollWheel.label")
+                description: pluginApi?.tr("settings.enableScrollWheel.desc")
+                checked: root.valueEnableScrollWheel
+                onToggled: checked => root.valueEnableScrollWheel = checked
+                defaultValue: defaults.enableScrollWheel ?? true
+            }
+
+            NHeader {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.section.autoScroll.label")
+                description: pluginApi?.tr("settings.section.autoScroll.desc")
+            }
+            NDivider {}
+
+            NToggle {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.centerFocusedWindow.label")
+                description: pluginApi?.tr("settings.centerFocusedWindow.desc")
+                checked: root.valueCenterFocusedWindow
+                onToggled: checked => root.valueCenterFocusedWindow = checked
+                defaultValue: defaults.centerFocusedWindow ?? true
+            }
+
+            NValueSlider {
+                label: pluginApi?.tr("settings.centerAnimationMs.label")
+                description: pluginApi?.tr("settings.centerAnimationMs.desc")
+                from: 0
+                to: 500
+                stepSize: 10
+                value: root.valueCenterAnimationMs
+                text: Math.round(root.valueCenterAnimationMs) + " ms"
+                defaultValue: defaults.centerAnimationMs ?? 200
+                showReset: true
+                onMoved: value => root.valueCenterAnimationMs = Math.round(value)
+            }
+
+            NHeader {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.section.advanced.label")
+                description: pluginApi?.tr("settings.section.advanced.desc")
+            }
+            NDivider {}
+
+            NToggle {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.debugLogging.label")
+                description: pluginApi?.tr("settings.debugLogging.desc")
+                checked: root.valueDebugLogging
+                onToggled: checked => root.valueDebugLogging = checked
+                defaultValue: defaults.debugLogging ?? false
             }
         }
     }

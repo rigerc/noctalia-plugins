@@ -106,9 +106,22 @@ Item {
 
     readonly property int slotLength: Math.max(Math.round(baseSlotLength * Style.uiScaleRatio), Math.round(capsuleHeight * 1.4))
     readonly property real slotSpacing: Math.max(0, Math.round(slotSpacingUnits * Style.marginS))
-    readonly property real crossExtent: capsuleHeight
+    readonly property real indicatorSpace: {
+        let space = 0;
+        if (showTrackLine)
+            space = Math.max(space, trackThickness + 1);
+        if (showFocusLine)
+            space = Math.max(space, focusLineThickness);
+        return space;
+    }
+    readonly property real crossExtent: {
+        const widgetSize = isVertical ? width : height;
+        if (widgetSize <= capsuleHeight)
+            return capsuleHeight;
+        return widgetSize - indicatorSpace;
+    }
     readonly property real trackThickness: Math.max(1, Math.round(Style.borderS))
-    readonly property int itemSize: Style.toOdd(crossExtent * Math.max(0.1, iconScale))
+    readonly property int itemSize: Style.toOdd(capsuleHeight * Math.max(0.1, iconScale))
     readonly property var liveEntriesByKey: mainInstance?.liveEntriesByKey ?? ({})
     readonly property string activeEntryKey: mainInstance?.activeEntryKey ?? ""
     readonly property int structureRevision: mainInstance?.structureRevision ?? 0
@@ -755,7 +768,6 @@ Item {
 
             width: contentExtent
             height: root.crossExtent
-            y: parent ? Style.pixelAlignCenter(parent.height, height) : 0
 
             function delegateItemAt(index) {
                 for (let i = 0; i < rowLayout.children.length; i++) {
@@ -768,7 +780,7 @@ Item {
 
             RowLayout {
                 id: rowLayout
-                anchors.verticalCenter: parent.verticalCenter
+                anchors.fill: parent
                 spacing: root.slotSpacing
 
                 Repeater {
@@ -787,7 +799,6 @@ Item {
 
             width: root.crossExtent
             height: contentExtent
-            x: parent ? Style.pixelAlignCenter(parent.width, width) : 0
 
             function delegateItemAt(index) {
                 for (let i = 0; i < columnLayout.children.length; i++) {
@@ -800,7 +811,7 @@ Item {
 
             ColumnLayout {
                 id: columnLayout
-                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.fill: parent
                 spacing: root.slotSpacing
 
                 Repeater {

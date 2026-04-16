@@ -4,50 +4,62 @@
   },
   "settings": {
     "tabs": {
-      "general": "General",
-      "behavior": "Behavior",
-      "appearance": "Appearance"
+      "layout": "Layout",
+      "colors": "Colors",
+      "behavior": "Behavior"
     },
     "section": {
-      "filtering": {
-        "label": "Filtering",
-        "desc": "Control which windows appear in the strip."
+      "slotSize": {
+        "label": "Slot Size & Spacing",
+        "desc": "Size, spacing, and structural dimensions for each window slot."
       },
-      "debug": {
-        "label": "Debug",
-        "desc": "Diagnostic options for troubleshooting."
+      "icons": {
+        "label": "Icons",
+        "desc": "Application icon display and tinting."
+      },
+      "windowTitle": {
+        "label": "Window Title",
+        "desc": "Font and visibility for window titles inside slots."
+      },
+      "edgeFade": {
+        "label": "Edge Fade",
+        "desc": "Overflow fade at the leading and trailing edges."
+      },
+      "background": {
+        "label": "Widget Background",
+        "desc": "Background fill for the entire widget strip."
+      },
+      "activeWindow": {
+        "label": "Active Window",
+        "desc": "Colors and borders for the currently focused window."
+      },
+      "inactiveWindows": {
+        "label": "Inactive Windows",
+        "desc": "Appearance of idle, background window slots."
+      },
+      "hoveredWindow": {
+        "label": "Hovered Window",
+        "desc": "Colors, borders, and animation when hovering a slot."
+      },
+      "indicators": {
+        "label": "Track & Focus Indicator",
+        "desc": "The position track and focused-slot indicator line."
+      },
+      "windowFiltering": {
+        "label": "Window Filtering",
+        "desc": "Control which windows appear in the strip."
       },
       "interaction": {
         "label": "Interaction",
         "desc": "Mouse and drag behavior for window slots."
       },
-      "scrollCentering": {
-        "label": "Scroll & Centering",
+      "autoScroll": {
+        "label": "Auto-Scroll",
         "desc": "How the strip reacts when focus changes."
       },
-      "slotLayout": {
-        "label": "Slot Layout",
-        "desc": "Size, spacing, and structural dimensions for each window slot."
-      },
-      "focusedSlot": {
-        "label": "Focused Slot",
-        "desc": "Colors and borders for the currently active window."
-      },
-      "unfocusedSlot": {
-        "label": "Unfocused Slot",
-        "desc": "Appearance of idle, background window slots."
-      },
-      "hoveredSlot": {
-        "label": "Hovered Slot",
-        "desc": "Colors, borders, and animation when hovering a slot."
-      },
-      "trackFocusLine": {
-        "label": "Track & Focus Line",
-        "desc": "The position track and focused-slot indicator line."
-      },
-      "background": {
-        "label": "Background",
-        "desc": "Background fill for the entire widget strip."
+      "advanced": {
+        "label": "Advanced",
+        "desc": "Diagnostic options for troubleshooting."
       }
     },
     "onlySameOutput": {
@@ -106,7 +118,7 @@
       "label": "Track opacity",
       "desc": "Opacity used by the passive track line."
     },
-    "focusLine": {
+    "showFocusLine": {
       "label": "Show focus line",
       "desc": "Draw a thin indicator line on the track marking the focused slot position."
     },
