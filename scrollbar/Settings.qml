@@ -33,6 +33,7 @@ ColumnLayout {
     property int valueSlotWidth: cfg.slotWidth ?? defaults.slotWidth ?? 112
     property int valueSlotSpacingUnits: cfg.slotSpacingUnits ?? defaults.slotSpacingUnits ?? 1
     property real valueRadiusScale: cfg.radiusScale ?? defaults.radiusScale ?? 1.0
+    property real valueSlotCapsuleScale: cfg.slotCapsuleScale ?? defaults.slotCapsuleScale ?? 1.0
 
     // Icons
     property bool valueShowIcons: cfg.showIcons ?? defaults.showIcons ?? true
@@ -139,6 +140,7 @@ ColumnLayout {
         pluginApi.pluginSettings.slotWidth = root.valueSlotWidth;
         pluginApi.pluginSettings.slotSpacingUnits = root.valueSlotSpacingUnits;
         pluginApi.pluginSettings.radiusScale = root.valueRadiusScale;
+        pluginApi.pluginSettings.slotCapsuleScale = root.valueSlotCapsuleScale;
         pluginApi.pluginSettings.showIcons = root.valueShowIcons;
         pluginApi.pluginSettings.iconScale = root.valueIconScale;
         pluginApi.pluginSettings.iconTintColor = root.valueIconTintColor;
@@ -278,6 +280,19 @@ ColumnLayout {
                 defaultValue: defaults.radiusScale ?? 1.0
                 showReset: true
                 onMoved: value => root.valueRadiusScale = Math.round(value * 100) / 100
+            }
+
+            NValueSlider {
+                label: pluginApi?.tr("settings.slotCapsuleScale.label")
+                description: pluginApi?.tr("settings.slotCapsuleScale.desc")
+                from: 0.3
+                to: 1.5
+                stepSize: 0.05
+                value: root.valueSlotCapsuleScale
+                text: Math.round(root.valueSlotCapsuleScale * 100) + "%"
+                defaultValue: defaults.slotCapsuleScale ?? 1.0
+                showReset: true
+                onMoved: value => root.valueSlotCapsuleScale = Math.round(value * 100) / 100
             }
 
             NHeader {

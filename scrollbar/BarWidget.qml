@@ -32,6 +32,7 @@ Item {
     readonly property bool debugLogging: cfg.debugLogging ?? defaults.debugLogging ?? false
     readonly property int maxWidgetWidthPercent: cfg.maxWidgetWidth ?? defaults.maxWidgetWidth ?? 40
     readonly property real baseSlotLength: cfg.slotWidth ?? defaults.slotWidth ?? 112
+    readonly property real slotCapsuleScale: Math.max(0.3, cfg.slotCapsuleScale ?? defaults.slotCapsuleScale ?? 1.0)
     readonly property bool showTitle: !isVertical && (cfg.showTitle ?? defaults.showTitle ?? true)
     readonly property real iconScale: cfg.iconScale ?? defaults.iconScale ?? 0.8
     readonly property real edgeFadeSize: Math.max(0, Math.round((cfg.edgeFadeSize ?? defaults.edgeFadeSize ?? 18) * Style.uiScaleRatio))
@@ -105,6 +106,7 @@ Item {
     }
 
     readonly property int slotLength: Math.max(Math.round(baseSlotLength * Style.uiScaleRatio), Math.round(capsuleHeight * 1.4))
+    readonly property int effectiveSlotLength: isVertical ? slotLength : (showTitle ? slotLength : Math.round(itemSize + 2 * Math.max(Style.marginM, Style.marginS * slotCapsuleScale)))
     readonly property real slotSpacing: Math.max(0, Math.round(slotSpacingUnits * Style.marginS))
     readonly property real indicatorSpace: {
         let space = 0;
@@ -114,14 +116,16 @@ Item {
             space = Math.max(space, focusLineThickness);
         return space;
     }
+    readonly property real scaledCapsuleHeight: capsuleHeight * slotCapsuleScale
     readonly property real crossExtent: {
         const widgetSize = isVertical ? width : height;
         if (widgetSize <= capsuleHeight)
             return capsuleHeight;
         return widgetSize - indicatorSpace;
     }
+    readonly property real slotCrossExtent: Math.min(crossExtent, scaledCapsuleHeight)
     readonly property real trackThickness: Math.max(1, Math.round(Style.borderS))
-    readonly property int itemSize: Style.toOdd(capsuleHeight * Math.max(0.1, iconScale))
+    readonly property int itemSize: Style.toOdd(slotCrossExtent * Math.max(0.1, iconScale))
     readonly property var liveEntriesByKey: mainInstance?.liveEntriesByKey ?? ({})
     readonly property string activeEntryKey: mainInstance?.activeEntryKey ?? ""
     readonly property int structureRevision: mainInstance?.structureRevision ?? 0
@@ -414,7 +418,7 @@ Item {
         onActiveChanged: root.debugLog("WheelHandler active=" + active)
         onWheel: event => {
             root.debugLog("WheelHandler wheel delta=" + event.angleDelta.y + " contentX=" + flickable.contentX + " contentWidth=" + flickable.contentWidth + " width=" + flickable.width);
-            const step = event.angleDelta.y / 120 * root.slotLength;
+            const step = event.angleDelta.y / 120 * root.effectiveSlotLength;
             if (root.isVertical) {
                 const maxY = Math.max(0, flickable.contentHeight - flickable.height);
                 flickable.contentY = Math.max(0, Math.min(maxY, flickable.contentY - step));
@@ -500,8 +504,9 @@ Item {
             }
             property bool hadDragDuringPress: false
 
-            Layout.preferredWidth: root.isVertical ? root.crossExtent : root.slotLength
-            Layout.preferredHeight: root.isVertical ? root.slotLength : root.crossExtent
+            Layout.preferredWidth: root.isVertical ? root.slotCrossExtent : root.effectiveSlotLength
+            Layout.preferredHeight: root.isVertical ? root.effectiveSlotLength : root.slotCrossExtent
+            Layout.alignment: root.isVertical ? Qt.AlignHCenter : Qt.AlignVCenter
             width: Layout.preferredWidth
             height: Layout.preferredHeight
             z: root.dragSourceIndex === index ? 1000 : 1
@@ -578,8 +583,8 @@ Item {
                     anchors.fill: parent
                     anchors.leftMargin: Style.marginM
                     anchors.rightMargin: Style.marginM
-                    anchors.topMargin: Style.marginS
-                    anchors.bottomMargin: Style.marginS
+                    anchors.topMargin: Style.marginS * root.slotCapsuleScale
+                    anchors.bottomMargin: Style.marginS * root.slotCapsuleScale
                     spacing: Style.marginS
                     visible: !root.isVertical
 
@@ -618,7 +623,8 @@ Item {
 
                     NText {
                         id: textLabel
-                        Layout.fillWidth: true
+                        Layout.fillWidth: root.showTitle
+                        Layout.preferredWidth: root.showTitle ? -1 : 0
                         Layout.alignment: Qt.AlignVCenter
                         text: delegateRoot.liveTitle
                         elide: Text.ElideRight
@@ -626,14 +632,17 @@ Item {
                         visible: root.showTitle
                         color: delegateRoot.slotTextColor
                         font.family: root.titleFontFamily || Qt.application.font.family
-                        pointSize: root.titleFontSize > 0 ? root.titleFontSize : root.barFontSize
+                        pointSize: root.titleFontSize > 0 ? root.titleFontSize : Math.max(Style.fontSizeXS, root.barFontSize * root.slotCapsuleScale)
                         font.weight: root.titleFontWeightValue >= 0 ? root.titleFontWeightValue : (delegateRoot.isFocused ? Style.fontWeightSemiBold : Style.fontWeightMedium)
                     }
                 }
 
                 ColumnLayout {
                     anchors.fill: parent
-                    anchors.margins: Style.marginS
+                    anchors.topMargin: Style.marginS
+                    anchors.bottomMargin: Style.marginS
+                    anchors.leftMargin: Style.marginS * root.slotCapsuleScale
+                    anchors.rightMargin: Style.marginS * root.slotCapsuleScale
                     spacing: Style.marginXS
                     visible: root.isVertical
 
@@ -746,7 +755,7 @@ Item {
                         return;
                     }
                     root.debugLog("delegate onWheel delta=" + wheel.angleDelta.y);
-                    const step = wheel.angleDelta.y / 120 * root.slotLength;
+                    const step = wheel.angleDelta.y / 120 * root.effectiveSlotLength;
                     if (root.isVertical) {
                         const maxY = Math.max(0, flickable.contentHeight - flickable.height);
                         flickable.contentY = Math.max(0, Math.min(maxY, flickable.contentY - step));

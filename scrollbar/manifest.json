@@ -1,7 +1,7 @@
 {
   "id": "scrollbar",
   "name": "Scrollbar",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "minNoctaliaVersion": "4.6.6",
   "author": "OpenAI",
   "license": "MIT",
@@ -27,6 +27,7 @@
       "debugLogging": false,
       "maxWidgetWidth": 40,
       "slotWidth": 112,
+      "slotCapsuleScale": 1.0,
       "showTitle": true,
       "iconScale": 0.8,
       "edgeFadeSize": 18,

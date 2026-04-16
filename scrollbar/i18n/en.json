@@ -182,6 +182,10 @@
       "label": "Corner roundness",
       "desc": "Scale the slot corner radius."
     },
+    "slotCapsuleScale": {
+      "label": "Capsule height scale",
+      "desc": "Scale the slot capsule height independently of the track line. Values below 100% shrink the capsules; values above 100% enlarge them."
+    },
     "focusedFillOpacity": {
       "label": "Focused fill opacity",
       "desc": "Strength of the focused slot background tint."
