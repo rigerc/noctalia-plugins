@@ -189,6 +189,9 @@ Item {
     readonly property bool hasWindow: combinedModel.length > 0
     readonly property bool showLeadingFade: isVertical ? flickable.contentY > 0.5 : flickable.contentX > 0.5
     readonly property bool showTrailingFade: isVertical ? (flickable.contentY + flickable.height) < (flickable.contentHeight - 0.5) : (flickable.contentX + flickable.width) < (flickable.contentWidth - 0.5)
+    readonly property real contentWidth: isVertical ? crossExtent : Math.max(crossExtent, viewportExtent)
+    readonly property real contentHeight: isVertical ? Math.max(crossExtent, viewportExtent) : crossExtent
+    readonly property color capsuleBaseColor: rootHoverHandler.hovered ? Color.mHover : Style.capsuleColor
 
     property var combinedModel: []
     property string combinedSignature: ""
@@ -246,8 +249,8 @@ Item {
     }
 
     visible: hasWindow
-    implicitWidth: hasWindow ? (isVertical ? crossExtent : Math.max(crossExtent, viewportExtent)) : 0
-    implicitHeight: hasWindow ? (isVertical ? Math.max(crossExtent, viewportExtent) : crossExtent) : 0
+    implicitWidth: hasWindow ? contentWidth : 0
+    implicitHeight: hasWindow ? contentHeight : 0
 
     function filteredSignature(entries) {
         return (entries || []).map(function (entry) {
@@ -436,6 +439,8 @@ Item {
     }
 
     HoverHandler {
+        id: rootHoverHandler
+
         onHoveredChanged: {
             root.debugLog("HoverHandler hovered=" + hovered);
             if (!hovered && root.activeEntryKey) {
@@ -490,16 +495,17 @@ Item {
     }
 
     MouseArea {
+        id: backgroundMouseArea
         anchors.fill: parent
-        acceptedButtons: Qt.RightButton
-        hoverEnabled: false
-        propagateComposedEvents: true
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
 
         onClicked: mouse => {
-            if (mouse.button !== Qt.RightButton)
-                return;
-            PanelService.showContextMenu(contextMenu, root, root.screen);
-            mouse.accepted = true;
+            if (mouse.button === Qt.RightButton) {
+                PanelService.showContextMenu(contextMenu, root, root.screen);
+                mouse.accepted = true;
+            }
         }
     }
 
@@ -585,55 +591,71 @@ Item {
     }
 
     Rectangle {
-        visible: root.backgroundEnabled
-        anchors.fill: parent
-        color: root.backgroundColor
-        radius: Style.radiusM * root.radiusScale
-    }
+        id: visualCapsule
+        x: Style.pixelAlignCenter(parent.width, width)
+        y: Style.pixelAlignCenter(parent.height, height)
+        width: root.contentWidth
+        height: root.contentHeight
+        color: root.capsuleBaseColor
+        radius: Style.radiusL * root.radiusScale
+        border.color: Style.capsuleBorderColor
+        border.width: Style.capsuleBorderWidth
 
-    Flickable {
-        id: flickable
-        anchors.fill: parent
-        clip: root.clipToBarBounds
+        Rectangle {
+            visible: root.backgroundEnabled
+            anchors.fill: parent
+            color: root.backgroundColor
+            radius: visualCapsule.radius
+        }
 
-        interactive: false
-        boundsBehavior: Flickable.StopAtBounds
-        contentWidth: root.isVertical ? width : root.contentExtent
-        contentHeight: root.isVertical ? root.contentExtent : height
+        Item {
+            anchors.fill: parent
 
-        Behavior on contentX {
-            enabled: root.centerAnimationMs > 0
-            NumberAnimation {
-                duration: root.centerAnimationMs
-                easing.type: Easing.OutCubic
+            Flickable {
+                id: flickable
+                anchors.fill: parent
+                clip: root.clipToBarBounds
+
+                interactive: false
+                boundsBehavior: Flickable.StopAtBounds
+                contentWidth: root.isVertical ? width : root.contentExtent
+                contentHeight: root.isVertical ? root.contentExtent : height
+
+                Behavior on contentX {
+                    enabled: root.centerAnimationMs > 0
+                    NumberAnimation {
+                        duration: root.centerAnimationMs
+                        easing.type: Easing.OutCubic
+                    }
+                }
+
+                Behavior on contentY {
+                    enabled: root.centerAnimationMs > 0
+                    NumberAnimation {
+                        duration: root.centerAnimationMs
+                        easing.type: Easing.OutCubic
+                    }
+                }
+
+                Loader {
+                    id: stripLoader
+                    sourceComponent: root.isVertical ? verticalStripComponent : horizontalStripComponent
+                }
+            }
+
+            TrackOverlay {
+                barRoot: root
+            }
+
+            EdgeFadeOverlay {
+                barRoot: root
+                leading: true
+            }
+
+            EdgeFadeOverlay {
+                barRoot: root
+                leading: false
             }
         }
-
-        Behavior on contentY {
-            enabled: root.centerAnimationMs > 0
-            NumberAnimation {
-                duration: root.centerAnimationMs
-                easing.type: Easing.OutCubic
-            }
-        }
-
-        Loader {
-            id: stripLoader
-            sourceComponent: root.isVertical ? verticalStripComponent : horizontalStripComponent
-        }
-    }
-
-    TrackOverlay {
-        barRoot: root
-    }
-
-    EdgeFadeOverlay {
-        barRoot: root
-        leading: true
-    }
-
-    EdgeFadeOverlay {
-        barRoot: root
-        leading: false
     }
 }
