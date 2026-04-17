@@ -409,5 +409,16 @@ jobs:
           print_required_properties
 
           if [[ "$issues" -ne 0 ]]; then
-            gh pr comment "$PR_NUMBER" --body "$comment_body"
+            if [ "$EVENT_NAME" = "pull_request_target" ]; then
+              gh pr comment "$PR_NUMBER" --body "$comment_body"
+            else
+              echo "$comment_body" >> "$GITHUB_STEP_SUMMARY"
+              echo ""
+              echo "::error::$issues code quality issue(s) found in $CHECK_DIRECTORY"
+              exit 1
+            fi
+          else
+            if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+              echo "### No code quality issues found in \`$CHECK_DIRECTORY\`" >> "$GITHUB_STEP_SUMMARY"
+            fi
           fi
