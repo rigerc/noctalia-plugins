@@ -28,17 +28,22 @@
     "tabs": {
       "layout": "Layout",
       "colors": "Colors",
-      "behavior": "Behavior"
+      "behavior": "Behavior",
+      "presets": "Presets"
     },
     "presets": {
       "label": "Presets",
-      "desc": "Apply a full preset across all settings, or save your current configuration as a reusable custom preset.",
-      "actions": {
-        "show": "Show Presets",
-        "hide": "Hide Presets"
+      "desc": "Apply built-in presets, load saved custom presets, and manage reusable preset snapshots for this widget.",
+      "tab": {
+        "label": "Presets",
+        "desc": "Use built-in presets for quick starting points, then save and reuse your own custom configurations."
+      },
+      "status": {
+        "label": "Current preset status"
       },
       "summary": {
-        "empty": "Collapsed by default. No preset selected.",
+        "empty": "No preset selected.",
+        "modified": "Preset selection cleared after manual edits.",
         "builtin": "Built-in selected: {name}",
         "custom": "Custom loaded: {name}",
         "count": "{count} custom presets saved."
@@ -47,6 +52,10 @@
         "label": "Built-in presets",
         "desc": "Pre-configured scrollbar modes that replace the full editable settings snapshot.",
         "placeholder": "Choose a built-in preset",
+        "actions": {
+          "apply": "Apply preset",
+          "active": "Active preset"
+        },
         "standard": {
           "name": "Standard",
           "desc": "Default strip layout with slots, icons, and titles, without the track or focus line."
@@ -75,17 +84,20 @@
       "custom": {
         "label": "Custom presets",
         "desc": "Load a saved custom preset into the editor, or save the current editor state as a named preset.",
+        "loadDesc": "Search and load a saved custom preset into the editor.",
         "placeholder": "Choose a custom preset",
         "empty": "No custom presets saved yet.",
         "selectedDesc": "Loaded custom preset: {name}",
+        "manage": {
+          "label": "Manage saved presets",
+          "desc": "Save the current editor state as a new preset, replace an existing one, or remove an outdated preset."
+        },
         "name": {
           "label": "Preset name",
           "desc": "Names are trimmed and must be unique across custom presets.",
           "placeholder": "Enter a preset name"
         },
         "actions": {
-          "showEditor": "Save Preset",
-          "hideEditor": "Hide Save Preset",
           "import": "Import Presets",
           "export": "Export Presets",
           "save": "Save New",
@@ -93,6 +105,8 @@
           "delete": "Delete"
         },
         "transfer": {
+          "label": "Import & export",
+          "desc": "Move custom presets between machines or back them up as JSON.",
           "exported": "Exported custom presets to {path}",
           "invalidJson": "The selected file is not valid JSON.",
           "noPresets": "The selected file does not contain any custom presets.",
@@ -103,6 +117,9 @@
           "empty": "Enter a name to save or overwrite a custom preset.",
           "duplicate": "This preset name already exists. Use Overwrite to update it."
         }
+      },
+      "actions": {
+        "clear": "Clear selection"
       }
     },
     "colorPicker": {

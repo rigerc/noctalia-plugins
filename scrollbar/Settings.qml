@@ -16,9 +16,8 @@ ColumnLayout {
     property string selectedBuiltinPresetKey: ""
     property string selectedCustomPresetName: ""
     property string customPresetNameInput: ""
-    property bool presetsExpanded: false
-    property bool customPresetEditorExpanded: false
     property string presetTransferMessage: ""
+    property bool presetSelectionClearedByEdit: false
     readonly property string presetExportFileName: "scrollbar-custom-presets.json"
 
     readonly property var fontWeightModel: ListModel {
@@ -134,35 +133,15 @@ ColumnLayout {
     readonly property var defaultSettings: createSettingsSnapshot(defaults, ({}))
     property var editSettings: createSettingsSnapshot(pluginApi?.pluginSettings || ({}), defaults)
     property var customPresets: createCustomPresetList(pluginApi?.pluginSettings || ({}), defaults)
-    readonly property var customPresetModel: {
-        const model = [{
-            "key": "",
-            "name": pluginApi?.tr("settings.presets.custom.placeholder")
-        }];
-        for (let i = 0; i < customPresets.length; i++) {
-            model.push({
-                "key": customPresets[i].name,
-                "name": customPresets[i].name
-            });
-        }
-        return model;
-    }
     readonly property string selectedPresetDescription: presetDescription(selectedBuiltinPresetKey)
-    readonly property string customPresetHelpText: {
-        if (customPresets.length === 0)
-            return pluginApi?.tr("settings.presets.custom.empty");
-        if (selectedCustomPresetName !== "")
-            return pluginApi?.tr("settings.presets.custom.selectedDesc", {
-                "name": selectedCustomPresetName
-            });
-        return pluginApi?.tr("settings.presets.custom.desc");
-    }
     readonly property string trimmedCustomPresetName: normalizePresetName(customPresetNameInput)
     readonly property int matchingCustomPresetIndex: findCustomPresetIndex(trimmedCustomPresetName)
     readonly property bool canSaveCustomPreset: trimmedCustomPresetName !== "" && matchingCustomPresetIndex === -1
     readonly property bool canOverwriteCustomPreset: trimmedCustomPresetName !== "" && matchingCustomPresetIndex !== -1
     readonly property bool canDeleteCustomPreset: selectedCustomPresetName !== "" && findCustomPresetIndex(selectedCustomPresetName) !== -1
-    readonly property string collapsedPresetSummary: {
+    readonly property string presetStatusSummary: {
+        if (presetSelectionClearedByEdit)
+            return pluginApi?.tr("settings.presets.summary.modified");
         if (selectedCustomPresetName !== "")
             return pluginApi?.tr("settings.presets.summary.custom", {
                 "name": selectedCustomPresetName
@@ -553,18 +532,23 @@ ColumnLayout {
         editSettings = createSettingsSnapshot(snapshot, defaults);
     }
 
-    function clearPresetSelection() {
+    function clearPresetSelection(markDirty) {
+        if (markDirty === undefined)
+            markDirty = false;
+
+        presetSelectionClearedByEdit = markDirty && (selectedBuiltinPresetKey !== "" || selectedCustomPresetName !== "");
         selectedBuiltinPresetKey = "";
         selectedCustomPresetName = "";
     }
 
     function applyBuiltInPreset(key) {
         if (key === "") {
-            clearPresetSelection();
+            clearPresetSelection(false);
             return;
         }
 
         applyPresetSnapshot(builtInPresetSnapshot(key));
+        presetSelectionClearedByEdit = false;
         selectedBuiltinPresetKey = key;
         selectedCustomPresetName = "";
         customPresetNameInput = "";
@@ -576,6 +560,7 @@ ColumnLayout {
             return;
 
         applyPresetSnapshot(customPresets[index].settings);
+        presetSelectionClearedByEdit = false;
         selectedBuiltinPresetKey = "";
         selectedCustomPresetName = customPresets[index].name;
         customPresetNameInput = customPresets[index].name;
@@ -593,8 +578,8 @@ ColumnLayout {
         customPresets = next;
         selectedCustomPresetName = trimmedCustomPresetName;
         selectedBuiltinPresetKey = "";
+        presetSelectionClearedByEdit = false;
         customPresetNameInput = trimmedCustomPresetName;
-        customPresetEditorExpanded = false;
     }
 
     function overwriteCustomPreset() {
@@ -609,8 +594,8 @@ ColumnLayout {
         customPresets = next;
         selectedCustomPresetName = next[matchingCustomPresetIndex].name;
         selectedBuiltinPresetKey = "";
+        presetSelectionClearedByEdit = false;
         customPresetNameInput = next[matchingCustomPresetIndex].name;
-        customPresetEditorExpanded = false;
     }
 
     function deleteSelectedCustomPreset() {
@@ -626,7 +611,7 @@ ColumnLayout {
         customPresets = next;
         selectedCustomPresetName = "";
         customPresetNameInput = "";
-        customPresetEditorExpanded = false;
+        presetSelectionClearedByEdit = false;
     }
 
     function exportCustomPresetsToFolder(folderPath) {
@@ -680,7 +665,7 @@ ColumnLayout {
         selectedBuiltinPresetKey = "";
         selectedCustomPresetName = "";
         customPresetNameInput = "";
-        customPresetEditorExpanded = false;
+        presetSelectionClearedByEdit = false;
         presetTransferMessage = pluginApi?.tr("settings.presets.custom.transfer.imported", {
             "count": importedPresets.length,
             "added": added,
@@ -772,15 +757,14 @@ ColumnLayout {
             next[groupKey] = ({});
         next[groupKey][nestedKey] = value;
         editSettings = next;
-        clearPresetSelection();
+        clearPresetSelection(true);
     }
 
     function refreshEditSettings() {
         editSettings = createSettingsSnapshot(pluginApi?.pluginSettings || ({}), defaults);
         customPresets = createCustomPresetList(pluginApi?.pluginSettings || ({}), defaults);
-        clearPresetSelection();
+        clearPresetSelection(false);
         customPresetNameInput = "";
-        customPresetEditorExpanded = false;
         presetTransferMessage = "";
     }
 
@@ -806,174 +790,12 @@ ColumnLayout {
         pluginApi.saveSettings();
     }
 
-    ColumnLayout {
-        Layout.fillWidth: true
-        spacing: Style.marginS
+    function openExportPresetPicker() {
+        exportPresetPicker.openFilePicker();
+    }
 
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: Style.marginM
-
-            NButton {
-                text: pluginApi?.tr(root.presetsExpanded ? "settings.presets.actions.hide" : "settings.presets.actions.show")
-                icon: root.presetsExpanded ? "chevron-up" : "chevron-down"
-                outlined: true
-                onClicked: root.presetsExpanded = !root.presetsExpanded
-            }
-
-            NLabel {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.presets.label")
-                description: root.collapsedPresetSummary
-            }
-        }
-
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 1
-            color: Color.mOutline
-        }
-
-        ColumnLayout {
-            visible: root.presetsExpanded
-            Layout.fillWidth: true
-            spacing: Style.marginM
-
-            NLabel {
-                Layout.fillWidth: true
-                description: pluginApi?.tr("settings.presets.desc")
-                descriptionColor: Color.mOnSurfaceVariant
-            }
-
-            NComboBox {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.presets.builtIn.label")
-                description: pluginApi?.tr("settings.presets.builtIn.desc")
-                model: root.builtInPresetModel
-                currentKey: root.selectedBuiltinPresetKey
-                defaultValue: ""
-                onSelected: key => root.applyBuiltInPreset(key)
-            }
-
-            NLabel {
-                visible: root.selectedPresetDescription !== ""
-                description: root.selectedPresetDescription
-                descriptionColor: Color.mOnSurfaceVariant
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.preferredHeight: 1
-                color: Color.mOutline
-            }
-
-            NComboBox {
-                Layout.fillWidth: true
-                label: pluginApi?.tr("settings.presets.custom.label")
-                description: root.customPresetHelpText
-                model: root.customPresetModel
-                currentKey: root.selectedCustomPresetName
-                defaultValue: ""
-                onSelected: key => {
-                    if (key === "") {
-                        root.selectedCustomPresetName = "";
-                        return;
-                    }
-                    root.loadCustomPreset(key);
-                }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: Style.marginM
-
-                NButton {
-                    text: pluginApi?.tr("settings.presets.custom.actions.import")
-                    icon: "folder-open"
-                    outlined: true
-                    onClicked: importPresetPicker.openFilePicker()
-                }
-
-                NButton {
-                    text: pluginApi?.tr("settings.presets.custom.actions.export")
-                    icon: "folder"
-                    outlined: true
-                    onClicked: exportPresetPicker.openFilePicker()
-                }
-
-                NButton {
-                    text: pluginApi?.tr(root.customPresetEditorExpanded ? "settings.presets.custom.actions.hideEditor" : "settings.presets.custom.actions.showEditor")
-                    icon: root.customPresetEditorExpanded ? "chevron-up" : "chevron-down"
-                    outlined: true
-                    onClicked: root.customPresetEditorExpanded = !root.customPresetEditorExpanded
-                }
-
-                Item {
-                    Layout.fillWidth: true
-                }
-            }
-
-            NLabel {
-                visible: root.presetTransferMessage !== ""
-                description: root.presetTransferMessage
-                descriptionColor: Color.mOnSurfaceVariant
-            }
-
-            ColumnLayout {
-                visible: root.customPresetEditorExpanded
-                Layout.fillWidth: true
-                spacing: Style.marginM
-
-                NTextInput {
-                    Layout.fillWidth: true
-                    label: pluginApi?.tr("settings.presets.custom.name.label")
-                    description: pluginApi?.tr("settings.presets.custom.name.desc")
-                    placeholderText: pluginApi?.tr("settings.presets.custom.name.placeholder")
-                    text: root.customPresetNameInput
-                    onTextChanged: root.customPresetNameInput = text
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: Style.marginM
-
-                    NButton {
-                        text: pluginApi?.tr("settings.presets.custom.actions.save")
-                        enabled: root.canSaveCustomPreset
-                        onClicked: root.saveNewCustomPreset()
-                    }
-
-                    NButton {
-                        text: pluginApi?.tr("settings.presets.custom.actions.overwrite")
-                        enabled: root.canOverwriteCustomPreset
-                        onClicked: root.overwriteCustomPreset()
-                    }
-
-                    NButton {
-                        text: pluginApi?.tr("settings.presets.custom.actions.delete")
-                        outlined: true
-                        enabled: root.canDeleteCustomPreset
-                        onClicked: root.deleteSelectedCustomPreset()
-                    }
-
-                    Item {
-                        Layout.fillWidth: true
-                    }
-                }
-
-                NLabel {
-                    visible: root.trimmedCustomPresetName === ""
-                    description: pluginApi?.tr("settings.presets.custom.validation.empty")
-                    descriptionColor: Color.mOnSurfaceVariant
-                }
-
-                NLabel {
-                    visible: root.trimmedCustomPresetName !== "" && root.matchingCustomPresetIndex !== -1
-                    description: pluginApi?.tr("settings.presets.custom.validation.duplicate")
-                    descriptionColor: Color.mPrimary
-                }
-            }
-        }
+    function openImportPresetPicker() {
+        importPresetPicker.openFilePicker();
     }
 
     NFilePicker {
@@ -1056,6 +878,12 @@ ColumnLayout {
             checked: tabView.currentIndex === 2
             onClicked: tabView.currentIndex = 2
         }
+        NTabButton {
+            text: pluginApi?.tr("settings.tabs.presets")
+            tabIndex: 3
+            checked: tabView.currentIndex === 3
+            onClicked: tabView.currentIndex = 3
+        }
     }
 
     NTabView {
@@ -1071,6 +899,10 @@ ColumnLayout {
         }
 
         BehaviorSettingsTab {
+            rootSettings: root
+        }
+
+        PresetsTab {
             rootSettings: root
         }
     }
