@@ -4,7 +4,7 @@
     {
       "id": "scrollbar",
       "name": "Scrollbar",
-      "version": "1.7.0",
+      "version": "1.8.0",
       "official": false,
       "author": "rigerc",
       "description": "A focused, scrolling window strip for the bar with centered selection and customizable overflow edge cues.",
@@ -15,7 +15,7 @@
         "Bar",
         "Utility"
       ],
-      "lastUpdated": "2026-04-17T17:31:57+02:00"
+      "lastUpdated": "2026-04-17T17:53:06+02:00"
     }
   ]
 }
