@@ -100,6 +100,26 @@ ColumnLayout {
             "name": pluginApi?.tr("options.widgetSizeModeFixed")
         }
     ]
+    readonly property var renderModeModel: [
+        {
+            "key": "bar",
+            "name": pluginApi?.tr("options.renderModeBar")
+        },
+        {
+            "key": "window",
+            "name": pluginApi?.tr("options.renderModeWindow")
+        }
+    ]
+    readonly property var windowSpaceModeModel: [
+        {
+            "key": "overlay",
+            "name": pluginApi?.tr("options.windowSpaceOverlay")
+        },
+        {
+            "key": "reserve",
+            "name": pluginApi?.tr("options.windowSpaceReserve")
+        }
+    ]
     readonly property var builtInPresetModel: [
         {
             "key": "",
@@ -225,6 +245,10 @@ ColumnLayout {
             "autoScroll": {
                 "centerFocusedWindow": readSetting(primary, secondary, "autoScroll", "centerFocusedWindow", "centerFocusedWindow", true),
                 "centerAnimationMs": readSetting(primary, secondary, "autoScroll", "centerAnimationMs", "centerAnimationMs", 200)
+            },
+            "window": {
+                "renderMode": readSetting(primary, secondary, "window", "renderMode", "renderMode", "bar"),
+                "spaceMode": readSetting(primary, secondary, "window", "spaceMode", "windowSpaceMode", "overlay")
             },
             "advanced": {
                 "debugLogging": readSetting(primary, secondary, "advanced", "debugLogging", "debugLogging", false)
@@ -715,6 +739,8 @@ ColumnLayout {
             return settingValue("indicators", "showFocusLine") ?? true;
         case "centerFocusedWindow":
             return settingValue("autoScroll", "centerFocusedWindow") ?? true;
+        case "renderModeWindow":
+            return (settingValue("window", "renderMode") ?? "bar") === "window";
         case "workspaceAnimationEnabled":
             return settingValue("workspaceAnimation", "enabled") ?? false;
         default:

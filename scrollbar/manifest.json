@@ -33,6 +33,10 @@
         "centerFocusedWindow": true,
         "centerAnimationMs": 200
       },
+      "window": {
+        "renderMode": "bar",
+        "spaceMode": "overlay"
+      },
       "advanced": {
         "debugLogging": false
       },

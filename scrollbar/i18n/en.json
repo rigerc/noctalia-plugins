@@ -22,7 +22,11 @@
     "trackLinePositionCenter": "Center",
     "trackLinePositionEnd": "Bottom / Right",
     "widgetSizeModeDynamic": "Dynamic",
-    "widgetSizeModeFixed": "Fixed"
+    "widgetSizeModeFixed": "Fixed",
+    "renderModeBar": "Bar widget",
+    "renderModeWindow": "Window",
+    "windowSpaceOverlay": "Overlay",
+    "windowSpaceReserve": "Reserve space"
   },
   "settings": {
     "tabs": {
@@ -152,6 +156,10 @@
         "label": "Slot Size & Spacing",
         "desc": "Size, spacing, and structural dimensions for each window slot."
       },
+      "renderMode": {
+        "label": "Render Mode",
+        "desc": "Choose whether Scrollbar lives in the bar or in a standalone edge window."
+      },
       "icons": {
         "label": "Icons",
         "desc": "Application icon display and tinting."
@@ -228,6 +236,14 @@
     "enableReorder": {
       "label": "Enable drag reorder",
       "desc": "Allow drag-to-reorder on compositors that expose safe live reorder support."
+    },
+    "renderMode": {
+      "label": "Render mode",
+      "desc": "Show Scrollbar inside the bar or as a standalone edge window."
+    },
+    "windowSpaceMode": {
+      "label": "Window space mode",
+      "desc": "Choose whether the standalone window floats above content or reserves edge space."
     },
     "debugLogging": {
       "label": "Debug logging",

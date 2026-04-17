@@ -21,6 +21,45 @@ ColumnLayout {
 
     NBox {
         Layout.fillWidth: true
+        Layout.preferredHeight: hostModeContent.implicitHeight + Style.marginL * 2
+
+        ColumnLayout {
+            id: hostModeContent
+            anchors.fill: parent
+            anchors.margins: Style.marginL
+            spacing: Style.marginM
+
+            NHeader {
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.section.renderMode.label")
+                description: rootSettings?.pluginApi?.tr("settings.section.renderMode.desc")
+            }
+
+            NComboBox {
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.renderMode.label")
+                description: rootSettings?.pluginApi?.tr("settings.renderMode.desc")
+                model: rootSettings?.renderModeModel
+                currentKey: rootSettings?.settingValue("window", "renderMode") ?? "bar"
+                defaultValue: rootSettings?.defaultValue("window", "renderMode") ?? "bar"
+                onSelected: key => rootSettings?.setSetting("window", "renderMode", key)
+            }
+
+            NComboBox {
+                visible: rootSettings?.isVisibleByConditions(["renderModeWindow"]) ?? false
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.windowSpaceMode.label")
+                description: rootSettings?.pluginApi?.tr("settings.windowSpaceMode.desc")
+                model: rootSettings?.windowSpaceModeModel
+                currentKey: rootSettings?.settingValue("window", "spaceMode") ?? "overlay"
+                defaultValue: rootSettings?.defaultValue("window", "spaceMode") ?? "overlay"
+                onSelected: key => rootSettings?.setSetting("window", "spaceMode", key)
+            }
+        }
+    }
+
+    NBox {
+        Layout.fillWidth: true
         Layout.preferredHeight: slotSizeContent.implicitHeight + Style.marginL * 2
 
         ColumnLayout {

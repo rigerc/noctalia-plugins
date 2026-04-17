@@ -2,8 +2,10 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Niri
+import Quickshell.Wayland
 import qs.Commons
 import qs.Services.Compositor
+import "./components"
 
 Item {
     id: root
@@ -50,6 +52,8 @@ Item {
 
     readonly property bool debugLogging: settingValue("advanced", "debugLogging", "debugLogging", false)
     readonly property bool supportsLiveReorder: CompositorService.isNiri || CompositorService.isHyprland
+    readonly property string renderMode: settingValue("window", "renderMode", "renderMode", "bar")
+    readonly property string windowSpaceMode: settingValue("window", "spaceMode", "windowSpaceMode", "overlay")
 
     property var allEntries: []
     property var liveEntriesByKey: ({})
@@ -516,6 +520,65 @@ Item {
         repeat: false
         onTriggered: {
             flushPendingTitleUpdates("title-debounce");
+        }
+    }
+
+    Variants {
+        model: Quickshell.screens
+
+        delegate: Loader {
+            id: screenWindowLoader
+
+            required property ShellScreen modelData
+
+            active: root.renderMode === "window"
+
+            sourceComponent: PanelWindow {
+                id: windowHost
+
+                readonly property string edge: Settings.getBarPositionForScreen(screen?.name)
+                readonly property bool isVerticalEdge: edge === "left" || edge === "right"
+
+                screen: screenWindowLoader.modelData
+                focusable: false
+                color: "transparent"
+                visible: windowContent.width > 0 && windowContent.height > 0
+                mask: Region {
+                    item: windowContent
+                }
+
+                anchors.top: isVerticalEdge || edge === "top"
+                anchors.bottom: isVerticalEdge || edge === "bottom"
+                anchors.left: !isVerticalEdge || edge === "left"
+                anchors.right: !isVerticalEdge || edge === "right"
+
+                implicitWidth: isVerticalEdge ? windowContent.width : Math.round(screen?.width || windowContent.width)
+                implicitHeight: isVerticalEdge ? Math.round(screen?.height || windowContent.height) : windowContent.height
+
+                WlrLayershell.namespace: "scrollbar-window-" + (screen?.name || "unknown")
+                WlrLayershell.layer: root.windowSpaceMode === "reserve" ? WlrLayer.Top : WlrLayer.Overlay
+                WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+                WlrLayershell.exclusionMode: root.windowSpaceMode === "reserve" ? ExclusionMode.Auto : ExclusionMode.Ignore
+
+                Item {
+                    id: windowContent
+                    width: windowView.implicitWidth
+                    height: windowView.implicitHeight
+                    x: Style.pixelAlignCenter(parent.width, width)
+                    y: Style.pixelAlignCenter(parent.height, height)
+
+                    ScrollbarView {
+                        id: windowView
+                        anchors.fill: parent
+                        pluginApi: root.pluginApi
+                        screen: windowHost.screen
+                        hostMode: "window"
+                        fillHostThickness: false
+                        hostThickness: Style.getCapsuleHeightForScreen(windowHost.screen?.name)
+                        visibleInCurrentMode: root.renderMode === "window"
+                    }
+                }
+            }
         }
     }
 }
