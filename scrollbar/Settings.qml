@@ -1,6 +1,8 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Quickshell
+import Quickshell.Io
 import qs.Commons
 import qs.Widgets
 import "./settings"
@@ -16,6 +18,8 @@ ColumnLayout {
     property string customPresetNameInput: ""
     property bool presetsExpanded: false
     property bool customPresetEditorExpanded: false
+    property string presetTransferMessage: ""
+    readonly property string presetExportFileName: "scrollbar-custom-presets.json"
 
     readonly property var fontWeightModel: ListModel {
         ListElement {
@@ -381,6 +385,34 @@ ColumnLayout {
         return normalized;
     }
 
+    function createCustomPresetListFromData(data) {
+        if (Array.isArray(data))
+            return createCustomPresetList({
+                "presets": {
+                    "custom": data
+                }
+            }, ({}));
+
+        if (Array.isArray(data?.customPresets))
+            return createCustomPresetList({
+                "presets": {
+                    "custom": data.customPresets
+                }
+            }, ({}));
+
+        if (Array.isArray(data?.presets?.custom))
+            return createCustomPresetList(data, ({}));
+
+        if (Array.isArray(data?.presets))
+            return createCustomPresetList({
+                "presets": {
+                    "custom": data.presets
+                }
+            }, ({}));
+
+        return [];
+    }
+
     function normalizePresetName(name) {
         return (name ?? "").trim();
     }
@@ -597,6 +629,66 @@ ColumnLayout {
         customPresetEditorExpanded = false;
     }
 
+    function exportCustomPresetsToFolder(folderPath) {
+        const targetFolder = (folderPath ?? "").trim();
+        if (targetFolder === "")
+            return;
+
+        exportAdapter.pluginId = pluginApi?.pluginId || pluginApi?.manifest?.id || "scrollbar";
+        exportAdapter.version = 1;
+        exportAdapter.exportedAt = new Date().toISOString();
+        exportAdapter.customPresets = deepCopy(customPresets);
+        exportFileView.path = targetFolder + "/" + presetExportFileName;
+        exportFileView.writeAdapter();
+        presetTransferMessage = pluginApi?.tr("settings.presets.custom.transfer.exported", {
+            "path": exportFileView.path
+        });
+    }
+
+    function importCustomPresetsFromContent(content, sourcePath) {
+        let parsed = null;
+        try {
+            parsed = JSON.parse(content);
+        } catch (error) {
+            presetTransferMessage = pluginApi?.tr("settings.presets.custom.transfer.invalidJson");
+            return;
+        }
+
+        const importedPresets = createCustomPresetListFromData(parsed);
+        if (importedPresets.length === 0) {
+            presetTransferMessage = pluginApi?.tr("settings.presets.custom.transfer.noPresets");
+            return;
+        }
+
+        const next = deepCopy(customPresets);
+        let added = 0;
+        let overwritten = 0;
+
+        for (let i = 0; i < importedPresets.length; i++) {
+            const preset = importedPresets[i];
+            const existingIndex = findCustomPresetIndex(preset.name, next);
+            if (existingIndex === -1) {
+                next.push(preset);
+                added += 1;
+            } else {
+                next[existingIndex] = preset;
+                overwritten += 1;
+            }
+        }
+
+        customPresets = next;
+        selectedBuiltinPresetKey = "";
+        selectedCustomPresetName = "";
+        customPresetNameInput = "";
+        customPresetEditorExpanded = false;
+        presetTransferMessage = pluginApi?.tr("settings.presets.custom.transfer.imported", {
+            "count": importedPresets.length,
+            "added": added,
+            "overwritten": overwritten,
+            "path": sourcePath || ""
+        });
+    }
+
     function settingValue(groupKey, nestedKey) {
         const group = editSettings ? editSettings[groupKey] : undefined;
         return group ? group[nestedKey] : undefined;
@@ -689,6 +781,7 @@ ColumnLayout {
         clearPresetSelection();
         customPresetNameInput = "";
         customPresetEditorExpanded = false;
+        presetTransferMessage = "";
     }
 
     onPluginApiChanged: refreshEditSettings()
@@ -795,6 +888,20 @@ ColumnLayout {
                 spacing: Style.marginM
 
                 NButton {
+                    text: pluginApi?.tr("settings.presets.custom.actions.import")
+                    icon: "folder-open"
+                    outlined: true
+                    onClicked: importPresetPicker.openFilePicker()
+                }
+
+                NButton {
+                    text: pluginApi?.tr("settings.presets.custom.actions.export")
+                    icon: "folder"
+                    outlined: true
+                    onClicked: exportPresetPicker.openFilePicker()
+                }
+
+                NButton {
                     text: pluginApi?.tr(root.customPresetEditorExpanded ? "settings.presets.custom.actions.hideEditor" : "settings.presets.custom.actions.showEditor")
                     icon: root.customPresetEditorExpanded ? "chevron-up" : "chevron-down"
                     outlined: true
@@ -804,6 +911,12 @@ ColumnLayout {
                 Item {
                     Layout.fillWidth: true
                 }
+            }
+
+            NLabel {
+                visible: root.presetTransferMessage !== ""
+                description: root.presetTransferMessage
+                descriptionColor: Color.mOnSurfaceVariant
             }
 
             ColumnLayout {
@@ -860,6 +973,62 @@ ColumnLayout {
                     descriptionColor: Color.mPrimary
                 }
             }
+        }
+    }
+
+    NFilePicker {
+        id: exportPresetPicker
+        selectionMode: "folders"
+        title: pluginApi?.tr("settings.presets.custom.actions.export")
+        initialPath: Quickshell.env("HOME") || "/home"
+        onAccepted: paths => {
+            if (paths.length > 0)
+                root.exportCustomPresetsToFolder(paths[0]);
+        }
+    }
+
+    NFilePicker {
+        id: importPresetPicker
+        selectionMode: "files"
+        nameFilters: ["*.json"]
+        title: pluginApi?.tr("settings.presets.custom.actions.import")
+        initialPath: Quickshell.env("HOME") || "/home"
+        onAccepted: paths => {
+            if (paths.length > 0) {
+                importFileView.path = paths[0];
+                importFileView.reload();
+            }
+        }
+    }
+
+    FileView {
+        id: exportFileView
+        path: ""
+        printErrors: false
+        watchChanges: false
+
+        adapter: JsonAdapter {
+            id: exportAdapter
+            property string pluginId: "scrollbar"
+            property int version: 1
+            property string exportedAt: ""
+            property var customPresets: []
+        }
+
+        onLoadFailed: function (_) {
+            writeAdapter();
+        }
+    }
+
+    FileView {
+        id: importFileView
+        path: ""
+        printErrors: false
+        watchChanges: false
+
+        onLoaded: root.importCustomPresetsFromContent(text(), path)
+        onLoadFailed: function (_) {
+            root.presetTransferMessage = pluginApi?.tr("settings.presets.custom.transfer.readFailed");
         }
     }
 

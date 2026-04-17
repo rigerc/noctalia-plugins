@@ -86,9 +86,18 @@
         "actions": {
           "showEditor": "Save Preset",
           "hideEditor": "Hide Save Preset",
+          "import": "Import Presets",
+          "export": "Export Presets",
           "save": "Save New",
           "overwrite": "Overwrite",
           "delete": "Delete"
+        },
+        "transfer": {
+          "exported": "Exported custom presets to {path}",
+          "invalidJson": "The selected file is not valid JSON.",
+          "noPresets": "The selected file does not contain any custom presets.",
+          "imported": "Imported {count} presets from {path}. Added: {added}. Overwritten: {overwritten}.",
+          "readFailed": "Failed to read the selected preset file."
         },
         "validation": {
           "empty": "Enter a name to save or overwrite a custom preset.",
