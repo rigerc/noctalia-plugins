@@ -42,6 +42,7 @@
         "backgroundColor": "none",
         "backgroundOpacity": 0,
         "margin": 0,
+        "height": 0,
         "radiusScale": 1.0,
         "gradientEnabled": false,
         "gradientColor": "none",

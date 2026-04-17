@@ -114,6 +114,7 @@ Item {
     readonly property string windowBackgroundColorKey: settingValue("window", "backgroundColor", "windowBackgroundColor", "none")
     readonly property real windowBackgroundOpacity: Math.max(0, Math.min(100, settingValue("window", "backgroundOpacity", "windowBackgroundOpacity", 0)))
     readonly property real windowMargin: Math.max(0, Math.round(settingValue("window", "margin", "windowMargin", 0) * Style.uiScaleRatio))
+    readonly property real windowHeight: Math.max(0, Math.round(settingValue("window", "height", "windowHeight", 0) * Style.uiScaleRatio))
     readonly property real windowRadiusScale: Math.max(0, settingValue("window", "radiusScale", "windowRadiusScale", 1.0))
     readonly property bool windowGradientEnabled: settingValue("window", "gradientEnabled", "windowGradientEnabled", false)
     readonly property string windowGradientColorKey: settingValue("window", "gradientColor", "windowGradientColor", "none")
@@ -691,7 +692,7 @@ Item {
                             screen: windowHost.screen
                             hostMode: "window"
                             fillHostThickness: false
-                            hostThickness: Style.getCapsuleHeightForScreen(windowHost.screen?.name)
+                            hostThickness: root.windowHeight > 0 ? root.windowHeight : Style.getCapsuleHeightForScreen(windowHost.screen?.name)
                             visibleInCurrentMode: root.renderMode === "window"
 
                             transform: Scale {

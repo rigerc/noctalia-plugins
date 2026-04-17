@@ -133,6 +133,20 @@ ColumnLayout {
 
             NValueSlider {
                 Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.windowHeight.label")
+                description: rootSettings?.pluginApi?.tr("settings.windowHeight.desc")
+                from: 0
+                to: 200
+                stepSize: 1
+                value: rootSettings?.settingValue("window", "height") ?? 0
+                text: value <= 0 ? rootSettings?.pluginApi?.tr("common.auto") ?? "Auto" : Math.round(value) + " px"
+                defaultValue: rootSettings?.defaultValue("window", "height") ?? 0
+                showReset: true
+                onMoved: sliderValue => rootSettings?.setSetting("window", "height", Math.round(sliderValue))
+            }
+
+            NValueSlider {
+                Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.windowRadiusScale.label")
                 description: rootSettings?.pluginApi?.tr("settings.windowRadiusScale.desc")
                 from: 0

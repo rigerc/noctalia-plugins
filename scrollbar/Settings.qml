@@ -273,6 +273,7 @@ ColumnLayout {
                 "backgroundColor": readSetting(primary, secondary, "window", "backgroundColor", "windowBackgroundColor", "none"),
                 "backgroundOpacity": readSetting(primary, secondary, "window", "backgroundOpacity", "windowBackgroundOpacity", 0),
                 "margin": readSetting(primary, secondary, "window", "margin", "windowMargin", 0),
+                "height": readSetting(primary, secondary, "window", "height", "windowHeight", 0),
                 "radiusScale": readSetting(primary, secondary, "window", "radiusScale", "windowRadiusScale", 1.0),
                 "gradientEnabled": readSetting(primary, secondary, "window", "gradientEnabled", "windowGradientEnabled", false),
                 "gradientColor": readSetting(primary, secondary, "window", "gradientColor", "windowGradientColor", "none"),

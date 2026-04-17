@@ -283,6 +283,10 @@
       "label": "Panel margin",
       "desc": "Outer margin between the window panel edge and the strip content."
     },
+    "windowHeight": {
+      "label": "Panel height",
+      "desc": "Cross-axis thickness of the panel in pixels. Set to 0 to use the bar default capsule height."
+    },
     "windowRadiusScale": {
       "label": "Panel corner roundness",
       "desc": "Scale the window panel corner radius independently from slot rounding."
