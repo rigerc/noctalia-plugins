@@ -271,6 +271,7 @@ Item {
     readonly property int effectiveSlotLength: isVertical ? slotLength : (showTitle ? slotLength : Math.round(itemSize + 2 * Math.max(Style.marginM, Style.marginS * slotCapsuleScale)))
     readonly property real paintOverflowInset: hasWindow ? Math.max(0, Math.ceil(Math.max(effectiveSlotLength, slotCrossExtent) * (maxVisualScaleMultiplier - 1.0) / 2)) : 0
     readonly property var liveEntriesByKey: mainInstance?.liveEntriesByKey ?? ({})
+    readonly property var titleEntriesByKey: mainInstance?.titleEntriesByKey ?? ({})
     readonly property string activeEntryKey: mainInstance?.activeEntryKey ?? ""
     readonly property int structureRevision: mainInstance?.structureRevision ?? 0
     readonly property int liveRevision: mainInstance?.liveRevision ?? 0
@@ -304,8 +305,7 @@ Item {
     readonly property string activeEntryTitle: {
         if (!activeEntryKey)
             return "";
-        const liveEntry = liveEntriesByKey ? liveEntriesByKey[activeEntryKey] : undefined;
-        const liveTitle = String(liveEntry?.title || "").trim();
+        const liveTitle = String(titleEntriesByKey ? titleEntriesByKey[activeEntryKey] || "" : "").trim();
         if (liveTitle !== "")
             return liveTitle;
         const activeIndex = indexOfEntry(activeEntryKey);
@@ -713,6 +713,7 @@ Item {
 
     onMainInstanceChanged: rebuildCombinedModel("mainInstanceChanged")
     onStructureRevisionChanged: rebuildCombinedModel("structureRevision")
+    onWorkspaceRevisionChanged: rebuildCombinedModel("workspaceRevision")
     onOnlySameOutputChanged: rebuildCombinedModel("onlySameOutputChanged")
     onOnlyActiveWorkspacesChanged: rebuildCombinedModel("onlyActiveWorkspacesChanged")
     onScreenChanged: rebuildCombinedModel("screenChanged")

@@ -131,6 +131,7 @@ Item {
 
     property var allEntries: []
     property var liveEntriesByKey: ({})
+    property var titleEntriesByKey: ({})
     property string activeEntryKey: ""
     property var compositorWorkspaces: []
     property int structureRevision: 0
@@ -139,9 +140,10 @@ Item {
 
     property bool pendingStructuralRefresh: false
     property string lastStructureSignature: ""
+    property string lastStateSignature: ""
     property string lastTitleSignature: ""
     property string lastWorkspaceSignature: ""
-    property var pendingLiveEntriesByKey: null
+    property var pendingTitleEntriesByKey: null
 
     function debugLog(message) {
         if (debugLogging)
@@ -258,9 +260,9 @@ Item {
         });
     }
 
-    function buildLiveEntries(entries, windows) {
+    function buildStateEntries(entries, windows) {
         const windowsByKey = ({});
-        const liveEntries = ({});
+        const stateEntries = ({});
 
         (windows || []).forEach(function (window) {
             const key = getWindowKey(window);
@@ -270,14 +272,31 @@ Item {
 
         (entries || []).forEach(function (entry) {
             const window = windowsByKey[entry.entryKey] || null;
-            liveEntries[entry.entryKey] = {
+            stateEntries[entry.entryKey] = {
                 "id": window?.id ?? entry.id ?? "",
-                "title": window?.title || entry.fallbackTitle || "",
                 "isFocused": !!window?.isFocused
             };
         });
 
-        return liveEntries;
+        return stateEntries;
+    }
+
+    function buildTitleEntries(entries, windows) {
+        const windowsByKey = ({});
+        const titleEntries = ({});
+
+        (windows || []).forEach(function (window) {
+            const key = getWindowKey(window);
+            if (key)
+                windowsByKey[key] = window;
+        });
+
+        (entries || []).forEach(function (entry) {
+            const window = windowsByKey[entry.entryKey] || null;
+            titleEntries[entry.entryKey] = window?.title || entry.fallbackTitle || "";
+        });
+
+        return titleEntries;
     }
 
     function getStructureSignature(entries) {
@@ -286,10 +305,16 @@ Item {
         }).join("||");
     }
 
-    function getTitleSignature(entries, liveEntries) {
+    function getStateSignature(entries, stateEntries) {
         return (entries || []).map(function (entry) {
-            const liveEntry = liveEntries ? liveEntries[entry.entryKey] : undefined;
-            return entry.entryKey + "|" + (liveEntry?.title || "");
+            const stateEntry = stateEntries ? stateEntries[entry.entryKey] : undefined;
+            return entry.entryKey + "|" + String(stateEntry?.id ?? "") + "|" + String(stateEntry?.isFocused === true);
+        }).join("||");
+    }
+
+    function getTitleSignature(entries, titleEntries) {
+        return (entries || []).map(function (entry) {
+            return entry.entryKey + "|" + String(titleEntries ? titleEntries[entry.entryKey] || "" : "");
         }).join("||");
     }
 
@@ -315,12 +340,18 @@ Item {
         debugLog("applyStructuralEntries(" + (reason || "unknown") + "): windows=" + allEntries.length);
     }
 
-    function applyLiveEntries(entries, reason) {
+    function applyStateEntries(entries, reason) {
         liveEntriesByKey = entries || ({});
         activeEntryKey = getFocusedEntryKey(liveEntriesByKey);
-        lastTitleSignature = getTitleSignature(allEntries, liveEntriesByKey);
+        lastStateSignature = getStateSignature(allEntries, liveEntriesByKey);
         liveRevision += 1;
-        debugLog("applyLiveEntries(" + (reason || "unknown") + "): focus=" + activeEntryKey + " windows=" + allEntries.length);
+        debugLog("applyStateEntries(" + (reason || "unknown") + "): focus=" + activeEntryKey + " windows=" + allEntries.length);
+    }
+
+    function applyTitleEntries(entries, reason) {
+        titleEntriesByKey = entries || ({});
+        lastTitleSignature = getTitleSignature(allEntries, titleEntriesByKey);
+        debugLog("applyTitleEntries(" + (reason || "unknown") + "): windows=" + allEntries.length);
     }
 
     function refreshWorkspaceSnapshot(reason) {
@@ -383,20 +414,15 @@ Item {
     }
 
     function flushPendingTitleUpdates(reason) {
-        if (!pendingLiveEntriesByKey)
+        if (!pendingTitleEntriesByKey)
             return;
 
-        const windows = collectWindows();
-        const nextLiveEntries = buildLiveEntries(allEntries, windows);
-        pendingLiveEntriesByKey = null;
-        applyLiveEntries(nextLiveEntries, reason || "title-debounce");
+        const nextTitleEntries = pendingTitleEntriesByKey;
+        pendingTitleEntriesByKey = null;
+        applyTitleEntries(nextTitleEntries, reason || "title-debounce");
     }
 
-    function updateSnapshots(reason, forceStructural) {
-        refreshWorkspaceSnapshot(reason);
-
-        const windows = collectWindows();
-        const nextEntries = buildStructuralEntries(windows);
+    function applySnapshots(reason, forceStructural, windows, nextEntries) {
         const nextStructureSignature = getStructureSignature(nextEntries);
         const structuralChanged = (forceStructural === true) || pendingStructuralRefresh || nextStructureSignature !== lastStructureSignature;
 
@@ -406,23 +432,48 @@ Item {
             applyStructuralEntries(nextEntries, reason);
 
         const effectiveEntries = structuralChanged ? nextEntries : allEntries;
-        const nextLiveEntries = buildLiveEntries(effectiveEntries, windows);
-        const nextTitleSignature = getTitleSignature(effectiveEntries, nextLiveEntries);
-        const nextFocusedEntryKey = getFocusedEntryKey(nextLiveEntries);
-        const focusChanged = nextFocusedEntryKey !== activeEntryKey;
+        const nextStateEntries = buildStateEntries(effectiveEntries, windows);
+        const nextTitleEntries = buildTitleEntries(effectiveEntries, windows);
+        const nextStateSignature = getStateSignature(effectiveEntries, nextStateEntries);
+        const nextTitleSignature = getTitleSignature(effectiveEntries, nextTitleEntries);
+        const stateChanged = structuralChanged || nextStateSignature !== lastStateSignature || Object.keys(liveEntriesByKey).length === 0;
         const titleChanged = nextTitleSignature !== lastTitleSignature;
 
-        if (structuralChanged || focusChanged || Object.keys(liveEntriesByKey).length === 0) {
-            pendingLiveEntriesByKey = null;
-            titleRefreshDebounce.stop();
-            applyLiveEntries(nextLiveEntries, reason);
+        if (stateChanged) {
+            applyStateEntries(nextStateEntries, reason);
+
+            if (structuralChanged || Object.keys(titleEntriesByKey).length === 0) {
+                pendingTitleEntriesByKey = null;
+                titleRefreshDebounce.stop();
+                applyTitleEntries(nextTitleEntries, reason);
+                return;
+            }
+
+            if (titleChanged) {
+                pendingTitleEntriesByKey = nextTitleEntries;
+                titleRefreshDebounce.restart();
+            } else {
+                pendingTitleEntriesByKey = null;
+                titleRefreshDebounce.stop();
+            }
             return;
         }
 
         if (titleChanged) {
-            pendingLiveEntriesByKey = nextLiveEntries;
+            pendingTitleEntriesByKey = nextTitleEntries;
             titleRefreshDebounce.restart();
+        } else {
+            pendingTitleEntriesByKey = null;
+            titleRefreshDebounce.stop();
         }
+    }
+
+    function updateSnapshots(reason, forceStructural) {
+        refreshWorkspaceSnapshot(reason);
+
+        const windows = collectWindows();
+        const nextEntries = buildStructuralEntries(windows);
+        applySnapshots(reason, forceStructural, windows, nextEntries);
     }
 
     function scheduleStructuralRefresh(reason) {
@@ -567,15 +618,15 @@ Item {
         target: CompositorService
 
         function onWindowListChanged() {
-            updateSnapshots("windowListChanged", true);
+            updateSnapshots("windowListChanged", false);
         }
 
         function onWorkspaceChanged() {
-            scheduleStructuralRefresh("workspaceChanged");
+            updateSnapshots("workspaceChanged", false);
         }
 
         function onActiveWindowChanged() {
-            updateSnapshots("activeWindowChanged", true);
+            updateSnapshots("activeWindowChanged", false);
         }
     }
 
@@ -608,9 +659,8 @@ Item {
             var nextSignature = getStructureSignature(nextEntries);
             if (nextSignature !== lastStructureSignature) {
                 debugLog("windowOrderPoll: order changed");
-                applyStructuralEntries(nextEntries, "windowOrderPoll");
-                var nextLiveEntries = buildLiveEntries(nextEntries, windows);
-                applyLiveEntries(nextLiveEntries, "windowOrderPoll");
+                refreshWorkspaceSnapshot("windowOrderPoll");
+                applySnapshots("windowOrderPoll", false, windows, nextEntries);
             }
         }
     }
