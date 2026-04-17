@@ -72,6 +72,59 @@ Item {
         return fallbackValue;
     }
 
+    function resolveThemeColor(key) {
+        switch (key) {
+        case "none":
+            return "transparent";
+        case "primary":
+            return Color.mPrimary;
+        case "on-primary":
+            return Color.mOnPrimary;
+        case "secondary":
+            return Color.mSecondary;
+        case "on-secondary":
+            return Color.mOnSecondary;
+        case "tertiary":
+            return Color.mTertiary;
+        case "on-tertiary":
+            return Color.mOnTertiary;
+        case "error":
+            return Color.mError;
+        case "on-error":
+            return Color.mOnError;
+        case "surface":
+            return Color.mSurface;
+        case "on-surface":
+            return Color.mOnSurface;
+        case "surface-variant":
+            return Color.mSurfaceVariant;
+        case "on-surface-variant":
+            return Color.mOnSurfaceVariant;
+        case "outline":
+            return Color.mOutline;
+        case "hover":
+            return Color.mHover;
+        case "on-hover":
+            return Color.mOnHover;
+        default:
+            return undefined;
+        }
+    }
+
+    function isHexColorString(value) {
+        return typeof value === "string"
+            && /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(value);
+    }
+
+    function resolveSettingColor(value, fallbackColor) {
+        const themeColor = resolveThemeColor(value);
+        if (themeColor !== undefined)
+            return themeColor;
+        if (isHexColorString(value))
+            return value;
+        return fallbackColor;
+    }
+
     readonly property string screenName: screen?.name ?? ""
     readonly property string barPosition: Settings.getBarPositionForScreen(screenName)
     readonly property bool isVertical: barPosition === "left" || barPosition === "right"
@@ -98,7 +151,7 @@ Item {
     readonly property string trackLinePosition: settingValue("indicators", "trackLinePosition", "trackLinePosition", "end")
     readonly property int trackLineThickness: Math.max(1, Math.min(8, Math.round(settingValue("indicators", "trackLineThickness", "trackLineThickness", 2))))
     readonly property string trackThumbColorKey: settingValue("indicators", "trackThumbColor", "trackThumbColor", "primary")
-    readonly property color trackThumbColor: Color.resolveColorKey(trackThumbColorKey)
+    readonly property color trackThumbColor: resolveSettingColor(trackThumbColorKey, Color.mPrimary)
     readonly property real inactiveOpacity: Math.max(0.05, Math.min(1, settingValue("unfocused", "inactiveOpacity", "inactiveOpacity", 45) / 100))
     readonly property int slotSpacingUnits: settingValue("layout", "slotSpacingUnits", "slotSpacingUnits", 1)
     readonly property real radiusScale: settingValue("layout", "radiusScale", "radiusScale", 1.0)
@@ -127,7 +180,7 @@ Item {
     readonly property real trackOpacity: Math.max(0, Math.min(1, settingValue("indicators", "trackOpacity", "trackOpacity", 35) / 100))
     readonly property bool showFocusLine: settingValue("indicators", "showFocusLine", "showFocusLine", true)
     readonly property string focusLineColorKey: settingValue("indicators", "focusLineColor", "focusLineColor", "secondary")
-    readonly property color focusLineColor: Color.resolveColorKey(focusLineColorKey)
+    readonly property color focusLineColor: resolveSettingColor(focusLineColorKey, Color.mSecondary)
     readonly property real focusLineOpacity: Math.max(0, Math.min(1, settingValue("indicators", "focusLineOpacity", "focusLineOpacity", 96) / 100))
     readonly property int focusLineThickness: Math.max(1, settingValue("indicators", "focusLineThickness", "focusLineThickness", 2))
     readonly property int focusLineAnimationMs: Math.max(0, settingValue("indicators", "focusLineAnimationMs", "focusLineAnimationMs", 120))
@@ -157,22 +210,22 @@ Item {
     readonly property real iconTintOpacity: Math.max(0, Math.min(1, settingValue("icons", "iconTintOpacity", "iconTintOpacity", 100) / 100))
     readonly property string backgroundColorKey: settingValue("background", "color", "backgroundColor", "none")
     readonly property real backgroundOpacity: Math.max(0, Math.min(1, settingValue("background", "opacity", "backgroundOpacity", 0) / 100))
-    readonly property color iconTintColor: iconTintColorKey !== "none" ? Color.resolveColorKey(iconTintColorKey) : "transparent"
+    readonly property color iconTintColor: resolveSettingColor(iconTintColorKey, "transparent")
     readonly property bool iconTintEnabled: iconTintColorKey !== "none"
     readonly property bool backgroundEnabled: backgroundColorKey !== "none" && backgroundOpacity > 0
-    readonly property color backgroundBaseColor: backgroundColorKey !== "none" ? Color.resolveColorKey(backgroundColorKey) : "transparent"
+    readonly property color backgroundBaseColor: resolveSettingColor(backgroundColorKey, "transparent")
     readonly property color backgroundColor: backgroundEnabled ? Qt.alpha(backgroundBaseColor, backgroundOpacity) : "transparent"
-    readonly property color focusedFillColor: Color.resolveColorKey(focusedFillColorKey)
-    readonly property color focusedBorderColor: Color.resolveColorKey(focusedBorderColorKey)
-    readonly property color focusedTextColor: Color.resolveColorKey(focusedTextColorKey)
-    readonly property color focusedTitleTextColor: Color.resolveColorKey(focusedTitleTextColorKey)
-    readonly property color hoverFillColor: Color.resolveColorKey(hoverFillColorKey)
-    readonly property color hoverBorderColor: Color.resolveColorKey(hoverBorderColorKey)
-    readonly property color hoverTextColor: Color.resolveColorKey(hoverTextColorKey)
-    readonly property color unfocusedFillColor: Color.resolveColorKey(unfocusedFillColorKey)
-    readonly property color unfocusedBorderColor: Color.resolveColorKey(unfocusedBorderColorKey)
-    readonly property color unfocusedTextColor: Color.resolveColorKey(unfocusedTextColorKey)
-    readonly property color workspaceIndicatorTextColor: Color.resolveColorKey(workspaceIndicatorTextColorKey)
+    readonly property color focusedFillColor: resolveSettingColor(focusedFillColorKey, Color.mPrimary)
+    readonly property color focusedBorderColor: resolveSettingColor(focusedBorderColorKey, Color.mPrimary)
+    readonly property color focusedTextColor: resolveSettingColor(focusedTextColorKey, Color.mOnPrimary)
+    readonly property color focusedTitleTextColor: resolveSettingColor(focusedTitleTextColorKey, Color.mOnSurface)
+    readonly property color hoverFillColor: resolveSettingColor(hoverFillColorKey, Color.mHover)
+    readonly property color hoverBorderColor: resolveSettingColor(hoverBorderColorKey, Color.mOutline)
+    readonly property color hoverTextColor: resolveSettingColor(hoverTextColorKey, Color.mOnHover)
+    readonly property color unfocusedFillColor: resolveSettingColor(unfocusedFillColorKey, Color.mSurfaceVariant)
+    readonly property color unfocusedBorderColor: resolveSettingColor(unfocusedBorderColorKey, Color.mOutline)
+    readonly property color unfocusedTextColor: resolveSettingColor(unfocusedTextColorKey, Color.mOnSurface)
+    readonly property color workspaceIndicatorTextColor: resolveSettingColor(workspaceIndicatorTextColorKey, Color.mPrimary)
 
     readonly property int titleFontWeightValue: {
         if (titleFontWeightKey === "light")

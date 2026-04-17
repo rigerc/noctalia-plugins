@@ -7,6 +7,12 @@ on:
       - reopened
     paths:
       - "**.qml"
+  workflow_dispatch:
+    inputs:
+      directory:
+        description: "Plugin directory to check (e.g. my-plugin)"
+        required: true
+        type: string
 permissions:
   contents: read
   pull-requests: write
@@ -18,26 +24,54 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Automatic Code Quality
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          BASE_REF: ${{ github.base_ref }}
-          HEAD_REF: ${{ github.head_ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number || '' }}
+          BASE_REF: ${{ github.base_ref || '' }}
+          HEAD_REF: ${{ github.head_ref || '' }}
+          CHECK_DIRECTORY: ${{ github.event.inputs.directory || '' }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
-          git fetch origin "$BASE_REF"
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            if [ -z "$CHECK_DIRECTORY" ]; then
+              echo "No directory specified!"
+              exit 1
+            fi
 
-          diff_changes=$(git diff -U10000 origin/$BASE_REF...HEAD |
-            awk '/^diff --git.*\.qml /{found=1} /^diff --git/{if(!/\.qml /) found=0} found{print}' |
-            grep -vE "^(index|\+\+\+|-)") || echo "No qml file changed"
+            if [ ! -d "$CHECK_DIRECTORY" ]; then
+              echo "Directory not found: $CHECK_DIRECTORY"
+              exit 1
+            fi
 
-          if [ -z "$diff_changes" ]; then
-            echo "No diff changes found!"
-            echo "The base ref checking: $BASE_REF"
-            echo "The head ref checking: $HEAD_REF"
-            exit 0
+            # Build synthetic diff-like input from all qml files in the directory
+            diff_changes=""
+            for qml_file in "$CHECK_DIRECTORY"/*.qml; do
+              [ -f "$qml_file" ] || continue
+              diff_changes+="$(printf 'diff --git a/%s b/%s\n@@ -0,0 +1,%d @@\n' "$qml_file" "$qml_file" "$(wc -l < "$qml_file")")"
+              while IFS= read -r file_line; do
+                diff_changes+="+${file_line}"$'\n'
+              done < "$qml_file"
+            done
+
+            if [ -z "$diff_changes" ]; then
+              echo "No qml files found in: $CHECK_DIRECTORY"
+              exit 0
+            fi
+          else
+            git fetch origin "$BASE_REF"
+
+            diff_changes=$(git diff -U10000 origin/$BASE_REF...HEAD |
+              awk '/^diff --git.*\.qml /{found=1} /^diff --git/{if(!/\.qml /) found=0} found{print}' |
+              grep -vE "^(index|\+\+\+|-)") || echo "No qml file changed"
+
+            if [ -z "$diff_changes" ]; then
+              echo "No diff changes found!"
+              echo "The base ref checking: $BASE_REF"
+              echo "The head ref checking: $HEAD_REF"
+              exit 0
+            fi
           fi
 
           comment_body=$(printf -- '### Automatic Code Quality Review')
@@ -257,7 +291,7 @@ jobs:
             else
               if echo "$line" | grep -E "^\+" >/dev/null; then
                 # Only new lines should be auto checked for this type of code quality
-                if echo "$line" | grep -E "(border(\.width)?|spacing|pointSize|radius|margin(s)?): [0-9]+" >/dev/null; then
+                if echo "$line" | grep -E "(border(\.width)?|spacing|pointSize|radius|margin(s)?): [1-9]+[0-9]*" >/dev/null; then
                   print_line "$h_priority" "$line_index" 'Do not use hardcoded values, always prefer to use the `Style` singleton instead' "$line"
                   issues=$((issues + 1))
                 fi
@@ -279,7 +313,7 @@ jobs:
                   print_line "$l_priority" "$line_index" 'When it comes to translations there is no need for fallback values. From: `pluginApi?.tr("example") || "value"`. To: `pluginApi?.tr("example")`' "$line"
                   issues=$((issues + 1))
                 fi
-                if echo "$line" | grep -E "(text|label|description): *(\"|').*(\"|')" >/dev/null; then 
+                if echo "$line" | grep -E "(text|label|description): *(\"|').+(\"|')" >/dev/null; then
                   print_line "$h_priority" "$line_index" 'Use translations instead of hardcoded text. Instead of: `"Example Label"`. To: `pluginApi?.tr("panel.example-label")`' "$line"
                   issues=$((issues + 1))
                 fi

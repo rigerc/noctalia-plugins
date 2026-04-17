@@ -30,6 +30,30 @@
       "colors": "Colors",
       "behavior": "Behavior"
     },
+    "colorPicker": {
+      "label": "Select color",
+      "desc": "Choose a theme color or pick a custom color.",
+      "defaultValue": "Default value: {value}"
+    },
+    "colorOptions": {
+      "none": "None",
+      "primary": "Primary",
+      "onPrimary": "On Primary",
+      "secondary": "Secondary",
+      "onSecondary": "On Secondary",
+      "tertiary": "Tertiary",
+      "onTertiary": "On Tertiary",
+      "error": "Error",
+      "onError": "On Error",
+      "surface": "Surface",
+      "onSurface": "On Surface",
+      "surfaceVariant": "Surface Variant",
+      "onSurfaceVariant": "On Surface Variant",
+      "outline": "Outline",
+      "hover": "Hover",
+      "onHover": "On Hover",
+      "custom": "Custom color"
+    },
     "emptySectionNote": "No settings in this section are available with the current selections.",
     "section": {
       "slotSize": {

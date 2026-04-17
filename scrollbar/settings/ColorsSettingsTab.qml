@@ -72,12 +72,14 @@ ColumnLayout {
     }
     NDivider {}
 
-    NColorChoice {
+    HybridColorChoice {
+        pluginApi: rootSettings?.pluginApi
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.backgroundColor.label")
         description: rootSettings?.pluginApi?.tr("settings.backgroundColor.desc")
-        currentKey: rootSettings?.settingValue("background", "color") ?? "none"
-        onSelected: key => rootSettings?.setSetting("background", "color", key)
+        currentValue: rootSettings?.settingValue("background", "color") ?? "none"
+        defaultValue: rootSettings?.defaultValue("background", "color") ?? "none"
+        onSelected: value => rootSettings?.setSetting("background", "color", value)
     }
 
     NValueSlider {
@@ -116,13 +118,15 @@ ColumnLayout {
         defaultValue: rootSettings?.defaultValue("focused", "showFill") ?? true
     }
 
-    NColorChoice {
+    HybridColorChoice {
+        pluginApi: rootSettings?.pluginApi
         visible: rootSettings?.isVisibleByConditions(["showSlots", "showFocusedFill"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.focusedFillColor.label")
         description: rootSettings?.pluginApi?.tr("settings.focusedFillColor.desc")
-        currentKey: rootSettings?.settingValue("focused", "fillColor") ?? "primary"
-        onSelected: key => rootSettings?.setSetting("focused", "fillColor", key)
+        currentValue: rootSettings?.settingValue("focused", "fillColor") ?? "primary"
+        defaultValue: rootSettings?.defaultValue("focused", "fillColor") ?? "primary"
+        onSelected: value => rootSettings?.setSetting("focused", "fillColor", value)
     }
 
     NValueSlider {
@@ -149,13 +153,15 @@ ColumnLayout {
         defaultValue: rootSettings?.defaultValue("focused", "showBorder") ?? true
     }
 
-    NColorChoice {
+    HybridColorChoice {
+        pluginApi: rootSettings?.pluginApi
         visible: rootSettings?.isVisibleByConditions(["showSlots", "showFocusedBorder"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.focusedBorderColor.label")
         description: rootSettings?.pluginApi?.tr("settings.focusedBorderColor.desc")
-        currentKey: rootSettings?.settingValue("focused", "borderColor") ?? "primary"
-        onSelected: key => rootSettings?.setSetting("focused", "borderColor", key)
+        currentValue: rootSettings?.settingValue("focused", "borderColor") ?? "primary"
+        defaultValue: rootSettings?.defaultValue("focused", "borderColor") ?? "primary"
+        onSelected: value => rootSettings?.setSetting("focused", "borderColor", value)
     }
 
     NValueSlider {
@@ -172,13 +178,15 @@ ColumnLayout {
         onMoved: sliderValue => rootSettings?.setSetting("focused", "borderOpacity", Math.round(sliderValue))
     }
 
-    NColorChoice {
+    HybridColorChoice {
+        pluginApi: rootSettings?.pluginApi
         visible: rootSettings?.isVisibleByConditions(["showSlots"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.focusedTextColor.label")
         description: rootSettings?.pluginApi?.tr("settings.focusedTextColor.desc")
-        currentKey: rootSettings?.settingValue("focused", "textColor") ?? "on-primary"
-        onSelected: key => rootSettings?.setSetting("focused", "textColor", key)
+        currentValue: rootSettings?.settingValue("focused", "textColor") ?? "on-primary"
+        defaultValue: rootSettings?.defaultValue("focused", "textColor") ?? "on-primary"
+        onSelected: value => rootSettings?.setSetting("focused", "textColor", value)
     }
 
     NLabel {
@@ -218,13 +226,15 @@ ColumnLayout {
         defaultValue: rootSettings?.defaultValue("unfocused", "showFill") ?? true
     }
 
-    NColorChoice {
+    HybridColorChoice {
+        pluginApi: rootSettings?.pluginApi
         visible: rootSettings?.isVisibleByConditions(["showSlots", "showUnfocusedFill"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.unfocusedFillColor.label")
         description: rootSettings?.pluginApi?.tr("settings.unfocusedFillColor.desc")
-        currentKey: rootSettings?.settingValue("unfocused", "fillColor") ?? "surface-variant"
-        onSelected: key => rootSettings?.setSetting("unfocused", "fillColor", key)
+        currentValue: rootSettings?.settingValue("unfocused", "fillColor") ?? "surface-variant"
+        defaultValue: rootSettings?.defaultValue("unfocused", "fillColor") ?? "surface-variant"
+        onSelected: value => rootSettings?.setSetting("unfocused", "fillColor", value)
     }
 
     NValueSlider {
@@ -251,13 +261,15 @@ ColumnLayout {
         defaultValue: rootSettings?.defaultValue("unfocused", "showBorder") ?? true
     }
 
-    NColorChoice {
+    HybridColorChoice {
+        pluginApi: rootSettings?.pluginApi
         visible: rootSettings?.isVisibleByConditions(["showSlots", "showUnfocusedBorder"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.unfocusedBorderColor.label")
         description: rootSettings?.pluginApi?.tr("settings.unfocusedBorderColor.desc")
-        currentKey: rootSettings?.settingValue("unfocused", "borderColor") ?? "outline"
-        onSelected: key => rootSettings?.setSetting("unfocused", "borderColor", key)
+        currentValue: rootSettings?.settingValue("unfocused", "borderColor") ?? "outline"
+        defaultValue: rootSettings?.defaultValue("unfocused", "borderColor") ?? "outline"
+        onSelected: value => rootSettings?.setSetting("unfocused", "borderColor", value)
     }
 
     NValueSlider {
@@ -274,13 +286,15 @@ ColumnLayout {
         onMoved: sliderValue => rootSettings?.setSetting("unfocused", "borderOpacity", Math.round(sliderValue))
     }
 
-    NColorChoice {
+    HybridColorChoice {
+        pluginApi: rootSettings?.pluginApi
         visible: rootSettings?.isVisibleByConditions(["showSlots"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.unfocusedTextColor.label")
         description: rootSettings?.pluginApi?.tr("settings.unfocusedTextColor.desc")
-        currentKey: rootSettings?.settingValue("unfocused", "textColor") ?? "on-surface"
-        onSelected: key => rootSettings?.setSetting("unfocused", "textColor", key)
+        currentValue: rootSettings?.settingValue("unfocused", "textColor") ?? "on-surface"
+        defaultValue: rootSettings?.defaultValue("unfocused", "textColor") ?? "on-surface"
+        onSelected: value => rootSettings?.setSetting("unfocused", "textColor", value)
     }
 
     NLabel {
@@ -296,13 +310,15 @@ ColumnLayout {
     }
     NDivider {}
 
-    NColorChoice {
+    HybridColorChoice {
+        pluginApi: rootSettings?.pluginApi
         visible: rootSettings?.isVisibleByConditions(["showSlots"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.hoverFillColor.label")
         description: rootSettings?.pluginApi?.tr("settings.hoverFillColor.desc")
-        currentKey: rootSettings?.settingValue("hover", "fillColor") ?? "hover"
-        onSelected: key => rootSettings?.setSetting("hover", "fillColor", key)
+        currentValue: rootSettings?.settingValue("hover", "fillColor") ?? "hover"
+        defaultValue: rootSettings?.defaultValue("hover", "fillColor") ?? "hover"
+        onSelected: value => rootSettings?.setSetting("hover", "fillColor", value)
     }
 
     NValueSlider {
@@ -329,13 +345,15 @@ ColumnLayout {
         defaultValue: rootSettings?.defaultValue("hover", "showBorder") ?? true
     }
 
-    NColorChoice {
+    HybridColorChoice {
+        pluginApi: rootSettings?.pluginApi
         visible: rootSettings?.isVisibleByConditions(["showSlots", "showHoverBorder"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.hoverBorderColor.label")
         description: rootSettings?.pluginApi?.tr("settings.hoverBorderColor.desc")
-        currentKey: rootSettings?.settingValue("hover", "borderColor") ?? "outline"
-        onSelected: key => rootSettings?.setSetting("hover", "borderColor", key)
+        currentValue: rootSettings?.settingValue("hover", "borderColor") ?? "outline"
+        defaultValue: rootSettings?.defaultValue("hover", "borderColor") ?? "outline"
+        onSelected: value => rootSettings?.setSetting("hover", "borderColor", value)
     }
 
     NValueSlider {
@@ -352,13 +370,15 @@ ColumnLayout {
         onMoved: sliderValue => rootSettings?.setSetting("hover", "borderOpacity", Math.round(sliderValue))
     }
 
-    NColorChoice {
+    HybridColorChoice {
+        pluginApi: rootSettings?.pluginApi
         visible: rootSettings?.isVisibleByConditions(["showSlots"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.hoverTextColor.label")
         description: rootSettings?.pluginApi?.tr("settings.hoverTextColor.desc")
-        currentKey: rootSettings?.settingValue("hover", "textColor") ?? "on-hover"
-        onSelected: key => rootSettings?.setSetting("hover", "textColor", key)
+        currentValue: rootSettings?.settingValue("hover", "textColor") ?? "on-hover"
+        defaultValue: rootSettings?.defaultValue("hover", "textColor") ?? "on-hover"
+        onSelected: value => rootSettings?.setSetting("hover", "textColor", value)
     }
 
     NValueSlider {
@@ -402,13 +422,15 @@ ColumnLayout {
     }
     NDivider {}
 
-    NColorChoice {
+    HybridColorChoice {
+        pluginApi: rootSettings?.pluginApi
         visible: rootSettings?.isVisibleByConditions(["hideSlots", "focusedTitleEnabled"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.focusedTitleTextColor.label")
         description: rootSettings?.pluginApi?.tr("settings.focusedTitleTextColor.desc")
-        currentKey: rootSettings?.settingValue("focusedTitle", "textColor") ?? "on-surface"
-        onSelected: key => rootSettings?.setSetting("focusedTitle", "textColor", key)
+        currentValue: rootSettings?.settingValue("focusedTitle", "textColor") ?? "on-surface"
+        defaultValue: rootSettings?.defaultValue("focusedTitle", "textColor") ?? "on-surface"
+        onSelected: value => rootSettings?.setSetting("focusedTitle", "textColor", value)
     }
 
     NValueSlider {
@@ -438,13 +460,15 @@ ColumnLayout {
     }
     NDivider {}
 
-    NColorChoice {
+    HybridColorChoice {
+        pluginApi: rootSettings?.pluginApi
         visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorEnabled"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorTextColor.label")
         description: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorTextColor.desc")
-        currentKey: rootSettings?.settingValue("workspaceIndicator", "textColor") ?? "primary"
-        onSelected: key => rootSettings?.setSetting("workspaceIndicator", "textColor", key)
+        currentValue: rootSettings?.settingValue("workspaceIndicator", "textColor") ?? "primary"
+        defaultValue: rootSettings?.defaultValue("workspaceIndicator", "textColor") ?? "primary"
+        onSelected: value => rootSettings?.setSetting("workspaceIndicator", "textColor", value)
     }
 
     NValueSlider {
@@ -522,13 +546,15 @@ ColumnLayout {
         onMoved: sliderValue => rootSettings?.setSetting("indicators", "trackOpacity", Math.round(sliderValue))
     }
 
-    NColorChoice {
+    HybridColorChoice {
+        pluginApi: rootSettings?.pluginApi
         visible: rootSettings?.isVisibleByConditions(["showTrackLine"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.trackThumbColor.label")
         description: rootSettings?.pluginApi?.tr("settings.trackThumbColor.desc")
-        currentKey: rootSettings?.settingValue("indicators", "trackThumbColor") ?? "primary"
-        onSelected: key => rootSettings?.setSetting("indicators", "trackThumbColor", key)
+        currentValue: rootSettings?.settingValue("indicators", "trackThumbColor") ?? "primary"
+        defaultValue: rootSettings?.defaultValue("indicators", "trackThumbColor") ?? "primary"
+        onSelected: value => rootSettings?.setSetting("indicators", "trackThumbColor", value)
     }
 
     NToggle {
@@ -541,13 +567,15 @@ ColumnLayout {
         defaultValue: rootSettings?.defaultValue("indicators", "showFocusLine") ?? true
     }
 
-    NColorChoice {
+    HybridColorChoice {
+        pluginApi: rootSettings?.pluginApi
         visible: rootSettings?.isVisibleByConditions(["showTrackLine", "showFocusLine"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.focusLineColor.label")
         description: rootSettings?.pluginApi?.tr("settings.focusLineColor.desc")
-        currentKey: rootSettings?.settingValue("indicators", "focusLineColor") ?? "secondary"
-        onSelected: key => rootSettings?.setSetting("indicators", "focusLineColor", key)
+        currentValue: rootSettings?.settingValue("indicators", "focusLineColor") ?? "secondary"
+        defaultValue: rootSettings?.defaultValue("indicators", "focusLineColor") ?? "secondary"
+        onSelected: value => rootSettings?.setSetting("indicators", "focusLineColor", value)
     }
 
     NValueSlider {
@@ -583,7 +611,7 @@ ColumnLayout {
         label: rootSettings?.pluginApi?.tr("settings.focusLineAnimationMs.label")
         description: rootSettings?.pluginApi?.tr("settings.focusLineAnimationMs.desc")
         from: 0
-        to: 400
+        to: 800
         stepSize: 10
         value: rootSettings?.settingValue("indicators", "focusLineAnimationMs") ?? 120
         text: Math.round(value) + " ms"

@@ -1,6 +1,9 @@
 # AI-Assisted Development Guidelines
 
-Use Haiku subagents for grunt and exploration work, but never for tasks that need planning or reasoning.
+References:
+  - Noctalia documentation: @docs/noctalia-docs/src/content/docs/
+  - Noctalia source: @docs/noctalia-shell/
+  - Example plugins for Noctalia: @docs/examples/noctalia-plugins/
 
 Guidelines for AI tools contributing to the Noctalia Plugins repository. **Study the official plugins before writing code** — especially `hello-world` (minimal reference) and `timer` (complex example with shared state). Official plugins have `"official": true` in their manifest.
 

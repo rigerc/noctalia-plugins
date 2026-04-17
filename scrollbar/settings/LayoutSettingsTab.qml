@@ -201,13 +201,15 @@ ColumnLayout {
         onMoved: sliderValue => rootSettings?.setSetting("icons", "iconScale", Math.round(sliderValue * 100) / 100)
     }
 
-    NColorChoice {
+    HybridColorChoice {
+        pluginApi: rootSettings?.pluginApi
         visible: rootSettings?.isVisibleByConditions(["showSlots", "showIcons"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.iconTintColor.label")
         description: rootSettings?.pluginApi?.tr("settings.iconTintColor.desc")
-        currentKey: rootSettings?.settingValue("icons", "iconTintColor") ?? "none"
-        onSelected: key => rootSettings?.setSetting("icons", "iconTintColor", key)
+        currentValue: rootSettings?.settingValue("icons", "iconTintColor") ?? "none"
+        defaultValue: rootSettings?.defaultValue("icons", "iconTintColor") ?? "none"
+        onSelected: value => rootSettings?.setSetting("icons", "iconTintColor", value)
     }
 
     NValueSlider {
