@@ -609,36 +609,46 @@ Item {
             sourceComponent: PanelWindow {
                 id: windowHost
 
-                readonly property string edge: Settings.getBarPositionForScreen(screen?.name)
-                readonly property bool isVerticalEdge: edge === "left" || edge === "right"
-
                 screen: screenWindowLoader.modelData
                 focusable: false
                 color: "transparent"
-                visible: windowContent.width > 0 && windowContent.height > 0
-                mask: Region {
-                    item: windowContent
-                }
+
+                readonly property string edge: Settings.getBarPositionForScreen(screen?.name)
+                readonly property bool isVerticalEdge: edge === "left" || edge === "right"
+                readonly property bool isTopOrLeft: edge === "top" || edge === "left"
+                readonly property real contentBaseWidth: Math.ceil(windowView.implicitWidth * root.windowScale) + root.windowMargin * 2
+                readonly property real contentBaseHeight: Math.ceil(windowView.implicitHeight * root.windowScale) + root.windowMargin * 2
+                readonly property real effectiveOffsetH: Math.round(root.windowOffsetH * Style.uiScaleRatio)
+                readonly property real effectiveOffsetV: Math.round(root.windowOffsetV * Style.uiScaleRatio)
 
                 anchors.top: isVerticalEdge || edge === "top"
                 anchors.bottom: isVerticalEdge || edge === "bottom"
                 anchors.left: !isVerticalEdge || edge === "left"
                 anchors.right: !isVerticalEdge || edge === "right"
 
-                implicitWidth: isVerticalEdge ? windowContent.width : Math.round(screen?.width || windowContent.width)
-                implicitHeight: isVerticalEdge ? Math.round(screen?.height || windowContent.height) : windowContent.height
+                implicitWidth: isVerticalEdge ? contentBaseWidth + Math.abs(effectiveOffsetH) : Math.round(screen?.width || contentBaseWidth)
+                implicitHeight: isVerticalEdge ? Math.round(screen?.height || contentBaseHeight) : contentBaseHeight + Math.abs(effectiveOffsetV)
 
                 WlrLayershell.namespace: "scrollbar-window-" + (screen?.name || "unknown")
                 WlrLayershell.layer: root.windowSpaceMode === "reserve" ? WlrLayer.Top : WlrLayer.Overlay
                 WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
                 WlrLayershell.exclusionMode: root.windowSpaceMode === "reserve" ? ExclusionMode.Auto : ExclusionMode.Ignore
 
+                visible: windowContent.width > 0 && windowContent.height > 0
+                mask: Region {
+                    item: windowContent
+                }
+
                 Item {
                     id: windowContent
-                    width: Math.ceil(windowView.implicitWidth * root.windowScale) + root.windowMargin * 2
-                    height: Math.ceil(windowView.implicitHeight * root.windowScale) + root.windowMargin * 2
-                    x: Style.pixelAlignCenter(parent.width, width) + Math.round(root.windowOffsetH * Style.uiScaleRatio)
-                    y: Style.pixelAlignCenter(parent.height, height) + Math.round(root.windowOffsetV * Style.uiScaleRatio)
+                    width: contentBaseWidth
+                    height: contentBaseHeight
+                    x: isVerticalEdge
+                        ? (isTopOrLeft ? Math.max(0, effectiveOffsetH) : Math.max(0, -effectiveOffsetH))
+                        : Style.pixelAlignCenter(parent.width, width) + effectiveOffsetH
+                    y: isVerticalEdge
+                        ? Style.pixelAlignCenter(parent.height, height) + effectiveOffsetV
+                        : (isTopOrLeft ? Math.max(0, effectiveOffsetV) : Math.max(0, -effectiveOffsetV))
 
                     Rectangle {
                         id: windowBackgroundRect
