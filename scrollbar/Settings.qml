@@ -163,6 +163,11 @@ ColumnLayout {
                 "titleFontSize": readSetting(primary, secondary, "title", "titleFontSize", "titleFontSize", 0),
                 "titleFontWeight": readSetting(primary, secondary, "title", "titleFontWeight", "titleFontWeight", "default")
             },
+            "focusedTitle": {
+                "enabled": readSetting(primary, secondary, "focusedTitle", "enabled", "focusedTitleEnabled", false),
+                "textColor": readSetting(primary, secondary, "focusedTitle", "textColor", "focusedTitleTextColor", "on-surface"),
+                "opacity": readSetting(primary, secondary, "focusedTitle", "opacity", "focusedTitleOpacity", 100)
+            },
             "workspaceIndicator": {
                 "enabled": readSetting(primary, secondary, "workspaceIndicator", "enabled", "workspaceIndicatorEnabled", false),
                 "labelMode": readSetting(primary, secondary, "workspaceIndicator", "labelMode", "workspaceIndicatorLabelMode", "id"),
@@ -259,6 +264,8 @@ ColumnLayout {
         switch (key) {
         case "showSlots":
             return settingValue("layout", "showSlots") ?? true;
+        case "hideSlots":
+            return !(settingValue("layout", "showSlots") ?? true);
         case "widgetSizeModeDynamic":
             return (settingValue("layout", "widgetSizeMode") ?? "dynamic") === "dynamic";
         case "widgetSizeModeFixed":
@@ -267,6 +274,8 @@ ColumnLayout {
             return settingValue("icons", "showIcons") ?? true;
         case "showTitle":
             return settingValue("title", "showTitle") ?? true;
+        case "focusedTitleEnabled":
+            return settingValue("focusedTitle", "enabled") ?? false;
         case "workspaceIndicatorEnabled":
             return settingValue("workspaceIndicator", "enabled") ?? false;
         case "edgeFadeEnabled":

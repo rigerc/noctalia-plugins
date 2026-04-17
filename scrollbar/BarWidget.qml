@@ -89,6 +89,7 @@ Item {
     readonly property real baseSlotLength: settingValue("layout", "slotWidth", "slotWidth", 112)
     readonly property real slotCapsuleScale: Math.max(0.3, settingValue("layout", "slotCapsuleScale", "slotCapsuleScale", 1.0))
     readonly property bool showTitle: !isVertical && settingValue("title", "showTitle", "showTitle", true)
+    readonly property bool focusedTitleEnabled: !isVertical && settingValue("focusedTitle", "enabled", "focusedTitleEnabled", false)
     readonly property real iconScale: settingValue("icons", "iconScale", "iconScale", 0.8)
     readonly property bool edgeFadeEnabled: settingValue("edgeFade", "enabled", "edgeFadeEnabled", true)
     readonly property real edgeFadeSize: Math.max(0, Math.round(settingValue("edgeFade", "fadeSize", "edgeFadeSize", 48) * Style.uiScaleRatio))
@@ -139,6 +140,8 @@ Item {
     readonly property string titleFontFamily: settingValue("title", "titleFontFamily", "titleFontFamily", "")
     readonly property int titleFontSize: Math.max(0, settingValue("title", "titleFontSize", "titleFontSize", 0))
     readonly property string titleFontWeightKey: settingValue("title", "titleFontWeight", "titleFontWeight", "default")
+    readonly property string focusedTitleTextColorKey: settingValue("focusedTitle", "textColor", "focusedTitleTextColor", "on-surface")
+    readonly property real focusedTitleOpacity: Math.max(0, Math.min(1, settingValue("focusedTitle", "opacity", "focusedTitleOpacity", 100) / 100))
     readonly property bool workspaceIndicatorEnabled: settingValue("workspaceIndicator", "enabled", "workspaceIndicatorEnabled", false)
     readonly property string workspaceIndicatorLabelMode: settingValue("workspaceIndicator", "labelMode", "workspaceIndicatorLabelMode", "id")
     readonly property string workspaceIndicatorPosition: settingValue("workspaceIndicator", "position", "workspaceIndicatorPosition", "before")
@@ -162,6 +165,7 @@ Item {
     readonly property color focusedFillColor: Color.resolveColorKey(focusedFillColorKey)
     readonly property color focusedBorderColor: Color.resolveColorKey(focusedBorderColorKey)
     readonly property color focusedTextColor: Color.resolveColorKey(focusedTextColorKey)
+    readonly property color focusedTitleTextColor: Color.resolveColorKey(focusedTitleTextColorKey)
     readonly property color hoverFillColor: Color.resolveColorKey(hoverFillColorKey)
     readonly property color hoverBorderColor: Color.resolveColorKey(hoverBorderColorKey)
     readonly property color hoverTextColor: Color.resolveColorKey(hoverTextColorKey)
@@ -240,6 +244,19 @@ Item {
         return activeWorkspaceIdText;
     }
     readonly property bool showWorkspaceIndicator: workspaceIndicatorEnabled && workspaceIndicatorText !== ""
+    readonly property string activeEntryTitle: {
+        if (!activeEntryKey)
+            return "";
+        const liveEntry = liveEntriesByKey ? liveEntriesByKey[activeEntryKey] : undefined;
+        const liveTitle = String(liveEntry?.title || "").trim();
+        if (liveTitle !== "")
+            return liveTitle;
+        const activeIndex = indexOfEntry(activeEntryKey);
+        if (activeIndex < 0)
+            return "";
+        return String(combinedModel[activeIndex]?.fallbackTitle || "").trim();
+    }
+    readonly property bool showFocusedTitleLabel: focusedTitleEnabled && !showSlots && activeEntryTitle !== ""
     readonly property real workspaceIndicatorPointSize: workspaceIndicatorFontSize > 0 ? workspaceIndicatorFontSize : Math.max(Style.fontSizeXS, Math.round(barFontSize * 0.85))
     readonly property bool indicatorBeforeStrip: workspaceIndicatorPosition !== "after"
     readonly property string workspaceIndicatorFamily: workspaceIndicatorFontFamily || Settings.data.ui.fontFixed
@@ -1006,6 +1023,24 @@ Item {
 
                         TrackOverlay {
                             barRoot: root
+                        }
+
+                        NText {
+                            visible: root.showFocusedTitleLabel
+                            anchors.verticalCenter: parent.verticalCenter
+                            x: Style.marginM
+                            width: Math.max(0, parent.width - Style.marginM * 2)
+                            z: 3
+                            text: root.activeEntryTitle
+                            color: root.focusedTitleTextColor
+                            opacity: root.focusedTitleOpacity
+                            family: root.titleFontFamily || Qt.application.font.family
+                            pointSize: root.titleFontSize > 0 ? root.titleFontSize : Math.max(Style.fontSizeXS, root.barFontSize)
+                            font.weight: root.titleFontWeightValue >= 0 ? root.titleFontWeightValue : Style.fontWeightSemiBold
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                            elide: Text.ElideRight
+                            maximumLineCount: 1
                         }
                     }
                 }

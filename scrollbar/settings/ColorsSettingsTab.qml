@@ -45,6 +45,10 @@ ColumnLayout {
         ["workspaceIndicatorEnabled"],
         ["workspaceIndicatorEnabled"]
     ]) ?? true
+    readonly property bool focusedTitleSectionVisible: rootSettings?.sectionHasVisibleSettings([
+        ["hideSlots", "focusedTitleEnabled"],
+        ["hideSlots", "focusedTitleEnabled"]
+    ]) ?? true
     readonly property bool indicatorsSectionVisible: rootSettings?.sectionHasVisibleSettings([
         [],
         ["showTrackLine"],
@@ -387,6 +391,42 @@ ColumnLayout {
 
     NLabel {
         visible: !hoveredWindowSectionVisible
+        description: rootSettings?.pluginApi?.tr("settings.emptySectionNote")
+        descriptionColor: Color.mOnSurfaceVariant
+    }
+
+    NHeader {
+        Layout.fillWidth: true
+        label: rootSettings?.pluginApi?.tr("settings.section.focusedTitle.label")
+        description: rootSettings?.pluginApi?.tr("settings.section.focusedTitle.desc")
+    }
+    NDivider {}
+
+    NColorChoice {
+        visible: rootSettings?.isVisibleByConditions(["hideSlots", "focusedTitleEnabled"]) ?? true
+        Layout.fillWidth: true
+        label: rootSettings?.pluginApi?.tr("settings.focusedTitleTextColor.label")
+        description: rootSettings?.pluginApi?.tr("settings.focusedTitleTextColor.desc")
+        currentKey: rootSettings?.settingValue("focusedTitle", "textColor") ?? "on-surface"
+        onSelected: key => rootSettings?.setSetting("focusedTitle", "textColor", key)
+    }
+
+    NValueSlider {
+        visible: rootSettings?.isVisibleByConditions(["hideSlots", "focusedTitleEnabled"]) ?? true
+        label: rootSettings?.pluginApi?.tr("settings.focusedTitleOpacity.label")
+        description: rootSettings?.pluginApi?.tr("settings.focusedTitleOpacity.desc")
+        from: 0
+        to: 100
+        stepSize: 1
+        value: rootSettings?.settingValue("focusedTitle", "opacity") ?? 100
+        text: Math.round(value) + "%"
+        defaultValue: rootSettings?.defaultValue("focusedTitle", "opacity") ?? 100
+        showReset: true
+        onMoved: sliderValue => rootSettings?.setSetting("focusedTitle", "opacity", Math.round(sliderValue))
+    }
+
+    NLabel {
+        visible: !focusedTitleSectionVisible
         description: rootSettings?.pluginApi?.tr("settings.emptySectionNote")
         descriptionColor: Color.mOnSurfaceVariant
     }

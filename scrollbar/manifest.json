@@ -1,7 +1,7 @@
 {
   "id": "scrollbar",
   "name": "Scrollbar",
-  "version": "1.7.1",
+  "version": "1.8.0",
   "minNoctaliaVersion": "4.6.6",
   "author": "rigerc",
   "license": "MIT",
@@ -57,6 +57,11 @@
         "titleFontFamily": "",
         "titleFontSize": 0,
         "titleFontWeight": "default"
+      },
+      "focusedTitle": {
+        "enabled": false,
+        "textColor": "on-surface",
+        "opacity": 100
       },
       "workspaceIndicator": {
         "enabled": false,

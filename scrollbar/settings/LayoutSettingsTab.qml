@@ -30,7 +30,11 @@ ColumnLayout {
         ["showSlots"],
         ["showSlots", "showTitle"],
         ["showSlots", "showTitle"],
-        ["showSlots", "showTitle"]
+        ["showSlots", "showTitle"],
+        ["hideSlots"],
+        ["hideSlots", "focusedTitleEnabled"],
+        ["hideSlots", "focusedTitleEnabled"],
+        ["hideSlots", "focusedTitleEnabled"]
     ]) ?? true
     readonly property bool workspaceIndicatorSectionVisible: rootSettings?.sectionHasVisibleSettings([
         [],
@@ -243,8 +247,18 @@ ColumnLayout {
         defaultValue: rootSettings?.defaultValue("title", "showTitle") ?? true
     }
 
+    NToggle {
+        visible: rootSettings?.isVisibleByConditions(["hideSlots"]) ?? true
+        Layout.fillWidth: true
+        label: rootSettings?.pluginApi?.tr("settings.focusedTitleEnabled.label")
+        description: rootSettings?.pluginApi?.tr("settings.focusedTitleEnabled.desc")
+        checked: rootSettings?.settingValue("focusedTitle", "enabled") ?? false
+        onToggled: checked => rootSettings?.setSetting("focusedTitle", "enabled", checked)
+        defaultValue: rootSettings?.defaultValue("focusedTitle", "enabled") ?? false
+    }
+
     NSearchableComboBox {
-        visible: rootSettings?.isVisibleByConditions(["showSlots", "showTitle"]) ?? true
+        visible: (rootSettings?.isVisibleByConditions(["showSlots", "showTitle"]) ?? false) || (rootSettings?.isVisibleByConditions(["hideSlots", "focusedTitleEnabled"]) ?? false)
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.titleFontFamily.label")
         description: rootSettings?.pluginApi?.tr("settings.titleFontFamily.desc")
@@ -255,7 +269,7 @@ ColumnLayout {
     }
 
     NValueSlider {
-        visible: rootSettings?.isVisibleByConditions(["showSlots", "showTitle"]) ?? true
+        visible: (rootSettings?.isVisibleByConditions(["showSlots", "showTitle"]) ?? false) || (rootSettings?.isVisibleByConditions(["hideSlots", "focusedTitleEnabled"]) ?? false)
         label: rootSettings?.pluginApi?.tr("settings.titleFontSize.label")
         description: rootSettings?.pluginApi?.tr("settings.titleFontSize.desc")
         from: 0
@@ -269,7 +283,7 @@ ColumnLayout {
     }
 
     NSearchableComboBox {
-        visible: rootSettings?.isVisibleByConditions(["showSlots", "showTitle"]) ?? true
+        visible: (rootSettings?.isVisibleByConditions(["showSlots", "showTitle"]) ?? false) || (rootSettings?.isVisibleByConditions(["hideSlots", "focusedTitleEnabled"]) ?? false)
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.titleFontWeight.label")
         description: rootSettings?.pluginApi?.tr("settings.titleFontWeight.desc")

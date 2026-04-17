@@ -44,6 +44,10 @@
         "label": "Window Title",
         "desc": "Font and visibility for window titles inside slots."
       },
+      "focusedTitle": {
+        "label": "Focused Window Title",
+        "desc": "Color styling for the centered focused-window title shown when slots are hidden."
+      },
       "workspaceIndicator": {
         "label": "Workspace Indicator",
         "desc": "Show the active workspace outside the scrolling strip so it remains visible."
@@ -136,6 +140,10 @@
     "showTitle": {
       "label": "Show titles",
       "desc": "Display truncated window titles next to icons on horizontal bars."
+    },
+    "focusedTitleEnabled": {
+      "label": "Show focused window title",
+      "desc": "Show the currently focused window title centered in the widget when slots are hidden."
     },
     "workspaceIndicatorEnabled": {
       "label": "Show workspace indicator",
@@ -292,6 +300,14 @@
     "focusedTextColor": {
       "label": "Focused text color",
       "desc": "Text and icon color for the focused slot."
+    },
+    "focusedTitleTextColor": {
+      "label": "Focused title color",
+      "desc": "Text color used by the centered focused-window title when slots are hidden."
+    },
+    "focusedTitleOpacity": {
+      "label": "Focused title opacity",
+      "desc": "Opacity of the centered focused-window title when slots are hidden."
     },
     "showFocusedFill": {
       "label": "Show focused fill",

@@ -56,9 +56,12 @@ The bar is not manually scrollable — it only moves when focus changes, so its 
 | Key | Label | Description | Condition |
 |-----|-------|-------------|-----------|
 | `showTitle` | Show titles | Display truncated window titles next to icons on horizontal bars. | `showSlots` |
+| `focusedTitleEnabled` | Show focused window title | Show the currently focused window title centered in the widget when slots are hidden. | `showSlots = false` |
 | `titleFontFamily` | Title font family | Font family used for window titles. Leave empty for the system default. | `showSlots` + `showTitle` |
 | `titleFontSize` | Title font size | Font size override for titles in points. Set to 0 to use the bar default. | `showSlots` + `showTitle` |
 | `titleFontWeight` | Title font weight | Font weight for titles. | `showSlots` + `showTitle` |
+
+When `showSlots` is disabled, the same title font settings are reused for the centered focused-window title.
 
 ### Workspace Indicator
 *Show the active workspace outside the scrolling strip so it remains visible.*
@@ -104,6 +107,14 @@ The bar is not manually scrollable — it only moves when focus changes, so its 
 | `focusedBorderColor` | Focused border color | Border color for the focused slot. | `showSlots` + `showFocusedBorder` |
 | `focusedBorderOpacity` | Focused border opacity | Opacity of the focused slot border. | `showSlots` + `showFocusedBorder` |
 | `focusedTextColor` | Focused text color | Text and icon color for the focused slot. | `showSlots` |
+
+### Focused Window Title
+*Color styling for the centered focused-window title shown when slots are hidden.*
+
+| Key | Label | Description | Condition |
+|-----|-------|-------------|-----------|
+| `focusedTitleTextColor` | Focused title color | Text color used by the centered focused-window title. | `showSlots = false` + `focusedTitleEnabled` |
+| `focusedTitleOpacity` | Focused title opacity | Opacity of the centered focused-window title. | `showSlots = false` + `focusedTitleEnabled` |
 
 ### Inactive Windows
 *Appearance of idle, background window slots.*
