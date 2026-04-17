@@ -127,6 +127,9 @@
       "workspaceAnimation": {
         "enabled": false,
         "axis": "horizontal"
+      },
+      "presets": {
+        "custom": []
       }
     }
   }

@@ -11,6 +11,11 @@ ColumnLayout {
     property var pluginApi: null
     property var defaults: pluginApi?.manifest?.metadata?.defaultSettings || ({})
     property real preferredWidth: 720 * Style.uiScaleRatio
+    property string selectedBuiltinPresetKey: ""
+    property string selectedCustomPresetName: ""
+    property string customPresetNameInput: ""
+    property bool presetsExpanded: false
+    property bool customPresetEditorExpanded: false
 
     readonly property var fontWeightModel: ListModel {
         ListElement {
@@ -92,14 +97,114 @@ ColumnLayout {
             "name": pluginApi?.tr("options.widgetSizeModeFixed")
         }
     ]
+    readonly property var builtInPresetModel: [
+        {
+            "key": "",
+            "name": pluginApi?.tr("settings.presets.builtIn.placeholder")
+        },
+        {
+            "key": "standard",
+            "name": pluginApi?.tr("settings.presets.builtIn.standard.name")
+        },
+        {
+            "key": "focusTrack",
+            "name": pluginApi?.tr("settings.presets.builtIn.focusTrack.name")
+        },
+        {
+            "key": "iconStrip",
+            "name": pluginApi?.tr("settings.presets.builtIn.iconStrip.name")
+        },
+        {
+            "key": "titleTrack",
+            "name": pluginApi?.tr("settings.presets.builtIn.titleTrack.name")
+        },
+        {
+            "key": "trackOnly",
+            "name": pluginApi?.tr("settings.presets.builtIn.trackOnly.name")
+        },
+        {
+            "key": "denseStrip",
+            "name": pluginApi?.tr("settings.presets.builtIn.denseStrip.name")
+        }
+    ]
     readonly property var defaultSettings: createSettingsSnapshot(defaults, ({}))
     property var editSettings: createSettingsSnapshot(pluginApi?.pluginSettings || ({}), defaults)
+    property var customPresets: createCustomPresetList(pluginApi?.pluginSettings || ({}), defaults)
+    readonly property var customPresetModel: {
+        const model = [{
+            "key": "",
+            "name": pluginApi?.tr("settings.presets.custom.placeholder")
+        }];
+        for (let i = 0; i < customPresets.length; i++) {
+            model.push({
+                "key": customPresets[i].name,
+                "name": customPresets[i].name
+            });
+        }
+        return model;
+    }
+    readonly property string selectedPresetDescription: presetDescription(selectedBuiltinPresetKey)
+    readonly property string customPresetHelpText: {
+        if (customPresets.length === 0)
+            return pluginApi?.tr("settings.presets.custom.empty");
+        if (selectedCustomPresetName !== "")
+            return pluginApi?.tr("settings.presets.custom.selectedDesc", {
+                "name": selectedCustomPresetName
+            });
+        return pluginApi?.tr("settings.presets.custom.desc");
+    }
+    readonly property string trimmedCustomPresetName: normalizePresetName(customPresetNameInput)
+    readonly property int matchingCustomPresetIndex: findCustomPresetIndex(trimmedCustomPresetName)
+    readonly property bool canSaveCustomPreset: trimmedCustomPresetName !== "" && matchingCustomPresetIndex === -1
+    readonly property bool canOverwriteCustomPreset: trimmedCustomPresetName !== "" && matchingCustomPresetIndex !== -1
+    readonly property bool canDeleteCustomPreset: selectedCustomPresetName !== "" && findCustomPresetIndex(selectedCustomPresetName) !== -1
+    readonly property string collapsedPresetSummary: {
+        if (selectedCustomPresetName !== "")
+            return pluginApi?.tr("settings.presets.summary.custom", {
+                "name": selectedCustomPresetName
+            });
+        if (selectedBuiltinPresetKey !== "")
+            return pluginApi?.tr("settings.presets.summary.builtin", {
+                "name": presetName(selectedBuiltinPresetKey)
+            });
+        if (customPresets.length > 0)
+            return pluginApi?.tr("settings.presets.summary.count", {
+                "count": customPresets.length
+            });
+        return pluginApi?.tr("settings.presets.summary.empty");
+    }
 
     spacing: Style.marginM
     implicitWidth: preferredWidth
 
     function deepCopy(value) {
         return JSON.parse(JSON.stringify(value));
+    }
+
+    function isPlainObject(value) {
+        return value !== null && typeof value === "object" && !Array.isArray(value);
+    }
+
+    function mergeDeep(base, overrides) {
+        const result = deepCopy(base);
+        applyDeepOverride(result, overrides);
+        return result;
+    }
+
+    function applyDeepOverride(target, overrides) {
+        if (!isPlainObject(overrides))
+            return;
+
+        for (const key in overrides) {
+            const nextValue = overrides[key];
+            if (isPlainObject(nextValue)) {
+                if (!isPlainObject(target[key]))
+                    target[key] = ({});
+                applyDeepOverride(target[key], nextValue);
+            } else {
+                target[key] = deepCopy(nextValue);
+            }
+        }
     }
 
     function readSetting(primary, secondary, groupKey, nestedKey, legacyKey, fallbackValue) {
@@ -255,6 +360,243 @@ ColumnLayout {
         };
     }
 
+    function createCustomPresetList(primary, secondary) {
+        const primaryPresets = primary?.presets?.custom;
+        const secondaryPresets = secondary?.presets?.custom;
+        const source = Array.isArray(primaryPresets) ? primaryPresets : (Array.isArray(secondaryPresets) ? secondaryPresets : []);
+        const normalized = [];
+
+        for (let i = 0; i < source.length; i++) {
+            const entry = source[i];
+            const name = normalizePresetName(entry?.name ?? "");
+            if (name === "" || findCustomPresetIndex(name, normalized) !== -1)
+                continue;
+
+            normalized.push({
+                "name": name,
+                "settings": createSettingsSnapshot(entry?.settings || ({}), defaults)
+            });
+        }
+
+        return normalized;
+    }
+
+    function normalizePresetName(name) {
+        return (name ?? "").trim();
+    }
+
+    function findCustomPresetIndex(name, presets) {
+        const normalizedName = normalizePresetName(name).toLowerCase();
+        if (normalizedName === "")
+            return -1;
+
+        const list = presets || customPresets;
+        for (let i = 0; i < list.length; i++) {
+            if ((list[i]?.name ?? "").toLowerCase() === normalizedName)
+                return i;
+        }
+
+        return -1;
+    }
+
+    function presetDescription(key) {
+        switch (key) {
+        case "standard":
+            return pluginApi?.tr("settings.presets.builtIn.standard.desc");
+        case "focusTrack":
+            return pluginApi?.tr("settings.presets.builtIn.focusTrack.desc");
+        case "iconStrip":
+            return pluginApi?.tr("settings.presets.builtIn.iconStrip.desc");
+        case "titleTrack":
+            return pluginApi?.tr("settings.presets.builtIn.titleTrack.desc");
+        case "trackOnly":
+            return pluginApi?.tr("settings.presets.builtIn.trackOnly.desc");
+        case "denseStrip":
+            return pluginApi?.tr("settings.presets.builtIn.denseStrip.desc");
+        default:
+            return pluginApi?.tr("settings.presets.builtIn.desc");
+        }
+    }
+
+    function presetName(key) {
+        switch (key) {
+        case "standard":
+            return pluginApi?.tr("settings.presets.builtIn.standard.name");
+        case "focusTrack":
+            return pluginApi?.tr("settings.presets.builtIn.focusTrack.name");
+        case "iconStrip":
+            return pluginApi?.tr("settings.presets.builtIn.iconStrip.name");
+        case "titleTrack":
+            return pluginApi?.tr("settings.presets.builtIn.titleTrack.name");
+        case "trackOnly":
+            return pluginApi?.tr("settings.presets.builtIn.trackOnly.name");
+        case "denseStrip":
+            return pluginApi?.tr("settings.presets.builtIn.denseStrip.name");
+        default:
+            return "";
+        }
+    }
+
+    function builtInPresetSnapshot(key) {
+        switch (key) {
+        case "standard":
+            return mergeDeep(defaultSettings, {
+                "indicators": {
+                    "showTrackLine": false,
+                    "showFocusLine": false
+                }
+            });
+        case "focusTrack":
+            return mergeDeep(defaultSettings, {
+                "indicators": {
+                    "showTrackLine": true,
+                    "showFocusLine": true
+                }
+            });
+        case "iconStrip":
+            return mergeDeep(defaultSettings, {
+                "indicators": {
+                    "showTrackLine": false,
+                    "showFocusLine": false
+                },
+                "title": {
+                    "showTitle": false
+                }
+            });
+        case "titleTrack":
+            return mergeDeep(defaultSettings, {
+                "layout": {
+                    "showSlots": false
+                },
+                "focusedTitle": {
+                    "enabled": true
+                },
+                "indicators": {
+                    "showTrackLine": true,
+                    "showFocusLine": true
+                }
+            });
+        case "trackOnly":
+            return mergeDeep(defaultSettings, {
+                "layout": {
+                    "showSlots": false
+                },
+                "focusedTitle": {
+                    "enabled": false
+                },
+                "indicators": {
+                    "showTrackLine": true,
+                    "showFocusLine": true
+                }
+            });
+        case "denseStrip":
+            return mergeDeep(defaultSettings, {
+                "layout": {
+                    "widgetSizeMode": "dynamic",
+                    "maxWidgetWidth": 60,
+                    "showSlots": true,
+                    "slotWidth": 84,
+                    "slotSpacingUnits": 0,
+                    "slotCapsuleScale": 0.72,
+                    "radiusScale": 0.85
+                },
+                "icons": {
+                    "showIcons": true,
+                    "iconScale": 0.65
+                },
+                "title": {
+                    "showTitle": false
+                },
+                "indicators": {
+                    "showTrackLine": false,
+                    "showFocusLine": false
+                }
+            });
+        default:
+            return deepCopy(defaultSettings);
+        }
+    }
+
+    function applyPresetSnapshot(snapshot) {
+        editSettings = createSettingsSnapshot(snapshot, defaults);
+    }
+
+    function clearPresetSelection() {
+        selectedBuiltinPresetKey = "";
+        selectedCustomPresetName = "";
+    }
+
+    function applyBuiltInPreset(key) {
+        if (key === "") {
+            clearPresetSelection();
+            return;
+        }
+
+        applyPresetSnapshot(builtInPresetSnapshot(key));
+        selectedBuiltinPresetKey = key;
+        selectedCustomPresetName = "";
+        customPresetNameInput = "";
+    }
+
+    function loadCustomPreset(name) {
+        const index = findCustomPresetIndex(name);
+        if (index === -1)
+            return;
+
+        applyPresetSnapshot(customPresets[index].settings);
+        selectedBuiltinPresetKey = "";
+        selectedCustomPresetName = customPresets[index].name;
+        customPresetNameInput = customPresets[index].name;
+    }
+
+    function saveNewCustomPreset() {
+        if (!canSaveCustomPreset)
+            return;
+
+        const next = deepCopy(customPresets);
+        next.push({
+            "name": trimmedCustomPresetName,
+            "settings": deepCopy(editSettings)
+        });
+        customPresets = next;
+        selectedCustomPresetName = trimmedCustomPresetName;
+        selectedBuiltinPresetKey = "";
+        customPresetNameInput = trimmedCustomPresetName;
+        customPresetEditorExpanded = false;
+    }
+
+    function overwriteCustomPreset() {
+        if (!canOverwriteCustomPreset)
+            return;
+
+        const next = deepCopy(customPresets);
+        next[matchingCustomPresetIndex] = {
+            "name": next[matchingCustomPresetIndex].name,
+            "settings": deepCopy(editSettings)
+        };
+        customPresets = next;
+        selectedCustomPresetName = next[matchingCustomPresetIndex].name;
+        selectedBuiltinPresetKey = "";
+        customPresetNameInput = next[matchingCustomPresetIndex].name;
+        customPresetEditorExpanded = false;
+    }
+
+    function deleteSelectedCustomPreset() {
+        if (!canDeleteCustomPreset)
+            return;
+
+        const index = findCustomPresetIndex(selectedCustomPresetName);
+        if (index === -1)
+            return;
+
+        const next = deepCopy(customPresets);
+        next.splice(index, 1);
+        customPresets = next;
+        selectedCustomPresetName = "";
+        customPresetNameInput = "";
+        customPresetEditorExpanded = false;
+    }
+
     function settingValue(groupKey, nestedKey) {
         const group = editSettings ? editSettings[groupKey] : undefined;
         return group ? group[nestedKey] : undefined;
@@ -338,10 +680,15 @@ ColumnLayout {
             next[groupKey] = ({});
         next[groupKey][nestedKey] = value;
         editSettings = next;
+        clearPresetSelection();
     }
 
     function refreshEditSettings() {
         editSettings = createSettingsSnapshot(pluginApi?.pluginSettings || ({}), defaults);
+        customPresets = createCustomPresetList(pluginApi?.pluginSettings || ({}), defaults);
+        clearPresetSelection();
+        customPresetNameInput = "";
+        customPresetEditorExpanded = false;
     }
 
     onPluginApiChanged: refreshEditSettings()
@@ -358,8 +705,162 @@ ColumnLayout {
         if (!pluginApi)
             return;
 
-        pluginApi.pluginSettings = deepCopy(editSettings);
+        const nextSettings = mergeDeep(pluginApi?.pluginSettings || ({}), editSettings);
+        nextSettings.presets = {
+            "custom": deepCopy(customPresets)
+        };
+        pluginApi.pluginSettings = nextSettings;
         pluginApi.saveSettings();
+    }
+
+    ColumnLayout {
+        Layout.fillWidth: true
+        spacing: Style.marginS
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Style.marginM
+
+            NButton {
+                text: pluginApi?.tr(root.presetsExpanded ? "settings.presets.actions.hide" : "settings.presets.actions.show")
+                icon: root.presetsExpanded ? "chevron-up" : "chevron-down"
+                outlined: true
+                onClicked: root.presetsExpanded = !root.presetsExpanded
+            }
+
+            NLabel {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.presets.label")
+                description: root.collapsedPresetSummary
+            }
+        }
+
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 1
+            color: Color.mOutline
+        }
+
+        ColumnLayout {
+            visible: root.presetsExpanded
+            Layout.fillWidth: true
+            spacing: Style.marginM
+
+            NLabel {
+                Layout.fillWidth: true
+                description: pluginApi?.tr("settings.presets.desc")
+                descriptionColor: Color.mOnSurfaceVariant
+            }
+
+            NComboBox {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.presets.builtIn.label")
+                description: pluginApi?.tr("settings.presets.builtIn.desc")
+                model: root.builtInPresetModel
+                currentKey: root.selectedBuiltinPresetKey
+                defaultValue: ""
+                onSelected: key => root.applyBuiltInPreset(key)
+            }
+
+            NLabel {
+                visible: root.selectedPresetDescription !== ""
+                description: root.selectedPresetDescription
+                descriptionColor: Color.mOnSurfaceVariant
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 1
+                color: Color.mOutline
+            }
+
+            NComboBox {
+                Layout.fillWidth: true
+                label: pluginApi?.tr("settings.presets.custom.label")
+                description: root.customPresetHelpText
+                model: root.customPresetModel
+                currentKey: root.selectedCustomPresetName
+                defaultValue: ""
+                onSelected: key => {
+                    if (key === "") {
+                        root.selectedCustomPresetName = "";
+                        return;
+                    }
+                    root.loadCustomPreset(key);
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: Style.marginM
+
+                NButton {
+                    text: pluginApi?.tr(root.customPresetEditorExpanded ? "settings.presets.custom.actions.hideEditor" : "settings.presets.custom.actions.showEditor")
+                    icon: root.customPresetEditorExpanded ? "chevron-up" : "chevron-down"
+                    outlined: true
+                    onClicked: root.customPresetEditorExpanded = !root.customPresetEditorExpanded
+                }
+
+                Item {
+                    Layout.fillWidth: true
+                }
+            }
+
+            ColumnLayout {
+                visible: root.customPresetEditorExpanded
+                Layout.fillWidth: true
+                spacing: Style.marginM
+
+                NTextInput {
+                    Layout.fillWidth: true
+                    label: pluginApi?.tr("settings.presets.custom.name.label")
+                    description: pluginApi?.tr("settings.presets.custom.name.desc")
+                    placeholderText: pluginApi?.tr("settings.presets.custom.name.placeholder")
+                    text: root.customPresetNameInput
+                    onTextChanged: root.customPresetNameInput = text
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Style.marginM
+
+                    NButton {
+                        text: pluginApi?.tr("settings.presets.custom.actions.save")
+                        enabled: root.canSaveCustomPreset
+                        onClicked: root.saveNewCustomPreset()
+                    }
+
+                    NButton {
+                        text: pluginApi?.tr("settings.presets.custom.actions.overwrite")
+                        enabled: root.canOverwriteCustomPreset
+                        onClicked: root.overwriteCustomPreset()
+                    }
+
+                    NButton {
+                        text: pluginApi?.tr("settings.presets.custom.actions.delete")
+                        outlined: true
+                        enabled: root.canDeleteCustomPreset
+                        onClicked: root.deleteSelectedCustomPreset()
+                    }
+
+                    Item {
+                        Layout.fillWidth: true
+                    }
+                }
+
+                NLabel {
+                    visible: root.trimmedCustomPresetName === ""
+                    description: pluginApi?.tr("settings.presets.custom.validation.empty")
+                    descriptionColor: Color.mOnSurfaceVariant
+                }
+
+                NLabel {
+                    visible: root.trimmedCustomPresetName !== "" && root.matchingCustomPresetIndex !== -1
+                    description: pluginApi?.tr("settings.presets.custom.validation.duplicate")
+                    descriptionColor: Color.mPrimary
+                }
+            }
+        }
     }
 
     NTabBar {

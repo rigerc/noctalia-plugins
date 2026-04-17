@@ -30,6 +30,72 @@
       "colors": "Colors",
       "behavior": "Behavior"
     },
+    "presets": {
+      "label": "Presets",
+      "desc": "Apply a full preset across all settings, or save your current configuration as a reusable custom preset.",
+      "actions": {
+        "show": "Show Presets",
+        "hide": "Hide Presets"
+      },
+      "summary": {
+        "empty": "Collapsed by default. No preset selected.",
+        "builtin": "Built-in selected: {name}",
+        "custom": "Custom loaded: {name}",
+        "count": "{count} custom presets saved."
+      },
+      "builtIn": {
+        "label": "Built-in presets",
+        "desc": "Pre-configured scrollbar modes that replace the full editable settings snapshot.",
+        "placeholder": "Choose a built-in preset",
+        "standard": {
+          "name": "Standard",
+          "desc": "Default strip layout with slots, icons, and titles, without the track or focus line."
+        },
+        "focusTrack": {
+          "name": "Focus Track",
+          "desc": "Standard strip layout with the passive track and focus indicator enabled."
+        },
+        "iconStrip": {
+          "name": "Icon Strip",
+          "desc": "Normal strip layout with slots and icons, but no window titles."
+        },
+        "titleTrack": {
+          "name": "Title Track",
+          "desc": "Hide slots and show the focused window title together with the track and focus line."
+        },
+        "trackOnly": {
+          "name": "Track Only",
+          "desc": "Hide slots and the focused title, leaving only the track and focus indicator."
+        },
+        "denseStrip": {
+          "name": "Dense Strip",
+          "desc": "Compact icon-first strip with tighter spacing so more windows fit in view."
+        }
+      },
+      "custom": {
+        "label": "Custom presets",
+        "desc": "Load a saved custom preset into the editor, or save the current editor state as a named preset.",
+        "placeholder": "Choose a custom preset",
+        "empty": "No custom presets saved yet.",
+        "selectedDesc": "Loaded custom preset: {name}",
+        "name": {
+          "label": "Preset name",
+          "desc": "Names are trimmed and must be unique across custom presets.",
+          "placeholder": "Enter a preset name"
+        },
+        "actions": {
+          "showEditor": "Save Preset",
+          "hideEditor": "Hide Save Preset",
+          "save": "Save New",
+          "overwrite": "Overwrite",
+          "delete": "Delete"
+        },
+        "validation": {
+          "empty": "Enter a name to save or overwrite a custom preset.",
+          "duplicate": "This preset name already exists. Use Overwrite to update it."
+        }
+      }
+    },
     "colorPicker": {
       "label": "Select color",
       "desc": "Choose a theme color or pick a custom color.",
