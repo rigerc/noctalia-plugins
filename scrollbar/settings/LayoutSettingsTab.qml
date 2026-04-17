@@ -59,6 +59,165 @@ ColumnLayout {
     }
 
     NBox {
+        visible: rootSettings?.isVisibleByConditions(["renderModeWindow"]) ?? false
+        Layout.fillWidth: true
+        Layout.preferredHeight: windowPanelContent.implicitHeight + Style.marginL * 2
+
+        ColumnLayout {
+            id: windowPanelContent
+            anchors.fill: parent
+            anchors.margins: Style.marginL
+            spacing: Style.marginM
+
+            NHeader {
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.section.windowPanel.label")
+                description: rootSettings?.pluginApi?.tr("settings.section.windowPanel.desc")
+            }
+
+            NValueSlider {
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.windowOffsetH.label")
+                description: rootSettings?.pluginApi?.tr("settings.windowOffsetH.desc")
+                from: -200
+                to: 200
+                stepSize: 1
+                value: rootSettings?.settingValue("window", "offsetH") ?? 0
+                text: Math.round(value) + " px"
+                defaultValue: rootSettings?.defaultValue("window", "offsetH") ?? 0
+                showReset: true
+                onMoved: sliderValue => rootSettings?.setSetting("window", "offsetH", Math.round(sliderValue))
+            }
+
+            NValueSlider {
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.windowOffsetV.label")
+                description: rootSettings?.pluginApi?.tr("settings.windowOffsetV.desc")
+                from: -200
+                to: 200
+                stepSize: 1
+                value: rootSettings?.settingValue("window", "offsetV") ?? 0
+                text: Math.round(value) + " px"
+                defaultValue: rootSettings?.defaultValue("window", "offsetV") ?? 0
+                showReset: true
+                onMoved: sliderValue => rootSettings?.setSetting("window", "offsetV", Math.round(sliderValue))
+            }
+
+            NValueSlider {
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.windowScale.label")
+                description: rootSettings?.pluginApi?.tr("settings.windowScale.desc")
+                from: 0.5
+                to: 2.0
+                stepSize: 0.05
+                value: rootSettings?.settingValue("window", "scale") ?? 1.0
+                text: Math.round(value * 100) + "%"
+                defaultValue: rootSettings?.defaultValue("window", "scale") ?? 1.0
+                showReset: true
+                onMoved: sliderValue => rootSettings?.setSetting("window", "scale", Math.round(sliderValue * 100) / 100)
+            }
+
+            NValueSlider {
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.windowMargin.label")
+                description: rootSettings?.pluginApi?.tr("settings.windowMargin.desc")
+                from: 0
+                to: 64
+                stepSize: 1
+                value: rootSettings?.settingValue("window", "margin") ?? 0
+                text: Math.round(value) + " px"
+                defaultValue: rootSettings?.defaultValue("window", "margin") ?? 0
+                showReset: true
+                onMoved: sliderValue => rootSettings?.setSetting("window", "margin", Math.round(sliderValue))
+            }
+
+            NValueSlider {
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.windowRadiusScale.label")
+                description: rootSettings?.pluginApi?.tr("settings.windowRadiusScale.desc")
+                from: 0
+                to: 1.5
+                stepSize: 0.05
+                value: rootSettings?.settingValue("window", "radiusScale") ?? 1.0
+                text: Math.round(value * 100) + "%"
+                defaultValue: rootSettings?.defaultValue("window", "radiusScale") ?? 1.0
+                showReset: true
+                onMoved: sliderValue => rootSettings?.setSetting("window", "radiusScale", Math.round(sliderValue * 100) / 100)
+            }
+
+            HybridColorChoice {
+                pluginApi: rootSettings?.pluginApi
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.windowBackgroundColor.label")
+                description: rootSettings?.pluginApi?.tr("settings.windowBackgroundColor.desc")
+                currentValue: rootSettings?.settingValue("window", "backgroundColor") ?? "none"
+                defaultValue: rootSettings?.defaultValue("window", "backgroundColor") ?? "none"
+                onSelected: value => rootSettings?.setSetting("window", "backgroundColor", value)
+            }
+
+            NValueSlider {
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.windowBackgroundOpacity.label")
+                description: rootSettings?.pluginApi?.tr("settings.windowBackgroundOpacity.desc")
+                from: 0
+                to: 100
+                stepSize: 1
+                value: rootSettings?.settingValue("window", "backgroundOpacity") ?? 0
+                text: Math.round(value) + "%"
+                defaultValue: rootSettings?.defaultValue("window", "backgroundOpacity") ?? 0
+                showReset: true
+                onMoved: sliderValue => rootSettings?.setSetting("window", "backgroundOpacity", Math.round(sliderValue))
+            }
+
+            NToggle {
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.windowGradientEnabled.label")
+                description: rootSettings?.pluginApi?.tr("settings.windowGradientEnabled.desc")
+                checked: rootSettings?.settingValue("window", "gradientEnabled") ?? false
+                onToggled: checked => rootSettings?.setSetting("window", "gradientEnabled", checked)
+                defaultValue: rootSettings?.defaultValue("window", "gradientEnabled") ?? false
+            }
+
+            HybridColorChoice {
+                pluginApi: rootSettings?.pluginApi
+                visible: rootSettings?.isVisibleByConditions(["renderModeWindow", "windowGradientEnabled"]) ?? false
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.windowGradientColor.label")
+                description: rootSettings?.pluginApi?.tr("settings.windowGradientColor.desc")
+                currentValue: rootSettings?.settingValue("window", "gradientColor") ?? "none"
+                defaultValue: rootSettings?.defaultValue("window", "gradientColor") ?? "none"
+                onSelected: value => rootSettings?.setSetting("window", "gradientColor", value)
+            }
+
+            NValueSlider {
+                visible: rootSettings?.isVisibleByConditions(["renderModeWindow", "windowGradientEnabled"]) ?? false
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.windowGradientOpacity.label")
+                description: rootSettings?.pluginApi?.tr("settings.windowGradientOpacity.desc")
+                from: 0
+                to: 100
+                stepSize: 1
+                value: rootSettings?.settingValue("window", "gradientOpacity") ?? 0
+                text: Math.round(value) + "%"
+                defaultValue: rootSettings?.defaultValue("window", "gradientOpacity") ?? 0
+                showReset: true
+                onMoved: sliderValue => rootSettings?.setSetting("window", "gradientOpacity", Math.round(sliderValue))
+            }
+
+            NComboBox {
+                visible: rootSettings?.isVisibleByConditions(["renderModeWindow", "windowGradientEnabled"]) ?? false
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.windowGradientDirection.label")
+                description: rootSettings?.pluginApi?.tr("settings.windowGradientDirection.desc")
+                model: rootSettings?.gradientDirectionModel
+                currentKey: rootSettings?.settingValue("window", "gradientDirection") ?? "vertical"
+                defaultValue: rootSettings?.defaultValue("window", "gradientDirection") ?? "vertical"
+                onSelected: key => rootSettings?.setSetting("window", "gradientDirection", key)
+            }
+        }
+    }
+
+    NBox {
         Layout.fillWidth: true
         Layout.preferredHeight: slotSizeContent.implicitHeight + Style.marginL * 2
 

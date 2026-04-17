@@ -50,10 +50,83 @@ Item {
         return fallbackValue;
     }
 
+    function resolveThemeColor(key) {
+        switch (key) {
+        case "none":
+            return "transparent";
+        case "primary":
+            return Color.mPrimary;
+        case "on-primary":
+            return Color.mOnPrimary;
+        case "secondary":
+            return Color.mSecondary;
+        case "on-secondary":
+            return Color.mOnSecondary;
+        case "tertiary":
+            return Color.mTertiary;
+        case "on-tertiary":
+            return Color.mOnTertiary;
+        case "error":
+            return Color.mError;
+        case "on-error":
+            return Color.mOnError;
+        case "surface":
+            return Color.mSurface;
+        case "on-surface":
+            return Color.mOnSurface;
+        case "surface-variant":
+            return Color.mSurfaceVariant;
+        case "on-surface-variant":
+            return Color.mOnSurfaceVariant;
+        case "outline":
+            return Color.mOutline;
+        case "hover":
+            return Color.mHover;
+        case "on-hover":
+            return Color.mOnHover;
+        default:
+            return undefined;
+        }
+    }
+
+    function isHexColorString(value) {
+        return typeof value === "string"
+            && /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(value);
+    }
+
+    function resolveSettingColor(value, fallbackColor) {
+        const themeColor = resolveThemeColor(value);
+        if (themeColor !== undefined)
+            return themeColor;
+        if (isHexColorString(value))
+            return value;
+        return fallbackColor;
+    }
+
     readonly property bool debugLogging: settingValue("advanced", "debugLogging", "debugLogging", false)
     readonly property bool supportsLiveReorder: CompositorService.isNiri || CompositorService.isHyprland
     readonly property string renderMode: settingValue("window", "renderMode", "renderMode", "bar")
     readonly property string windowSpaceMode: settingValue("window", "spaceMode", "windowSpaceMode", "overlay")
+
+    readonly property real windowOffsetH: settingValue("window", "offsetH", "windowOffsetH", 0)
+    readonly property real windowOffsetV: settingValue("window", "offsetV", "windowOffsetV", 0)
+    readonly property real windowScale: Math.max(0.5, settingValue("window", "scale", "windowScale", 1.0))
+    readonly property string windowBackgroundColorKey: settingValue("window", "backgroundColor", "windowBackgroundColor", "none")
+    readonly property real windowBackgroundOpacity: Math.max(0, Math.min(100, settingValue("window", "backgroundOpacity", "windowBackgroundOpacity", 0)))
+    readonly property real windowMargin: Math.max(0, Math.round(settingValue("window", "margin", "windowMargin", 0) * Style.uiScaleRatio))
+    readonly property real windowRadiusScale: Math.max(0, settingValue("window", "radiusScale", "windowRadiusScale", 1.0))
+    readonly property bool windowGradientEnabled: settingValue("window", "gradientEnabled", "windowGradientEnabled", false)
+    readonly property string windowGradientColorKey: settingValue("window", "gradientColor", "windowGradientColor", "none")
+    readonly property real windowGradientOpacity: Math.max(0, Math.min(100, settingValue("window", "gradientOpacity", "windowGradientOpacity", 0)))
+    readonly property string windowGradientDirection: settingValue("window", "gradientDirection", "windowGradientDirection", "vertical")
+
+    readonly property bool windowBackgroundEnabled: windowBackgroundColorKey !== "none" && windowBackgroundOpacity > 0
+    readonly property color windowBackgroundBaseColor: resolveSettingColor(windowBackgroundColorKey, "transparent")
+    readonly property color windowBackgroundResolvedColor: windowBackgroundEnabled ? Qt.alpha(windowBackgroundBaseColor, windowBackgroundOpacity / 100) : "transparent"
+    readonly property bool windowGradientActive: windowGradientEnabled && windowGradientColorKey !== "none" && windowGradientOpacity > 0
+    readonly property color windowGradientBaseColor: resolveSettingColor(windowGradientColorKey, "transparent")
+    readonly property color windowGradientResolvedColor: windowGradientActive ? Qt.alpha(windowGradientBaseColor, windowGradientOpacity / 100) : "transparent"
+    readonly property real effectiveWindowRadius: Style.radiusL * windowRadiusScale
 
     property var allEntries: []
     property var liveEntriesByKey: ({})
@@ -562,20 +635,62 @@ Item {
 
                 Item {
                     id: windowContent
-                    width: windowView.implicitWidth
-                    height: windowView.implicitHeight
-                    x: Style.pixelAlignCenter(parent.width, width)
-                    y: Style.pixelAlignCenter(parent.height, height)
+                    width: Math.ceil(windowView.implicitWidth * root.windowScale) + root.windowMargin * 2
+                    height: Math.ceil(windowView.implicitHeight * root.windowScale) + root.windowMargin * 2
+                    x: Style.pixelAlignCenter(parent.width, width) + Math.round(root.windowOffsetH * Style.uiScaleRatio)
+                    y: Style.pixelAlignCenter(parent.height, height) + Math.round(root.windowOffsetV * Style.uiScaleRatio)
 
-                    ScrollbarView {
-                        id: windowView
+                    Rectangle {
+                        id: windowBackgroundRect
                         anchors.fill: parent
-                        pluginApi: root.pluginApi
-                        screen: windowHost.screen
-                        hostMode: "window"
-                        fillHostThickness: false
-                        hostThickness: Style.getCapsuleHeightForScreen(windowHost.screen?.name)
-                        visibleInCurrentMode: root.renderMode === "window"
+                        radius: root.effectiveWindowRadius
+                        color: root.windowBackgroundResolvedColor
+                        visible: root.windowBackgroundEnabled || root.windowGradientActive
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: root.effectiveWindowRadius
+                            visible: root.windowGradientActive
+                            color: "transparent"
+
+                            gradient: Gradient {
+                                orientation: root.windowGradientDirection === "horizontal" ? Gradient.Horizontal : Gradient.Vertical
+                                GradientStop {
+                                    position: 0.0
+                                    color: "transparent"
+                                }
+                                GradientStop {
+                                    position: 1.0
+                                    color: root.windowGradientResolvedColor
+                                }
+                            }
+                        }
+                    }
+
+                    Item {
+                        id: windowScaledContent
+                        anchors.fill: parent
+                        anchors.margins: root.windowMargin
+
+                        ScrollbarView {
+                            id: windowView
+                            anchors.centerIn: parent
+                            width: implicitWidth
+                            height: implicitHeight
+                            pluginApi: root.pluginApi
+                            screen: windowHost.screen
+                            hostMode: "window"
+                            fillHostThickness: false
+                            hostThickness: Style.getCapsuleHeightForScreen(windowHost.screen?.name)
+                            visibleInCurrentMode: root.renderMode === "window"
+
+                            transform: Scale {
+                                origin.x: windowView.width / 2
+                                origin.y: windowView.height / 2
+                                xScale: root.windowScale
+                                yScale: root.windowScale
+                            }
+                        }
                     }
                 }
             }

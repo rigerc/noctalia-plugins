@@ -120,6 +120,16 @@ ColumnLayout {
             "name": pluginApi?.tr("options.windowSpaceReserve")
         }
     ]
+    readonly property var gradientDirectionModel: [
+        {
+            "key": "vertical",
+            "name": pluginApi?.tr("options.gradientDirectionVertical")
+        },
+        {
+            "key": "horizontal",
+            "name": pluginApi?.tr("options.gradientDirectionHorizontal")
+        }
+    ]
     readonly property var builtInPresetModel: [
         {
             "key": "",
@@ -148,6 +158,14 @@ ColumnLayout {
         {
             "key": "denseStrip",
             "name": pluginApi?.tr("settings.presets.builtIn.denseStrip.name")
+        },
+        {
+            "key": "floatingPanel",
+            "name": pluginApi?.tr("settings.presets.builtIn.floatingPanel.name")
+        },
+        {
+            "key": "edgePill",
+            "name": pluginApi?.tr("settings.presets.builtIn.edgePill.name")
         }
     ]
     readonly property var defaultSettings: createSettingsSnapshot(defaults, ({}))
@@ -248,7 +266,18 @@ ColumnLayout {
             },
             "window": {
                 "renderMode": readSetting(primary, secondary, "window", "renderMode", "renderMode", "bar"),
-                "spaceMode": readSetting(primary, secondary, "window", "spaceMode", "windowSpaceMode", "overlay")
+                "spaceMode": readSetting(primary, secondary, "window", "spaceMode", "windowSpaceMode", "overlay"),
+                "offsetH": readSetting(primary, secondary, "window", "offsetH", "windowOffsetH", 0),
+                "offsetV": readSetting(primary, secondary, "window", "offsetV", "windowOffsetV", 0),
+                "scale": readSetting(primary, secondary, "window", "scale", "windowScale", 1.0),
+                "backgroundColor": readSetting(primary, secondary, "window", "backgroundColor", "windowBackgroundColor", "none"),
+                "backgroundOpacity": readSetting(primary, secondary, "window", "backgroundOpacity", "windowBackgroundOpacity", 0),
+                "margin": readSetting(primary, secondary, "window", "margin", "windowMargin", 0),
+                "radiusScale": readSetting(primary, secondary, "window", "radiusScale", "windowRadiusScale", 1.0),
+                "gradientEnabled": readSetting(primary, secondary, "window", "gradientEnabled", "windowGradientEnabled", false),
+                "gradientColor": readSetting(primary, secondary, "window", "gradientColor", "windowGradientColor", "none"),
+                "gradientOpacity": readSetting(primary, secondary, "window", "gradientOpacity", "windowGradientOpacity", 0),
+                "gradientDirection": readSetting(primary, secondary, "window", "gradientDirection", "windowGradientDirection", "vertical")
             },
             "advanced": {
                 "debugLogging": readSetting(primary, secondary, "advanced", "debugLogging", "debugLogging", false)
@@ -448,6 +477,10 @@ ColumnLayout {
             return pluginApi?.tr("settings.presets.builtIn.trackOnly.desc");
         case "denseStrip":
             return pluginApi?.tr("settings.presets.builtIn.denseStrip.desc");
+        case "floatingPanel":
+            return pluginApi?.tr("settings.presets.builtIn.floatingPanel.desc");
+        case "edgePill":
+            return pluginApi?.tr("settings.presets.builtIn.edgePill.desc");
         default:
             return pluginApi?.tr("settings.presets.builtIn.desc");
         }
@@ -467,6 +500,10 @@ ColumnLayout {
             return pluginApi?.tr("settings.presets.builtIn.trackOnly.name");
         case "denseStrip":
             return pluginApi?.tr("settings.presets.builtIn.denseStrip.name");
+        case "floatingPanel":
+            return pluginApi?.tr("settings.presets.builtIn.floatingPanel.name");
+        case "edgePill":
+            return pluginApi?.tr("settings.presets.builtIn.edgePill.name");
         default:
             return "";
         }
@@ -545,6 +582,39 @@ ColumnLayout {
                 "indicators": {
                     "showTrackLine": false,
                     "showFocusLine": false
+                }
+            });
+        case "floatingPanel":
+            return mergeDeep(defaultSettings, {
+                "window": {
+                    "renderMode": "window",
+                    "spaceMode": "overlay",
+                    "backgroundColor": "surface",
+                    "backgroundOpacity": 75,
+                    "gradientEnabled": true,
+                    "gradientColor": "primary",
+                    "gradientOpacity": 15,
+                    "radiusScale": 0.6,
+                    "margin": 8,
+                    "scale": 0.95
+                }
+            });
+        case "edgePill":
+            return mergeDeep(defaultSettings, {
+                "window": {
+                    "renderMode": "window",
+                    "spaceMode": "overlay",
+                    "backgroundColor": "surface",
+                    "backgroundOpacity": 100,
+                    "radiusScale": 1.0,
+                    "margin": 4
+                },
+                "layout": {
+                    "showSlots": false
+                },
+                "indicators": {
+                    "showTrackLine": true,
+                    "showFocusLine": true
                 }
             });
         default:
@@ -741,6 +811,8 @@ ColumnLayout {
             return settingValue("autoScroll", "centerFocusedWindow") ?? true;
         case "renderModeWindow":
             return (settingValue("window", "renderMode") ?? "bar") === "window";
+        case "windowGradientEnabled":
+            return settingValue("window", "gradientEnabled") ?? false;
         case "workspaceAnimationEnabled":
             return settingValue("workspaceAnimation", "enabled") ?? false;
         default:
