@@ -4,10 +4,10 @@
     {
       "id": "scrollbar",
       "name": "Scrollbar",
-      "version": "1.0.0",
+      "version": "1.7.0",
       "official": false,
-      "author": "OpenAI",
-      "description": "A focused, scrolling window strip for the bar with centered selection and passive overflow fades.",
+      "author": "rigerc",
+      "description": "A focused, scrolling window strip for the bar with centered selection and customizable overflow edge cues.",
       "repository": "https://github.com/noctalia-dev/noctalia-plugins",
       "minNoctaliaVersion": "4.6.6",
       "license": "MIT",
@@ -15,7 +15,7 @@
         "Bar",
         "Utility"
       ],
-      "lastUpdated": "2026-04-15T18:57:35+02:00"
+      "lastUpdated": "2026-04-17T17:31:57+02:00"
     }
   ]
 }
