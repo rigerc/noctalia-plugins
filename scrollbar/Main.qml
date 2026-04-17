@@ -567,7 +567,7 @@ Item {
         target: CompositorService
 
         function onWindowListChanged() {
-            scheduleStructuralRefresh("windowListChanged");
+            updateSnapshots("windowListChanged", true);
         }
 
         function onWorkspaceChanged() {
@@ -575,7 +575,7 @@ Item {
         }
 
         function onActiveWindowChanged() {
-            updateSnapshots("activeWindowChanged", pendingStructuralRefresh);
+            updateSnapshots("activeWindowChanged", true);
         }
     }
 
@@ -594,6 +594,24 @@ Item {
         repeat: false
         onTriggered: {
             flushPendingTitleUpdates("title-debounce");
+        }
+    }
+
+    Timer {
+        id: windowOrderPollTimer
+        interval: 500
+        repeat: true
+        running: allEntries.length > 0
+        onTriggered: {
+            var windows = collectWindows();
+            var nextEntries = buildStructuralEntries(windows);
+            var nextSignature = getStructureSignature(nextEntries);
+            if (nextSignature !== lastStructureSignature) {
+                debugLog("windowOrderPoll: order changed");
+                applyStructuralEntries(nextEntries, "windowOrderPoll");
+                var nextLiveEntries = buildLiveEntries(nextEntries, windows);
+                applyLiveEntries(nextLiveEntries, "windowOrderPoll");
+            }
         }
     }
 
