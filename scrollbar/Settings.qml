@@ -223,7 +223,7 @@ ColumnLayout {
                 "showTrackLine": readSetting(primary, secondary, "indicators", "showTrackLine", "showTrackLine", true),
                 "trackOpacity": readSetting(primary, secondary, "indicators", "trackOpacity", "trackOpacity", 35),
                 "trackLinePosition": readSetting(primary, secondary, "indicators", "trackLinePosition", "trackLinePosition", "end"),
-                "trackSegmentGap": readSetting(primary, secondary, "indicators", "trackSegmentGap", "trackSegmentGap", 1),
+                "trackLineThickness": readSetting(primary, secondary, "indicators", "trackLineThickness", "trackLineThickness", 2),
                 "trackThumbColor": readSetting(primary, secondary, "indicators", "trackThumbColor", "trackThumbColor", "primary"),
                 "showFocusLine": readSetting(primary, secondary, "indicators", "showFocusLine", "showFocusLine", true),
                 "focusLineColor": readSetting(primary, secondary, "indicators", "focusLineColor", "focusLineColor", "secondary"),
@@ -241,6 +241,65 @@ ColumnLayout {
     function settingValue(groupKey, nestedKey) {
         const group = editSettings ? editSettings[groupKey] : undefined;
         return group ? group[nestedKey] : undefined;
+    }
+
+    function conditionValue(key) {
+        switch (key) {
+        case "showSlots":
+            return settingValue("layout", "showSlots") ?? true;
+        case "showIcons":
+            return settingValue("icons", "showIcons") ?? true;
+        case "showTitle":
+            return settingValue("title", "showTitle") ?? true;
+        case "workspaceIndicatorEnabled":
+            return settingValue("workspaceIndicator", "enabled") ?? false;
+        case "edgeFadeEnabled":
+            return settingValue("edgeFade", "enabled") ?? true;
+        case "showFocusedFill":
+            return settingValue("focused", "showFill") ?? true;
+        case "showFocusedBorder":
+            return settingValue("focused", "showBorder") ?? true;
+        case "showUnfocusedFill":
+            return settingValue("unfocused", "showFill") ?? true;
+        case "showUnfocusedBorder":
+            return settingValue("unfocused", "showBorder") ?? true;
+        case "showHoverBorder":
+            return settingValue("hover", "showBorder") ?? true;
+        case "showTrackLine":
+            return settingValue("indicators", "showTrackLine") ?? true;
+        case "showFocusLine":
+            return settingValue("indicators", "showFocusLine") ?? true;
+        case "centerFocusedWindow":
+            return settingValue("autoScroll", "centerFocusedWindow") ?? true;
+        case "workspaceAnimationEnabled":
+            return settingValue("workspaceAnimation", "enabled") ?? false;
+        default:
+            return true;
+        }
+    }
+
+    function isVisibleByConditions(conditions) {
+        if (!conditions || conditions.length === 0)
+            return true;
+
+        for (let i = 0; i < conditions.length; i++) {
+            if (!conditionValue(conditions[i]))
+                return false;
+        }
+
+        return true;
+    }
+
+    function sectionHasVisibleSettings(conditionsList) {
+        if (!conditionsList || conditionsList.length === 0)
+            return false;
+
+        for (let i = 0; i < conditionsList.length; i++) {
+            if (isVisibleByConditions(conditionsList[i]))
+                return true;
+        }
+
+        return false;
     }
 
     function defaultValue(groupKey, nestedKey) {

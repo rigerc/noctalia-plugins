@@ -8,6 +8,26 @@ ColumnLayout {
 
     property var rootSettings: null
 
+    readonly property bool windowFilteringSectionVisible: rootSettings?.sectionHasVisibleSettings([
+        [],
+        []
+    ]) ?? true
+    readonly property bool interactionSectionVisible: rootSettings?.sectionHasVisibleSettings([
+        [],
+        []
+    ]) ?? true
+    readonly property bool autoScrollSectionVisible: rootSettings?.sectionHasVisibleSettings([
+        [],
+        ["centerFocusedWindow"]
+    ]) ?? true
+    readonly property bool workspaceAnimationSectionVisible: rootSettings?.sectionHasVisibleSettings([
+        [],
+        ["workspaceAnimationEnabled"]
+    ]) ?? true
+    readonly property bool advancedSectionVisible: rootSettings?.sectionHasVisibleSettings([
+        []
+    ]) ?? true
+
     Layout.fillWidth: true
     spacing: Style.marginXL
 
@@ -36,6 +56,12 @@ ColumnLayout {
         defaultValue: rootSettings?.defaultValue("filtering", "onlyActiveWorkspaces") ?? true
     }
 
+    NLabel {
+        visible: !windowFilteringSectionVisible
+        description: rootSettings?.pluginApi?.tr("settings.emptySectionNote")
+        descriptionColor: Color.mOnSurfaceVariant
+    }
+
     NHeader {
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.section.interaction.label")
@@ -61,6 +87,12 @@ ColumnLayout {
         defaultValue: rootSettings?.defaultValue("interaction", "enableScrollWheel") ?? true
     }
 
+    NLabel {
+        visible: !interactionSectionVisible
+        description: rootSettings?.pluginApi?.tr("settings.emptySectionNote")
+        descriptionColor: Color.mOnSurfaceVariant
+    }
+
     NHeader {
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.section.autoScroll.label")
@@ -78,6 +110,7 @@ ColumnLayout {
     }
 
     NValueSlider {
+        visible: rootSettings?.isVisibleByConditions(["centerFocusedWindow"]) ?? true
         label: rootSettings?.pluginApi?.tr("settings.centerAnimationMs.label")
         description: rootSettings?.pluginApi?.tr("settings.centerAnimationMs.desc")
         from: 0
@@ -90,78 +123,10 @@ ColumnLayout {
         onMoved: sliderValue => rootSettings?.setSetting("autoScroll", "centerAnimationMs", Math.round(sliderValue))
     }
 
-    NHeader {
-        Layout.fillWidth: true
-        label: rootSettings?.pluginApi?.tr("settings.section.indicators.label")
-        description: rootSettings?.pluginApi?.tr("settings.section.indicators.desc")
-    }
-    NDivider {}
-
-    NToggle {
-        Layout.fillWidth: true
-        label: rootSettings?.pluginApi?.tr("settings.showTrackLine.label")
-        description: rootSettings?.pluginApi?.tr("settings.showTrackLine.desc")
-        checked: rootSettings?.settingValue("indicators", "showTrackLine") ?? true
-        onToggled: checked => rootSettings?.setSetting("indicators", "showTrackLine", checked)
-        defaultValue: rootSettings?.defaultValue("indicators", "showTrackLine") ?? true
-    }
-
-    NComboBox {
-        Layout.fillWidth: true
-        label: rootSettings?.pluginApi?.tr("settings.trackLinePosition.label")
-        description: rootSettings?.pluginApi?.tr("settings.trackLinePosition.desc")
-        model: rootSettings?.trackLinePositionModel
-        currentKey: rootSettings?.settingValue("indicators", "trackLinePosition") ?? "end"
-        defaultValue: rootSettings?.defaultValue("indicators", "trackLinePosition") ?? "end"
-        onSelected: key => rootSettings?.setSetting("indicators", "trackLinePosition", key)
-    }
-
-    NValueSlider {
-        label: rootSettings?.pluginApi?.tr("settings.trackSegmentGap.label")
-        description: rootSettings?.pluginApi?.tr("settings.trackSegmentGap.desc")
-        from: 1
-        to: 5
-        stepSize: 1
-        value: rootSettings?.settingValue("indicators", "trackSegmentGap") ?? 1
-        text: Math.round(value) + " px"
-        defaultValue: rootSettings?.defaultValue("indicators", "trackSegmentGap") ?? 1
-        showReset: true
-        onMoved: sliderValue => rootSettings?.setSetting("indicators", "trackSegmentGap", Math.round(sliderValue))
-    }
-
-    NToggle {
-        Layout.fillWidth: true
-        label: rootSettings?.pluginApi?.tr("settings.showFocusLine.label")
-        description: rootSettings?.pluginApi?.tr("settings.showFocusLine.desc")
-        checked: rootSettings?.settingValue("indicators", "showFocusLine") ?? true
-        onToggled: checked => rootSettings?.setSetting("indicators", "showFocusLine", checked)
-        defaultValue: rootSettings?.defaultValue("indicators", "showFocusLine") ?? true
-    }
-
-    NValueSlider {
-        label: rootSettings?.pluginApi?.tr("settings.focusLineThickness.label")
-        description: rootSettings?.pluginApi?.tr("settings.focusLineThickness.desc")
-        from: 1
-        to: 6
-        stepSize: 1
-        value: rootSettings?.settingValue("indicators", "focusLineThickness") ?? 2
-        text: Math.round(value) + " px"
-        defaultValue: rootSettings?.defaultValue("indicators", "focusLineThickness") ?? 2
-        showReset: true
-        onMoved: sliderValue => rootSettings?.setSetting("indicators", "focusLineThickness", Math.round(sliderValue))
-    }
-
-    NValueSlider {
-        label: rootSettings?.pluginApi?.tr("settings.focusLineAnimationMs.label")
-        description: rootSettings?.pluginApi?.tr("settings.focusLineAnimationMs.desc")
-        from: 0
-        to: 400
-        stepSize: 10
-        value: rootSettings?.settingValue("indicators", "focusLineAnimationMs") ?? 120
-        text: Math.round(value) + " ms"
-        defaultValue: rootSettings?.defaultValue("indicators", "focusLineAnimationMs") ?? 120
-        showReset: true
-        onMoved: sliderValue => rootSettings?.setSetting("indicators", "focusLineAnimationMs", Math.round(sliderValue))
+    NLabel {
+        visible: !autoScrollSectionVisible
+        description: rootSettings?.pluginApi?.tr("settings.emptySectionNote")
+        descriptionColor: Color.mOnSurfaceVariant
     }
 
     NHeader {
@@ -181,6 +146,7 @@ ColumnLayout {
     }
 
     NComboBox {
+        visible: rootSettings?.isVisibleByConditions(["workspaceAnimationEnabled"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.workspaceAnimationAxis.label")
         description: rootSettings?.pluginApi?.tr("settings.workspaceAnimationAxis.desc")
@@ -188,6 +154,12 @@ ColumnLayout {
         currentKey: rootSettings?.settingValue("workspaceAnimation", "axis") ?? "horizontal"
         defaultValue: rootSettings?.defaultValue("workspaceAnimation", "axis") ?? "horizontal"
         onSelected: key => rootSettings?.setSetting("workspaceAnimation", "axis", key)
+    }
+
+    NLabel {
+        visible: !workspaceAnimationSectionVisible
+        description: rootSettings?.pluginApi?.tr("settings.emptySectionNote")
+        descriptionColor: Color.mOnSurfaceVariant
     }
 
     NHeader {
@@ -204,5 +176,11 @@ ColumnLayout {
         checked: rootSettings?.settingValue("advanced", "debugLogging") ?? false
         onToggled: checked => rootSettings?.setSetting("advanced", "debugLogging", checked)
         defaultValue: rootSettings?.defaultValue("advanced", "debugLogging") ?? false
+    }
+
+    NLabel {
+        visible: !advancedSectionVisible
+        description: rootSettings?.pluginApi?.tr("settings.emptySectionNote")
+        descriptionColor: Color.mOnSurfaceVariant
     }
 }

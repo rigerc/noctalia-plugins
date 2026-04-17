@@ -8,6 +8,56 @@ ColumnLayout {
 
     property var rootSettings: null
 
+    readonly property bool backgroundSectionVisible: rootSettings?.sectionHasVisibleSettings([
+        [],
+        []
+    ]) ?? true
+    readonly property bool activeWindowSectionVisible: rootSettings?.sectionHasVisibleSettings([
+        ["showSlots"],
+        ["showSlots", "showFocusedFill"],
+        ["showSlots", "showFocusedFill"],
+        ["showSlots"],
+        ["showSlots", "showFocusedBorder"],
+        ["showSlots", "showFocusedBorder"],
+        ["showSlots"]
+    ]) ?? true
+    readonly property bool inactiveWindowSectionVisible: rootSettings?.sectionHasVisibleSettings([
+        ["showSlots"],
+        ["showSlots"],
+        ["showSlots", "showUnfocusedFill"],
+        ["showSlots", "showUnfocusedFill"],
+        ["showSlots"],
+        ["showSlots", "showUnfocusedBorder"],
+        ["showSlots", "showUnfocusedBorder"],
+        ["showSlots"]
+    ]) ?? true
+    readonly property bool hoveredWindowSectionVisible: rootSettings?.sectionHasVisibleSettings([
+        ["showSlots"],
+        ["showSlots"],
+        ["showSlots"],
+        ["showSlots", "showHoverBorder"],
+        ["showSlots", "showHoverBorder"],
+        ["showSlots"],
+        ["showSlots"],
+        ["showSlots"]
+    ]) ?? true
+    readonly property bool workspaceIndicatorColorsSectionVisible: rootSettings?.sectionHasVisibleSettings([
+        ["workspaceIndicatorEnabled"],
+        ["workspaceIndicatorEnabled"]
+    ]) ?? true
+    readonly property bool indicatorsSectionVisible: rootSettings?.sectionHasVisibleSettings([
+        [],
+        ["showTrackLine"],
+        ["showTrackLine"],
+        ["showTrackLine"],
+        ["showTrackLine"],
+        ["showTrackLine"],
+        ["showTrackLine", "showFocusLine"],
+        ["showTrackLine", "showFocusLine"],
+        ["showTrackLine", "showFocusLine"],
+        ["showTrackLine", "showFocusLine"]
+    ]) ?? true
+
     Layout.fillWidth: true
     spacing: Style.marginXL
 
@@ -39,6 +89,12 @@ ColumnLayout {
         onMoved: sliderValue => rootSettings?.setSetting("background", "opacity", Math.round(sliderValue))
     }
 
+    NLabel {
+        visible: !backgroundSectionVisible
+        description: rootSettings?.pluginApi?.tr("settings.emptySectionNote")
+        descriptionColor: Color.mOnSurfaceVariant
+    }
+
     NHeader {
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.section.activeWindow.label")
@@ -47,6 +103,7 @@ ColumnLayout {
     NDivider {}
 
     NToggle {
+        visible: rootSettings?.isVisibleByConditions(["showSlots"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.showFocusedFill.label")
         description: rootSettings?.pluginApi?.tr("settings.showFocusedFill.desc")
@@ -56,6 +113,7 @@ ColumnLayout {
     }
 
     NColorChoice {
+        visible: rootSettings?.isVisibleByConditions(["showSlots", "showFocusedFill"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.focusedFillColor.label")
         description: rootSettings?.pluginApi?.tr("settings.focusedFillColor.desc")
@@ -64,6 +122,7 @@ ColumnLayout {
     }
 
     NValueSlider {
+        visible: rootSettings?.isVisibleByConditions(["showSlots", "showFocusedFill"]) ?? true
         label: rootSettings?.pluginApi?.tr("settings.focusedFillOpacity.label")
         description: rootSettings?.pluginApi?.tr("settings.focusedFillOpacity.desc")
         from: 20
@@ -77,6 +136,7 @@ ColumnLayout {
     }
 
     NToggle {
+        visible: rootSettings?.isVisibleByConditions(["showSlots"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.showFocusedBorder.label")
         description: rootSettings?.pluginApi?.tr("settings.showFocusedBorder.desc")
@@ -86,6 +146,7 @@ ColumnLayout {
     }
 
     NColorChoice {
+        visible: rootSettings?.isVisibleByConditions(["showSlots", "showFocusedBorder"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.focusedBorderColor.label")
         description: rootSettings?.pluginApi?.tr("settings.focusedBorderColor.desc")
@@ -94,6 +155,7 @@ ColumnLayout {
     }
 
     NValueSlider {
+        visible: rootSettings?.isVisibleByConditions(["showSlots", "showFocusedBorder"]) ?? true
         label: rootSettings?.pluginApi?.tr("settings.focusedBorderOpacity.label")
         description: rootSettings?.pluginApi?.tr("settings.focusedBorderOpacity.desc")
         from: 0
@@ -107,11 +169,18 @@ ColumnLayout {
     }
 
     NColorChoice {
+        visible: rootSettings?.isVisibleByConditions(["showSlots"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.focusedTextColor.label")
         description: rootSettings?.pluginApi?.tr("settings.focusedTextColor.desc")
         currentKey: rootSettings?.settingValue("focused", "textColor") ?? "on-primary"
         onSelected: key => rootSettings?.setSetting("focused", "textColor", key)
+    }
+
+    NLabel {
+        visible: !activeWindowSectionVisible
+        description: rootSettings?.pluginApi?.tr("settings.emptySectionNote")
+        descriptionColor: Color.mOnSurfaceVariant
     }
 
     NHeader {
@@ -121,7 +190,22 @@ ColumnLayout {
     }
     NDivider {}
 
+    NValueSlider {
+        visible: rootSettings?.isVisibleByConditions(["showSlots"]) ?? true
+        label: rootSettings?.pluginApi?.tr("settings.inactiveOpacity.label")
+        description: rootSettings?.pluginApi?.tr("settings.inactiveOpacity.desc")
+        from: 10
+        to: 100
+        stepSize: 1
+        value: rootSettings?.settingValue("unfocused", "inactiveOpacity") ?? 45
+        text: Math.round(value) + "%"
+        defaultValue: rootSettings?.defaultValue("unfocused", "inactiveOpacity") ?? 45
+        showReset: true
+        onMoved: sliderValue => rootSettings?.setSetting("unfocused", "inactiveOpacity", Math.round(sliderValue))
+    }
+
     NToggle {
+        visible: rootSettings?.isVisibleByConditions(["showSlots"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.showUnfocusedFill.label")
         description: rootSettings?.pluginApi?.tr("settings.showUnfocusedFill.desc")
@@ -131,6 +215,7 @@ ColumnLayout {
     }
 
     NColorChoice {
+        visible: rootSettings?.isVisibleByConditions(["showSlots", "showUnfocusedFill"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.unfocusedFillColor.label")
         description: rootSettings?.pluginApi?.tr("settings.unfocusedFillColor.desc")
@@ -139,6 +224,7 @@ ColumnLayout {
     }
 
     NValueSlider {
+        visible: rootSettings?.isVisibleByConditions(["showSlots", "showUnfocusedFill"]) ?? true
         label: rootSettings?.pluginApi?.tr("settings.unfocusedFillOpacity.label")
         description: rootSettings?.pluginApi?.tr("settings.unfocusedFillOpacity.desc")
         from: 0
@@ -152,6 +238,7 @@ ColumnLayout {
     }
 
     NToggle {
+        visible: rootSettings?.isVisibleByConditions(["showSlots"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.showUnfocusedBorder.label")
         description: rootSettings?.pluginApi?.tr("settings.showUnfocusedBorder.desc")
@@ -161,6 +248,7 @@ ColumnLayout {
     }
 
     NColorChoice {
+        visible: rootSettings?.isVisibleByConditions(["showSlots", "showUnfocusedBorder"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.unfocusedBorderColor.label")
         description: rootSettings?.pluginApi?.tr("settings.unfocusedBorderColor.desc")
@@ -169,6 +257,7 @@ ColumnLayout {
     }
 
     NValueSlider {
+        visible: rootSettings?.isVisibleByConditions(["showSlots", "showUnfocusedBorder"]) ?? true
         label: rootSettings?.pluginApi?.tr("settings.unfocusedBorderOpacity.label")
         description: rootSettings?.pluginApi?.tr("settings.unfocusedBorderOpacity.desc")
         from: 0
@@ -182,6 +271,7 @@ ColumnLayout {
     }
 
     NColorChoice {
+        visible: rootSettings?.isVisibleByConditions(["showSlots"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.unfocusedTextColor.label")
         description: rootSettings?.pluginApi?.tr("settings.unfocusedTextColor.desc")
@@ -189,17 +279,10 @@ ColumnLayout {
         onSelected: key => rootSettings?.setSetting("unfocused", "textColor", key)
     }
 
-    NValueSlider {
-        label: rootSettings?.pluginApi?.tr("settings.inactiveOpacity.label")
-        description: rootSettings?.pluginApi?.tr("settings.inactiveOpacity.desc")
-        from: 10
-        to: 100
-        stepSize: 1
-        value: rootSettings?.settingValue("unfocused", "inactiveOpacity") ?? 45
-        text: Math.round(value) + "%"
-        defaultValue: rootSettings?.defaultValue("unfocused", "inactiveOpacity") ?? 45
-        showReset: true
-        onMoved: sliderValue => rootSettings?.setSetting("unfocused", "inactiveOpacity", Math.round(sliderValue))
+    NLabel {
+        visible: !inactiveWindowSectionVisible
+        description: rootSettings?.pluginApi?.tr("settings.emptySectionNote")
+        descriptionColor: Color.mOnSurfaceVariant
     }
 
     NHeader {
@@ -210,6 +293,7 @@ ColumnLayout {
     NDivider {}
 
     NColorChoice {
+        visible: rootSettings?.isVisibleByConditions(["showSlots"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.hoverFillColor.label")
         description: rootSettings?.pluginApi?.tr("settings.hoverFillColor.desc")
@@ -218,6 +302,7 @@ ColumnLayout {
     }
 
     NValueSlider {
+        visible: rootSettings?.isVisibleByConditions(["showSlots"]) ?? true
         label: rootSettings?.pluginApi?.tr("settings.hoverFillOpacity.label")
         description: rootSettings?.pluginApi?.tr("settings.hoverFillOpacity.desc")
         from: 0
@@ -231,6 +316,7 @@ ColumnLayout {
     }
 
     NToggle {
+        visible: rootSettings?.isVisibleByConditions(["showSlots"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.showHoverBorder.label")
         description: rootSettings?.pluginApi?.tr("settings.showHoverBorder.desc")
@@ -240,6 +326,7 @@ ColumnLayout {
     }
 
     NColorChoice {
+        visible: rootSettings?.isVisibleByConditions(["showSlots", "showHoverBorder"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.hoverBorderColor.label")
         description: rootSettings?.pluginApi?.tr("settings.hoverBorderColor.desc")
@@ -248,6 +335,7 @@ ColumnLayout {
     }
 
     NValueSlider {
+        visible: rootSettings?.isVisibleByConditions(["showSlots", "showHoverBorder"]) ?? true
         label: rootSettings?.pluginApi?.tr("settings.hoverBorderOpacity.label")
         description: rootSettings?.pluginApi?.tr("settings.hoverBorderOpacity.desc")
         from: 0
@@ -261,6 +349,7 @@ ColumnLayout {
     }
 
     NColorChoice {
+        visible: rootSettings?.isVisibleByConditions(["showSlots"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.hoverTextColor.label")
         description: rootSettings?.pluginApi?.tr("settings.hoverTextColor.desc")
@@ -269,6 +358,7 @@ ColumnLayout {
     }
 
     NValueSlider {
+        visible: rootSettings?.isVisibleByConditions(["showSlots"]) ?? true
         label: rootSettings?.pluginApi?.tr("settings.hoverScalePercent.label")
         description: rootSettings?.pluginApi?.tr("settings.hoverScalePercent.desc")
         from: 0
@@ -282,6 +372,7 @@ ColumnLayout {
     }
 
     NValueSlider {
+        visible: rootSettings?.isVisibleByConditions(["showSlots"]) ?? true
         label: rootSettings?.pluginApi?.tr("settings.hoverTransitionDurationMs.label")
         description: rootSettings?.pluginApi?.tr("settings.hoverTransitionDurationMs.desc")
         from: 0
@@ -294,6 +385,12 @@ ColumnLayout {
         onMoved: sliderValue => rootSettings?.setSetting("hover", "transitionDurationMs", Math.round(sliderValue))
     }
 
+    NLabel {
+        visible: !hoveredWindowSectionVisible
+        description: rootSettings?.pluginApi?.tr("settings.emptySectionNote")
+        descriptionColor: Color.mOnSurfaceVariant
+    }
+
     NHeader {
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.section.workspaceIndicatorColors.label")
@@ -302,6 +399,7 @@ ColumnLayout {
     NDivider {}
 
     NColorChoice {
+        visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorEnabled"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorTextColor.label")
         description: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorTextColor.desc")
@@ -310,6 +408,7 @@ ColumnLayout {
     }
 
     NValueSlider {
+        visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorEnabled"]) ?? true
         label: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorOpacity.label")
         description: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorOpacity.desc")
         from: 0
@@ -322,6 +421,12 @@ ColumnLayout {
         onMoved: sliderValue => rootSettings?.setSetting("workspaceIndicator", "opacity", Math.round(sliderValue))
     }
 
+    NLabel {
+        visible: !workspaceIndicatorColorsSectionVisible
+        description: rootSettings?.pluginApi?.tr("settings.emptySectionNote")
+        descriptionColor: Color.mOnSurfaceVariant
+    }
+
     NHeader {
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.section.indicators.label")
@@ -329,7 +434,42 @@ ColumnLayout {
     }
     NDivider {}
 
+    NToggle {
+        Layout.fillWidth: true
+        label: rootSettings?.pluginApi?.tr("settings.showTrackLine.label")
+        description: rootSettings?.pluginApi?.tr("settings.showTrackLine.desc")
+        checked: rootSettings?.settingValue("indicators", "showTrackLine") ?? true
+        onToggled: checked => rootSettings?.setSetting("indicators", "showTrackLine", checked)
+        defaultValue: rootSettings?.defaultValue("indicators", "showTrackLine") ?? true
+    }
+
+    NComboBox {
+        visible: rootSettings?.isVisibleByConditions(["showTrackLine"]) ?? true
+        Layout.fillWidth: true
+        label: rootSettings?.pluginApi?.tr("settings.trackLinePosition.label")
+        description: rootSettings?.pluginApi?.tr("settings.trackLinePosition.desc")
+        model: rootSettings?.trackLinePositionModel
+        currentKey: rootSettings?.settingValue("indicators", "trackLinePosition") ?? "end"
+        defaultValue: rootSettings?.defaultValue("indicators", "trackLinePosition") ?? "end"
+        onSelected: key => rootSettings?.setSetting("indicators", "trackLinePosition", key)
+    }
+
     NValueSlider {
+        visible: rootSettings?.isVisibleByConditions(["showTrackLine"]) ?? true
+        label: rootSettings?.pluginApi?.tr("settings.trackLineThickness.label")
+        description: rootSettings?.pluginApi?.tr("settings.trackLineThickness.desc")
+        from: 1
+        to: 8
+        stepSize: 1
+        value: rootSettings?.settingValue("indicators", "trackLineThickness") ?? 2
+        text: Math.round(value) + " px"
+        defaultValue: rootSettings?.defaultValue("indicators", "trackLineThickness") ?? 2
+        showReset: true
+        onMoved: sliderValue => rootSettings?.setSetting("indicators", "trackLineThickness", Math.round(sliderValue))
+    }
+
+    NValueSlider {
+        visible: rootSettings?.isVisibleByConditions(["showTrackLine"]) ?? true
         label: rootSettings?.pluginApi?.tr("settings.trackOpacity.label")
         description: rootSettings?.pluginApi?.tr("settings.trackOpacity.desc")
         from: 0
@@ -343,6 +483,7 @@ ColumnLayout {
     }
 
     NColorChoice {
+        visible: rootSettings?.isVisibleByConditions(["showTrackLine"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.trackThumbColor.label")
         description: rootSettings?.pluginApi?.tr("settings.trackThumbColor.desc")
@@ -350,7 +491,18 @@ ColumnLayout {
         onSelected: key => rootSettings?.setSetting("indicators", "trackThumbColor", key)
     }
 
+    NToggle {
+        visible: rootSettings?.isVisibleByConditions(["showTrackLine"]) ?? true
+        Layout.fillWidth: true
+        label: rootSettings?.pluginApi?.tr("settings.showFocusLine.label")
+        description: rootSettings?.pluginApi?.tr("settings.showFocusLine.desc")
+        checked: rootSettings?.settingValue("indicators", "showFocusLine") ?? true
+        onToggled: checked => rootSettings?.setSetting("indicators", "showFocusLine", checked)
+        defaultValue: rootSettings?.defaultValue("indicators", "showFocusLine") ?? true
+    }
+
     NColorChoice {
+        visible: rootSettings?.isVisibleByConditions(["showTrackLine", "showFocusLine"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.focusLineColor.label")
         description: rootSettings?.pluginApi?.tr("settings.focusLineColor.desc")
@@ -359,6 +511,7 @@ ColumnLayout {
     }
 
     NValueSlider {
+        visible: rootSettings?.isVisibleByConditions(["showTrackLine", "showFocusLine"]) ?? true
         label: rootSettings?.pluginApi?.tr("settings.focusLineOpacity.label")
         description: rootSettings?.pluginApi?.tr("settings.focusLineOpacity.desc")
         from: 0
@@ -369,5 +522,39 @@ ColumnLayout {
         defaultValue: rootSettings?.defaultValue("indicators", "focusLineOpacity") ?? 96
         showReset: true
         onMoved: sliderValue => rootSettings?.setSetting("indicators", "focusLineOpacity", Math.round(sliderValue))
+    }
+
+    NValueSlider {
+        visible: rootSettings?.isVisibleByConditions(["showTrackLine", "showFocusLine"]) ?? true
+        label: rootSettings?.pluginApi?.tr("settings.focusLineThickness.label")
+        description: rootSettings?.pluginApi?.tr("settings.focusLineThickness.desc")
+        from: 1
+        to: 6
+        stepSize: 1
+        value: rootSettings?.settingValue("indicators", "focusLineThickness") ?? 2
+        text: Math.round(value) + " px"
+        defaultValue: rootSettings?.defaultValue("indicators", "focusLineThickness") ?? 2
+        showReset: true
+        onMoved: sliderValue => rootSettings?.setSetting("indicators", "focusLineThickness", Math.round(sliderValue))
+    }
+
+    NValueSlider {
+        visible: rootSettings?.isVisibleByConditions(["showTrackLine", "showFocusLine"]) ?? true
+        label: rootSettings?.pluginApi?.tr("settings.focusLineAnimationMs.label")
+        description: rootSettings?.pluginApi?.tr("settings.focusLineAnimationMs.desc")
+        from: 0
+        to: 400
+        stepSize: 10
+        value: rootSettings?.settingValue("indicators", "focusLineAnimationMs") ?? 120
+        text: Math.round(value) + " ms"
+        defaultValue: rootSettings?.defaultValue("indicators", "focusLineAnimationMs") ?? 120
+        showReset: true
+        onMoved: sliderValue => rootSettings?.setSetting("indicators", "focusLineAnimationMs", Math.round(sliderValue))
+    }
+
+    NLabel {
+        visible: !indicatorsSectionVisible
+        description: rootSettings?.pluginApi?.tr("settings.emptySectionNote")
+        descriptionColor: Color.mOnSurfaceVariant
     }
 }

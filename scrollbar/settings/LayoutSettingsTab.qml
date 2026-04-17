@@ -9,6 +9,41 @@ ColumnLayout {
 
     property var rootSettings: null
 
+    readonly property bool slotSizeSectionVisible: rootSettings?.sectionHasVisibleSettings([
+        [],
+        ["showSlots"],
+        ["showSlots"],
+        ["showSlots"],
+        ["showSlots"],
+        []
+    ]) ?? true
+    readonly property bool iconsSectionVisible: rootSettings?.sectionHasVisibleSettings([
+        ["showSlots"],
+        ["showSlots", "showIcons"],
+        ["showSlots", "showIcons"],
+        ["showSlots", "showIcons"]
+    ]) ?? true
+    readonly property bool windowTitleSectionVisible: rootSettings?.sectionHasVisibleSettings([
+        ["showSlots"],
+        ["showSlots", "showTitle"],
+        ["showSlots", "showTitle"],
+        ["showSlots", "showTitle"]
+    ]) ?? true
+    readonly property bool workspaceIndicatorSectionVisible: rootSettings?.sectionHasVisibleSettings([
+        [],
+        ["workspaceIndicatorEnabled"],
+        ["workspaceIndicatorEnabled"],
+        ["workspaceIndicatorEnabled"],
+        ["workspaceIndicatorEnabled"],
+        ["workspaceIndicatorEnabled"],
+        ["workspaceIndicatorEnabled"]
+    ]) ?? true
+    readonly property bool edgeFadeSectionVisible: rootSettings?.sectionHasVisibleSettings([
+        [],
+        ["edgeFadeEnabled"],
+        ["edgeFadeEnabled"]
+    ]) ?? true
+
     Layout.fillWidth: true
     spacing: Style.marginXL
 
@@ -19,7 +54,17 @@ ColumnLayout {
     }
     NDivider {}
 
+    NToggle {
+        Layout.fillWidth: true
+        label: rootSettings?.pluginApi?.tr("settings.showSlots.label")
+        description: rootSettings?.pluginApi?.tr("settings.showSlots.desc")
+        checked: rootSettings?.settingValue("layout", "showSlots") ?? true
+        onToggled: checked => rootSettings?.setSetting("layout", "showSlots", checked)
+        defaultValue: rootSettings?.defaultValue("layout", "showSlots") ?? true
+    }
+
     NValueSlider {
+        visible: rootSettings?.isVisibleByConditions(["showSlots"]) ?? true
         label: rootSettings?.pluginApi?.tr("settings.slotWidth.label")
         description: rootSettings?.pluginApi?.tr("settings.slotWidth.desc")
         from: 72
@@ -30,6 +75,48 @@ ColumnLayout {
         defaultValue: rootSettings?.defaultValue("layout", "slotWidth") ?? 112
         showReset: true
         onMoved: sliderValue => rootSettings?.setSetting("layout", "slotWidth", Math.round(sliderValue))
+    }
+
+    NValueSlider {
+        visible: rootSettings?.isVisibleByConditions(["showSlots"]) ?? true
+        label: rootSettings?.pluginApi?.tr("settings.slotSpacingUnits.label")
+        description: rootSettings?.pluginApi?.tr("settings.slotSpacingUnits.desc")
+        from: 0
+        to: 6
+        stepSize: 1
+        value: rootSettings?.settingValue("layout", "slotSpacingUnits") ?? 1
+        text: Math.round(value).toString()
+        defaultValue: rootSettings?.defaultValue("layout", "slotSpacingUnits") ?? 1
+        showReset: true
+        onMoved: sliderValue => rootSettings?.setSetting("layout", "slotSpacingUnits", Math.round(sliderValue))
+    }
+
+    NValueSlider {
+        visible: rootSettings?.isVisibleByConditions(["showSlots"]) ?? true
+        label: rootSettings?.pluginApi?.tr("settings.slotCapsuleScale.label")
+        description: rootSettings?.pluginApi?.tr("settings.slotCapsuleScale.desc")
+        from: 0.3
+        to: 1.5
+        stepSize: 0.05
+        value: rootSettings?.settingValue("layout", "slotCapsuleScale") ?? 1.0
+        text: Math.round(value * 100) + "%"
+        defaultValue: rootSettings?.defaultValue("layout", "slotCapsuleScale") ?? 1.0
+        showReset: true
+        onMoved: sliderValue => rootSettings?.setSetting("layout", "slotCapsuleScale", Math.round(sliderValue * 100) / 100)
+    }
+
+    NValueSlider {
+        visible: rootSettings?.isVisibleByConditions(["showSlots"]) ?? true
+        label: rootSettings?.pluginApi?.tr("settings.radiusScale.label")
+        description: rootSettings?.pluginApi?.tr("settings.radiusScale.desc")
+        from: 0
+        to: 1
+        stepSize: 0.05
+        value: rootSettings?.settingValue("layout", "radiusScale") ?? 1.0
+        text: Math.round(value * 100) + "%"
+        defaultValue: rootSettings?.defaultValue("layout", "radiusScale") ?? 1.0
+        showReset: true
+        onMoved: sliderValue => rootSettings?.setSetting("layout", "radiusScale", Math.round(sliderValue * 100) / 100)
     }
 
     NValueSlider {
@@ -45,52 +132,10 @@ ColumnLayout {
         onMoved: sliderValue => rootSettings?.setSetting("layout", "maxWidgetWidth", Math.round(sliderValue))
     }
 
-    NToggle {
-        Layout.fillWidth: true
-        label: rootSettings?.pluginApi?.tr("settings.showSlots.label")
-        description: rootSettings?.pluginApi?.tr("settings.showSlots.desc")
-        checked: rootSettings?.settingValue("layout", "showSlots") ?? true
-        onToggled: checked => rootSettings?.setSetting("layout", "showSlots", checked)
-        defaultValue: rootSettings?.defaultValue("layout", "showSlots") ?? true
-    }
-
-    NValueSlider {
-        label: rootSettings?.pluginApi?.tr("settings.slotSpacingUnits.label")
-        description: rootSettings?.pluginApi?.tr("settings.slotSpacingUnits.desc")
-        from: 0
-        to: 6
-        stepSize: 1
-        value: rootSettings?.settingValue("layout", "slotSpacingUnits") ?? 1
-        text: Math.round(value).toString()
-        defaultValue: rootSettings?.defaultValue("layout", "slotSpacingUnits") ?? 1
-        showReset: true
-        onMoved: sliderValue => rootSettings?.setSetting("layout", "slotSpacingUnits", Math.round(sliderValue))
-    }
-
-    NValueSlider {
-        label: rootSettings?.pluginApi?.tr("settings.radiusScale.label")
-        description: rootSettings?.pluginApi?.tr("settings.radiusScale.desc")
-        from: 0
-        to: 1
-        stepSize: 0.05
-        value: rootSettings?.settingValue("layout", "radiusScale") ?? 1.0
-        text: Math.round(value * 100) + "%"
-        defaultValue: rootSettings?.defaultValue("layout", "radiusScale") ?? 1.0
-        showReset: true
-        onMoved: sliderValue => rootSettings?.setSetting("layout", "radiusScale", Math.round(sliderValue * 100) / 100)
-    }
-
-    NValueSlider {
-        label: rootSettings?.pluginApi?.tr("settings.slotCapsuleScale.label")
-        description: rootSettings?.pluginApi?.tr("settings.slotCapsuleScale.desc")
-        from: 0.3
-        to: 1.5
-        stepSize: 0.05
-        value: rootSettings?.settingValue("layout", "slotCapsuleScale") ?? 1.0
-        text: Math.round(value * 100) + "%"
-        defaultValue: rootSettings?.defaultValue("layout", "slotCapsuleScale") ?? 1.0
-        showReset: true
-        onMoved: sliderValue => rootSettings?.setSetting("layout", "slotCapsuleScale", Math.round(sliderValue * 100) / 100)
+    NLabel {
+        visible: !slotSizeSectionVisible
+        description: rootSettings?.pluginApi?.tr("settings.emptySectionNote")
+        descriptionColor: Color.mOnSurfaceVariant
     }
 
     NHeader {
@@ -101,6 +146,7 @@ ColumnLayout {
     NDivider {}
 
     NToggle {
+        visible: rootSettings?.isVisibleByConditions(["showSlots"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.showIcons.label")
         description: rootSettings?.pluginApi?.tr("settings.showIcons.desc")
@@ -110,6 +156,7 @@ ColumnLayout {
     }
 
     NValueSlider {
+        visible: rootSettings?.isVisibleByConditions(["showSlots", "showIcons"]) ?? true
         label: rootSettings?.pluginApi?.tr("settings.iconScale.label")
         description: rootSettings?.pluginApi?.tr("settings.iconScale.desc")
         from: 0.5
@@ -123,6 +170,7 @@ ColumnLayout {
     }
 
     NColorChoice {
+        visible: rootSettings?.isVisibleByConditions(["showSlots", "showIcons"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.iconTintColor.label")
         description: rootSettings?.pluginApi?.tr("settings.iconTintColor.desc")
@@ -131,6 +179,7 @@ ColumnLayout {
     }
 
     NValueSlider {
+        visible: rootSettings?.isVisibleByConditions(["showSlots", "showIcons"]) ?? true
         label: rootSettings?.pluginApi?.tr("settings.iconTintOpacity.label")
         description: rootSettings?.pluginApi?.tr("settings.iconTintOpacity.desc")
         from: 0
@@ -143,6 +192,12 @@ ColumnLayout {
         onMoved: sliderValue => rootSettings?.setSetting("icons", "iconTintOpacity", Math.round(sliderValue))
     }
 
+    NLabel {
+        visible: !iconsSectionVisible
+        description: rootSettings?.pluginApi?.tr("settings.emptySectionNote")
+        descriptionColor: Color.mOnSurfaceVariant
+    }
+
     NHeader {
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.section.windowTitle.label")
@@ -151,6 +206,7 @@ ColumnLayout {
     NDivider {}
 
     NToggle {
+        visible: rootSettings?.isVisibleByConditions(["showSlots"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.showTitle.label")
         description: rootSettings?.pluginApi?.tr("settings.showTitle.desc")
@@ -160,6 +216,7 @@ ColumnLayout {
     }
 
     NSearchableComboBox {
+        visible: rootSettings?.isVisibleByConditions(["showSlots", "showTitle"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.titleFontFamily.label")
         description: rootSettings?.pluginApi?.tr("settings.titleFontFamily.desc")
@@ -170,6 +227,7 @@ ColumnLayout {
     }
 
     NValueSlider {
+        visible: rootSettings?.isVisibleByConditions(["showSlots", "showTitle"]) ?? true
         label: rootSettings?.pluginApi?.tr("settings.titleFontSize.label")
         description: rootSettings?.pluginApi?.tr("settings.titleFontSize.desc")
         from: 0
@@ -183,6 +241,7 @@ ColumnLayout {
     }
 
     NSearchableComboBox {
+        visible: rootSettings?.isVisibleByConditions(["showSlots", "showTitle"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.titleFontWeight.label")
         description: rootSettings?.pluginApi?.tr("settings.titleFontWeight.desc")
@@ -190,6 +249,12 @@ ColumnLayout {
         currentKey: rootSettings?.settingValue("title", "titleFontWeight") ?? "default"
         defaultValue: rootSettings?.defaultValue("title", "titleFontWeight") ?? "default"
         onSelected: key => rootSettings?.setSetting("title", "titleFontWeight", key)
+    }
+
+    NLabel {
+        visible: !windowTitleSectionVisible
+        description: rootSettings?.pluginApi?.tr("settings.emptySectionNote")
+        descriptionColor: Color.mOnSurfaceVariant
     }
 
     NHeader {
@@ -209,6 +274,7 @@ ColumnLayout {
     }
 
     NComboBox {
+        visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorEnabled"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorLabelMode.label")
         description: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorLabelMode.desc")
@@ -219,6 +285,7 @@ ColumnLayout {
     }
 
     NComboBox {
+        visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorEnabled"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorPosition.label")
         description: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorPosition.desc")
@@ -229,6 +296,7 @@ ColumnLayout {
     }
 
     NSearchableComboBox {
+        visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorEnabled"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorFontFamily.label")
         description: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorFontFamily.desc")
@@ -239,6 +307,7 @@ ColumnLayout {
     }
 
     NValueSlider {
+        visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorEnabled"]) ?? true
         label: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorFontSize.label")
         description: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorFontSize.desc")
         from: 0
@@ -252,6 +321,7 @@ ColumnLayout {
     }
 
     NValueSlider {
+        visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorEnabled"]) ?? true
         label: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorSpacing.label")
         description: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorSpacing.desc")
         from: 0
@@ -265,6 +335,7 @@ ColumnLayout {
     }
 
     NValueSlider {
+        visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorEnabled"]) ?? true
         label: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorPadding.label")
         description: rootSettings?.pluginApi?.tr("settings.workspaceIndicatorPadding.desc")
         from: 0
@@ -275,6 +346,12 @@ ColumnLayout {
         defaultValue: rootSettings?.defaultValue("workspaceIndicator", "padding") ?? 0
         showReset: true
         onMoved: sliderValue => rootSettings?.setSetting("workspaceIndicator", "padding", Math.round(sliderValue))
+    }
+
+    NLabel {
+        visible: !workspaceIndicatorSectionVisible
+        description: rootSettings?.pluginApi?.tr("settings.emptySectionNote")
+        descriptionColor: Color.mOnSurfaceVariant
     }
 
     NHeader {
@@ -290,10 +367,11 @@ ColumnLayout {
         description: rootSettings?.pluginApi?.tr("settings.edgeFadeEnabled.desc")
         checked: rootSettings?.settingValue("edgeFade", "enabled") ?? true
         defaultValue: rootSettings?.defaultValue("edgeFade", "enabled") ?? true
-        onToggled: rootSettings?.setSetting("edgeFade", "enabled", checked)
+        onToggled: checked => rootSettings?.setSetting("edgeFade", "enabled", checked)
     }
 
     NValueSlider {
+        visible: rootSettings?.isVisibleByConditions(["edgeFadeEnabled"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.edgeFadeSize.label")
         description: rootSettings?.pluginApi?.tr("settings.edgeFadeSize.desc")
@@ -308,6 +386,7 @@ ColumnLayout {
     }
 
     NValueSlider {
+        visible: rootSettings?.isVisibleByConditions(["edgeFadeEnabled"]) ?? true
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.edgeFadeOpacity.label")
         description: rootSettings?.pluginApi?.tr("settings.edgeFadeOpacity.desc")
@@ -319,5 +398,11 @@ ColumnLayout {
         defaultValue: rootSettings?.defaultValue("edgeFade", "fadeOpacity") ?? 100
         showReset: true
         onMoved: sliderValue => rootSettings?.setSetting("edgeFade", "fadeOpacity", Math.round(sliderValue))
+    }
+
+    NLabel {
+        visible: !edgeFadeSectionVisible
+        description: rootSettings?.pluginApi?.tr("settings.emptySectionNote")
+        descriptionColor: Color.mOnSurfaceVariant
     }
 }

@@ -93,7 +93,7 @@ Item {
     readonly property real edgeFadeOpacity: Math.max(0, Math.min(1, settingValue("edgeFade", "fadeOpacity", "edgeFadeOpacity", 100) / 100))
     readonly property bool showTrackLine: settingValue("indicators", "showTrackLine", "showTrackLine", true)
     readonly property string trackLinePosition: settingValue("indicators", "trackLinePosition", "trackLinePosition", "end")
-    readonly property int trackSegmentGap: Math.max(1, Math.min(5, Math.round(settingValue("indicators", "trackSegmentGap", "trackSegmentGap", 1))))
+    readonly property int trackLineThickness: Math.max(1, Math.min(8, Math.round(settingValue("indicators", "trackLineThickness", "trackLineThickness", 2))))
     readonly property string trackThumbColorKey: settingValue("indicators", "trackThumbColor", "trackThumbColor", "primary")
     readonly property color trackThumbColor: Color.resolveColorKey(trackThumbColorKey)
     readonly property real inactiveOpacity: Math.max(0.05, Math.min(1, settingValue("unfocused", "inactiveOpacity", "inactiveOpacity", 45) / 100))
@@ -203,7 +203,7 @@ Item {
         return widgetSize - indicatorSpace;
     }
     readonly property real slotCrossExtent: scaledCapsuleHeight
-    readonly property real trackThickness: Math.max(1, Math.round(Style.borderS))
+    readonly property real trackThickness: trackLineThickness
     readonly property int itemSize: Style.toOdd(slotCrossExtent * Math.max(0.1, iconScale))
     readonly property int effectiveSlotLength: isVertical ? slotLength : (showTitle ? slotLength : Math.round(itemSize + 2 * Math.max(Style.marginM, Style.marginS * slotCapsuleScale)))
     readonly property real paintOverflowInset: hasWindow ? Math.max(0, Math.ceil(Math.max(effectiveSlotLength, slotCrossExtent) * (maxVisualScaleMultiplier - 1.0) / 2)) : 0
@@ -496,21 +496,18 @@ Item {
             return null;
 
         const point = item.mapToItem(container, 0, 0);
-        const gap = Math.max(0, Math.round(trackSegmentGap));
-        const startInset = Math.floor(gap / 2);
-        const endInset = Math.ceil(gap / 2);
 
         if (isVertical) {
-            const start = Math.round(point.y + startInset);
-            const length = Math.max(1, Math.round(item.height - startInset - endInset));
+            const start = Math.round(point.y);
+            const length = Math.max(1, Math.round(item.height));
             return {
                 "offset": start,
                 "length": length
             };
         }
 
-        const start = Math.round(point.x + startInset);
-        const length = Math.max(1, Math.round(item.width - startInset - endInset));
+        const start = Math.round(point.x);
+        const length = Math.max(1, Math.round(item.width));
         return {
             "offset": start,
             "length": length
@@ -672,7 +669,7 @@ Item {
     onContentHeightChanged: Qt.callLater(clampScrollPosition)
     onLiveRevisionChanged: Qt.callLater(updateFocusedIndicator)
     onShowFocusLineChanged: Qt.callLater(updateFocusedIndicator)
-    onTrackSegmentGapChanged: Qt.callLater(updateFocusedIndicator)
+    onTrackLineThicknessChanged: Qt.callLater(updateFocusedIndicator)
 
     Component.onCompleted: {
         rebuildCombinedModel("init");

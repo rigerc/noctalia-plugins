@@ -10,24 +10,26 @@ Item {
     clip: true
     visible: (barRoot?.showTrackLine ?? false) || (barRoot?.showFocusLine ?? false)
 
-    Repeater {
-        model: (barRoot?.showTrackLine ?? false) ? (barRoot?.combinedModel ?? []) : []
+    Rectangle {
+        visible: (barRoot?.showTrackLine ?? false) && !(barRoot?.isVertical ?? false)
+        x: 0
+        y: barRoot?.indicatorCrossOffset(height) ?? 0
+        width: parent.width
+        height: barRoot?.trackThickness ?? 1
+        radius: height / 2
+        color: Qt.alpha(Color.mOutline, barRoot?.trackOpacity ?? 1)
+        z: 0
+    }
 
-        Rectangle {
-            required property int index
-
-            readonly property var geometry: barRoot?.indicatorGeometryForIndex(index) ?? null
-            readonly property bool vertical: barRoot?.isVertical ?? false
-
-            visible: geometry !== null
-            x: vertical ? (barRoot?.indicatorCrossOffset(width) ?? 0) : (geometry ? geometry.offset - (barRoot?.flickableRef?.contentX ?? 0) : 0)
-            y: vertical ? (geometry ? geometry.offset - (barRoot?.flickableRef?.contentY ?? 0) : 0) : (barRoot?.indicatorCrossOffset(height) ?? 0)
-            width: vertical ? (barRoot?.trackThickness ?? 1) : (geometry ? geometry.length : 0)
-            height: vertical ? (geometry ? geometry.length : 0) : (barRoot?.trackThickness ?? 1)
-            radius: vertical ? width / 2 : height / 2
-            color: Qt.alpha(Color.mOutline, barRoot?.trackOpacity ?? 1)
-            z: 0
-        }
+    Rectangle {
+        visible: (barRoot?.showTrackLine ?? false) && (barRoot?.isVertical ?? false)
+        x: barRoot?.indicatorCrossOffset(width) ?? 0
+        y: 0
+        width: barRoot?.trackThickness ?? 1
+        height: parent.height
+        radius: width / 2
+        color: Qt.alpha(Color.mOutline, barRoot?.trackOpacity ?? 1)
+        z: 0
     }
 
     Rectangle {

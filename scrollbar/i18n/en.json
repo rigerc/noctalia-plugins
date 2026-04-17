@@ -28,6 +28,7 @@
       "colors": "Colors",
       "behavior": "Behavior"
     },
+    "emptySectionNote": "No settings in this section are available with the current selections.",
     "section": {
       "slotSize": {
         "label": "Slot Size & Spacing",
@@ -182,9 +183,9 @@
       "label": "Track line position",
       "desc": "Place the track and focus line at the top, center, or bottom on horizontal bars, and left, center, or right on vertical bars."
     },
-    "trackSegmentGap": {
-      "label": "Track segment gap",
-      "desc": "Gap between each per-window track segment."
+    "trackLineThickness": {
+      "label": "Track line thickness",
+      "desc": "Thickness of the passive track line and scrollbar thumb in pixels."
     },
     "trackOpacity": {
       "label": "Track opacity",
