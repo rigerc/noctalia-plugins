@@ -82,6 +82,8 @@ Item {
     readonly property bool onlyActiveWorkspaces: settingValue("filtering", "onlyActiveWorkspaces", "onlyActiveWorkspaces", true)
     readonly property bool enableReorder: settingValue("interaction", "enableReorder", "enableReorder", true)
     readonly property bool debugLogging: settingValue("advanced", "debugLogging", "debugLogging", false)
+    readonly property string widgetSizeMode: settingValue("layout", "widgetSizeMode", "widgetSizeMode", "dynamic")
+    readonly property int fixedWidgetSize: Math.max(120, Math.round(settingValue("layout", "fixedWidgetSize", "fixedWidgetSize", 360)))
     readonly property int maxWidgetWidthPercent: settingValue("layout", "maxWidgetWidth", "maxWidgetWidth", 40)
     readonly property bool showSlots: settingValue("layout", "showSlots", "showSlots", true)
     readonly property real baseSlotLength: settingValue("layout", "slotWidth", "slotWidth", 112)
@@ -250,6 +252,8 @@ Item {
     readonly property real layoutImplicitWidth: layoutInnerWidth + workspaceIndicatorPadding * 2
     readonly property real layoutImplicitHeight: layoutInnerHeight + workspaceIndicatorPadding * 2
     readonly property real workspaceSlideDistance: Math.max(Style.marginXL, Math.round(barFontSize * 1.4))
+    readonly property bool useFixedWidgetSize: widgetSizeMode === "fixed"
+    readonly property real scaledFixedWidgetExtent: Math.round(fixedWidgetSize * Style.uiScaleRatio)
 
     readonly property real maxWidgetExtent: {
         if (!screen || maxWidgetWidthPercent <= 0)
@@ -260,10 +264,21 @@ Item {
         const available = isVertical ? (screen.height - margin * 2) : (screen.width - margin * 2);
         return Math.round(available * (maxWidgetWidthPercent / 100));
     }
+    readonly property real fixedWidgetExtent: {
+        if (!screen)
+            return 0;
+
+        const barFloating = Settings.data.bar.barType === "floating";
+        const margin = barFloating ? Math.ceil(Settings.data.bar.marginHorizontal) : 0;
+        const available = isVertical ? (screen.height - margin * 2) : (screen.width - margin * 2);
+        return Math.max(0, Math.min(scaledFixedWidgetExtent, available));
+    }
 
     readonly property real viewportExtent: {
         if (logicalContentExtent <= 0)
             return 0;
+        if (useFixedWidgetSize && fixedWidgetExtent > 0)
+            return fixedWidgetExtent;
         if (maxWidgetExtent > 0)
             return Math.min(logicalContentExtent, maxWidgetExtent);
         return logicalContentExtent;

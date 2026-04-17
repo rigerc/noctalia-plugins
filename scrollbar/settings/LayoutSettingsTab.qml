@@ -11,6 +11,9 @@ ColumnLayout {
 
     readonly property bool slotSizeSectionVisible: rootSettings?.sectionHasVisibleSettings([
         [],
+        [],
+        ["widgetSizeModeFixed"],
+        ["widgetSizeModeDynamic"],
         ["showSlots"],
         ["showSlots"],
         ["showSlots"],
@@ -61,6 +64,30 @@ ColumnLayout {
         checked: rootSettings?.settingValue("layout", "showSlots") ?? true
         onToggled: checked => rootSettings?.setSetting("layout", "showSlots", checked)
         defaultValue: rootSettings?.defaultValue("layout", "showSlots") ?? true
+    }
+
+    NComboBox {
+        Layout.fillWidth: true
+        label: rootSettings?.pluginApi?.tr("settings.widgetSizeMode.label")
+        description: rootSettings?.pluginApi?.tr("settings.widgetSizeMode.desc")
+        model: rootSettings?.widgetSizeModeModel
+        currentKey: rootSettings?.settingValue("layout", "widgetSizeMode") ?? "dynamic"
+        defaultValue: rootSettings?.defaultValue("layout", "widgetSizeMode") ?? "dynamic"
+        onSelected: key => rootSettings?.setSetting("layout", "widgetSizeMode", key)
+    }
+
+    NValueSlider {
+        visible: rootSettings?.isVisibleByConditions(["widgetSizeModeFixed"]) ?? false
+        label: rootSettings?.pluginApi?.tr("settings.fixedWidgetSize.label")
+        description: rootSettings?.pluginApi?.tr("settings.fixedWidgetSize.desc")
+        from: 120
+        to: 1200
+        stepSize: 8
+        value: rootSettings?.settingValue("layout", "fixedWidgetSize") ?? 360
+        text: Math.round(value) + " px"
+        defaultValue: rootSettings?.defaultValue("layout", "fixedWidgetSize") ?? 360
+        showReset: true
+        onMoved: sliderValue => rootSettings?.setSetting("layout", "fixedWidgetSize", Math.round(sliderValue))
     }
 
     NValueSlider {
@@ -120,6 +147,7 @@ ColumnLayout {
     }
 
     NValueSlider {
+        visible: rootSettings?.isVisibleByConditions(["widgetSizeModeDynamic"]) ?? true
         label: rootSettings?.pluginApi?.tr("settings.maxWidgetWidth.label")
         description: rootSettings?.pluginApi?.tr("settings.maxWidgetWidth.desc")
         from: 20

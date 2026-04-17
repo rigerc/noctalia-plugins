@@ -20,7 +20,9 @@
     "workspaceAnimationVertical": "Vertical",
     "trackLinePositionStart": "Top / Left",
     "trackLinePositionCenter": "Center",
-    "trackLinePositionEnd": "Bottom / Right"
+    "trackLinePositionEnd": "Bottom / Right",
+    "widgetSizeModeDynamic": "Dynamic",
+    "widgetSizeModeFixed": "Fixed"
   },
   "settings": {
     "tabs": {
@@ -111,9 +113,17 @@
       "label": "Debug logging",
       "desc": "Write model refresh, focus, and interaction details to the shell log."
     },
+    "widgetSizeMode": {
+      "label": "Widget size mode",
+      "desc": "Choose whether the widget shrinks to content with a maximum cap or keeps a fixed visible size."
+    },
+    "fixedWidgetSize": {
+      "label": "Fixed widget size",
+      "desc": "Visible size of the widget along the strip axis. Horizontal bars use width; vertical bars use height."
+    },
     "maxWidgetWidth": {
       "label": "Max widget width",
-      "desc": "Maximum percentage of the bar this strip may occupy before it starts clipping and fading."
+      "desc": "Maximum percentage of the bar this strip may occupy in dynamic mode before it starts clipping and fading."
     },
     "showSlots": {
       "label": "Show slots",

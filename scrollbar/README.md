@@ -32,11 +32,13 @@ The bar is not manually scrollable — it only moves when focus changes, so its 
 | Key | Label | Description | Condition |
 |-----|-------|-------------|-----------|
 | `showSlots` | Show slots | Render the window slot capsules and their contents. | |
+| `widgetSizeMode` | Widget size mode | Choose whether the widget shrinks to content with a cap or keeps a fixed visible size. | |
+| `fixedWidgetSize` | Fixed widget size | Visible size of the widget along the strip axis in pixels. Horizontal bars use width; vertical bars use height. | `widgetSizeMode = fixed` |
 | `slotWidth` | Slot width | Fixed size for each window slot along the strip axis. | `showSlots` |
 | `slotSpacingUnits` | Slot spacing | Gap between adjacent window slots. | `showSlots` |
 | `slotCapsuleScale` | Capsule height scale | Scale the slot capsule height independently of the track line. | `showSlots` |
 | `radiusScale` | Corner roundness | Scale the slot corner radius. | `showSlots` |
-| `maxWidgetWidth` | Max widget width | Maximum percentage of the bar this strip may occupy before clipping and fading. | |
+| `maxWidgetWidth` | Max widget width | Maximum percentage of the bar this strip may occupy in dynamic mode before clipping and fading. | `widgetSizeMode = dynamic` |
 
 ### Icons
 *Application icon display and tinting.*

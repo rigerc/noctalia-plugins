@@ -82,6 +82,16 @@ ColumnLayout {
             "name": pluginApi?.tr("options.trackLinePositionEnd")
         }
     ]
+    readonly property var widgetSizeModeModel: [
+        {
+            "key": "dynamic",
+            "name": pluginApi?.tr("options.widgetSizeModeDynamic")
+        },
+        {
+            "key": "fixed",
+            "name": pluginApi?.tr("options.widgetSizeModeFixed")
+        }
+    ]
     readonly property var defaultSettings: createSettingsSnapshot(defaults, ({}))
     property var editSettings: createSettingsSnapshot(pluginApi?.pluginSettings || ({}), defaults)
 
@@ -132,6 +142,8 @@ ColumnLayout {
                 "debugLogging": readSetting(primary, secondary, "advanced", "debugLogging", "debugLogging", false)
             },
             "layout": {
+                "widgetSizeMode": readSetting(primary, secondary, "layout", "widgetSizeMode", "widgetSizeMode", "dynamic"),
+                "fixedWidgetSize": readSetting(primary, secondary, "layout", "fixedWidgetSize", "fixedWidgetSize", 360),
                 "maxWidgetWidth": readSetting(primary, secondary, "layout", "maxWidgetWidth", "maxWidgetWidth", 40),
                 "showSlots": readSetting(primary, secondary, "layout", "showSlots", "showSlots", true),
                 "slotWidth": readSetting(primary, secondary, "layout", "slotWidth", "slotWidth", 112),
@@ -247,6 +259,10 @@ ColumnLayout {
         switch (key) {
         case "showSlots":
             return settingValue("layout", "showSlots") ?? true;
+        case "widgetSizeModeDynamic":
+            return (settingValue("layout", "widgetSizeMode") ?? "dynamic") === "dynamic";
+        case "widgetSizeModeFixed":
+            return (settingValue("layout", "widgetSizeMode") ?? "dynamic") === "fixed";
         case "showIcons":
             return settingValue("icons", "showIcons") ?? true;
         case "showTitle":
