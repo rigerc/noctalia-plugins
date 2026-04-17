@@ -144,6 +144,9 @@ Item {
     property string lastTitleSignature: ""
     property string lastWorkspaceSignature: ""
     property var pendingTitleEntriesByKey: null
+    property bool startupFocusSyncPending: true
+    property int startupFocusSyncAttempts: 0
+    readonly property int startupFocusSyncMaxAttempts: 12
 
     function debugLog(message) {
         if (debugLogging)
@@ -422,6 +425,38 @@ Item {
         applyTitleEntries(nextTitleEntries, reason || "title-debounce");
     }
 
+    function hasStartupFocusSyncSettled() {
+        if (activeEntryKey !== "")
+            return true;
+        return allEntries.length === 0;
+    }
+
+    function stopStartupFocusSync(reason) {
+        if (!startupFocusSyncPending)
+            return;
+
+        startupFocusSyncPending = false;
+        startupFocusSyncTimer.stop();
+        debugLog("stopStartupFocusSync(" + (reason || "unknown") + ")");
+    }
+
+    function evaluateStartupFocusSync(reason) {
+        if (!startupFocusSyncPending)
+            return;
+
+        if (hasStartupFocusSyncSettled()) {
+            stopStartupFocusSync(reason || "settled");
+            return;
+        }
+
+        if (startupFocusSyncAttempts >= startupFocusSyncMaxAttempts) {
+            stopStartupFocusSync(reason || "max-attempts");
+            return;
+        }
+
+        startupFocusSyncTimer.restart();
+    }
+
     function applySnapshots(reason, forceStructural, windows, nextEntries) {
         const nextStructureSignature = getStructureSignature(nextEntries);
         const structuralChanged = (forceStructural === true) || pendingStructuralRefresh || nextStructureSignature !== lastStructureSignature;
@@ -474,6 +509,7 @@ Item {
         const windows = collectWindows();
         const nextEntries = buildStructuralEntries(windows);
         applySnapshots(reason, forceStructural, windows, nextEntries);
+        evaluateStartupFocusSync(reason);
     }
 
     function scheduleStructuralRefresh(reason) {
@@ -611,6 +647,7 @@ Item {
         Qt.callLater(function () {
             refreshWorkspaceSnapshot("init");
             updateSnapshots("init", true);
+            evaluateStartupFocusSync("init");
         });
     }
 
@@ -627,6 +664,19 @@ Item {
 
         function onActiveWindowChanged() {
             updateSnapshots("activeWindowChanged", false);
+        }
+    }
+
+    Timer {
+        id: startupFocusSyncTimer
+        interval: 75
+        repeat: false
+        onTriggered: {
+            if (!root.startupFocusSyncPending)
+                return;
+
+            root.startupFocusSyncAttempts += 1;
+            root.updateSnapshots("startup-focus-sync", false);
         }
     }
 
