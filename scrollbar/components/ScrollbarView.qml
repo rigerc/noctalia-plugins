@@ -149,7 +149,7 @@ Item {
     readonly property real edgeFadeOpacity: Math.max(0, Math.min(1, settingValue("edgeFade", "fadeOpacity", "edgeFadeOpacity", 100) / 100))
     readonly property bool showTrackLine: settingValue("indicators", "showTrackLine", "showTrackLine", true)
     readonly property string trackLinePosition: settingValue("indicators", "trackLinePosition", "trackLinePosition", "end")
-    readonly property int trackLineThickness: Math.max(1, Math.min(8, Math.round(settingValue("indicators", "trackLineThickness", "trackLineThickness", 2))))
+    readonly property int trackLineThickness: Math.max(1, Math.round(settingValue("indicators", "trackLineThickness", "trackLineThickness", 2)))
     readonly property string trackThumbColorKey: settingValue("indicators", "trackThumbColor", "trackThumbColor", "primary")
     readonly property color trackThumbColor: resolveSettingColor(trackThumbColorKey, Color.mPrimary)
     readonly property real inactiveOpacity: Math.max(0.05, Math.min(1, settingValue("unfocused", "inactiveOpacity", "inactiveOpacity", 45) / 100))

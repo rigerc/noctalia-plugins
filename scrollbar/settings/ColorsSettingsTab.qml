@@ -615,7 +615,7 @@ ColumnLayout {
                 label: rootSettings?.pluginApi?.tr("settings.trackLineThickness.label")
                 description: rootSettings?.pluginApi?.tr("settings.trackLineThickness.desc")
                 from: 1
-                to: 8
+                to: 50
                 stepSize: 1
                 value: rootSettings?.settingValue("indicators", "trackLineThickness") ?? 2
                 text: Math.round(value) + " px"
@@ -689,7 +689,7 @@ ColumnLayout {
                 label: rootSettings?.pluginApi?.tr("settings.focusLineThickness.label")
                 description: rootSettings?.pluginApi?.tr("settings.focusLineThickness.desc")
                 from: 1
-                to: 6
+                to: 50
                 stepSize: 1
                 value: rootSettings?.settingValue("indicators", "focusLineThickness") ?? 2
                 text: Math.round(value) + " px"
