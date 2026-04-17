@@ -39,7 +39,7 @@ Item {
         height: barRoot?.trackThickness ?? 1
         radius: height / 2
         width: Math.min(parent.width, Math.max(Style.marginXL, Math.round(((barRoot?.logicalViewportExtent ?? 0) / Math.max(1, barRoot?.logicalContentExtent ?? 1)) * parent.width)))
-        color: Qt.alpha(barRoot?.trackThumbColor ?? Color.mPrimary, 0.85)
+        color: Qt.alpha(barRoot?.trackThumbColor ?? Color.mPrimary, barRoot?.trackOpacity ?? 1)
         z: 1
     }
 
@@ -61,7 +61,7 @@ Item {
         width: barRoot?.trackThickness ?? 1
         radius: width / 2
         height: Math.min(parent.height, Math.max(Style.marginXL, Math.round(((barRoot?.logicalViewportExtent ?? 0) / Math.max(1, barRoot?.logicalContentExtent ?? 1)) * parent.height)))
-        color: Qt.alpha(barRoot?.trackThumbColor ?? Color.mPrimary, 0.85)
+        color: Qt.alpha(barRoot?.trackThumbColor ?? Color.mPrimary, barRoot?.trackOpacity ?? 1)
         z: 1
     }
 
