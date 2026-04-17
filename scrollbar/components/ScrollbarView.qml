@@ -195,6 +195,11 @@ Item {
     readonly property string titleFontWeightKey: settingValue("title", "titleFontWeight", "titleFontWeight", "default")
     readonly property string focusedTitleTextColorKey: settingValue("focusedTitle", "textColor", "focusedTitleTextColor", "on-surface")
     readonly property real focusedTitleOpacity: Math.max(0, Math.min(1, settingValue("focusedTitle", "opacity", "focusedTitleOpacity", 100) / 100))
+    readonly property string focusedTitleBackgroundColorKey: settingValue("focusedTitle", "backgroundColor", "focusedTitleBackgroundColor", "none")
+    readonly property real focusedTitleBackgroundOpacity: Math.max(0, Math.min(1, settingValue("focusedTitle", "backgroundOpacity", "focusedTitleBackgroundOpacity", 0) / 100))
+    readonly property real focusedTitleOffsetV: Math.round(settingValue("focusedTitle", "offsetV", "focusedTitleOffsetV", 0) * Style.uiScaleRatio)
+    readonly property bool focusedTitleBackgroundEnabled: focusedTitleBackgroundColorKey !== "none" && focusedTitleBackgroundOpacity > 0
+    readonly property color focusedTitleBackgroundColor: focusedTitleBackgroundEnabled ? Qt.alpha(resolveSettingColor(focusedTitleBackgroundColorKey, Color.mSurface), focusedTitleBackgroundOpacity) : "transparent"
     readonly property bool workspaceIndicatorEnabled: settingValue("workspaceIndicator", "enabled", "workspaceIndicatorEnabled", false)
     readonly property string workspaceIndicatorLabelMode: settingValue("workspaceIndicator", "labelMode", "workspaceIndicatorLabelMode", "id")
     readonly property string workspaceIndicatorPosition: settingValue("workspaceIndicator", "position", "workspaceIndicatorPosition", "before")
@@ -1060,22 +1065,37 @@ Item {
                             barRoot: root
                         }
 
-                        NText {
+                        Item {
                             visible: root.showFocusedTitleLabel
                             anchors.verticalCenter: parent.verticalCenter
+                            anchors.verticalCenterOffset: root.focusedTitleOffsetV
                             x: Style.marginM
                             width: Math.max(0, parent.width - Style.marginM * 2)
+                            height: focusedTitleLabel.implicitHeight + Style.marginM * 2
                             z: 3
-                            text: root.activeEntryTitle
-                            color: root.focusedTitleTextColor
-                            opacity: root.focusedTitleOpacity
-                            family: root.titleFontFamily || Qt.application.font.family
-                            pointSize: root.titleFontSize > 0 ? root.titleFontSize : Math.max(Style.fontSizeXS, root.barFontSize)
-                            font.weight: root.titleFontWeightValue >= 0 ? root.titleFontWeightValue : Style.fontWeightSemiBold
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                            elide: Text.ElideRight
-                            maximumLineCount: 1
+
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: Style.radiusS
+                                color: root.focusedTitleBackgroundColor
+                                visible: root.focusedTitleBackgroundEnabled
+                            }
+
+                            NText {
+                                id: focusedTitleLabel
+                                anchors.fill: parent
+                                anchors.margins: Style.marginM
+                                text: root.activeEntryTitle
+                                color: root.focusedTitleTextColor
+                                opacity: root.focusedTitleOpacity
+                                family: root.titleFontFamily || Qt.application.font.family
+                                pointSize: root.titleFontSize > 0 ? root.titleFontSize : Math.max(Style.fontSizeXS, root.barFontSize)
+                                font.weight: root.titleFontWeightValue >= 0 ? root.titleFontWeightValue : Style.fontWeightSemiBold
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                                elide: Text.ElideRight
+                                maximumLineCount: 1
+                            }
                         }
                     }
                 }

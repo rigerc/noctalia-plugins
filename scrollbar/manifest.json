@@ -76,7 +76,10 @@
       "focusedTitle": {
         "enabled": false,
         "textColor": "on-surface",
-        "opacity": 100
+        "opacity": 100,
+        "backgroundColor": "none",
+        "backgroundOpacity": 0,
+        "offsetV": 0
       },
       "workspaceIndicator": {
         "enabled": false,

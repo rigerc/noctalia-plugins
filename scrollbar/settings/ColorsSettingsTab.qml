@@ -478,6 +478,45 @@ ColumnLayout {
                 onMoved: sliderValue => rootSettings?.setSetting("focusedTitle", "opacity", Math.round(sliderValue))
             }
 
+            HybridColorChoice {
+                pluginApi: rootSettings?.pluginApi
+                visible: rootSettings?.isVisibleByConditions(["hideSlots", "focusedTitleEnabled"]) ?? true
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.focusedTitleBackgroundColor.label")
+                description: rootSettings?.pluginApi?.tr("settings.focusedTitleBackgroundColor.desc")
+                currentValue: rootSettings?.settingValue("focusedTitle", "backgroundColor") ?? "none"
+                defaultValue: rootSettings?.defaultValue("focusedTitle", "backgroundColor") ?? "none"
+                onSelected: value => rootSettings?.setSetting("focusedTitle", "backgroundColor", value)
+            }
+
+            NValueSlider {
+                visible: rootSettings?.isVisibleByConditions(["hideSlots", "focusedTitleEnabled"]) ?? true
+                label: rootSettings?.pluginApi?.tr("settings.focusedTitleBackgroundOpacity.label")
+                description: rootSettings?.pluginApi?.tr("settings.focusedTitleBackgroundOpacity.desc")
+                from: 0
+                to: 100
+                stepSize: 1
+                value: rootSettings?.settingValue("focusedTitle", "backgroundOpacity") ?? 0
+                text: Math.round(value) + "%"
+                defaultValue: rootSettings?.defaultValue("focusedTitle", "backgroundOpacity") ?? 0
+                showReset: true
+                onMoved: sliderValue => rootSettings?.setSetting("focusedTitle", "backgroundOpacity", Math.round(sliderValue))
+            }
+
+            NValueSlider {
+                visible: rootSettings?.isVisibleByConditions(["hideSlots", "focusedTitleEnabled"]) ?? true
+                label: rootSettings?.pluginApi?.tr("settings.focusedTitleOffsetV.label")
+                description: rootSettings?.pluginApi?.tr("settings.focusedTitleOffsetV.desc")
+                from: -64
+                to: 64
+                stepSize: 1
+                value: rootSettings?.settingValue("focusedTitle", "offsetV") ?? 0
+                text: Math.round(value) + " px"
+                defaultValue: rootSettings?.defaultValue("focusedTitle", "offsetV") ?? 0
+                showReset: true
+                onMoved: sliderValue => rootSettings?.setSetting("focusedTitle", "offsetV", Math.round(sliderValue))
+            }
+
             NLabel {
                 visible: !focusedTitleSectionVisible
                 description: rootSettings?.pluginApi?.tr("settings.emptySectionNote")

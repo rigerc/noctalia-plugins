@@ -499,6 +499,18 @@
       "label": "Focused title opacity",
       "desc": "Opacity of the centered focused-window title when slots are hidden."
     },
+    "focusedTitleBackgroundColor": {
+      "label": "Focused title background",
+      "desc": "Background fill color behind the centered focused-window title."
+    },
+    "focusedTitleBackgroundOpacity": {
+      "label": "Focused title background opacity",
+      "desc": "Opacity of the focused title background."
+    },
+    "focusedTitleOffsetV": {
+      "label": "Focused title vertical offset",
+      "desc": "Shift the focused title up or down from its centered position. Negative moves up, positive moves down."
+    },
     "showFocusedFill": {
       "label": "Show focused fill",
       "desc": "Enable the background color on the focused slot."

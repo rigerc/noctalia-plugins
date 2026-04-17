@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "code-smells": {
+      "source": "barlevysh/code-smells-skill",
+      "sourceType": "github",
+      "computedHash": "b84f72197d42c402083823c580bfbc69590d9c93071f772ad4e216ec71b53630"
+    }
+  }
+}

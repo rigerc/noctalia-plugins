@@ -307,7 +307,10 @@ ColumnLayout {
             "focusedTitle": {
                 "enabled": readSetting(primary, secondary, "focusedTitle", "enabled", "focusedTitleEnabled", false),
                 "textColor": readSetting(primary, secondary, "focusedTitle", "textColor", "focusedTitleTextColor", "on-surface"),
-                "opacity": readSetting(primary, secondary, "focusedTitle", "opacity", "focusedTitleOpacity", 100)
+                "opacity": readSetting(primary, secondary, "focusedTitle", "opacity", "focusedTitleOpacity", 100),
+                "backgroundColor": readSetting(primary, secondary, "focusedTitle", "backgroundColor", "focusedTitleBackgroundColor", "none"),
+                "backgroundOpacity": readSetting(primary, secondary, "focusedTitle", "backgroundOpacity", "focusedTitleBackgroundOpacity", 0),
+                "offsetV": readSetting(primary, secondary, "focusedTitle", "offsetV", "focusedTitleOffsetV", 0)
             },
             "workspaceIndicator": {
                 "enabled": readSetting(primary, secondary, "workspaceIndicator", "enabled", "workspaceIndicatorEnabled", false),
