@@ -243,10 +243,11 @@ Item {
     readonly property real workspaceIndicatorPointSize: workspaceIndicatorFontSize > 0 ? workspaceIndicatorFontSize : Math.max(Style.fontSizeXS, Math.round(barFontSize * 0.85))
     readonly property bool indicatorBeforeStrip: workspaceIndicatorPosition !== "after"
     readonly property string workspaceIndicatorFamily: workspaceIndicatorFontFamily || Settings.data.ui.fontFixed
-    readonly property real contentSpacing: showWorkspaceIndicator && hasWindow ? workspaceIndicatorSpacing : 0
-    readonly property bool hasContent: hasWindow || showWorkspaceIndicator
-    readonly property real stripImplicitWidth: hasWindow ? contentWidth : 0
-    readonly property real stripImplicitHeight: hasWindow ? contentHeight : 0
+    readonly property bool hasStripFrame: hasWindow || (useFixedWidgetSize && fixedWidgetExtent > 0)
+    readonly property real contentSpacing: showWorkspaceIndicator && hasStripFrame ? workspaceIndicatorSpacing : 0
+    readonly property bool hasContent: hasStripFrame || showWorkspaceIndicator
+    readonly property real stripImplicitWidth: hasStripFrame ? contentWidth : 0
+    readonly property real stripImplicitHeight: hasStripFrame ? contentHeight : 0
     readonly property real layoutInnerWidth: isVertical ? Math.max(stripImplicitWidth, workspaceLabelMeasure.implicitWidth) : (stripImplicitWidth + (showWorkspaceIndicator ? workspaceLabelMeasure.implicitWidth + contentSpacing : 0))
     readonly property real layoutInnerHeight: isVertical ? (stripImplicitHeight + (showWorkspaceIndicator ? workspaceLabelMeasure.implicitHeight + contentSpacing : 0)) : Math.max(stripImplicitHeight, workspaceLabelMeasure.implicitHeight)
     readonly property real layoutImplicitWidth: layoutInnerWidth + workspaceIndicatorPadding * 2
@@ -275,10 +276,10 @@ Item {
     }
 
     readonly property real viewportExtent: {
-        if (logicalContentExtent <= 0)
-            return 0;
         if (useFixedWidgetSize && fixedWidgetExtent > 0)
             return fixedWidgetExtent;
+        if (logicalContentExtent <= 0)
+            return 0;
         if (maxWidgetExtent > 0)
             return Math.min(logicalContentExtent, maxWidgetExtent);
         return logicalContentExtent;
@@ -933,7 +934,7 @@ Item {
 
         Item {
             id: stripContainer
-            visible: root.hasWindow
+            visible: root.hasStripFrame
             width: root.stripImplicitWidth
             height: root.stripImplicitHeight
             x: root.isVertical ? Style.pixelAlignCenter(widgetContent.width, width) : (root.showWorkspaceIndicator && root.indicatorBeforeStrip ? root.workspaceIndicatorPadding + workspaceLabelMeasure.implicitWidth + root.contentSpacing : root.workspaceIndicatorPadding)
@@ -1073,8 +1074,8 @@ Item {
             family: root.workspaceIndicatorFamily
             pointSize: root.workspaceIndicatorPointSize
             z: 20
-            x: root.isVertical ? Style.pixelAlignCenter(widgetContent.width, width) : (root.hasWindow ? stripContainer.x + stripContainer.width + root.contentSpacing : root.workspaceIndicatorPadding)
-            y: root.isVertical ? (root.hasWindow ? stripContainer.y + stripContainer.height + root.contentSpacing : root.workspaceIndicatorPadding) : Style.pixelAlignCenter(widgetContent.height, height)
+            x: root.isVertical ? Style.pixelAlignCenter(widgetContent.width, width) : (root.hasStripFrame ? stripContainer.x + stripContainer.width + root.contentSpacing : root.workspaceIndicatorPadding)
+            y: root.isVertical ? (root.hasStripFrame ? stripContainer.y + stripContainer.height + root.contentSpacing : root.workspaceIndicatorPadding) : Style.pixelAlignCenter(widgetContent.height, height)
         }
     }
 }
