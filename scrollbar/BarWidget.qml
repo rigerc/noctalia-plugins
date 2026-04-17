@@ -303,7 +303,7 @@ Item {
     }
 
     readonly property bool hasWindow: combinedModel.length > 0
-    readonly property real logicalViewportExtent: isVertical ? flickable.height : flickable.width
+    readonly property real logicalViewportExtent: viewportExtent
     readonly property real minScrollOffset: hasWindow ? paintOverflowInset : 0
     readonly property real maxScrollOffset: {
         const totalExtent = stripContentExtent;
@@ -341,13 +341,7 @@ Item {
     readonly property bool focusedIndicatorInView: {
         if (!focusedIndicatorVisible)
             return false;
-        if (isVertical) {
-            const viewY = animatedIndicatorOffset - flickable.contentY;
-            return (viewY + animatedIndicatorLength) > 0 && viewY < flickable.height;
-        } else {
-            const viewX = animatedIndicatorOffset - flickable.contentX;
-            return (viewX + animatedIndicatorLength) > 0 && viewX < flickable.width;
-        }
+        return (animatedIndicatorOffset + animatedIndicatorLength) > 0 && animatedIndicatorOffset < logicalViewportExtent;
     }
     readonly property real edgeFadeOpacityRatio: Math.max(0, Math.min(1, edgeFadeOpacity))
 
@@ -523,24 +517,13 @@ Item {
     }
 
     function indicatorGeometryForIndex(index) {
-        const item = getDelegateItem(index);
-        const container = stripLoader.item;
-        if (!item || !container)
+        const count = combinedModel.length;
+        if (index < 0 || index >= count || count <= 0 || logicalViewportExtent <= 0)
             return null;
 
-        const point = item.mapToItem(container, 0, 0);
-
-        if (isVertical) {
-            const start = Math.round(point.y);
-            const length = Math.max(1, Math.round(item.height));
-            return {
-                "offset": start,
-                "length": length
-            };
-        }
-
-        const start = Math.round(point.x);
-        const length = Math.max(1, Math.round(item.width));
+        const start = Math.round(logicalViewportExtent * index / count);
+        const end = Math.round(logicalViewportExtent * (index + 1) / count);
+        const length = Math.max(1, end - start);
         return {
             "offset": start,
             "length": length

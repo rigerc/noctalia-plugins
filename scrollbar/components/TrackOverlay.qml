@@ -45,7 +45,7 @@ Item {
 
     Rectangle {
         visible: (barRoot?.showFocusLine ?? false) && !(barRoot?.isVertical ?? false) && (barRoot?.focusedIndicatorInView ?? false)
-        x: (barRoot?.animatedIndicatorOffset ?? 0) - (barRoot?.flickableRef?.contentX ?? 0)
+        x: barRoot?.animatedIndicatorOffset ?? 0
         y: barRoot?.indicatorCrossOffset(height) ?? 0
         height: barRoot?.focusLineThickness ?? 1
         radius: height / 2
@@ -68,7 +68,7 @@ Item {
     Rectangle {
         visible: (barRoot?.showFocusLine ?? false) && (barRoot?.isVertical ?? false) && (barRoot?.focusedIndicatorInView ?? false)
         x: barRoot?.indicatorCrossOffset(width) ?? 0
-        y: (barRoot?.animatedIndicatorOffset ?? 0) - (barRoot?.flickableRef?.contentY ?? 0)
+        y: barRoot?.animatedIndicatorOffset ?? 0
         width: barRoot?.focusLineThickness ?? 1
         radius: width / 2
         height: barRoot?.animatedIndicatorLength ?? 0
