@@ -33,9 +33,13 @@ ColumnLayout {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.track.color.label")
                 description: rootSettings?.pluginApi?.tr("settings.track.color.desc")
-                currentValue: rootSettings?.settingValue("track", "color") ?? "surface"
-                defaultValue: rootSettings?.defaultValue("track", "color") ?? "surface"
-                onSelected: value => rootSettings?.setSetting("track", "color", value)
+                currentColor: rootSettings?.objectSettingValue("track", "fill", "color") ?? "surface"
+                defaultColor: rootSettings?.defaultObjectValue("track", "fill", "color") ?? "surface"
+                currentOpacity: rootSettings?.objectSettingValue("track", "fill", "opacity") ?? 1
+                defaultOpacity: rootSettings?.defaultObjectValue("track", "fill", "opacity") ?? 1
+                showOpacityControl: true
+                onColorSelected: value => rootSettings?.setObjectSetting("track", "fill", "color", value)
+                onOpacitySelected: value => rootSettings?.setObjectSetting("track", "fill", "opacity", value)
             }
 
             HybridColorChoice {
@@ -43,9 +47,9 @@ ColumnLayout {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.track.separatorColor.label")
                 description: rootSettings?.pluginApi?.tr("settings.track.separatorColor.desc")
-                currentValue: rootSettings?.settingValue("track", "separatorColor") ?? "outline"
-                defaultValue: rootSettings?.defaultValue("track", "separatorColor") ?? "outline"
-                onSelected: value => rootSettings?.setSetting("track", "separatorColor", value)
+                currentColor: rootSettings?.settingValue("track", "separatorColor") ?? "outline"
+                defaultColor: rootSettings?.defaultValue("track", "separatorColor") ?? "outline"
+                onColorSelected: value => rootSettings?.setSetting("track", "separatorColor", value)
             }
         }
     }
@@ -71,9 +75,9 @@ ColumnLayout {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.focusLine.colors.focused.label")
                 description: rootSettings?.pluginApi?.tr("settings.focusLine.colors.focused.desc")
-                currentValue: rootSettings?.nestedSettingValue("focusLine", "colors", "focused") ?? "primary"
-                defaultValue: rootSettings?.defaultNestedValue("focusLine", "colors", "focused") ?? "primary"
-                onSelected: value => rootSettings?.setNestedSetting("focusLine", "colors", "focused", value)
+                currentColor: rootSettings?.nestedSettingValue("focusLine", "colors", "focused") ?? "primary"
+                defaultColor: rootSettings?.defaultNestedValue("focusLine", "colors", "focused") ?? "primary"
+                onColorSelected: value => rootSettings?.setNestedSetting("focusLine", "colors", "focused", value)
             }
 
             HybridColorChoice {
@@ -81,9 +85,9 @@ ColumnLayout {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.focusLine.colors.hover.label")
                 description: rootSettings?.pluginApi?.tr("settings.focusLine.colors.hover.desc")
-                currentValue: rootSettings?.nestedSettingValue("focusLine", "colors", "hover") ?? "hover"
-                defaultValue: rootSettings?.defaultNestedValue("focusLine", "colors", "hover") ?? "hover"
-                onSelected: value => rootSettings?.setNestedSetting("focusLine", "colors", "hover", value)
+                currentColor: rootSettings?.nestedSettingValue("focusLine", "colors", "hover") ?? "hover"
+                defaultColor: rootSettings?.defaultNestedValue("focusLine", "colors", "hover") ?? "hover"
+                onColorSelected: value => rootSettings?.setNestedSetting("focusLine", "colors", "hover", value)
             }
 
             HybridColorChoice {
@@ -91,9 +95,9 @@ ColumnLayout {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.focusLine.colors.default.label")
                 description: rootSettings?.pluginApi?.tr("settings.focusLine.colors.default.desc")
-                currentValue: rootSettings?.nestedSettingValue("focusLine", "colors", "default") ?? "surface-variant"
-                defaultValue: rootSettings?.defaultNestedValue("focusLine", "colors", "default") ?? "surface-variant"
-                onSelected: value => rootSettings?.setNestedSetting("focusLine", "colors", "default", value)
+                currentColor: rootSettings?.nestedSettingValue("focusLine", "colors", "default") ?? "surface-variant"
+                defaultColor: rootSettings?.defaultNestedValue("focusLine", "colors", "default") ?? "surface-variant"
+                onColorSelected: value => rootSettings?.setNestedSetting("focusLine", "colors", "default", value)
             }
         }
     }
@@ -120,9 +124,9 @@ ColumnLayout {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.window.iconColors.focused.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.iconColors.focused.desc")
-                currentValue: rootSettings?.nestedSettingValue("window", "iconColors", "focused") ?? "on-surface"
-                defaultValue: rootSettings?.defaultNestedValue("window", "iconColors", "focused") ?? "on-surface"
-                onSelected: value => rootSettings?.setNestedSetting("window", "iconColors", "focused", value)
+                currentColor: rootSettings?.nestedSettingValue("window", "iconColors", "focused") ?? "on-surface"
+                defaultColor: rootSettings?.defaultNestedValue("window", "iconColors", "focused") ?? "on-surface"
+                onColorSelected: value => rootSettings?.setNestedSetting("window", "iconColors", "focused", value)
             }
 
             HybridColorChoice {
@@ -131,9 +135,9 @@ ColumnLayout {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.window.iconColors.hover.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.iconColors.hover.desc")
-                currentValue: rootSettings?.nestedSettingValue("window", "iconColors", "hover") ?? "on-hover"
-                defaultValue: rootSettings?.defaultNestedValue("window", "iconColors", "hover") ?? "on-hover"
-                onSelected: value => rootSettings?.setNestedSetting("window", "iconColors", "hover", value)
+                currentColor: rootSettings?.nestedSettingValue("window", "iconColors", "hover") ?? "on-hover"
+                defaultColor: rootSettings?.defaultNestedValue("window", "iconColors", "hover") ?? "on-hover"
+                onColorSelected: value => rootSettings?.setNestedSetting("window", "iconColors", "hover", value)
             }
 
             HybridColorChoice {
@@ -142,9 +146,9 @@ ColumnLayout {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.window.iconColors.default.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.iconColors.default.desc")
-                currentValue: rootSettings?.nestedSettingValue("window", "iconColors", "default") ?? "on-surface-variant"
-                defaultValue: rootSettings?.defaultNestedValue("window", "iconColors", "default") ?? "on-surface-variant"
-                onSelected: value => rootSettings?.setNestedSetting("window", "iconColors", "default", value)
+                currentColor: rootSettings?.nestedSettingValue("window", "iconColors", "default") ?? "on-surface-variant"
+                defaultColor: rootSettings?.defaultNestedValue("window", "iconColors", "default") ?? "on-surface-variant"
+                onColorSelected: value => rootSettings?.setNestedSetting("window", "iconColors", "default", value)
             }
 
             HybridColorChoice {
@@ -153,9 +157,9 @@ ColumnLayout {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.window.titleColors.focused.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.titleColors.focused.desc")
-                currentValue: rootSettings?.nestedSettingValue("window", "titleColors", "focused") ?? "on-surface"
-                defaultValue: rootSettings?.defaultNestedValue("window", "titleColors", "focused") ?? "on-surface"
-                onSelected: value => rootSettings?.setNestedSetting("window", "titleColors", "focused", value)
+                currentColor: rootSettings?.nestedSettingValue("window", "titleColors", "focused") ?? "on-surface"
+                defaultColor: rootSettings?.defaultNestedValue("window", "titleColors", "focused") ?? "on-surface"
+                onColorSelected: value => rootSettings?.setNestedSetting("window", "titleColors", "focused", value)
             }
 
             HybridColorChoice {
@@ -164,9 +168,9 @@ ColumnLayout {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.window.titleColors.hover.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.titleColors.hover.desc")
-                currentValue: rootSettings?.nestedSettingValue("window", "titleColors", "hover") ?? "on-hover"
-                defaultValue: rootSettings?.defaultNestedValue("window", "titleColors", "hover") ?? "on-hover"
-                onSelected: value => rootSettings?.setNestedSetting("window", "titleColors", "hover", value)
+                currentColor: rootSettings?.nestedSettingValue("window", "titleColors", "hover") ?? "on-hover"
+                defaultColor: rootSettings?.defaultNestedValue("window", "titleColors", "hover") ?? "on-hover"
+                onColorSelected: value => rootSettings?.setNestedSetting("window", "titleColors", "hover", value)
             }
 
             HybridColorChoice {
@@ -175,9 +179,9 @@ ColumnLayout {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.window.titleColors.default.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.titleColors.default.desc")
-                currentValue: rootSettings?.nestedSettingValue("window", "titleColors", "default") ?? "on-surface-variant"
-                defaultValue: rootSettings?.defaultNestedValue("window", "titleColors", "default") ?? "on-surface-variant"
-                onSelected: value => rootSettings?.setNestedSetting("window", "titleColors", "default", value)
+                currentColor: rootSettings?.nestedSettingValue("window", "titleColors", "default") ?? "on-surface-variant"
+                defaultColor: rootSettings?.defaultNestedValue("window", "titleColors", "default") ?? "on-surface-variant"
+                onColorSelected: value => rootSettings?.setNestedSetting("window", "titleColors", "default", value)
             }
         }
     }

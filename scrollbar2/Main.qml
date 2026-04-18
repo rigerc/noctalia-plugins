@@ -50,6 +50,27 @@ Item {
         return fallbackValue;
     }
 
+    function objectSettingValue(groupKey, objectKey, nestedKey, fallbackValue) {
+        const configValue = currentSettings?.[groupKey]?.[objectKey]?.[nestedKey];
+        if (configValue !== undefined)
+            return configValue;
+
+        const defaultValue = defaults?.[groupKey]?.[objectKey]?.[nestedKey];
+        if (defaultValue !== undefined)
+            return defaultValue;
+
+        return fallbackValue;
+    }
+
+    function normalizeOpacityValue(value) {
+        const numericValue = Number(value);
+        if (isNaN(numericValue))
+            return 0;
+        if (numericValue > 1)
+            return Math.max(0, Math.min(1, numericValue / 100));
+        return Math.max(0, Math.min(1, numericValue));
+    }
+
     function resolveThemeColor(key) {
         switch (key) {
         case "none":
@@ -108,20 +129,20 @@ Item {
     readonly property real displayScale: Math.max(0.5, settingValue("display", "scale", 1.0))
     readonly property real displayMargin: Math.max(0, Math.round(settingValue("display", "margin", 0) * Style.uiScaleRatio))
     readonly property real displayRadiusScale: Math.max(0, settingValue("display", "radiusScale", 1.0))
-    readonly property string displayBackgroundColorKey: settingValue("display", "backgroundColor", "none")
-    readonly property real displayBackgroundOpacity: Math.max(0, Math.min(100, settingValue("display", "backgroundOpacity", 0)))
+    readonly property string displayBackgroundColorKey: objectSettingValue("display", "background", "color", settingValue("display", "backgroundColor", "none"))
+    readonly property real displayBackgroundOpacity: normalizeOpacityValue(objectSettingValue("display", "background", "opacity", settingValue("display", "backgroundOpacity", 0)))
     readonly property bool displayGradientEnabled: settingValue("display", "gradientEnabled", false)
-    readonly property string displayGradientColorKey: settingValue("display", "gradientColor", "none")
-    readonly property real displayGradientOpacity: Math.max(0, Math.min(100, settingValue("display", "gradientOpacity", 0)))
+    readonly property string displayGradientColorKey: objectSettingValue("display", "gradient", "color", settingValue("display", "gradientColor", "none"))
+    readonly property real displayGradientOpacity: normalizeOpacityValue(objectSettingValue("display", "gradient", "opacity", settingValue("display", "gradientOpacity", 0)))
     readonly property string displayGradientDirection: settingValue("display", "gradientDirection", "vertical")
     readonly property string trackPosition: settingValue("track", "position", "bottom")
     readonly property real effectiveDisplayRadius: Style.radiusL * displayRadiusScale
     readonly property bool displayBackgroundEnabled: displayBackgroundColorKey !== "none" && displayBackgroundOpacity > 0
     readonly property color displayBackgroundBaseColor: resolveSettingColor(displayBackgroundColorKey, "transparent")
-    readonly property color displayBackgroundResolvedColor: displayBackgroundEnabled ? Qt.alpha(displayBackgroundBaseColor, displayBackgroundOpacity / 100) : "transparent"
+    readonly property color displayBackgroundResolvedColor: displayBackgroundEnabled ? Qt.alpha(displayBackgroundBaseColor, displayBackgroundOpacity) : "transparent"
     readonly property bool displayGradientActive: displayGradientEnabled && displayGradientColorKey !== "none" && displayGradientOpacity > 0
     readonly property color displayGradientBaseColor: resolveSettingColor(displayGradientColorKey, "transparent")
-    readonly property color displayGradientResolvedColor: displayGradientActive ? Qt.alpha(displayGradientBaseColor, displayGradientOpacity / 100) : "transparent"
+    readonly property color displayGradientResolvedColor: displayGradientActive ? Qt.alpha(displayGradientBaseColor, displayGradientOpacity) : "transparent"
 
     function getAppNameFromDesktopEntry(appId) {
         if (!appId)

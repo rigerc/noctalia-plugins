@@ -35,7 +35,16 @@
     "colorPicker": {
       "label": "Select color",
       "desc": "Choose a theme color or pick a custom color.",
-      "defaultValue": "Default value: {value}"
+      "defaultColor": "Default color: {value}",
+      "defaultOpacity": "Default opacity: {value}",
+      "legacyCurrent": "{value} (current legacy value)",
+      "legacyDefault": "{value} (default legacy value)",
+      "opacity": {
+        "label": "Transparency",
+        "desc": "Expand to fine-tune opacity for this color.",
+        "valueLabel": "Opacity",
+        "valueDesc": "Adjust how transparent this color should be."
+      }
     },
     "colorOptions": {
       "none": "None",

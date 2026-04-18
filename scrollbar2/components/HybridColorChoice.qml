@@ -5,33 +5,42 @@ import qs.Commons
 import qs.Services.UI
 import qs.Widgets
 
-RowLayout {
+ColumnLayout {
     id: root
 
     property var pluginApi: null
     property string label: pluginApi?.tr("settings.colorPicker.label")
     property string description: pluginApi?.tr("settings.colorPicker.desc")
-    property string currentValue: ""
-    property var defaultValue: undefined
+    property string currentColor: ""
+    property var defaultColor: undefined
+    property real currentOpacity: 1
+    property var defaultOpacity: undefined
+    property bool showOpacityControl: false
+    property real opacityFrom: 0
+    property real opacityTo: 1
+    property real opacityStepSize: 0.01
 
-    readonly property bool isValueChanged: (defaultValue !== undefined) && !sameValue(currentValue, defaultValue)
-    readonly property string indicatorTooltip: pluginApi?.tr("settings.colorPicker.defaultValue", {
-        "value": describeValue(defaultValue)
-    }) ?? ""
+    readonly property bool colorChanged: (defaultColor !== undefined) && !sameValue(currentColor, defaultColor)
+    readonly property bool opacityChanged: showOpacityControl && defaultOpacity !== undefined
+        && !sameNumber(currentOpacity, defaultOpacity)
+    readonly property bool isValueChanged: colorChanged || opacityChanged
+    readonly property string indicatorTooltip: defaultSummary()
     readonly property int diameter: Math.round(Style.baseWidgetSize * 0.9 * Style.uiScaleRatio)
-    readonly property bool customSelected: isCustomColor(currentValue)
-    readonly property color customPreviewColor: resolveColor(customSelected ? currentValue : "surface-variant", Color.mSurfaceVariant)
-    readonly property var colorOptions: [
+    readonly property bool customSelected: isCustomColor(currentColor)
+    readonly property color customPreviewColor: resolveColor(customSelected ? currentColor : "surface", Color.mSurface)
+    readonly property var preferredColorOptions: [
         { "key": "none", "name": pluginApi?.tr("settings.colorOptions.none") },
         { "key": "primary", "name": pluginApi?.tr("settings.colorOptions.primary") },
-        { "key": "on-primary", "name": pluginApi?.tr("settings.colorOptions.onPrimary") },
         { "key": "secondary", "name": pluginApi?.tr("settings.colorOptions.secondary") },
-        { "key": "on-secondary", "name": pluginApi?.tr("settings.colorOptions.onSecondary") },
         { "key": "tertiary", "name": pluginApi?.tr("settings.colorOptions.tertiary") },
-        { "key": "on-tertiary", "name": pluginApi?.tr("settings.colorOptions.onTertiary") },
-        { "key": "error", "name": pluginApi?.tr("settings.colorOptions.error") },
-        { "key": "on-error", "name": pluginApi?.tr("settings.colorOptions.onError") },
         { "key": "surface", "name": pluginApi?.tr("settings.colorOptions.surface") },
+        { "key": "error", "name": pluginApi?.tr("settings.colorOptions.error") }
+    ]
+    readonly property var legacyColorOptions: [
+        { "key": "on-primary", "name": pluginApi?.tr("settings.colorOptions.onPrimary") },
+        { "key": "on-secondary", "name": pluginApi?.tr("settings.colorOptions.onSecondary") },
+        { "key": "on-tertiary", "name": pluginApi?.tr("settings.colorOptions.onTertiary") },
+        { "key": "on-error", "name": pluginApi?.tr("settings.colorOptions.onError") },
         { "key": "on-surface", "name": pluginApi?.tr("settings.colorOptions.onSurface") },
         { "key": "surface-variant", "name": pluginApi?.tr("settings.colorOptions.surfaceVariant") },
         { "key": "on-surface-variant", "name": pluginApi?.tr("settings.colorOptions.onSurfaceVariant") },
@@ -39,14 +48,26 @@ RowLayout {
         { "key": "hover", "name": pluginApi?.tr("settings.colorOptions.hover") },
         { "key": "on-hover", "name": pluginApi?.tr("settings.colorOptions.onHover") }
     ]
+    readonly property var visibleColorOptions: buildVisibleColorOptions()
 
-    signal selected(string value)
+    signal colorSelected(string value)
+    signal opacitySelected(real value)
+
+    Layout.fillWidth: true
+    spacing: Style.marginM
 
     function sameValue(left, right) {
         if (left === undefined || right === undefined)
             return left === right;
 
         return String(left).toLowerCase() === String(right).toLowerCase();
+    }
+
+    function sameNumber(left, right) {
+        if (left === undefined || right === undefined)
+            return left === right;
+
+        return Math.abs(Number(left) - Number(right)) < 0.0001;
     }
 
     function isThemeColorKey(value) {
@@ -139,19 +160,86 @@ RowLayout {
         if (isCustomColor(value))
             return String(value).toUpperCase();
 
-        for (let i = 0; i < colorOptions.length; i++) {
-            if (sameValue(colorOptions[i].key, value))
-                return colorOptions[i].name;
+        for (let i = 0; i < preferredColorOptions.length; i++) {
+            if (sameValue(preferredColorOptions[i].key, value))
+                return preferredColorOptions[i].name;
+        }
+
+        for (let j = 0; j < legacyColorOptions.length; j++) {
+            if (sameValue(legacyColorOptions[j].key, value))
+                return legacyColorOptions[j].name;
         }
 
         return String(value);
+    }
+
+    function describeOpacity(value) {
+        if (value === undefined)
+            return "";
+        return Math.round(Number(value) * 100) + "%";
+    }
+
+    function defaultSummary() {
+        if (!isValueChanged)
+            return "";
+
+        const parts = [];
+        if (defaultColor !== undefined) {
+            parts.push(pluginApi?.tr("settings.colorPicker.defaultColor", {
+                "value": describeValue(defaultColor)
+            }) ?? "");
+        }
+        if (showOpacityControl && defaultOpacity !== undefined) {
+            parts.push(pluginApi?.tr("settings.colorPicker.defaultOpacity", {
+                "value": describeOpacity(defaultOpacity)
+            }) ?? "");
+        }
+        let summary = "";
+        for (let i = 0; i < parts.length; i++) {
+            if (!parts[i])
+                continue;
+            if (summary !== "")
+                summary += " | ";
+            summary += parts[i];
+        }
+        return summary;
+    }
+
+    function buildVisibleColorOptions() {
+        const options = preferredColorOptions.slice();
+
+        function maybeAppendLegacy(value, suffixKey) {
+            if (value === undefined || isCustomColor(value))
+                return;
+            for (let index = 0; index < options.length; index++) {
+                if (sameValue(options[index].key, value))
+                    return;
+            }
+            let legacy = null;
+            for (let legacyIndex = 0; legacyIndex < legacyColorOptions.length; legacyIndex++) {
+                if (sameValue(legacyColorOptions[legacyIndex].key, value)) {
+                    legacy = legacyColorOptions[legacyIndex];
+                    break;
+                }
+            }
+            if (!legacy)
+                return;
+            options.push({
+                "key": legacy.key,
+                "name": pluginApi?.tr(suffixKey, { "value": legacy.name }) ?? legacy.name
+            });
+        }
+
+        maybeAppendLegacy(currentColor, "settings.colorPicker.legacyCurrent");
+        maybeAppendLegacy(defaultColor, "settings.colorPicker.legacyDefault");
+        return options;
     }
 
     function pickerSeedColor() {
         if (customSelected)
             return customPreviewColor;
 
-        return resolveColor(currentValue, Color.mPrimary);
+        return resolveColor(currentColor, Color.mPrimary);
     }
 
     function openCustomPicker() {
@@ -164,37 +252,34 @@ RowLayout {
 
         parent: Overlay.overlay
         modal: true
-        onColorSelected: color => root.selected(Qt.rgba(color.r, color.g, color.b, 1).toString().toUpperCase())
+        onColorSelected: color => root.colorSelected(Qt.rgba(color.r, color.g, color.b, 1).toString().toUpperCase())
     }
 
     NLabel {
+        Layout.fillWidth: true
         label: root.label
         description: root.description
         showIndicator: root.isValueChanged
         indicatorTooltip: root.indicatorTooltip
     }
 
-    RowLayout {
-        id: colourRow
-
+    Flow {
+        Layout.fillWidth: true
         spacing: Style.marginS
-        opacity: enabled ? 1.0 : 0.6
-        Layout.minimumWidth: (root.diameter * (root.colorOptions.length + 1)) + (spacing * root.colorOptions.length)
 
         Repeater {
-            model: root.colorOptions
+            model: root.visibleColorOptions
 
             Rectangle {
                 id: colorCircle
 
                 required property var modelData
 
-                readonly property bool isSelected: root.sameValue(root.currentValue, modelData.key)
+                readonly property bool isSelected: root.sameValue(root.currentColor, modelData.key)
                 readonly property color swatchColor: root.resolveColor(modelData.key, Color.mOnSurface)
 
-                Layout.alignment: Qt.AlignHCenter
-                implicitWidth: root.diameter
-                implicitHeight: root.diameter
+                width: root.diameter
+                height: root.diameter
                 radius: width * 0.5
                 color: modelData.key === "none" ? Color.mSurfaceVariant : swatchColor
                 border.color: circleMouseArea.containsMouse || isSelected ? Color.mOnSurface : Color.mOutline
@@ -227,7 +312,7 @@ RowLayout {
                     cursorShape: Qt.PointingHandCursor
                     onEntered: TooltipService.show(parent, colorCircle.modelData.name)
                     onExited: TooltipService.hide()
-                    onClicked: root.selected(colorCircle.modelData.key)
+                    onClicked: root.colorSelected(colorCircle.modelData.key)
                 }
 
                 Behavior on border.color {
@@ -241,9 +326,8 @@ RowLayout {
         Rectangle {
             id: customCircle
 
-            Layout.alignment: Qt.AlignHCenter
-            implicitWidth: root.diameter
-            implicitHeight: root.diameter
+            width: root.diameter
+            height: root.diameter
             radius: width * 0.5
             color: root.customPreviewColor
             border.color: customMouseArea.containsMouse || root.customSelected ? Color.mOnSurface : Color.mOutline
@@ -264,7 +348,7 @@ RowLayout {
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onEntered: TooltipService.show(parent, root.customSelected
-                    ? `${root.pluginApi?.tr("settings.colorOptions.custom")} (${String(root.currentValue).toUpperCase()})`
+                    ? `${root.pluginApi?.tr("settings.colorOptions.custom")} (${String(root.currentColor).toUpperCase()})`
                     : root.pluginApi?.tr("settings.colorOptions.custom"))
                 onExited: TooltipService.hide()
                 onClicked: root.openCustomPicker()
@@ -275,6 +359,28 @@ RowLayout {
                     duration: Style.animationFast
                 }
             }
+        }
+    }
+
+    NCollapsible {
+        visible: root.showOpacityControl
+        Layout.fillWidth: true
+        expanded: false
+        label: root.pluginApi?.tr("settings.colorPicker.opacity.label")
+        description: root.pluginApi?.tr("settings.colorPicker.opacity.desc")
+
+        NValueSlider {
+            Layout.fillWidth: true
+            label: root.pluginApi?.tr("settings.colorPicker.opacity.valueLabel")
+            description: root.pluginApi?.tr("settings.colorPicker.opacity.valueDesc")
+            from: root.opacityFrom
+            to: root.opacityTo
+            stepSize: root.opacityStepSize
+            value: Math.max(root.opacityFrom, Math.min(root.opacityTo, root.currentOpacity))
+            text: root.describeOpacity(value)
+            defaultValue: root.defaultOpacity !== undefined ? Math.max(root.opacityFrom, Math.min(root.opacityTo, root.defaultOpacity)) : undefined
+            showReset: root.defaultOpacity !== undefined
+            onMoved: sliderValue => root.opacitySelected(Math.round(sliderValue * 100) / 100)
         }
     }
 }

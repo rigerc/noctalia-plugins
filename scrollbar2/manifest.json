@@ -29,11 +29,15 @@
         "scale": 1.0,
         "margin": 0,
         "radiusScale": 1.0,
-        "backgroundColor": "none",
-        "backgroundOpacity": 0,
+        "background": {
+          "color": "none",
+          "opacity": 0
+        },
         "gradientEnabled": false,
-        "gradientColor": "none",
-        "gradientOpacity": 0,
+        "gradient": {
+          "color": "none",
+          "opacity": 0
+        },
         "gradientDirection": "vertical"
       },
       "filtering": {
@@ -46,8 +50,10 @@
         "thickness": 6,
         "borderRadius": 3,
         "shadowEnabled": true,
-        "opacity": 1,
-        "color": "surface",
+        "fill": {
+          "color": "surface",
+          "opacity": 1
+        },
         "separatorColor": "outline",
         "width": 40,
         "segmentSpacing": 4

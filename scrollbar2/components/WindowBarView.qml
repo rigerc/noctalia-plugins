@@ -56,6 +56,18 @@ Item {
         return fallbackValue;
     }
 
+    function objectSettingValue(groupKey, objectKey, nestedKey, fallbackValue) {
+        const configValue = currentSettings?.[groupKey]?.[objectKey]?.[nestedKey];
+        if (configValue !== undefined)
+            return configValue;
+
+        const defaultValue = defaults?.[groupKey]?.[objectKey]?.[nestedKey];
+        if (defaultValue !== undefined)
+            return defaultValue;
+
+        return fallbackValue;
+    }
+
     function nestedStateColor(groupKey, stateKey, fallbackValue) {
         const group = currentSettings?.[groupKey]?.colors;
         if (group && group[stateKey] !== undefined)
@@ -86,6 +98,15 @@ Item {
         return fallbackColor;
     }
 
+    function normalizeOpacityValue(value, fallbackValue) {
+        const numericValue = Number(value);
+        if (isNaN(numericValue))
+            return fallbackValue;
+        if (numericValue > 1)
+            return Math.max(0, Math.min(1, numericValue / 100));
+        return Math.max(0, Math.min(1, numericValue));
+    }
+
     readonly property bool onlySameOutput: settingValue("filtering", "onlySameOutput", true)
     readonly property bool onlyActiveWorkspaces: settingValue("filtering", "onlyActiveWorkspaces", true)
     readonly property string trackPosition: settingValue("track", "position", "bottom")
@@ -93,8 +114,8 @@ Item {
     readonly property real trackThickness: Math.max(1, settingValue("track", "thickness", 6) * Style.uiScaleRatio)
     readonly property real trackBorderRadius: Math.max(0, settingValue("track", "borderRadius", 3) * Style.uiScaleRatio)
     readonly property bool trackShadowEnabled: settingValue("track", "shadowEnabled", true)
-    readonly property real trackOpacity: Math.max(0, Math.min(1, settingValue("track", "opacity", 1)))
-    readonly property color trackColor: resolveColor(settingValue("track", "color", "surface"), Color.mSurface)
+    readonly property real trackOpacity: normalizeOpacityValue(objectSettingValue("track", "fill", "opacity", settingValue("track", "opacity", 1)), 1)
+    readonly property color trackColor: resolveColor(objectSettingValue("track", "fill", "color", settingValue("track", "color", "surface")), Color.mSurface)
     readonly property color separatorColor: resolveColor(settingValue("track", "separatorColor", "outline"), Color.mOutline)
     readonly property real trackWidthPercent: Math.max(5, Math.min(100, settingValue("track", "width", 90)))
     readonly property real segmentSpacing: Math.max(0, settingValue("track", "segmentSpacing", 4) * Style.uiScaleRatio)
@@ -103,7 +124,7 @@ Item {
     readonly property real focusLineRadius: Math.max(0, settingValue("focusLine", "borderRadius", 3) * Style.uiScaleRatio)
     readonly property string focusLineVerticalAlign: settingValue("focusLine", "verticalAlign", "bottom")
     readonly property bool focusLineShadowEnabled: settingValue("focusLine", "shadowEnabled", true)
-    readonly property real focusLineOpacity: Math.max(0, Math.min(1, settingValue("focusLine", "opacity", 1)))
+    readonly property real focusLineOpacity: normalizeOpacityValue(settingValue("focusLine", "opacity", 1), 1)
     readonly property color focusLineFocusedColor: resolveColor(nestedStateColor("focusLine", "focused", "primary"), Color.mPrimary)
     readonly property color focusLineHoverColor: resolveColor(nestedStateColor("focusLine", "hover", "hover"), Color.mHover)
     readonly property color focusLineDefaultColor: resolveColor(nestedStateColor("focusLine", "default", "surface-variant"), Color.mSurfaceVariant)

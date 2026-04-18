@@ -144,15 +144,73 @@ ColumnLayout {
         return normalizeSettingsSnapshot(merge(base, overrides));
     }
 
+    function clampOpacity(value, fallbackValue) {
+        const numericValue = Number(value);
+        if (isNaN(numericValue))
+            return fallbackValue;
+        return Math.max(0, Math.min(1, numericValue));
+    }
+
+    function normalizeOpacityValue(value, fallbackValue) {
+        const numericValue = Number(value);
+        if (isNaN(numericValue))
+            return fallbackValue;
+        if (numericValue > 1)
+            return clampOpacity(numericValue / 100, fallbackValue);
+        return clampOpacity(numericValue, fallbackValue);
+    }
+
+    function normalizeColorSetting(settingValue, legacyColorValue, legacyOpacityValue, fallbackColor, fallbackOpacity) {
+        const normalized = ({});
+        const currentValue = (settingValue && typeof settingValue === "object" && !Array.isArray(settingValue)) ? settingValue : ({});
+        normalized.color = currentValue.color ?? legacyColorValue ?? fallbackColor;
+        normalized.opacity = normalizeOpacityValue(currentValue.opacity ?? legacyOpacityValue, fallbackOpacity);
+        return normalized;
+    }
+
     function normalizeSettingsSnapshot(settings) {
         const next = deepCopy(settings || ({}));
         if (!next.display)
             next.display = ({});
+        if (!next.track)
+            next.track = ({});
+        if (!next.focusLine)
+            next.focusLine = ({});
         next.display.spaceMode = "reserve";
         if (next.track && next.track.height !== undefined)
             delete next.track.height;
         if (next.animation && next.animation.type !== undefined)
             delete next.animation.type;
+
+        next.display.background = normalizeColorSetting(
+            next.display.background,
+            next.display.backgroundColor,
+            next.display.backgroundOpacity,
+            "none",
+            0
+        );
+        next.display.gradient = normalizeColorSetting(
+            next.display.gradient,
+            next.display.gradientColor,
+            next.display.gradientOpacity,
+            "none",
+            0
+        );
+        next.track.fill = normalizeColorSetting(
+            next.track.fill,
+            next.track.color,
+            next.track.opacity,
+            "surface",
+            1
+        );
+        next.focusLine.opacity = normalizeOpacityValue(next.focusLine.opacity, 1);
+
+        delete next.display.backgroundColor;
+        delete next.display.backgroundOpacity;
+        delete next.display.gradientColor;
+        delete next.display.gradientOpacity;
+        delete next.track.color;
+        delete next.track.opacity;
         return next;
     }
 
@@ -167,6 +225,10 @@ ColumnLayout {
         return nestedGroup ? nestedGroup[nestedKey] : undefined;
     }
 
+    function objectSettingValue(groupKey, objectKey, nestedKey) {
+        return nestedSettingValue(groupKey, objectKey, nestedKey);
+    }
+
     function defaultValue(groupKey, nestedKey) {
         const group = defaultSettings ? defaultSettings[groupKey] : undefined;
         return group ? group[nestedKey] : undefined;
@@ -176,6 +238,10 @@ ColumnLayout {
         const group = defaultSettings ? defaultSettings[groupKey] : undefined;
         const nestedGroup = group ? group[nestedGroupKey] : undefined;
         return nestedGroup ? nestedGroup[nestedKey] : undefined;
+    }
+
+    function defaultObjectValue(groupKey, objectKey, nestedKey) {
+        return defaultNestedValue(groupKey, objectKey, nestedKey);
     }
 
     function setSetting(groupKey, nestedKey, value) {
@@ -194,6 +260,10 @@ ColumnLayout {
             next[groupKey][nestedGroupKey] = ({});
         next[groupKey][nestedGroupKey][nestedKey] = value;
         editSettings = next;
+    }
+
+    function setObjectSetting(groupKey, objectKey, nestedKey, value) {
+        setNestedSetting(groupKey, objectKey, nestedKey, value);
     }
 
     function conditionValue(key) {

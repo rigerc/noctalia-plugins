@@ -125,23 +125,13 @@ ColumnLayout {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.display.backgroundColor.label")
                 description: rootSettings?.pluginApi?.tr("settings.display.backgroundColor.desc")
-                currentValue: rootSettings?.settingValue("display", "backgroundColor") ?? "none"
-                defaultValue: rootSettings?.defaultValue("display", "backgroundColor") ?? "none"
-                onSelected: value => rootSettings?.setSetting("display", "backgroundColor", value)
-            }
-
-            NValueSlider {
-                visible: rootSettings?.isVisibleByConditions(["floatingPanelMode"]) ?? true
-                label: rootSettings?.pluginApi?.tr("settings.display.backgroundOpacity.label")
-                description: rootSettings?.pluginApi?.tr("settings.display.backgroundOpacity.desc")
-                from: 0
-                to: 100
-                stepSize: 1
-                value: rootSettings?.settingValue("display", "backgroundOpacity") ?? 0
-                text: Math.round(value) + "%"
-                defaultValue: rootSettings?.defaultValue("display", "backgroundOpacity") ?? 0
-                showReset: true
-                onMoved: sliderValue => rootSettings?.setSetting("display", "backgroundOpacity", Math.round(sliderValue))
+                currentColor: rootSettings?.objectSettingValue("display", "background", "color") ?? "none"
+                defaultColor: rootSettings?.defaultObjectValue("display", "background", "color") ?? "none"
+                currentOpacity: rootSettings?.objectSettingValue("display", "background", "opacity") ?? 0
+                defaultOpacity: rootSettings?.defaultObjectValue("display", "background", "opacity") ?? 0
+                showOpacityControl: true
+                onColorSelected: value => rootSettings?.setObjectSetting("display", "background", "color", value)
+                onOpacitySelected: value => rootSettings?.setObjectSetting("display", "background", "opacity", value)
             }
 
             NToggle {
@@ -160,23 +150,13 @@ ColumnLayout {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.display.gradientColor.label")
                 description: rootSettings?.pluginApi?.tr("settings.display.gradientColor.desc")
-                currentValue: rootSettings?.settingValue("display", "gradientColor") ?? "none"
-                defaultValue: rootSettings?.defaultValue("display", "gradientColor") ?? "none"
-                onSelected: value => rootSettings?.setSetting("display", "gradientColor", value)
-            }
-
-            NValueSlider {
-                visible: rootSettings?.isVisibleByConditions(["floatingPanelMode", "displayGradientEnabled"]) ?? false
-                label: rootSettings?.pluginApi?.tr("settings.display.gradientOpacity.label")
-                description: rootSettings?.pluginApi?.tr("settings.display.gradientOpacity.desc")
-                from: 0
-                to: 100
-                stepSize: 1
-                value: rootSettings?.settingValue("display", "gradientOpacity") ?? 0
-                text: Math.round(value) + "%"
-                defaultValue: rootSettings?.defaultValue("display", "gradientOpacity") ?? 0
-                showReset: true
-                onMoved: sliderValue => rootSettings?.setSetting("display", "gradientOpacity", Math.round(sliderValue))
+                currentColor: rootSettings?.objectSettingValue("display", "gradient", "color") ?? "none"
+                defaultColor: rootSettings?.defaultObjectValue("display", "gradient", "color") ?? "none"
+                currentOpacity: rootSettings?.objectSettingValue("display", "gradient", "opacity") ?? 0
+                defaultOpacity: rootSettings?.defaultObjectValue("display", "gradient", "opacity") ?? 0
+                showOpacityControl: true
+                onColorSelected: value => rootSettings?.setObjectSetting("display", "gradient", "color", value)
+                onOpacitySelected: value => rootSettings?.setObjectSetting("display", "gradient", "opacity", value)
             }
 
             NComboBox {
@@ -268,19 +248,6 @@ ColumnLayout {
                 defaultValue: rootSettings?.defaultValue("track", "borderRadius") ?? 3
                 showReset: true
                 onMoved: sliderValue => rootSettings?.setSetting("track", "borderRadius", Math.round(sliderValue))
-            }
-
-            NValueSlider {
-                label: rootSettings?.pluginApi?.tr("settings.track.opacity.label")
-                description: rootSettings?.pluginApi?.tr("settings.track.opacity.desc")
-                from: 0
-                to: 1
-                stepSize: 0.01
-                value: rootSettings?.settingValue("track", "opacity") ?? 1
-                text: Math.round(value * 100) + "%"
-                defaultValue: rootSettings?.defaultValue("track", "opacity") ?? 1
-                showReset: true
-                onMoved: sliderValue => rootSettings?.setSetting("track", "opacity", Math.round(sliderValue * 100) / 100)
             }
 
             NToggle {
