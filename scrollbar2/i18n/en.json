@@ -20,6 +20,9 @@
     "verticalAlignTop": "Top",
     "verticalAlignCenter": "Center",
     "verticalAlignBottom": "Bottom",
+    "animationSpring": "Spring",
+    "animationEase": "Ease",
+    "animationLinear": "Linear",
     "gradientVertical": "Vertical",
     "gradientHorizontal": "Horizontal",
     "horizontalAlignLeft": "Left",
@@ -223,9 +226,9 @@
         "label": "Focus Opacity",
         "desc": "Opacity of the focus indicator."
       },
-      "shadowEnabled": {
-        "label": "Enable Focus Glow",
-        "desc": "Add a glow around the focus indicator."
+      "lineColor": {
+        "label": "Focus Line Color",
+        "desc": "Color of the moving focus indicator line."
       },
       "colors": {
         "focused": {
@@ -346,6 +349,10 @@
       "enabled": {
         "label": "Enable Animation",
         "desc": "Animate focus movement, fades, and color changes."
+      },
+      "type": {
+        "label": "Animation Type",
+        "desc": "Choose how the focus indicator transitions between windows."
       },
       "speed": {
         "label": "Animation Speed",

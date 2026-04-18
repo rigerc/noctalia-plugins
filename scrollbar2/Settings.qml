@@ -104,6 +104,20 @@ ColumnLayout {
             "name": pluginApi?.tr("options.fontWeightBold")
         }
     ]
+    readonly property var animationTypeModel: [
+        {
+            "key": "spring",
+            "name": pluginApi?.tr("options.animationSpring")
+        },
+        {
+            "key": "ease",
+            "name": pluginApi?.tr("options.animationEase")
+        },
+        {
+            "key": "linear",
+            "name": pluginApi?.tr("options.animationLinear")
+        }
+    ]
     readonly property var gradientDirectionModel: [
         {
             "key": "vertical",
@@ -204,8 +218,6 @@ ColumnLayout {
         next.display.spaceMode = "reserve";
         if (next.track && next.track.height !== undefined)
             delete next.track.height;
-        if (next.animation && next.animation.type !== undefined)
-            delete next.animation.type;
 
         next.display.background = normalizeColorSetting(
             next.display.background,
@@ -236,6 +248,13 @@ ColumnLayout {
                 "default": "surface-variant"
             }
         );
+        next.focusLine.lineColor = normalizeColorSetting(
+            next.focusLine.lineColor,
+            undefined,
+            undefined,
+            "primary",
+            1
+        );
         next.window = next.window && typeof next.window === "object" && !Array.isArray(next.window) ? next.window : ({});
         next.window.iconColors = normalizeColorStateMap(
             next.window.iconColors,
@@ -261,6 +280,7 @@ ColumnLayout {
         delete next.display.gradientOpacity;
         delete next.track.color;
         delete next.track.opacity;
+        delete next.focusLine.shadowEnabled;
         return next;
     }
 

@@ -62,8 +62,11 @@
         "thickness": 6,
         "borderRadius": 3,
         "verticalAlign": "bottom",
-        "shadowEnabled": true,
         "opacity": 1,
+        "lineColor": {
+          "color": "primary",
+          "opacity": 1
+        },
         "colors": {
           "focused": {
             "color": "primary",
@@ -130,6 +133,7 @@
       },
       "animation": {
         "enabled": true,
+        "type": "spring",
         "speed": 420
       },
       "_presets": [],

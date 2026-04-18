@@ -159,7 +159,6 @@ Item {
     readonly property real focusLineThickness: Math.max(1, settingValue("focusLine", "thickness", 6) * Style.uiScaleRatio)
     readonly property real focusLineRadius: Math.max(0, settingValue("focusLine", "borderRadius", 3) * Style.uiScaleRatio)
     readonly property string focusLineVerticalAlign: settingValue("focusLine", "verticalAlign", "bottom")
-    readonly property bool focusLineShadowEnabled: settingValue("focusLine", "shadowEnabled", true)
     readonly property real focusLineOpacity: normalizeOpacityValue(settingValue("focusLine", "opacity", 1), 1)
     readonly property string focusLineFocusedColorKey: nestedStateColor("focusLine", "focused", "primary")
     readonly property string focusLineHoverColorKey: nestedStateColor("focusLine", "hover", "hover")
@@ -170,6 +169,10 @@ Item {
     readonly property color focusLineFocusedColor: resolveColor(focusLineFocusedColorKey, Color.mPrimary)
     readonly property color focusLineHoverColor: resolveColor(focusLineHoverColorKey, Color.mHover)
     readonly property color focusLineDefaultColor: resolveColor(focusLineDefaultColorKey, Color.mSurfaceVariant)
+
+    readonly property string focusLineIndicatorColorKey: objectSettingValue("focusLine", "lineColor", "color", "primary")
+    readonly property real focusLineIndicatorOpacity: normalizeOpacityValue(objectSettingValue("focusLine", "lineColor", "opacity", 1), 1)
+    readonly property color focusLineIndicatorColor: resolveColor(focusLineIndicatorColorKey, Color.mPrimary)
 
     readonly property bool showIcon: settingValue("window", "showIcon", true)
     readonly property bool showTitle: settingValue("window", "showTitle", true)
@@ -208,6 +211,7 @@ Item {
     readonly property color titleColorDefault: resolveColor(titleColorDefaultKey, Color.mOnSurfaceVariant)
 
     readonly property bool animationEnabled: settingValue("animation", "enabled", true)
+    readonly property string animationType: settingValue("animation", "type", "spring")
     readonly property int animationSpeed: Math.max(0, Math.round(settingValue("animation", "speed", 420)))
 
     readonly property int revisionToken: (mainInstance?.structureRevision ?? 0) + (mainInstance?.liveRevision ?? 0) + (mainInstance?.titleRevision ?? 0)
@@ -340,6 +344,21 @@ Item {
 
     function indicatorY() {
         return alignedY(focusLineVerticalAlign, visibleFocusLineThickness);
+    }
+
+    function focusLineEasingType() {
+        switch (animationType) {
+        case "linear":
+            return Easing.Linear;
+        case "ease":
+            return Easing.InOutQuad;
+        default:
+            return Easing.OutBack;
+        }
+    }
+
+    function focusLineOvershoot() {
+        return animationType === "spring" ? 1.15 : 0;
     }
 
     function focusedEntry() {
@@ -665,8 +684,8 @@ Item {
             enabled: root.animationEnabled
             NumberAnimation {
                 duration: root.animationSpeed
-                easing.type: Easing.OutBack
-                easing.overshoot: 1.15
+                easing.type: root.focusLineEasingType()
+                easing.overshoot: root.focusLineOvershoot()
             }
         }
 
@@ -674,8 +693,8 @@ Item {
             enabled: root.animationEnabled
             NumberAnimation {
                 duration: root.animationSpeed
-                easing.type: Easing.OutBack
-                easing.overshoot: 1.15
+                easing.type: root.focusLineEasingType()
+                easing.overshoot: root.focusLineOvershoot()
             }
         }
 
@@ -686,16 +705,8 @@ Item {
             width: parent.width
             height: root.visibleFocusLineThickness
             radius: root.focusLineRadius
-            color: Qt.alpha(root.focusLineFocusedColor, root.focusLineOpacity * root.focusLineFocusedOpacity)
+            color: Qt.alpha(root.focusLineIndicatorColor, root.focusLineOpacity * root.focusLineIndicatorOpacity)
         }
-    }
-
-    NDropShadow {
-        anchors.fill: focusIndicator
-        source: focusLineFill
-        autoPaddingEnabled: true
-        visible: focusIndicator.visible && focusLineShadowEnabled
-        z: 19
     }
 
     Item {

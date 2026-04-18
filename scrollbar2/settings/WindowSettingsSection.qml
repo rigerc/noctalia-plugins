@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import qs.Commons
 import qs.Services.System
 import qs.Widgets
+import "../components"
 
 ColumnLayout {
     id: root
@@ -293,13 +294,18 @@ ColumnLayout {
                 onMoved: sliderValue => rootSettings?.setSetting("focusLine", "opacity", Math.round(sliderValue * 100) / 100)
             }
 
-            NToggle {
+            HybridColorChoice {
+                pluginApi: rootSettings?.pluginApi
                 Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.focusLine.shadowEnabled.label")
-                description: rootSettings?.pluginApi?.tr("settings.focusLine.shadowEnabled.desc")
-                checked: rootSettings?.settingValue("focusLine", "shadowEnabled") ?? true
-                onToggled: checked => rootSettings?.setSetting("focusLine", "shadowEnabled", checked)
-                defaultValue: rootSettings?.defaultValue("focusLine", "shadowEnabled") ?? true
+                label: rootSettings?.pluginApi?.tr("settings.focusLine.lineColor.label")
+                description: rootSettings?.pluginApi?.tr("settings.focusLine.lineColor.desc")
+                currentColor: rootSettings?.objectSettingValue("focusLine", "lineColor", "color") ?? "primary"
+                defaultColor: rootSettings?.defaultObjectValue("focusLine", "lineColor", "color") ?? "primary"
+                currentOpacity: rootSettings?.objectSettingValue("focusLine", "lineColor", "opacity") ?? 1
+                defaultOpacity: rootSettings?.defaultObjectValue("focusLine", "lineColor", "opacity") ?? 1
+                showOpacityControl: true
+                onColorSelected: value => rootSettings?.setObjectSetting("focusLine", "lineColor", "color", value)
+                onOpacitySelected: value => rootSettings?.setObjectSetting("focusLine", "lineColor", "opacity", value)
             }
         }
     }
