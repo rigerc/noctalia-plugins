@@ -72,16 +72,6 @@ ColumnLayout {
                 defaultValue: rootSettings?.defaultValue("animation", "enabled") ?? true
             }
 
-            NComboBox {
-                Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.animation.type.label")
-                description: rootSettings?.pluginApi?.tr("settings.animation.type.desc")
-                model: rootSettings?.animationTypeModel
-                currentKey: rootSettings?.settingValue("animation", "type") ?? "spring"
-                defaultValue: rootSettings?.defaultValue("animation", "type") ?? "spring"
-                onSelected: key => rootSettings?.setSetting("animation", "type", key)
-            }
-
             NValueSlider {
                 label: rootSettings?.pluginApi?.tr("settings.animation.speed.label")
                 description: rootSettings?.pluginApi?.tr("settings.animation.speed.desc")

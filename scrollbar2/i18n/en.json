@@ -19,15 +19,16 @@
     "verticalAlignTop": "Top",
     "verticalAlignCenter": "Center",
     "verticalAlignBottom": "Bottom",
-    "animationSpring": "Spring",
-    "animationEase": "Ease",
-    "animationLinear": "Linear",
-    "animationFade": "Fade",
     "gradientVertical": "Vertical",
     "gradientHorizontal": "Horizontal",
     "horizontalAlignLeft": "Left",
     "horizontalAlignCenter": "Center",
-    "horizontalAlignRight": "Right"
+    "horizontalAlignRight": "Right",
+    "fontWeightLight": "Light",
+    "fontWeightNormal": "Normal",
+    "fontWeightMedium": "Medium",
+    "fontWeightSemibold": "Semibold",
+    "fontWeightBold": "Bold"
   },
   "settings": {
     "summary": "Configure `scrollbar2` as a compact bar widget or a reserve-space floating panel. Theme-aware colors use Noctalia color pickers and also allow custom hex values.",
@@ -256,6 +257,14 @@
         "label": "Window Margin",
         "desc": "Inset around each window segment background and its content."
       },
+      "paddingLeft": {
+        "label": "Left Padding",
+        "desc": "Left inner padding for window content inside each segment."
+      },
+      "paddingRight": {
+        "label": "Right Padding",
+        "desc": "Right inner padding for window content inside each segment."
+      },
       "font": {
         "label": "Font Family",
         "desc": "Font family used for window titles."
@@ -263,6 +272,20 @@
       "fontSize": {
         "label": "Font Size",
         "desc": "Base size of the window title text."
+      },
+      "fontWeights": {
+        "focused": {
+          "label": "Focused Font Weight",
+          "desc": "Font weight used for focused window titles."
+        },
+        "hover": {
+          "label": "Hover Font Weight",
+          "desc": "Font weight used for hovered window titles."
+        },
+        "default": {
+          "label": "Inactive Font Weight",
+          "desc": "Font weight used for inactive window titles."
+        }
       },
       "iconScale": {
         "label": "Icon Scale",
@@ -313,10 +336,6 @@
       "enabled": {
         "label": "Enable Animation",
         "desc": "Animate focus movement, fades, and color changes."
-      },
-      "type": {
-        "label": "Animation Type",
-        "desc": "Choose how the focus state transitions between windows."
       },
       "speed": {
         "label": "Animation Speed",

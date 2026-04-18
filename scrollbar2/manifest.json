@@ -77,6 +77,13 @@
         "titleScale": 1,
         "iconAlign": "center",
         "titleAlign": "left",
+        "paddingLeft": 7,
+        "paddingRight": 7,
+        "fontWeights": {
+          "focused": "semibold",
+          "hover": "medium",
+          "default": "medium"
+        },
         "iconColors": {
           "focused": "on-surface",
           "hover": "on-hover",
@@ -90,7 +97,6 @@
       },
       "animation": {
         "enabled": true,
-        "type": "spring",
         "speed": 420
       }
     }

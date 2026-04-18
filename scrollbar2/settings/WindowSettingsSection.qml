@@ -92,6 +92,32 @@ ColumnLayout {
                 onMoved: sliderValue => rootSettings?.setSetting("window", "margin", Math.round(sliderValue))
             }
 
+            NValueSlider {
+                label: rootSettings?.pluginApi?.tr("settings.window.paddingLeft.label")
+                description: rootSettings?.pluginApi?.tr("settings.window.paddingLeft.desc")
+                from: 0
+                to: 32
+                stepSize: 1
+                value: rootSettings?.settingValue("window", "paddingLeft") ?? 7
+                text: Math.round(value) + " px"
+                defaultValue: rootSettings?.defaultValue("window", "paddingLeft") ?? 7
+                showReset: true
+                onMoved: sliderValue => rootSettings?.setSetting("window", "paddingLeft", Math.round(sliderValue))
+            }
+
+            NValueSlider {
+                label: rootSettings?.pluginApi?.tr("settings.window.paddingRight.label")
+                description: rootSettings?.pluginApi?.tr("settings.window.paddingRight.desc")
+                from: 0
+                to: 32
+                stepSize: 1
+                value: rootSettings?.settingValue("window", "paddingRight") ?? 7
+                text: Math.round(value) + " px"
+                defaultValue: rootSettings?.defaultValue("window", "paddingRight") ?? 7
+                showReset: true
+                onMoved: sliderValue => rootSettings?.setSetting("window", "paddingRight", Math.round(sliderValue))
+            }
+
             NSearchableComboBox {
                 visible: rootSettings?.isVisibleByConditions(["showTitle"]) ?? true
                 Layout.fillWidth: true
@@ -115,6 +141,39 @@ ColumnLayout {
                 defaultValue: rootSettings?.defaultValue("window", "fontSize") ?? 11
                 showReset: true
                 onMoved: sliderValue => rootSettings?.setSetting("window", "fontSize", Math.round(sliderValue))
+            }
+
+            NComboBox {
+                visible: rootSettings?.isVisibleByConditions(["showTitle"]) ?? true
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.window.fontWeights.focused.label")
+                description: rootSettings?.pluginApi?.tr("settings.window.fontWeights.focused.desc")
+                model: rootSettings?.fontWeightModel
+                currentKey: rootSettings?.nestedSettingValue("window", "fontWeights", "focused") ?? "semibold"
+                defaultValue: rootSettings?.defaultNestedValue("window", "fontWeights", "focused") ?? "semibold"
+                onSelected: key => rootSettings?.setNestedSetting("window", "fontWeights", "focused", key)
+            }
+
+            NComboBox {
+                visible: rootSettings?.isVisibleByConditions(["showTitle"]) ?? true
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.window.fontWeights.hover.label")
+                description: rootSettings?.pluginApi?.tr("settings.window.fontWeights.hover.desc")
+                model: rootSettings?.fontWeightModel
+                currentKey: rootSettings?.nestedSettingValue("window", "fontWeights", "hover") ?? "medium"
+                defaultValue: rootSettings?.defaultNestedValue("window", "fontWeights", "hover") ?? "medium"
+                onSelected: key => rootSettings?.setNestedSetting("window", "fontWeights", "hover", key)
+            }
+
+            NComboBox {
+                visible: rootSettings?.isVisibleByConditions(["showTitle"]) ?? true
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.window.fontWeights.default.label")
+                description: rootSettings?.pluginApi?.tr("settings.window.fontWeights.default.desc")
+                model: rootSettings?.fontWeightModel
+                currentKey: rootSettings?.nestedSettingValue("window", "fontWeights", "default") ?? "medium"
+                defaultValue: rootSettings?.defaultNestedValue("window", "fontWeights", "default") ?? "medium"
+                onSelected: key => rootSettings?.setNestedSetting("window", "fontWeights", "default", key)
             }
 
             NComboBox {

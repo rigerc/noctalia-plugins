@@ -114,12 +114,17 @@ Item {
     readonly property string focusedAlign: settingValue("window", "focusedAlign", "segment")
     readonly property real windowBorderRadius: Math.max(0, settingValue("window", "borderRadius", 6) * Style.uiScaleRatio)
     readonly property real windowMargin: Math.max(0, settingValue("window", "margin", 2) * Style.uiScaleRatio)
+    readonly property real windowPaddingLeft: Math.max(0, settingValue("window", "paddingLeft", 7) * Style.uiScaleRatio)
+    readonly property real windowPaddingRight: Math.max(0, settingValue("window", "paddingRight", 7) * Style.uiScaleRatio)
     readonly property string titleFontFamily: settingValue("window", "font", "JetBrains Mono")
     readonly property real titleFontSize: Math.max(1, settingValue("window", "fontSize", 11) * Style.uiScaleRatio)
     readonly property real iconScale: Math.max(0.5, settingValue("window", "iconScale", 1.0))
     readonly property real titleScale: Math.max(0.5, settingValue("window", "titleScale", 1.0))
     readonly property string iconAlign: settingValue("window", "iconAlign", "center")
     readonly property string titleAlign: settingValue("window", "titleAlign", "left")
+    readonly property string titleWeightFocused: currentSettings?.window?.fontWeights?.focused ?? defaults?.window?.fontWeights?.focused ?? "semibold"
+    readonly property string titleWeightHover: currentSettings?.window?.fontWeights?.hover ?? defaults?.window?.fontWeights?.hover ?? "medium"
+    readonly property string titleWeightDefault: currentSettings?.window?.fontWeights?.default ?? defaults?.window?.fontWeights?.default ?? "medium"
     readonly property color iconColorFocused: resolveColor(nestedWindowStateColor("iconColors", "focused", "on-surface"), Color.mOnSurface)
     readonly property color iconColorHover: resolveColor(nestedWindowStateColor("iconColors", "hover", "on-hover"), Color.mOnHover)
     readonly property color iconColorDefault: resolveColor(nestedWindowStateColor("iconColors", "default", "on-surface-variant"), Color.mOnSurfaceVariant)
@@ -128,9 +133,7 @@ Item {
     readonly property color titleColorDefault: resolveColor(nestedWindowStateColor("titleColors", "default", "on-surface-variant"), Color.mOnSurfaceVariant)
 
     readonly property bool animationEnabled: settingValue("animation", "enabled", true)
-    readonly property string animationType: settingValue("animation", "type", "spring")
     readonly property int animationSpeed: Math.max(0, Math.round(settingValue("animation", "speed", 420)))
-    readonly property bool isFadeAnimation: animationType === "fade"
 
     readonly property int revisionToken: (mainInstance?.structureRevision ?? 0) + (mainInstance?.liveRevision ?? 0) + (mainInstance?.titleRevision ?? 0)
     readonly property var entries: {
@@ -187,13 +190,8 @@ Item {
 
     function segmentBackgroundColor(entryKey) {
         const state = segmentState(entryKey);
-        if (isFadeAnimation) {
-            if (state === "focused")
-                return focusLineFocusedColor;
-            if (state === "hover")
-                return focusLineHoverColor;
-            return focusLineDefaultColor;
-        }
+        if (state === "focused")
+            return focusLineFocusedColor;
         if (state === "hover")
             return focusLineHoverColor;
         return focusLineDefaultColor;
@@ -213,6 +211,17 @@ Item {
         if (state === "hover")
             return titleColorHover;
         return titleColorDefault;
+    }
+
+    function titleWeight(entryKey) {
+        switch (segmentState(entryKey)) {
+        case "focused":
+            return fontWeightValue(titleWeightFocused, Style.fontWeightSemiBold);
+        case "hover":
+            return fontWeightValue(titleWeightHover, Style.fontWeightMedium);
+        default:
+            return fontWeightValue(titleWeightDefault, Style.fontWeightMedium);
+        }
     }
 
     function labelVisible(entryKey) {
@@ -249,21 +258,6 @@ Item {
         return alignedY(focusLineVerticalAlign, visibleFocusLineThickness);
     }
 
-    function focusLineEasingType() {
-        switch (animationType) {
-        case "linear":
-            return Easing.Linear;
-        case "ease":
-            return Easing.InOutQuad;
-        default:
-            return Easing.OutBack;
-        }
-    }
-
-    function focusLineOvershoot() {
-        return animationType === "spring" ? 1.15 : 0;
-    }
-
     function focusedEntry() {
         if (focusedIndex < 0 || focusedIndex >= entries.length)
             return null;
@@ -278,6 +272,23 @@ Item {
             return Text.AlignRight;
         default:
             return Text.AlignLeft;
+        }
+    }
+
+    function fontWeightValue(weightKey, fallbackValue) {
+        switch (weightKey) {
+        case "light":
+            return Font.Light;
+        case "normal":
+            return Font.Normal;
+        case "medium":
+            return Style.fontWeightMedium;
+        case "semibold":
+            return Style.fontWeightSemiBold;
+        case "bold":
+            return Style.fontWeightBold;
+        default:
+            return fallbackValue;
         }
     }
 
@@ -380,14 +391,14 @@ Item {
                 RowLayout {
                     anchors.fill: parent
                     anchors.margins: root.windowMargin
-                    anchors.leftMargin: root.windowMargin + root.labelPaddingH
-                    anchors.rightMargin: root.windowMargin + root.labelPaddingH
+                    anchors.leftMargin: root.windowMargin + root.windowPaddingLeft
+                    anchors.rightMargin: root.windowMargin + root.windowPaddingRight
                     spacing: root.labelGap
                     visible: root.showIcon || root.showTitle
                     layoutDirection: root.focusedOnly && root.focusedAlign === "right" && segmentItem.showLabel ? Qt.RightToLeft : Qt.LeftToRight
 
                     Item {
-                        Layout.preferredWidth: root.showIcon ? (root.showTitle ? root.computedIconSize : Math.max(root.computedIconSize, segmentItem.width - (root.windowMargin * 2) - (root.labelPaddingH * 2))) : 0
+                        Layout.preferredWidth: root.showIcon ? (root.showTitle ? root.computedIconSize : Math.max(root.computedIconSize, segmentItem.width - (root.windowMargin * 2) - root.windowPaddingLeft - root.windowPaddingRight)) : 0
                         Layout.preferredHeight: root.showIcon ? root.computedIconSize : 0
                         Layout.alignment: Qt.AlignVCenter
                         visible: root.showIcon
@@ -454,7 +465,7 @@ Item {
                         horizontalAlignment: root.horizontalAlignment(root.titleAlign)
                         font.family: root.titleFontFamily || Qt.application.font.family
                         pointSize: root.titleFontSize * root.titleScale
-                        font.weight: root.segmentState(segmentItem.entryKey) === "focused" ? Style.fontWeightSemiBold : Style.fontWeightMedium
+                        font.weight: root.titleWeight(segmentItem.entryKey)
 
                         Behavior on color {
                             enabled: root.animationEnabled
@@ -551,7 +562,7 @@ Item {
 
     Item {
         id: focusIndicator
-        visible: !isFadeAnimation && focusedIndex >= 0 && availableContainerHeight > 0
+        visible: focusedIndex >= 0 && availableContainerHeight > 0
         x: indicatorOffset(focusedIndex)
         y: 0
         width: segmentWidth
@@ -562,8 +573,8 @@ Item {
             enabled: root.animationEnabled
             NumberAnimation {
                 duration: root.animationSpeed
-                easing.type: root.focusLineEasingType()
-                easing.overshoot: root.focusLineOvershoot()
+                easing.type: Easing.OutBack
+                easing.overshoot: 1.15
             }
         }
 
@@ -571,8 +582,8 @@ Item {
             enabled: root.animationEnabled
             NumberAnimation {
                 duration: root.animationSpeed
-                easing.type: root.focusLineEasingType()
-                easing.overshoot: root.focusLineOvershoot()
+                easing.type: Easing.OutBack
+                easing.overshoot: 1.15
             }
         }
 
@@ -644,7 +655,7 @@ Item {
                 color: root.titleColorFocused
                 font.family: root.titleFontFamily || Qt.application.font.family
                 pointSize: root.titleFontSize * root.titleScale
-                font.weight: Style.fontWeightSemiBold
+                font.weight: root.fontWeightValue(root.titleWeightFocused, Style.fontWeightSemiBold)
             }
         }
     }

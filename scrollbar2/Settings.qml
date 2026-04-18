@@ -80,22 +80,26 @@ ColumnLayout {
             "name": pluginApi?.tr("options.horizontalAlignRight")
         }
     ]
-    readonly property var animationTypeModel: [
+    readonly property var fontWeightModel: [
         {
-            "key": "spring",
-            "name": pluginApi?.tr("options.animationSpring")
+            "key": "light",
+            "name": pluginApi?.tr("options.fontWeightLight")
         },
         {
-            "key": "ease",
-            "name": pluginApi?.tr("options.animationEase")
+            "key": "normal",
+            "name": pluginApi?.tr("options.fontWeightNormal")
         },
         {
-            "key": "linear",
-            "name": pluginApi?.tr("options.animationLinear")
+            "key": "medium",
+            "name": pluginApi?.tr("options.fontWeightMedium")
         },
         {
-            "key": "fade",
-            "name": pluginApi?.tr("options.animationFade")
+            "key": "semibold",
+            "name": pluginApi?.tr("options.fontWeightSemibold")
+        },
+        {
+            "key": "bold",
+            "name": pluginApi?.tr("options.fontWeightBold")
         }
     ]
     readonly property var gradientDirectionModel: [
@@ -147,6 +151,8 @@ ColumnLayout {
         next.display.spaceMode = "reserve";
         if (next.track && next.track.height !== undefined)
             delete next.track.height;
+        if (next.animation && next.animation.type !== undefined)
+            delete next.animation.type;
         return next;
     }
 
