@@ -164,6 +164,58 @@ ColumnLayout {
                         speed: 250
                     }
                 })
+            },
+            {
+                id: "builtin:indicator",
+                name: pluginApi?.tr("settings.presets.builtinPresets.indicator.name") ?? "Indicator",
+                description: pluginApi?.tr("settings.presets.builtinPresets.indicator.desc") ?? "",
+                builtIn: true,
+                settings: _deepMerge(d, {
+                    track: {
+                        thickness: 4,
+                        segmentSpacing: 2,
+                        shadowEnabled: false
+                    },
+                    focusLine: {
+                        thickness: 4,
+                        shadowEnabled: false
+                    },
+                    window: {
+                        showIcon: false,
+                        showTitle: false
+                    },
+                    animation: {
+                        enabled: true,
+                        speed: 300
+                    }
+                })
+            },
+            {
+                id: "builtin:pill",
+                name: pluginApi?.tr("settings.presets.builtinPresets.pill.name") ?? "Pill",
+                description: pluginApi?.tr("settings.presets.builtinPresets.pill.desc") ?? "",
+                builtIn: true,
+                settings: _deepMerge(d, {
+                    track: {
+                        thickness: 8,
+                        borderRadius: 4,
+                        shadowEnabled: false,
+                        segmentSpacing: 3
+                    },
+                    focusLine: {
+                        thickness: 8,
+                        borderRadius: 4,
+                        shadowEnabled: false
+                    },
+                    window: {
+                        showIcon: false,
+                        showTitle: false
+                    },
+                    animation: {
+                        enabled: true,
+                        speed: 350
+                    }
+                })
             }
         ];
     }

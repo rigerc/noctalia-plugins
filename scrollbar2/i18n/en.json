@@ -445,6 +445,14 @@
         "compact": {
           "name": "Compact",
           "desc": "Tiny track with focused-only labels."
+        },
+        "indicator": {
+          "name": "Indicator",
+          "desc": "Track and focus line only, no window content."
+        },
+        "pill": {
+          "name": "Pill",
+          "desc": "Fully rounded track with smooth focus indicator."
         }
       },
       "notifications": {

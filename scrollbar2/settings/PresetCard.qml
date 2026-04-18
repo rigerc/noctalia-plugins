@@ -28,6 +28,8 @@ Item {
     NBox {
         id: cardBox
         anchors.fill: parent
+        color: root.isActive ? Color.mPrimary : Color.mSurfaceVariant
+        forceOpaque: root.isActive
         border.color: root.isActive ? Color.mPrimary : Style.boxBorderColor
         border.width: root.isActive ? 2 * Style.uiScaleRatio : Style.borderS
     }
@@ -42,7 +44,7 @@ Item {
             text: root.presetName
             pointSize: Style.fontSizeM
             font.weight: Style.fontWeightMedium
-            color: root.isActive ? Color.mPrimary : Color.mOnSurface
+            color: root.isActive ? Color.mOnPrimary : Color.mOnSurface
             elide: Text.ElideRight
             Layout.fillWidth: true
         }
@@ -52,7 +54,7 @@ Item {
                 ? (root.pluginApi?.tr("settings.presets.badge") ?? "")
                 : (root.presetDescription || "")
             pointSize: Style.fontSizeS
-            color: root.isBuiltIn ? Color.mPrimary : Color.mOnSurfaceVariant
+            color: root.isActive ? Qt.alpha(Color.mOnPrimary, 0.7) : Color.mOnSurfaceVariant
             elide: Text.ElideRight
             Layout.fillWidth: true
             visible: text !== "" && text !== null
