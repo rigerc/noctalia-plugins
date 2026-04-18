@@ -131,6 +131,8 @@ ColumnLayout {
         if (!next.display)
             next.display = ({});
         next.display.spaceMode = "reserve";
+        if (next.track && next.track.height !== undefined)
+            delete next.track.height;
         return next;
     }
 

@@ -44,11 +44,11 @@
         "position": "bottom",
         "verticalAlign": "bottom",
         "thickness": 6,
-        "height": 0,
         "borderRadius": 3,
         "shadowEnabled": true,
         "opacity": 1,
         "color": "surface",
+        "separatorColor": "outline",
         "width": 40,
         "segmentSpacing": 4
       },

@@ -37,6 +37,16 @@ ColumnLayout {
                 defaultValue: rootSettings?.defaultValue("track", "color") ?? "surface"
                 onSelected: value => rootSettings?.setSetting("track", "color", value)
             }
+
+            HybridColorChoice {
+                pluginApi: rootSettings?.pluginApi
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.track.separatorColor.label")
+                description: rootSettings?.pluginApi?.tr("settings.track.separatorColor.desc")
+                currentValue: rootSettings?.settingValue("track", "separatorColor") ?? "outline"
+                defaultValue: rootSettings?.defaultValue("track", "separatorColor") ?? "outline"
+                onSelected: value => rootSettings?.setSetting("track", "separatorColor", value)
+            }
         }
     }
 

@@ -121,10 +121,6 @@
         "label": "Track Width",
         "desc": "Width of the track as a percentage of the screen width."
       },
-      "height": {
-        "label": "Container Height",
-        "desc": "Fixed height for the transparent container. Set to 0 for automatic height."
-      },
       "thickness": {
         "label": "Track Thickness",
         "desc": "Thickness of the track line."
@@ -148,6 +144,10 @@
       "color": {
         "label": "Track Color",
         "desc": "Theme key or hex color for the track line."
+      },
+      "separatorColor": {
+        "label": "Separator Color",
+        "desc": "Theme key or hex color applied to the track line between segments."
       },
       "shadowEnabled": {
         "label": "Enable Track Shadow",

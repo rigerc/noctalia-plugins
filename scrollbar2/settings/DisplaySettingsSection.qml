@@ -222,19 +222,6 @@ ColumnLayout {
             }
 
             NValueSlider {
-                label: rootSettings?.pluginApi?.tr("settings.track.height.label")
-                description: rootSettings?.pluginApi?.tr("settings.track.height.desc")
-                from: 0
-                to: 60
-                stepSize: 1
-                value: rootSettings?.settingValue("track", "height") ?? 0
-                text: value <= 0 ? rootSettings?.pluginApi?.tr("common.auto") : (Math.round(value) + " px")
-                defaultValue: rootSettings?.defaultValue("track", "height") ?? 0
-                showReset: true
-                onMoved: sliderValue => rootSettings?.setSetting("track", "height", Math.round(sliderValue))
-            }
-
-            NValueSlider {
                 label: rootSettings?.pluginApi?.tr("settings.track.thickness.label")
                 description: rootSettings?.pluginApi?.tr("settings.track.thickness.desc")
                 from: 1

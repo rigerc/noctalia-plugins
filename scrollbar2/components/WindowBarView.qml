@@ -91,11 +91,11 @@ Item {
     readonly property string trackPosition: settingValue("track", "position", "bottom")
     readonly property string trackVerticalAlign: settingValue("track", "verticalAlign", "bottom")
     readonly property real trackThickness: Math.max(1, settingValue("track", "thickness", 6) * Style.uiScaleRatio)
-    readonly property real trackHeightSetting: Math.max(0, settingValue("track", "height", 0) * Style.uiScaleRatio)
     readonly property real trackBorderRadius: Math.max(0, settingValue("track", "borderRadius", 3) * Style.uiScaleRatio)
     readonly property bool trackShadowEnabled: settingValue("track", "shadowEnabled", true)
     readonly property real trackOpacity: Math.max(0, Math.min(1, settingValue("track", "opacity", 1)))
     readonly property color trackColor: resolveColor(settingValue("track", "color", "surface"), Color.mSurface)
+    readonly property color separatorColor: resolveColor(settingValue("track", "separatorColor", "outline"), Color.mOutline)
     readonly property real trackWidthPercent: Math.max(5, Math.min(100, settingValue("track", "width", 90)))
     readonly property real segmentSpacing: Math.max(0, settingValue("track", "segmentSpacing", 4) * Style.uiScaleRatio)
 
@@ -144,9 +144,9 @@ Item {
     readonly property real computedLabelHeight: Math.max(computedIconSize, Math.round(titleFontSize * titleScale * 1.5))
     readonly property real computedContentHeight: {
         if (!showIcon && !showTitle)
-            return trackHeightSetting > 0 ? Math.max(trackHeightSetting, trackThickness) : trackThickness;
+            return Math.max(trackThickness, focusLineThickness);
         const windowContentHeight = computedLabelHeight + horizontalPadding * 2;
-        return trackHeightSetting > 0 ? Math.max(trackHeightSetting, trackThickness, focusLineThickness) : Math.max(trackThickness, focusLineThickness, windowContentHeight);
+        return Math.max(trackThickness, focusLineThickness, windowContentHeight);
     }
     readonly property real availableContainerHeight: Math.max(1, root.height > 0 ? root.height : (hostMode === "bar" ? Style.getCapsuleHeightForScreen(screenName) : computedContentHeight))
     readonly property real visibleTrackThickness: Math.min(availableContainerHeight, trackThickness)
@@ -223,6 +223,10 @@ Item {
         if (index < 0)
             return 0;
         return horizontalPadding + index * (segmentWidth + segmentSpacing);
+    }
+
+    function separatorOffset(index) {
+        return horizontalPadding + (index + 1) * segmentWidth + index * segmentSpacing;
     }
 
     function alignedY(alignKey, itemThickness) {
@@ -472,6 +476,30 @@ Item {
         radius: Math.min(trackBorderRadius, height / 2)
         color: Qt.alpha(trackColor, trackOpacity)
         z: 10
+    }
+
+    Item {
+        id: trackSeparators
+        x: 0
+        y: trackLine.y
+        width: root.width
+        height: trackLine.height
+        visible: root.segmentCount > 1 && root.segmentSpacing > 0 && trackLine.visible
+        z: 11
+
+        Repeater {
+            model: Math.max(0, root.segmentCount - 1)
+
+            delegate: Rectangle {
+                required property int index
+
+                x: root.separatorOffset(index)
+                y: 0
+                width: root.segmentSpacing
+                height: trackSeparators.height
+                color: Qt.alpha(root.separatorColor, root.trackOpacity)
+            }
+        }
     }
 
     NDropShadow {
