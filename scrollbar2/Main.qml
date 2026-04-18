@@ -17,10 +17,12 @@ Item {
     property var allEntries: []
     property var liveEntriesByKey: ({})
     property var titleEntriesByKey: ({})
+    property var compositorWorkspaces: []
     property string activeEntryKey: ""
     property int structureRevision: 0
     property int liveRevision: 0
     property int titleRevision: 0
+    property int workspaceRevision: 0
 
     function refreshSettingsSnapshot() {
         currentSettings = pluginApi?.pluginSettings || ({});
@@ -190,6 +192,42 @@ Item {
         return windows;
     }
 
+    function collectWorkspaces() {
+        const workspaces = [];
+        try {
+            const total = CompositorService.workspaces?.count || 0;
+            for (let i = 0; i < total; i++) {
+                const workspace = CompositorService.workspaces.get(i);
+                if (workspace)
+                    workspaces.push(workspace);
+            }
+        } catch (error) {}
+        return workspaces;
+    }
+
+    function cloneWorkspaceData(workspace) {
+        return {
+            "id": workspace?.id,
+            "idx": workspace?.idx,
+            "name": workspace?.name || "",
+            "output": workspace?.output || "",
+            "isFocused": workspace?.isFocused === true,
+            "isActive": workspace?.isActive === true,
+            "isUrgent": workspace?.isUrgent === true,
+            "isOccupied": workspace?.isOccupied === true
+        };
+    }
+
+    function workspaceOutputMatches(workspace, screenName) {
+        if (!workspace)
+            return false;
+        if (CompositorService.globalWorkspaces)
+            return true;
+        if (!screenName)
+            return true;
+        return String(workspace.output || "").toLowerCase() === String(screenName || "").toLowerCase();
+    }
+
     function getActiveWorkspaceIds() {
         try {
             return CompositorService.getActiveWorkspaces().map(function (workspace) {
@@ -198,6 +236,72 @@ Item {
         } catch (error) {
             return [];
         }
+    }
+
+    function refreshWorkspaceSnapshot() {
+        compositorWorkspaces = collectWorkspaces().map(cloneWorkspaceData);
+        workspaceRevision += 1;
+    }
+
+    function workspaceToken(workspace) {
+        if (!workspace)
+            return "";
+        if (workspace.id !== undefined && workspace.id !== null && String(workspace.id) !== "")
+            return String(workspace.id);
+        if (workspace.idx !== undefined && workspace.idx !== null && String(workspace.idx) !== "")
+            return String(workspace.idx);
+        if (workspace.name)
+            return String(workspace.name);
+        return "";
+    }
+
+    function resolveWorkspaceForScreen(screenName) {
+        const normalizedScreenName = String(screenName || "").toLowerCase();
+        const matchingWorkspaces = compositorWorkspaces.filter(function (workspace) {
+            return workspaceOutputMatches(workspace, normalizedScreenName);
+        });
+
+        for (let i = 0; i < matchingWorkspaces.length; i++) {
+            if (matchingWorkspaces[i].isFocused)
+                return matchingWorkspaces[i];
+        }
+        for (let i = 0; i < matchingWorkspaces.length; i++) {
+            if (matchingWorkspaces[i].isActive)
+                return matchingWorkspaces[i];
+        }
+        for (let i = 0; i < compositorWorkspaces.length; i++) {
+            if (compositorWorkspaces[i].isFocused)
+                return compositorWorkspaces[i];
+        }
+        for (let i = 0; i < compositorWorkspaces.length; i++) {
+            if (compositorWorkspaces[i].isActive)
+                return compositorWorkspaces[i];
+        }
+        if (matchingWorkspaces.length > 0)
+            return matchingWorkspaces[0];
+        if (compositorWorkspaces.length > 0)
+            return compositorWorkspaces[0];
+        return null;
+    }
+
+    function countWindowsForWorkspace(screenName, workspaceId) {
+        if (workspaceId === undefined || workspaceId === null || workspaceId === "")
+            return 0;
+
+        const normalizedScreenName = String(screenName || "").toLowerCase();
+        let count = 0;
+        const windows = collectWindows();
+        for (let i = 0; i < windows.length; i++) {
+            const window = windows[i];
+            if (!window || window.workspaceId !== workspaceId)
+                continue;
+            if (!workspaceOutputMatches({
+                "output": window.output || ""
+            }, normalizedScreenName))
+                continue;
+            count += 1;
+        }
+        return count;
     }
 
     function buildEntries(windows) {
@@ -262,6 +366,7 @@ Item {
     }
 
     function updateSnapshots(reason) {
+        refreshWorkspaceSnapshot();
         const windows = collectWindows();
         const nextEntries = buildEntries(windows);
         const nextLiveEntries = buildLiveEntries(nextEntries, windows);
@@ -347,6 +452,10 @@ Item {
 
     Connections {
         target: CompositorService
+
+        function onWorkspacesChanged() {
+            root.refreshWorkspaceSnapshot();
+        }
 
         function onWindowListChanged() {
             root.updateSnapshots("windowListChanged");

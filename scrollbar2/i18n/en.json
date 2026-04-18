@@ -23,11 +23,18 @@
     "animationSpring": "Spring",
     "animationEase": "Ease",
     "animationLinear": "Linear",
+    "animationSmooth": "Smooth",
     "gradientVertical": "Vertical",
     "gradientHorizontal": "Horizontal",
     "horizontalAlignLeft": "Left",
     "horizontalAlignCenter": "Center",
     "horizontalAlignRight": "Right",
+    "workspaceIndicatorId": "Workspace ID",
+    "workspaceIndicatorName": "Workspace Name",
+    "workspaceIndicatorLeft": "Left of Track",
+    "workspaceIndicatorRight": "Right of Track",
+    "axisHorizontal": "Horizontal",
+    "axisVertical": "Vertical",
     "fontWeightLight": "Light",
     "fontWeightNormal": "Normal",
     "fontWeightMedium": "Medium",
@@ -206,7 +213,11 @@
       },
       "animation": {
         "label": "Animation",
-        "desc": "Focus movement, fade, and transition timing."
+        "desc": "Focus movement and transition timing."
+      },
+      "workspaceIndicator": {
+        "label": "Workspace Indicator",
+        "desc": "Show the active workspace beside the track with optional count badge styling."
       }
     },
     "focusLine": {
@@ -348,7 +359,7 @@
     "animation": {
       "enabled": {
         "label": "Enable Animation",
-        "desc": "Animate focus movement, fades, and color changes."
+        "desc": "Animate focus movement and color changes."
       },
       "type": {
         "label": "Animation Type",
@@ -357,6 +368,120 @@
       "speed": {
         "label": "Animation Speed",
         "desc": "Transition duration in milliseconds."
+      }
+    },
+    "workspaceIndicator": {
+      "enabled": {
+        "label": "Show Workspace Indicator",
+        "desc": "Render the active workspace beside the window track."
+      },
+      "labelMode": {
+        "label": "Workspace Text",
+        "desc": "Choose whether to show the active workspace id or name."
+      },
+      "presetText": {
+        "label": "Preset Text",
+        "desc": "Optional prefix text shown before the active workspace value."
+      },
+      "position": {
+        "label": "Position",
+        "desc": "Place the workspace indicator on the left or right side of the track."
+      },
+      "verticalAlign": {
+        "label": "Vertical Position",
+        "desc": "Align the workspace indicator to the top, center, or bottom."
+      },
+      "paddingX": {
+        "label": "Horizontal Padding",
+        "desc": "Inner horizontal padding for the workspace capsule."
+      },
+      "paddingY": {
+        "label": "Vertical Padding",
+        "desc": "Inner vertical padding for the workspace capsule."
+      },
+      "marginLeft": {
+        "label": "Left Margin",
+        "desc": "Spacing on the left side of the workspace indicator."
+      },
+      "marginRight": {
+        "label": "Right Margin",
+        "desc": "Spacing on the right side of the workspace indicator."
+      },
+      "borderRadius": {
+        "label": "Border Radius",
+        "desc": "Corner radius of the workspace indicator background."
+      },
+      "background": {
+        "label": "Background",
+        "desc": "Background color and opacity for the workspace indicator."
+      },
+      "font": {
+        "family": {
+          "label": "Font Family",
+          "desc": "Font family used for the workspace text."
+        },
+        "size": {
+          "label": "Font Size",
+          "desc": "Base size of the workspace text."
+        },
+        "weight": {
+          "label": "Font Weight",
+          "desc": "Font weight used for the workspace text."
+        },
+        "color": {
+          "label": "Text Color",
+          "desc": "Text color and opacity for the workspace label."
+        }
+      },
+      "badge": {
+        "sectionLabel": "Window Count Badge",
+        "sectionDesc": "Optional badge showing how many windows are on the active workspace for this screen.",
+        "enabled": {
+          "label": "Show Window Count Badge",
+          "desc": "Render a badge with the active workspace window count."
+        },
+        "background": {
+          "label": "Badge Background",
+          "desc": "Background color and opacity for the count badge."
+        },
+        "font": {
+          "family": {
+            "label": "Badge Font Family",
+            "desc": "Font family used for the count badge text."
+          },
+          "size": {
+            "label": "Badge Font Size",
+            "desc": "Base size of the count badge text."
+          },
+          "weight": {
+            "label": "Badge Font Weight",
+            "desc": "Font weight used for the count badge text."
+          },
+          "color": {
+            "label": "Badge Text Color",
+            "desc": "Text color and opacity for the count badge."
+          }
+        }
+      },
+      "animation": {
+        "sectionLabel": "Workspace Animation",
+        "sectionDesc": "Animate the workspace indicator when the active workspace changes.",
+        "enabled": {
+          "label": "Animate On Change",
+          "desc": "Animate the workspace label and badge when the active workspace changes."
+        },
+        "type": {
+          "label": "Animation Type",
+          "desc": "Choose the motion style for workspace indicator changes."
+        },
+        "axis": {
+          "label": "Animation Axis",
+          "desc": "Slide the workspace indicator horizontally or vertically during changes."
+        },
+        "speed": {
+          "label": "Animation Speed",
+          "desc": "Transition duration in milliseconds for workspace changes."
+        }
       }
     },
     "tabs": {

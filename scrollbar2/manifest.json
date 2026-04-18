@@ -136,6 +136,53 @@
         "type": "spring",
         "speed": 420
       },
+      "workspaceIndicator": {
+        "enabled": false,
+        "labelMode": "id",
+        "presetText": "",
+        "position": "left",
+        "verticalAlign": "center",
+        "paddingX": 10,
+        "paddingY": 4,
+        "marginLeft": 8,
+        "marginRight": 8,
+        "borderRadius": 999,
+        "background": {
+          "color": "surface",
+          "opacity": 0.72
+        },
+        "font": {
+          "family": "JetBrains Mono",
+          "size": 11,
+          "weight": "medium",
+          "color": {
+            "color": "on-surface",
+            "opacity": 1
+          }
+        },
+        "badge": {
+          "enabled": false,
+          "background": {
+            "color": "primary",
+            "opacity": 1
+          },
+          "font": {
+            "family": "JetBrains Mono",
+            "size": 10,
+            "weight": "semibold",
+            "color": {
+              "color": "on-primary",
+              "opacity": 1
+            }
+          }
+        },
+        "animation": {
+          "enabled": true,
+          "axis": "horizontal",
+          "type": "smooth",
+          "speed": 220
+        }
+      },
       "_presets": [],
       "_activePresetId": ""
     }

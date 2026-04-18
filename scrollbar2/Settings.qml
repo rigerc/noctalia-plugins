@@ -116,6 +116,40 @@ ColumnLayout {
         {
             "key": "linear",
             "name": pluginApi?.tr("options.animationLinear")
+        },
+        {
+            "key": "smooth",
+            "name": pluginApi?.tr("options.animationSmooth")
+        }
+    ]
+    readonly property var workspaceIndicatorLabelModeModel: [
+        {
+            "key": "id",
+            "name": pluginApi?.tr("options.workspaceIndicatorId")
+        },
+        {
+            "key": "name",
+            "name": pluginApi?.tr("options.workspaceIndicatorName")
+        }
+    ]
+    readonly property var workspaceIndicatorPositionModel: [
+        {
+            "key": "left",
+            "name": pluginApi?.tr("options.workspaceIndicatorLeft")
+        },
+        {
+            "key": "right",
+            "name": pluginApi?.tr("options.workspaceIndicatorRight")
+        }
+    ]
+    readonly property var axisModel: [
+        {
+            "key": "horizontal",
+            "name": pluginApi?.tr("options.axisHorizontal")
+        },
+        {
+            "key": "vertical",
+            "name": pluginApi?.tr("options.axisVertical")
         }
     ]
     readonly property var gradientDirectionModel: [
@@ -273,6 +307,32 @@ ColumnLayout {
             }
         );
         next.focusLine.opacity = normalizeOpacityValue(next.focusLine.opacity, 1);
+        next.animation = next.animation && typeof next.animation === "object" && !Array.isArray(next.animation) ? next.animation : ({});
+        if (next.animation.type === "fade")
+            next.animation.type = "ease";
+        if (["spring", "ease", "linear", "smooth"].indexOf(next.animation.type) < 0)
+            next.animation.type = "spring";
+        next.workspaceIndicator = next.workspaceIndicator && typeof next.workspaceIndicator === "object" && !Array.isArray(next.workspaceIndicator) ? next.workspaceIndicator : ({});
+        if (["id", "name"].indexOf(next.workspaceIndicator.labelMode) < 0)
+            next.workspaceIndicator.labelMode = "id";
+        if (["left", "right"].indexOf(next.workspaceIndicator.position) < 0)
+            next.workspaceIndicator.position = "left";
+        if (["top", "center", "bottom"].indexOf(next.workspaceIndicator.verticalAlign) < 0)
+            next.workspaceIndicator.verticalAlign = "center";
+        next.workspaceIndicator.background = normalizeColorSetting(next.workspaceIndicator.background, undefined, undefined, "surface", 0.72);
+        next.workspaceIndicator.font = next.workspaceIndicator.font && typeof next.workspaceIndicator.font === "object" && !Array.isArray(next.workspaceIndicator.font) ? next.workspaceIndicator.font : ({});
+        next.workspaceIndicator.font.color = normalizeColorSetting(next.workspaceIndicator.font.color, undefined, undefined, "on-surface", 1);
+        next.workspaceIndicator.badge = next.workspaceIndicator.badge && typeof next.workspaceIndicator.badge === "object" && !Array.isArray(next.workspaceIndicator.badge) ? next.workspaceIndicator.badge : ({});
+        next.workspaceIndicator.badge.background = normalizeColorSetting(next.workspaceIndicator.badge.background, undefined, undefined, "primary", 1);
+        next.workspaceIndicator.badge.font = next.workspaceIndicator.badge.font && typeof next.workspaceIndicator.badge.font === "object" && !Array.isArray(next.workspaceIndicator.badge.font) ? next.workspaceIndicator.badge.font : ({});
+        next.workspaceIndicator.badge.font.color = normalizeColorSetting(next.workspaceIndicator.badge.font.color, undefined, undefined, "on-primary", 1);
+        next.workspaceIndicator.animation = next.workspaceIndicator.animation && typeof next.workspaceIndicator.animation === "object" && !Array.isArray(next.workspaceIndicator.animation) ? next.workspaceIndicator.animation : ({});
+        if (["horizontal", "vertical"].indexOf(next.workspaceIndicator.animation.axis) < 0)
+            next.workspaceIndicator.animation.axis = "horizontal";
+        if (next.workspaceIndicator.animation.type === "fade")
+            next.workspaceIndicator.animation.type = "ease";
+        if (["spring", "ease", "linear", "smooth"].indexOf(next.workspaceIndicator.animation.type) < 0)
+            next.workspaceIndicator.animation.type = "smooth";
 
         delete next.display.backgroundColor;
         delete next.display.backgroundOpacity;
@@ -371,6 +431,12 @@ ColumnLayout {
             return (settingValue("display", "mode") ?? "floatingPanel") === "floatingPanel";
         case "displayGradientEnabled":
             return settingValue("display", "gradientEnabled") ?? false;
+        case "workspaceIndicatorEnabled":
+            return settingValue("workspaceIndicator", "enabled") ?? false;
+        case "workspaceIndicatorBadgeEnabled":
+            return nestedSettingValue("workspaceIndicator", "badge", "enabled") ?? false;
+        case "workspaceIndicatorAnimationEnabled":
+            return nestedSettingValue("workspaceIndicator", "animation", "enabled") ?? true;
         case "showIcons":
             return settingValue("window", "showIcon") ?? true;
         case "showTitle":
@@ -454,6 +520,11 @@ ColumnLayout {
             }
 
             WindowSettingsSection {
+                Layout.fillWidth: true
+                rootSettings: root
+            }
+
+            WorkspaceIndicatorSettingsSection {
                 Layout.fillWidth: true
                 rootSettings: root
             }

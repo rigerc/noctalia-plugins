@@ -22,6 +22,11 @@ Item {
     property string selectedEntryKey: ""
     property string selectedAppId: ""
     property var contextMenuModel: []
+    property string displayedWorkspaceText: ""
+    property string outgoingWorkspaceText: ""
+    property int displayedWorkspaceBadgeCount: 0
+    property int outgoingWorkspaceBadgeCount: 0
+    property real workspaceIndicatorTransitionProgress: 1
 
     readonly property string screenName: screen?.name ?? ""
     readonly property string barPosition: Settings.getBarPositionForScreen(screenName)
@@ -213,14 +218,73 @@ Item {
     readonly property bool animationEnabled: settingValue("animation", "enabled", true)
     readonly property string animationType: settingValue("animation", "type", "spring")
     readonly property int animationSpeed: Math.max(0, Math.round(settingValue("animation", "speed", 420)))
+    readonly property bool workspaceIndicatorEnabled: settingValue("workspaceIndicator", "enabled", false)
+    readonly property string workspaceIndicatorLabelMode: settingValue("workspaceIndicator", "labelMode", "id")
+    readonly property string workspaceIndicatorPresetText: String(settingValue("workspaceIndicator", "presetText", "") || "").trim()
+    readonly property string workspaceIndicatorPosition: settingValue("workspaceIndicator", "position", "left")
+    readonly property string workspaceIndicatorVerticalAlign: settingValue("workspaceIndicator", "verticalAlign", "center")
+    readonly property real workspaceIndicatorPaddingX: Math.max(0, settingValue("workspaceIndicator", "paddingX", 10) * Style.uiScaleRatio)
+    readonly property real workspaceIndicatorPaddingY: Math.max(0, settingValue("workspaceIndicator", "paddingY", 4) * Style.uiScaleRatio)
+    readonly property real workspaceIndicatorMarginLeft: Math.max(0, settingValue("workspaceIndicator", "marginLeft", 8) * Style.uiScaleRatio)
+    readonly property real workspaceIndicatorMarginRight: Math.max(0, settingValue("workspaceIndicator", "marginRight", 8) * Style.uiScaleRatio)
+    readonly property real workspaceIndicatorBorderRadius: Math.max(0, settingValue("workspaceIndicator", "borderRadius", 999) * Style.uiScaleRatio)
+    readonly property color workspaceIndicatorBackgroundColor: resolveColor(objectSettingValue("workspaceIndicator", "background", "color", "surface"), Color.mSurface)
+    readonly property real workspaceIndicatorBackgroundOpacity: normalizeOpacityValue(objectSettingValue("workspaceIndicator", "background", "opacity", 0.72), 0.72)
+    readonly property string workspaceIndicatorFontFamily: currentSettings?.workspaceIndicator?.font?.family ?? defaults?.workspaceIndicator?.font?.family ?? "JetBrains Mono"
+    readonly property real workspaceIndicatorFontSize: Math.max(1, (currentSettings?.workspaceIndicator?.font?.size ?? defaults?.workspaceIndicator?.font?.size ?? 11) * Style.uiScaleRatio)
+    readonly property string workspaceIndicatorFontWeightKey: currentSettings?.workspaceIndicator?.font?.weight ?? defaults?.workspaceIndicator?.font?.weight ?? "medium"
+    readonly property string workspaceIndicatorTextColorKey: currentSettings?.workspaceIndicator?.font?.color?.color ?? defaults?.workspaceIndicator?.font?.color?.color ?? "on-surface"
+    readonly property real workspaceIndicatorTextOpacity: normalizeOpacityValue(currentSettings?.workspaceIndicator?.font?.color?.opacity ?? defaults?.workspaceIndicator?.font?.color?.opacity ?? 1, 1)
+    readonly property color workspaceIndicatorTextColor: resolveColor(workspaceIndicatorTextColorKey, Color.mOnSurface)
+    readonly property bool workspaceIndicatorBadgeEnabled: currentSettings?.workspaceIndicator?.badge?.enabled ?? defaults?.workspaceIndicator?.badge?.enabled ?? false
+    readonly property color workspaceIndicatorBadgeBackgroundColor: resolveColor(currentSettings?.workspaceIndicator?.badge?.background?.color ?? defaults?.workspaceIndicator?.badge?.background?.color ?? "primary", Color.mPrimary)
+    readonly property real workspaceIndicatorBadgeBackgroundOpacity: normalizeOpacityValue(currentSettings?.workspaceIndicator?.badge?.background?.opacity ?? defaults?.workspaceIndicator?.badge?.background?.opacity ?? 1, 1)
+    readonly property string workspaceIndicatorBadgeFontFamily: currentSettings?.workspaceIndicator?.badge?.font?.family ?? defaults?.workspaceIndicator?.badge?.font?.family ?? "JetBrains Mono"
+    readonly property real workspaceIndicatorBadgeFontSize: Math.max(1, (currentSettings?.workspaceIndicator?.badge?.font?.size ?? defaults?.workspaceIndicator?.badge?.font?.size ?? 10) * Style.uiScaleRatio)
+    readonly property string workspaceIndicatorBadgeFontWeightKey: currentSettings?.workspaceIndicator?.badge?.font?.weight ?? defaults?.workspaceIndicator?.badge?.font?.weight ?? "semibold"
+    readonly property string workspaceIndicatorBadgeTextColorKey: currentSettings?.workspaceIndicator?.badge?.font?.color?.color ?? defaults?.workspaceIndicator?.badge?.font?.color?.color ?? "on-primary"
+    readonly property real workspaceIndicatorBadgeTextOpacity: normalizeOpacityValue(currentSettings?.workspaceIndicator?.badge?.font?.color?.opacity ?? defaults?.workspaceIndicator?.badge?.font?.color?.opacity ?? 1, 1)
+    readonly property color workspaceIndicatorBadgeTextColor: resolveColor(workspaceIndicatorBadgeTextColorKey, Color.mOnPrimary)
+    readonly property bool workspaceIndicatorAnimationEnabled: currentSettings?.workspaceIndicator?.animation?.enabled ?? defaults?.workspaceIndicator?.animation?.enabled ?? true
+    readonly property string workspaceIndicatorAnimationAxis: currentSettings?.workspaceIndicator?.animation?.axis ?? defaults?.workspaceIndicator?.animation?.axis ?? "horizontal"
+    readonly property string workspaceIndicatorAnimationType: currentSettings?.workspaceIndicator?.animation?.type ?? defaults?.workspaceIndicator?.animation?.type ?? "smooth"
+    readonly property int workspaceIndicatorAnimationSpeed: Math.max(0, Math.round(currentSettings?.workspaceIndicator?.animation?.speed ?? defaults?.workspaceIndicator?.animation?.speed ?? 220))
 
-    readonly property int revisionToken: (mainInstance?.structureRevision ?? 0) + (mainInstance?.liveRevision ?? 0) + (mainInstance?.titleRevision ?? 0)
+    readonly property int revisionToken: (mainInstance?.structureRevision ?? 0) + (mainInstance?.liveRevision ?? 0) + (mainInstance?.titleRevision ?? 0) + (mainInstance?.workspaceRevision ?? 0)
     readonly property var entries: {
         revisionToken;
         if (!mainInstance)
             return [];
         return mainInstance.getFilteredEntries(screenName, onlySameOutput, onlyActiveWorkspaces) || [];
     }
+    readonly property var activeWorkspace: mainInstance?.resolveWorkspaceForScreen(screenName) ?? null
+    readonly property string activeWorkspaceIdText: {
+        if (!activeWorkspace)
+            return "";
+        if (activeWorkspace.idx !== undefined && activeWorkspace.idx !== null && String(activeWorkspace.idx) !== "")
+            return String(activeWorkspace.idx);
+        if (activeWorkspace.id !== undefined && activeWorkspace.id !== null && String(activeWorkspace.id) !== "")
+            return String(activeWorkspace.id);
+        return "";
+    }
+    readonly property string activeWorkspaceNameText: String(activeWorkspace?.name || "").trim()
+    readonly property string workspaceIndicatorValueText: {
+        if (!activeWorkspace)
+            return "";
+        if (workspaceIndicatorLabelMode === "name")
+            return activeWorkspaceNameText || activeWorkspaceIdText;
+        return activeWorkspaceIdText || activeWorkspaceNameText;
+    }
+    readonly property string workspaceIndicatorText: {
+        const parts = [];
+        if (workspaceIndicatorPresetText)
+            parts.push(workspaceIndicatorPresetText);
+        if (workspaceIndicatorValueText)
+            parts.push(workspaceIndicatorValueText);
+        return parts.join(" ").trim();
+    }
+    readonly property int workspaceIndicatorBadgeCount: workspaceIndicatorBadgeEnabled && activeWorkspace ? (mainInstance?.countWindowsForWorkspace(screenName, activeWorkspace.id) ?? 0) : 0
+    readonly property bool showWorkspaceIndicator: workspaceIndicatorEnabled && workspaceIndicatorText !== ""
     readonly property int segmentCount: entries.length
     readonly property real availableWidth: Math.max(160 * Style.uiScaleRatio, Math.round((screen?.width || 1200) * trackWidthPercent / 100))
     readonly property real horizontalPadding: Math.max(2, Math.round(2 * Style.uiScaleRatio))
@@ -243,7 +307,11 @@ Item {
         const totalSpacing = Math.max(0, segmentCount - 1) * segmentSpacing;
         return Math.max(1, Math.floor((availableWidth - totalSpacing - horizontalPadding * 2) / segmentCount));
     }
-    readonly property real actualTrackWidth: segmentCount > 0 ? (segmentWidth * segmentCount) + (Math.max(0, segmentCount - 1) * segmentSpacing) + horizontalPadding * 2 : availableWidth
+    readonly property real actualTrackWidth: segmentCount > 0 ? (segmentWidth * segmentCount) + (Math.max(0, segmentCount - 1) * segmentSpacing) + horizontalPadding * 2 : 0
+    readonly property real indicatorLeadingGap: showWorkspaceIndicator && workspaceIndicatorPosition === "left" ? workspaceIndicatorMarginLeft : 0
+    readonly property real indicatorTrailingGap: showWorkspaceIndicator && workspaceIndicatorPosition === "left" ? workspaceIndicatorMarginRight : 0
+    readonly property real indicatorOffsetX: showWorkspaceIndicator && workspaceIndicatorPosition === "left" ? (indicatorLeadingGap + workspaceContainer.width + indicatorTrailingGap) : 0
+    readonly property real totalIndicatorWidth: showWorkspaceIndicator ? (workspaceIndicatorMarginLeft + workspaceContainer.width + workspaceIndicatorMarginRight) : 0
     readonly property int focusedIndex: {
         if (!mainInstance?.activeEntryKey)
             return -1;
@@ -254,9 +322,78 @@ Item {
         return -1;
     }
 
-    implicitWidth: hostVisible && segmentCount > 0 ? actualTrackWidth : 0
-    implicitHeight: hostVisible && segmentCount > 0 ? availableContainerHeight : 0
-    visible: hostVisible && segmentCount > 0
+    implicitWidth: hostVisible && (segmentCount > 0 || showWorkspaceIndicator) ? actualTrackWidth + totalIndicatorWidth : 0
+    implicitHeight: hostVisible && (segmentCount > 0 || showWorkspaceIndicator) ? Math.max(availableContainerHeight, workspaceContainer.height) : 0
+    visible: hostVisible && (segmentCount > 0 || showWorkspaceIndicator)
+
+    function workspaceIndicatorEasingType() {
+        switch (workspaceIndicatorAnimationType) {
+        case "linear":
+            return Easing.Linear;
+        case "ease":
+            return Easing.InOutQuad;
+        case "spring":
+            return Easing.OutBack;
+        default:
+            return Easing.OutCubic;
+        }
+    }
+
+    function workspaceIndicatorOvershoot() {
+        return workspaceIndicatorAnimationType === "spring" ? 1.12 : 0;
+    }
+
+    function workspaceIndicatorAlignedY() {
+        if (workspaceIndicatorVerticalAlign === "top")
+            return 0;
+        if (workspaceIndicatorVerticalAlign === "bottom")
+            return Math.max(0, root.implicitHeight - workspaceContainer.height);
+        return Math.max(0, Math.round((root.implicitHeight - workspaceContainer.height) / 2));
+    }
+
+    function updateWorkspaceIndicatorPresentation() {
+        if (!showWorkspaceIndicator) {
+            displayedWorkspaceText = "";
+            outgoingWorkspaceText = "";
+            displayedWorkspaceBadgeCount = 0;
+            outgoingWorkspaceBadgeCount = 0;
+            workspaceIndicatorTransitionProgress = 1;
+            return;
+        }
+
+        const nextText = workspaceIndicatorText;
+        const nextBadgeCount = workspaceIndicatorBadgeCount;
+        if (displayedWorkspaceText === "") {
+            displayedWorkspaceText = nextText;
+            displayedWorkspaceBadgeCount = nextBadgeCount;
+            outgoingWorkspaceText = "";
+            outgoingWorkspaceBadgeCount = 0;
+            workspaceIndicatorTransitionProgress = 1;
+            return;
+        }
+        if (displayedWorkspaceText === nextText && displayedWorkspaceBadgeCount === nextBadgeCount)
+            return;
+
+        if (!workspaceIndicatorAnimationEnabled || workspaceIndicatorAnimationSpeed <= 0) {
+            displayedWorkspaceText = nextText;
+            displayedWorkspaceBadgeCount = nextBadgeCount;
+            outgoingWorkspaceText = "";
+            outgoingWorkspaceBadgeCount = 0;
+            workspaceIndicatorTransitionProgress = 1;
+            return;
+        }
+
+        outgoingWorkspaceText = displayedWorkspaceText;
+        outgoingWorkspaceBadgeCount = displayedWorkspaceBadgeCount;
+        displayedWorkspaceText = nextText;
+        displayedWorkspaceBadgeCount = nextBadgeCount;
+        workspaceIndicatorTransitionProgress = 0;
+        workspaceIndicatorSwap.restart();
+    }
+
+    onWorkspaceIndicatorTextChanged: updateWorkspaceIndicatorPresentation()
+    onWorkspaceIndicatorBadgeCountChanged: updateWorkspaceIndicatorPresentation()
+    Component.onCompleted: updateWorkspaceIndicatorPresentation()
 
     function segmentState(entryKey) {
         const isFocused = mainInstance?.activeEntryKey === entryKey;
@@ -352,6 +489,8 @@ Item {
             return Easing.Linear;
         case "ease":
             return Easing.InOutQuad;
+        case "smooth":
+            return Easing.OutCubic;
         default:
             return Easing.OutBack;
         }
@@ -453,11 +592,123 @@ Item {
         PanelService.showContextMenu(contextMenu, root, root.screen, anchorItem ?? root);
     }
 
+    NumberAnimation {
+        id: workspaceIndicatorSwap
+        target: root
+        property: "workspaceIndicatorTransitionProgress"
+        from: 0
+        to: 1
+        duration: root.workspaceIndicatorAnimationSpeed
+        easing.type: root.workspaceIndicatorEasingType()
+        easing.overshoot: root.workspaceIndicatorOvershoot()
+        onStopped: {
+            if (root.workspaceIndicatorTransitionProgress >= 1) {
+                root.outgoingWorkspaceText = "";
+                root.outgoingWorkspaceBadgeCount = 0;
+            }
+        }
+    }
+
+    Item {
+        id: workspaceContainer
+        visible: root.showWorkspaceIndicator
+        x: root.workspaceIndicatorPosition === "left" ? root.workspaceIndicatorMarginLeft : Math.max(0, root.actualTrackWidth + root.workspaceIndicatorMarginLeft)
+        y: root.workspaceIndicatorAlignedY()
+        width: workspaceBackground.width
+        height: workspaceBackground.height
+        z: 30
+
+        Rectangle {
+            id: workspaceBackground
+            width: Math.max(incomingIndicator.implicitWidth, outgoingIndicator.implicitWidth) + root.workspaceIndicatorPaddingX * 2
+            height: Math.max(incomingIndicator.implicitHeight, outgoingIndicator.implicitHeight) + root.workspaceIndicatorPaddingY * 2
+            radius: Math.min(root.workspaceIndicatorBorderRadius, Math.min(width, height) / 2)
+            color: Qt.alpha(root.workspaceIndicatorBackgroundColor, root.workspaceIndicatorBackgroundOpacity)
+
+            Item {
+                anchors.fill: parent
+                clip: true
+
+                RowLayout {
+                    id: outgoingIndicator
+                    anchors.centerIn: parent
+                    spacing: Math.max(4, Math.round(4 * Style.uiScaleRatio))
+                    visible: root.outgoingWorkspaceText !== "" && root.workspaceIndicatorTransitionProgress < 1
+                    opacity: 1 - root.workspaceIndicatorTransitionProgress
+                    x: root.workspaceIndicatorAnimationAxis === "horizontal" ? Math.round((-root.workspaceIndicatorPaddingX * 1.5) * root.workspaceIndicatorTransitionProgress) : 0
+                    y: root.workspaceIndicatorAnimationAxis === "vertical" ? Math.round((-root.workspaceIndicatorPaddingY * 2) * root.workspaceIndicatorTransitionProgress) : 0
+
+                    NText {
+                        text: root.outgoingWorkspaceText
+                        color: Qt.alpha(root.workspaceIndicatorTextColor, root.workspaceIndicatorTextOpacity)
+                        font.family: root.workspaceIndicatorFontFamily || Qt.application.font.family
+                        font.weight: root.fontWeightValue(root.workspaceIndicatorFontWeightKey, Style.fontWeightMedium)
+                        pointSize: root.workspaceIndicatorFontSize
+                    }
+
+                    Rectangle {
+                        visible: root.workspaceIndicatorBadgeEnabled
+                        radius: Math.min(height / 2, Math.round(999 * Style.uiScaleRatio))
+                        color: Qt.alpha(root.workspaceIndicatorBadgeBackgroundColor, root.workspaceIndicatorBadgeBackgroundOpacity)
+                        implicitWidth: badgeOutgoingText.implicitWidth + root.workspaceIndicatorPaddingX
+                        implicitHeight: badgeOutgoingText.implicitHeight + root.workspaceIndicatorPaddingY
+
+                        NText {
+                            id: badgeOutgoingText
+                            anchors.centerIn: parent
+                            text: String(root.outgoingWorkspaceBadgeCount)
+                            color: Qt.alpha(root.workspaceIndicatorBadgeTextColor, root.workspaceIndicatorBadgeTextOpacity)
+                            font.family: root.workspaceIndicatorBadgeFontFamily || Qt.application.font.family
+                            font.weight: root.fontWeightValue(root.workspaceIndicatorBadgeFontWeightKey, Style.fontWeightSemiBold)
+                            pointSize: root.workspaceIndicatorBadgeFontSize
+                        }
+                    }
+                }
+
+                RowLayout {
+                    id: incomingIndicator
+                    anchors.centerIn: parent
+                    spacing: Math.max(4, Math.round(4 * Style.uiScaleRatio))
+                    opacity: root.workspaceIndicatorAnimationEnabled ? root.workspaceIndicatorTransitionProgress : 1
+                    x: root.workspaceIndicatorAnimationAxis === "horizontal" ? Math.round((1 - root.workspaceIndicatorTransitionProgress) * root.workspaceIndicatorPaddingX * 1.5) : 0
+                    y: root.workspaceIndicatorAnimationAxis === "vertical" ? Math.round((1 - root.workspaceIndicatorTransitionProgress) * root.workspaceIndicatorPaddingY * 2) : 0
+
+                    NText {
+                        text: root.displayedWorkspaceText
+                        color: Qt.alpha(root.workspaceIndicatorTextColor, root.workspaceIndicatorTextOpacity)
+                        font.family: root.workspaceIndicatorFontFamily || Qt.application.font.family
+                        font.weight: root.fontWeightValue(root.workspaceIndicatorFontWeightKey, Style.fontWeightMedium)
+                        pointSize: root.workspaceIndicatorFontSize
+                    }
+
+                    Rectangle {
+                        visible: root.workspaceIndicatorBadgeEnabled
+                        radius: Math.min(height / 2, Math.round(999 * Style.uiScaleRatio))
+                        color: Qt.alpha(root.workspaceIndicatorBadgeBackgroundColor, root.workspaceIndicatorBadgeBackgroundOpacity)
+                        implicitWidth: badgeIncomingText.implicitWidth + root.workspaceIndicatorPaddingX
+                        implicitHeight: badgeIncomingText.implicitHeight + root.workspaceIndicatorPaddingY
+
+                        NText {
+                            id: badgeIncomingText
+                            anchors.centerIn: parent
+                            text: String(root.displayedWorkspaceBadgeCount)
+                            color: Qt.alpha(root.workspaceIndicatorBadgeTextColor, root.workspaceIndicatorBadgeTextOpacity)
+                            font.family: root.workspaceIndicatorBadgeFontFamily || Qt.application.font.family
+                            font.weight: root.fontWeightValue(root.workspaceIndicatorBadgeFontWeightKey, Style.fontWeightSemiBold)
+                            pointSize: root.workspaceIndicatorBadgeFontSize
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     Row {
         id: segmentsRow
-        anchors.fill: parent
-        anchors.leftMargin: horizontalPadding
-        anchors.rightMargin: horizontalPadding
+        x: root.indicatorOffsetX + horizontalPadding
+        y: 0
+        width: Math.max(0, root.actualTrackWidth - horizontalPadding * 2)
+        height: root.availableContainerHeight
         spacing: segmentSpacing
         z: 1
 
@@ -630,20 +881,21 @@ Item {
 
     Rectangle {
         id: trackLine
-        x: 0
+        x: root.indicatorOffsetX
         y: trackLineY()
-        width: root.width
+        width: root.actualTrackWidth
         height: visibleTrackThickness
         radius: Math.min(trackBorderRadius, height / 2)
         color: Qt.alpha(trackColor, trackOpacity)
+        visible: root.segmentCount > 0
         z: 10
     }
 
     Item {
         id: trackSeparators
-        x: 0
+        x: root.indicatorOffsetX
         y: trackLine.y
-        width: root.width
+        width: root.actualTrackWidth
         height: trackLine.height
         visible: root.segmentCount > 1 && root.segmentSpacing > 0 && trackLine.visible
         z: 11
@@ -667,14 +919,14 @@ Item {
         anchors.fill: trackLine
         source: trackLine
         autoPaddingEnabled: true
-        visible: trackShadowEnabled
+        visible: trackShadowEnabled && trackLine.visible
         z: 9
     }
 
     Item {
         id: focusIndicator
         visible: focusedIndex >= 0 && availableContainerHeight > 0
-        x: indicatorOffset(focusedIndex)
+        x: root.indicatorOffsetX + indicatorOffset(focusedIndex)
         y: 0
         width: segmentWidth
         height: availableContainerHeight
@@ -710,7 +962,10 @@ Item {
     }
 
     Item {
-        anchors.fill: parent
+        x: root.indicatorOffsetX
+        y: 0
+        width: root.actualTrackWidth
+        height: root.availableContainerHeight
         z: 10
         visible: root.focusedOnly && root.focusedAlign === "center" && root.focusedEntry() !== null
 
