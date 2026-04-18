@@ -168,8 +168,8 @@ Item {
         const contentHeight = computedLabelHeight + horizontalPadding * 2;
         return trackHeightSetting > 0 ? Math.max(trackHeightSetting, trackThickness) : Math.max(trackThickness, contentHeight);
     }
-    readonly property real contentHeight: Math.max(0, computedTrackHeight - contentTopInset - contentBottomInset)
-    readonly property real visibleFocusLineThickness: Math.min(contentHeight, focusLineThickness)
+    readonly property real windowHeight: Math.max(0, computedTrackHeight - contentTopInset - contentBottomInset)
+    readonly property real visibleFocusLineThickness: Math.min(windowHeight, focusLineThickness)
     readonly property real segmentWidth: {
         if (segmentCount <= 0)
             return 0;
@@ -252,8 +252,8 @@ Item {
         if (focusLineVerticalAlign === "top")
             return 0;
         if (focusLineVerticalAlign === "center")
-            return Math.round((contentHeight - visibleFocusLineThickness) / 2);
-        return Math.max(0, contentHeight - visibleFocusLineThickness);
+            return Math.round((windowHeight - visibleFocusLineThickness) / 2);
+        return Math.max(0, windowHeight - visibleFocusLineThickness);
     }
 
     function focusLineEasingType() {
@@ -385,6 +385,7 @@ Item {
         anchors.bottom: parent.bottom
         anchors.bottomMargin: contentBottomInset
         clip: true
+        z: 1
 
         Row {
             id: segmentBackgroundsRow
@@ -401,7 +402,7 @@ Item {
                     required property var modelData
 
                     width: root.segmentWidth
-                    height: parent ? parent.height : root.contentHeight
+                    height: parent ? parent.height : root.windowHeight
                     radius: Math.max(0, root.trackBorderRadius - Style.borderS)
                     color: root.segmentBackgroundColor(modelData.entryKey ?? "")
                     border.width: root.borderSegment ? root.borderWidth : 0
@@ -426,12 +427,12 @@ Item {
 
         Item {
             id: focusIndicator
-            visible: !isFadeAnimation && focusedIndex >= 0 && contentHeight > 0
+            visible: !isFadeAnimation && focusedIndex >= 0 && windowHeight > 0
             x: indicatorOffset(focusedIndex)
             y: 0
             width: segmentWidth
-            height: contentHeight
-            z: 2
+            height: windowHeight
+            z: 10
 
             Behavior on x {
                 enabled: root.animationEnabled
@@ -467,7 +468,7 @@ Item {
             source: focusLineFill
             autoPaddingEnabled: true
             visible: focusIndicator.visible && focusLineShadowEnabled
-            z: 2
+            z: 9
         }
 
         Row {
@@ -476,7 +477,7 @@ Item {
             anchors.leftMargin: horizontalPadding
             anchors.rightMargin: horizontalPadding
             spacing: segmentSpacing
-            z: 3
+            z: 20
 
             Repeater {
                 model: root.entries
@@ -492,7 +493,7 @@ Item {
                     readonly property bool showLabel: root.labelVisible(entryKey)
 
                     width: root.segmentWidth
-                    height: parent ? parent.height : root.contentHeight
+                    height: parent ? parent.height : root.windowHeight
 
                     RowLayout {
                         anchors.fill: parent
