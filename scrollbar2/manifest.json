@@ -22,8 +22,8 @@
   "metadata": {
     "defaultSettings": {
       "display": {
-        "mode": "floatingPanel",
-        "spaceMode": "overlay",
+        "mode": "bar",
+        "spaceMode": "reserve",
         "offsetH": 0,
         "offsetV": 0,
         "scale": 1.0,
@@ -47,8 +47,8 @@
         "borderRadius": 3,
         "shadowEnabled": true,
         "opacity": 1,
-        "color": "#16161f",
-        "width": 90,
+        "color": "surface",
+        "width": 40,
         "segmentSpacing": 4,
         "borders": {
           "top": false,
@@ -57,7 +57,7 @@
           "left": false,
           "segment": false
         },
-        "borderColor": "#2a2a42",
+        "borderColor": "outline",
         "borderWidth": 1
       },
       "focusLine": {
@@ -67,9 +67,9 @@
         "shadowEnabled": true,
         "opacity": 1,
         "colors": {
-          "focused": "#00e5ff",
-          "hover": "#1a2a36",
-          "default": "#12121e"
+          "focused": "primary",
+          "hover": "hover",
+          "default": "surface-variant"
         }
       },
       "window": {
@@ -82,14 +82,14 @@
         "iconScale": 1,
         "titleScale": 1,
         "iconColors": {
-          "focused": "#ffffff",
-          "hover": "#9090b8",
-          "default": "#404060"
+          "focused": "on-surface",
+          "hover": "on-hover",
+          "default": "on-surface-variant"
         },
         "titleColors": {
-          "focused": "#ffffff",
-          "hover": "#9090b8",
-          "default": "#404060"
+          "focused": "on-surface",
+          "hover": "on-hover",
+          "default": "on-surface-variant"
         }
       },
       "animation": {

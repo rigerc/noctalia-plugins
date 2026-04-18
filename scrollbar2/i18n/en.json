@@ -1,4 +1,7 @@
 {
+  "common": {
+    "auto": "Auto"
+  },
   "menu": {
     "focus": "Focus window",
     "closeWindow": "Close window",
@@ -7,8 +10,6 @@
   "options": {
     "displayModeFloatingPanel": "Floating Panel",
     "displayModeBar": "Bar",
-    "spaceModeOverlay": "Overlay",
-    "spaceModeReserve": "Reserve Space",
     "trackPositionTop": "Top",
     "trackPositionBottom": "Bottom",
     "focusAlignSegment": "Focused Segment",
@@ -26,23 +27,35 @@
     "gradientHorizontal": "Horizontal"
   },
   "settings": {
-    "summary": "Configure `scrollbar2` as a compact bar widget or a floating screen-edge window bar. Colors accept theme keys like `primary` or hex values like `#00e5ff`.",
-    "auto": "Auto",
-    "sections": {
-      "display": "Display",
-      "track": "Track",
-      "focusLine": "Focus Line",
-      "window": "Window Labels",
-      "animation": "Animation"
+    "summary": "Configure `scrollbar2` as a compact bar widget or a reserve-space floating panel. Theme-aware colors use Noctalia color pickers and also allow custom hex values.",
+    "colorPicker": {
+      "label": "Select color",
+      "desc": "Choose a theme color or pick a custom color.",
+      "defaultValue": "Default value: {value}"
+    },
+    "colorOptions": {
+      "none": "None",
+      "primary": "Primary",
+      "onPrimary": "On Primary",
+      "secondary": "Secondary",
+      "onSecondary": "On Secondary",
+      "tertiary": "Tertiary",
+      "onTertiary": "On Tertiary",
+      "error": "Error",
+      "onError": "On Error",
+      "surface": "Surface",
+      "onSurface": "On Surface",
+      "surfaceVariant": "Surface Variant",
+      "onSurfaceVariant": "On Surface Variant",
+      "outline": "Outline",
+      "hover": "Hover",
+      "onHover": "On Hover",
+      "custom": "Custom color"
     },
     "display": {
       "mode": {
         "label": "Placement",
-        "desc": "Choose whether the bar lives in the Noctalia bar or as a floating panel."
-      },
-      "spaceMode": {
-        "label": "Floating Panel Space Mode",
-        "desc": "Overlay keeps the bar above windows; reserve space asks the compositor to keep room for it."
+        "desc": "Choose whether the bar lives in the Noctalia bar or as a reserve-space floating panel."
       },
       "scale": {
         "label": "Floating Panel Scale",
@@ -165,6 +178,44 @@
           "label": "Segment Borders",
           "desc": "Draw a border around each individual segment."
         }
+      }
+    },
+    "section": {
+      "display": {
+        "label": "Display & Floating Panel",
+        "desc": "Placement mode and reserve-space floating panel settings."
+      },
+      "track": {
+        "label": "Track Geometry",
+        "desc": "Width, spacing, sizing, and shadow controls for the main track."
+      },
+      "window": {
+        "label": "Window Labels",
+        "desc": "Toggle labels, choose alignment, and configure typography and scaling."
+      },
+      "focusLine": {
+        "label": "Focus Line",
+        "desc": "Animation strip geometry and behavior."
+      },
+      "trackColors": {
+        "label": "Track Colors & Borders",
+        "desc": "Theme-aware colors and border toggles for the track."
+      },
+      "focusColors": {
+        "label": "Focus Colors",
+        "desc": "Focused, hover, and default colors used by the focus system."
+      },
+      "windowColors": {
+        "label": "Window Colors",
+        "desc": "Icon and title colors for focused, hover, and default states."
+      },
+      "filtering": {
+        "label": "Filtering",
+        "desc": "Control which windows appear in the bar."
+      },
+      "animation": {
+        "label": "Animation",
+        "desc": "Focus movement, fade, and transition timing."
       }
     },
     "focusLine": {

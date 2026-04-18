@@ -106,7 +106,7 @@ Item {
     readonly property real trackBorderRadius: Math.max(0, settingValue("track", "borderRadius", 3) * Style.uiScaleRatio)
     readonly property bool trackShadowEnabled: settingValue("track", "shadowEnabled", true)
     readonly property real trackOpacity: Math.max(0, Math.min(1, settingValue("track", "opacity", 1)))
-    readonly property color trackColor: resolveColor(settingValue("track", "color", "#16161f"), Color.mSurface)
+    readonly property color trackColor: resolveColor(settingValue("track", "color", "surface"), Color.mSurface)
     readonly property real trackWidthPercent: Math.max(5, Math.min(100, settingValue("track", "width", 90)))
     readonly property real segmentSpacing: Math.max(0, settingValue("track", "segmentSpacing", 4) * Style.uiScaleRatio)
     readonly property bool borderTop: nestedBorderValue("top", false)
@@ -114,7 +114,7 @@ Item {
     readonly property bool borderBottom: nestedBorderValue("bottom", false)
     readonly property bool borderLeft: nestedBorderValue("left", false)
     readonly property bool borderSegment: nestedBorderValue("segment", false)
-    readonly property color borderColor: resolveColor(settingValue("track", "borderColor", "#2a2a42"), Color.mOutline)
+    readonly property color borderColor: resolveColor(settingValue("track", "borderColor", "outline"), Color.mOutline)
     readonly property real borderWidth: Math.max(0, settingValue("track", "borderWidth", 1) * Style.uiScaleRatio)
 
     readonly property real focusLineThickness: Math.max(1, settingValue("focusLine", "thickness", 6) * Style.uiScaleRatio)
@@ -122,9 +122,9 @@ Item {
     readonly property string focusLineVerticalAlign: settingValue("focusLine", "verticalAlign", "bottom")
     readonly property bool focusLineShadowEnabled: settingValue("focusLine", "shadowEnabled", true)
     readonly property real focusLineOpacity: Math.max(0, Math.min(1, settingValue("focusLine", "opacity", 1)))
-    readonly property color focusLineFocusedColor: resolveColor(nestedStateColor("focusLine", "focused", "#00e5ff"), Color.mPrimary)
-    readonly property color focusLineHoverColor: resolveColor(nestedStateColor("focusLine", "hover", "#1a2a36"), Color.mHover)
-    readonly property color focusLineDefaultColor: resolveColor(nestedStateColor("focusLine", "default", "#12121e"), Color.mSurfaceVariant)
+    readonly property color focusLineFocusedColor: resolveColor(nestedStateColor("focusLine", "focused", "primary"), Color.mPrimary)
+    readonly property color focusLineHoverColor: resolveColor(nestedStateColor("focusLine", "hover", "hover"), Color.mHover)
+    readonly property color focusLineDefaultColor: resolveColor(nestedStateColor("focusLine", "default", "surface-variant"), Color.mSurfaceVariant)
 
     readonly property bool showIcon: settingValue("window", "showIcon", true)
     readonly property bool showTitle: settingValue("window", "showTitle", true)
@@ -134,12 +134,12 @@ Item {
     readonly property real titleFontSize: Math.max(1, settingValue("window", "fontSize", 11) * Style.uiScaleRatio)
     readonly property real iconScale: Math.max(0.5, settingValue("window", "iconScale", 1.0))
     readonly property real titleScale: Math.max(0.5, settingValue("window", "titleScale", 1.0))
-    readonly property color iconColorFocused: resolveColor(nestedWindowStateColor("iconColors", "focused", "#ffffff"), Color.mOnSurface)
-    readonly property color iconColorHover: resolveColor(nestedWindowStateColor("iconColors", "hover", "#9090b8"), Color.mOnSurfaceVariant)
-    readonly property color iconColorDefault: resolveColor(nestedWindowStateColor("iconColors", "default", "#404060"), Color.mOnSurfaceVariant)
-    readonly property color titleColorFocused: resolveColor(nestedWindowStateColor("titleColors", "focused", "#ffffff"), Color.mOnSurface)
-    readonly property color titleColorHover: resolveColor(nestedWindowStateColor("titleColors", "hover", "#9090b8"), Color.mOnSurfaceVariant)
-    readonly property color titleColorDefault: resolveColor(nestedWindowStateColor("titleColors", "default", "#404060"), Color.mOnSurfaceVariant)
+    readonly property color iconColorFocused: resolveColor(nestedWindowStateColor("iconColors", "focused", "on-surface"), Color.mOnSurface)
+    readonly property color iconColorHover: resolveColor(nestedWindowStateColor("iconColors", "hover", "on-hover"), Color.mOnHover)
+    readonly property color iconColorDefault: resolveColor(nestedWindowStateColor("iconColors", "default", "on-surface-variant"), Color.mOnSurfaceVariant)
+    readonly property color titleColorFocused: resolveColor(nestedWindowStateColor("titleColors", "focused", "on-surface"), Color.mOnSurface)
+    readonly property color titleColorHover: resolveColor(nestedWindowStateColor("titleColors", "hover", "on-hover"), Color.mOnHover)
+    readonly property color titleColorDefault: resolveColor(nestedWindowStateColor("titleColors", "default", "on-surface-variant"), Color.mOnSurfaceVariant)
 
     readonly property bool animationEnabled: settingValue("animation", "enabled", true)
     readonly property string animationType: settingValue("animation", "type", "spring")
@@ -372,15 +372,13 @@ Item {
         z: -1
     }
 
-    Rectangle {
+    Item {
         id: focusIndicator
         visible: !isFadeAnimation && focusedIndex >= 0
         x: indicatorOffset(focusedIndex)
-        y: indicatorY()
+        y: 0
         width: segmentWidth
-        height: Math.min(computedTrackHeight, focusLineThickness)
-        radius: focusLineRadius
-        color: Qt.alpha(focusLineFocusedColor, focusLineOpacity)
+        height: computedTrackHeight
         z: 2
 
         Behavior on x {
@@ -400,11 +398,21 @@ Item {
                 easing.overshoot: root.focusLineOvershoot()
             }
         }
+
+        Rectangle {
+            id: focusLineFill
+            x: 0
+            y: root.indicatorY()
+            width: parent.width
+            height: Math.min(root.computedTrackHeight, root.focusLineThickness)
+            radius: root.focusLineRadius
+            color: Qt.alpha(root.focusLineFocusedColor, root.focusLineOpacity)
+        }
     }
 
     NDropShadow {
         anchors.fill: focusIndicator
-        source: focusIndicator
+        source: focusLineFill
         autoPaddingEnabled: true
         visible: focusIndicator.visible && focusLineShadowEnabled
         z: 1
@@ -413,7 +421,8 @@ Item {
     Row {
         id: segmentsRow
         anchors.fill: parent
-        anchors.margins: horizontalPadding
+        anchors.leftMargin: horizontalPadding
+        anchors.rightMargin: horizontalPadding
         spacing: segmentSpacing
         z: 3
 
@@ -432,7 +441,7 @@ Item {
                 readonly property string tooltipText: title
 
                 width: root.segmentWidth
-                height: root.computedTrackHeight - horizontalPadding * 2
+                height: parent ? parent.height : root.computedTrackHeight
 
                 Rectangle {
                     anchors.fill: parent

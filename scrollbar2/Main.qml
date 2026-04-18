@@ -104,7 +104,6 @@ Item {
     }
 
     readonly property string displayMode: settingValue("display", "mode", "floatingPanel")
-    readonly property string displaySpaceMode: settingValue("display", "spaceMode", "overlay")
     readonly property real displayOffsetH: settingValue("display", "offsetH", 0)
     readonly property real displayOffsetV: settingValue("display", "offsetV", 0)
     readonly property real displayScale: Math.max(0.5, settingValue("display", "scale", 1.0))
@@ -382,9 +381,9 @@ Item {
                 implicitHeight: contentBaseHeight + Math.abs(effectiveOffsetV)
 
                 WlrLayershell.namespace: "scrollbar2-window-" + (screen?.name || "unknown")
-                WlrLayershell.layer: root.displaySpaceMode === "reserve" ? WlrLayer.Top : WlrLayer.Overlay
+                WlrLayershell.layer: WlrLayer.Top
                 WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-                WlrLayershell.exclusionMode: root.displaySpaceMode === "reserve" ? ExclusionMode.Auto : ExclusionMode.Ignore
+                WlrLayershell.exclusionMode: ExclusionMode.Auto
 
                 visible: windowContent.width > 0 && windowContent.height > 0
                 mask: Region {
