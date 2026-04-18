@@ -116,6 +116,8 @@ Item {
     readonly property bool borderSegment: nestedBorderValue("segment", false)
     readonly property color borderColor: resolveColor(settingValue("track", "borderColor", "outline"), Color.mOutline)
     readonly property real borderWidth: Math.max(0, settingValue("track", "borderWidth", 1) * Style.uiScaleRatio)
+    readonly property real contentTopInset: borderTop ? borderWidth : 0
+    readonly property real contentBottomInset: borderBottom ? borderWidth : 0
 
     readonly property real focusLineThickness: Math.max(1, settingValue("focusLine", "thickness", 6) * Style.uiScaleRatio)
     readonly property real focusLineRadius: Math.max(0, settingValue("focusLine", "borderRadius", 3) * Style.uiScaleRatio)
@@ -166,6 +168,8 @@ Item {
         const contentHeight = computedLabelHeight + horizontalPadding * 2;
         return trackHeightSetting > 0 ? Math.max(trackHeightSetting, trackThickness) : Math.max(trackThickness, contentHeight);
     }
+    readonly property real contentHeight: Math.max(0, computedTrackHeight - contentTopInset - contentBottomInset)
+    readonly property real visibleFocusLineThickness: Math.min(contentHeight, focusLineThickness)
     readonly property real segmentWidth: {
         if (segmentCount <= 0)
             return 0;
@@ -248,8 +252,8 @@ Item {
         if (focusLineVerticalAlign === "top")
             return 0;
         if (focusLineVerticalAlign === "center")
-            return Math.round((computedTrackHeight - focusLineThickness) / 2);
-        return Math.max(0, computedTrackHeight - focusLineThickness);
+            return Math.round((contentHeight - visibleFocusLineThickness) / 2);
+        return Math.max(0, contentHeight - visibleFocusLineThickness);
     }
 
     function focusLineEasingType() {
@@ -373,83 +377,35 @@ Item {
     }
 
     Item {
-        id: focusIndicator
-        visible: !isFadeAnimation && focusedIndex >= 0
-        x: indicatorOffset(focusedIndex)
-        y: 0
-        width: segmentWidth
-        height: computedTrackHeight
-        z: 2
+        id: contentLane
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.topMargin: contentTopInset
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: contentBottomInset
+        clip: true
 
-        Behavior on x {
-            enabled: root.animationEnabled
-            NumberAnimation {
-                duration: root.animationSpeed
-                easing.type: root.focusLineEasingType()
-                easing.overshoot: root.focusLineOvershoot()
-            }
-        }
+        Row {
+            id: segmentBackgroundsRow
+            anchors.fill: parent
+            anchors.leftMargin: horizontalPadding
+            anchors.rightMargin: horizontalPadding
+            spacing: segmentSpacing
+            z: 1
 
-        Behavior on width {
-            enabled: root.animationEnabled
-            NumberAnimation {
-                duration: root.animationSpeed
-                easing.type: root.focusLineEasingType()
-                easing.overshoot: root.focusLineOvershoot()
-            }
-        }
+            Repeater {
+                model: root.entries
 
-        Rectangle {
-            id: focusLineFill
-            x: 0
-            y: root.indicatorY()
-            width: parent.width
-            height: Math.min(root.computedTrackHeight, root.focusLineThickness)
-            radius: root.focusLineRadius
-            color: Qt.alpha(root.focusLineFocusedColor, root.focusLineOpacity)
-        }
-    }
+                delegate: Rectangle {
+                    required property var modelData
 
-    NDropShadow {
-        anchors.fill: focusIndicator
-        source: focusLineFill
-        autoPaddingEnabled: true
-        visible: focusIndicator.visible && focusLineShadowEnabled
-        z: 1
-    }
-
-    Row {
-        id: segmentsRow
-        anchors.fill: parent
-        anchors.leftMargin: horizontalPadding
-        anchors.rightMargin: horizontalPadding
-        spacing: segmentSpacing
-        z: 3
-
-        Repeater {
-            model: root.entries
-
-            delegate: Item {
-                id: segmentItem
-
-                required property var modelData
-                required property int index
-
-                readonly property string entryKey: modelData.entryKey ?? ""
-                readonly property string title: root.currentTitle(modelData)
-                readonly property bool showLabel: root.labelVisible(entryKey)
-                readonly property string tooltipText: title
-
-                width: root.segmentWidth
-                height: parent ? parent.height : root.computedTrackHeight
-
-                Rectangle {
-                    anchors.fill: parent
+                    width: root.segmentWidth
+                    height: parent ? parent.height : root.contentHeight
                     radius: Math.max(0, root.trackBorderRadius - Style.borderS)
-                    color: root.segmentBackgroundColor(segmentItem.entryKey)
+                    color: root.segmentBackgroundColor(modelData.entryKey ?? "")
                     border.width: root.borderSegment ? root.borderWidth : 0
                     border.color: root.borderColor
-                    z: 1
 
                     Behavior on color {
                         enabled: root.animationEnabled
@@ -465,53 +421,145 @@ Item {
                         }
                     }
                 }
+            }
+        }
 
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: root.labelPaddingH
-                    anchors.rightMargin: root.labelPaddingH
-                    spacing: root.labelGap
-                    z: 2
-                    visible: root.showIcon || root.showTitle
-                    layoutDirection: root.focusedOnly && root.focusedAlign === "right" && segmentItem.showLabel ? Qt.RightToLeft : Qt.LeftToRight
+        Item {
+            id: focusIndicator
+            visible: !isFadeAnimation && focusedIndex >= 0 && contentHeight > 0
+            x: indicatorOffset(focusedIndex)
+            y: 0
+            width: segmentWidth
+            height: contentHeight
+            z: 2
 
-                    Item {
-                        Layout.preferredWidth: root.showIcon ? root.computedIconSize : 0
-                        Layout.preferredHeight: root.showIcon ? root.computedIconSize : 0
-                        visible: root.showIcon
-                        opacity: segmentItem.showLabel ? 1 : 0
+            Behavior on x {
+                enabled: root.animationEnabled
+                NumberAnimation {
+                    duration: root.animationSpeed
+                    easing.type: root.focusLineEasingType()
+                    easing.overshoot: root.focusLineOvershoot()
+                }
+            }
 
-                        Behavior on opacity {
-                            enabled: root.animationEnabled
-                            NumberAnimation {
-                                duration: root.animationSpeed
+            Behavior on width {
+                enabled: root.animationEnabled
+                NumberAnimation {
+                    duration: root.animationSpeed
+                    easing.type: root.focusLineEasingType()
+                    easing.overshoot: root.focusLineOvershoot()
+                }
+            }
+
+            Rectangle {
+                id: focusLineFill
+                x: 0
+                y: root.indicatorY()
+                width: parent.width
+                height: root.visibleFocusLineThickness
+                radius: root.focusLineRadius
+                color: Qt.alpha(root.focusLineFocusedColor, root.focusLineOpacity)
+            }
+        }
+
+        NDropShadow {
+            anchors.fill: focusIndicator
+            source: focusLineFill
+            autoPaddingEnabled: true
+            visible: focusIndicator.visible && focusLineShadowEnabled
+            z: 2
+        }
+
+        Row {
+            id: segmentsLabelsRow
+            anchors.fill: parent
+            anchors.leftMargin: horizontalPadding
+            anchors.rightMargin: horizontalPadding
+            spacing: segmentSpacing
+            z: 3
+
+            Repeater {
+                model: root.entries
+
+                delegate: Item {
+                    id: segmentItem
+
+                    required property var modelData
+                    required property int index
+
+                    readonly property string entryKey: modelData.entryKey ?? ""
+                    readonly property string title: root.currentTitle(modelData)
+                    readonly property bool showLabel: root.labelVisible(entryKey)
+
+                    width: root.segmentWidth
+                    height: parent ? parent.height : root.contentHeight
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: root.labelPaddingH
+                        anchors.rightMargin: root.labelPaddingH
+                        spacing: root.labelGap
+                        visible: root.showIcon || root.showTitle
+                        layoutDirection: root.focusedOnly && root.focusedAlign === "right" && segmentItem.showLabel ? Qt.RightToLeft : Qt.LeftToRight
+
+                        Item {
+                            Layout.preferredWidth: root.showIcon ? root.computedIconSize : 0
+                            Layout.preferredHeight: root.showIcon ? root.computedIconSize : 0
+                            visible: root.showIcon
+                            opacity: segmentItem.showLabel ? 1 : 0
+
+                            Behavior on opacity {
+                                enabled: root.animationEnabled
+                                NumberAnimation {
+                                    duration: root.animationSpeed
+                                }
                             }
-                        }
 
-                        IconImage {
-                            id: appIcon
-                            anchors.fill: parent
-                            source: ThemeIcons.iconForAppId(segmentItem.modelData.appId)
-                            smooth: true
-                            asynchronous: true
-                            visible: status === Image.Ready
+                            IconImage {
+                                id: appIcon
+                                anchors.fill: parent
+                                source: ThemeIcons.iconForAppId(segmentItem.modelData.appId)
+                                smooth: true
+                                asynchronous: true
+                                visible: status === Image.Ready
 
-                            layer.enabled: visible
-                            layer.effect: ShaderEffect {
-                                property color targetColor: root.labelColor(segmentItem.entryKey, "icon")
-                                property real colorizeMode: 0.0
+                                layer.enabled: visible
+                                layer.effect: ShaderEffect {
+                                    property color targetColor: root.labelColor(segmentItem.entryKey, "icon")
+                                    property real colorizeMode: 0.0
 
-                                fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/appicon_colorize.frag.qsb")
+                                    fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/appicon_colorize.frag.qsb")
+                                }
+                            }
+
+                            NText {
+                                anchors.centerIn: parent
+                                visible: !appIcon.visible
+                                text: segmentItem.title.length > 0 ? segmentItem.title.charAt(0).toUpperCase() : "?"
+                                pointSize: Math.max(Style.fontSizeXS, root.titleFontSize * root.titleScale * 0.95)
+                                font.weight: Style.fontWeightBold
+                                color: root.labelColor(segmentItem.entryKey, "icon")
+
+                                Behavior on color {
+                                    enabled: root.animationEnabled
+                                    ColorAnimation {
+                                        duration: root.animationSpeed
+                                    }
+                                }
                             }
                         }
 
                         NText {
-                            anchors.centerIn: parent
-                            visible: !appIcon.visible
-                            text: segmentItem.title.length > 0 ? segmentItem.title.charAt(0).toUpperCase() : "?"
-                            pointSize: Math.max(Style.fontSizeXS, root.titleFontSize * root.titleScale * 0.95)
-                            font.weight: Style.fontWeightBold
-                            color: root.labelColor(segmentItem.entryKey, "icon")
+                            Layout.fillWidth: true
+                            visible: root.showTitle
+                            text: segmentItem.title
+                            elide: Text.ElideRight
+                            maximumLineCount: 1
+                            opacity: segmentItem.showLabel ? 1 : 0
+                            color: root.labelColor(segmentItem.entryKey, "title")
+                            font.family: root.titleFontFamily || Qt.application.font.family
+                            pointSize: root.titleFontSize * root.titleScale
+                            font.weight: root.segmentState(segmentItem.entryKey) === "focused" ? Style.fontWeightSemiBold : Style.fontWeightMedium
 
                             Behavior on color {
                                 enabled: root.animationEnabled
@@ -519,63 +567,43 @@ Item {
                                     duration: root.animationSpeed
                                 }
                             }
-                        }
-                    }
 
-                    NText {
-                        Layout.fillWidth: true
-                        visible: root.showTitle
-                        text: segmentItem.title
-                        elide: Text.ElideRight
-                        maximumLineCount: 1
-                        opacity: segmentItem.showLabel ? 1 : 0
-                        color: root.labelColor(segmentItem.entryKey, "title")
-                        font.family: root.titleFontFamily || Qt.application.font.family
-                        pointSize: root.titleFontSize * root.titleScale
-                        font.weight: root.segmentState(segmentItem.entryKey) === "focused" ? Style.fontWeightSemiBold : Style.fontWeightMedium
-
-                        Behavior on color {
-                            enabled: root.animationEnabled
-                            ColorAnimation {
-                                duration: root.animationSpeed
-                            }
-                        }
-
-                        Behavior on opacity {
-                            enabled: root.animationEnabled
-                            NumberAnimation {
-                                duration: root.animationSpeed
+                            Behavior on opacity {
+                                enabled: root.animationEnabled
+                                NumberAnimation {
+                                    duration: root.animationSpeed
+                                }
                             }
                         }
                     }
-                }
 
-                MouseArea {
-                    anchors.fill: parent
-                    acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
+                    MouseArea {
+                        anchors.fill: parent
+                        acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
 
-                    onEntered: {
-                        root.hoveredEntryKey = segmentItem.entryKey;
-                        if (segmentItem.title)
-                            TooltipService.show(segmentItem, segmentItem.title, BarService.getTooltipDirection(root.screen?.name));
-                    }
+                        onEntered: {
+                            root.hoveredEntryKey = segmentItem.entryKey;
+                            if (segmentItem.title)
+                                TooltipService.show(segmentItem, segmentItem.title, BarService.getTooltipDirection(root.screen?.name));
+                        }
 
-                    onExited: {
-                        if (root.hoveredEntryKey === segmentItem.entryKey)
-                            root.hoveredEntryKey = "";
-                        TooltipService.hide();
-                    }
-
-                    onClicked: mouse => {
-                        if (mouse.button === Qt.LeftButton) {
-                            root.mainInstance?.focusEntry(segmentItem.entryKey);
-                        } else if (mouse.button === Qt.MiddleButton) {
-                            root.mainInstance?.closeEntry(segmentItem.entryKey);
-                        } else if (mouse.button === Qt.RightButton) {
+                        onExited: {
+                            if (root.hoveredEntryKey === segmentItem.entryKey)
+                                root.hoveredEntryKey = "";
                             TooltipService.hide();
-                            root.openContextMenu(segmentItem, segmentItem.modelData);
+                        }
+
+                        onClicked: mouse => {
+                            if (mouse.button === Qt.LeftButton) {
+                                root.mainInstance?.focusEntry(segmentItem.entryKey);
+                            } else if (mouse.button === Qt.MiddleButton) {
+                                root.mainInstance?.closeEntry(segmentItem.entryKey);
+                            } else if (mouse.button === Qt.RightButton) {
+                                TooltipService.hide();
+                                root.openContextMenu(segmentItem, segmentItem.modelData);
+                            }
                         }
                     }
                 }
@@ -584,7 +612,7 @@ Item {
     }
 
     Item {
-        anchors.fill: parent
+        anchors.fill: contentLane
         z: 4
         visible: root.focusedOnly && root.focusedAlign === "center" && root.focusedEntry() !== null
 
