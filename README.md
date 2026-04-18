@@ -4,4 +4,4 @@
 
   ## Scrollbar
   
-  A standalone taskbar bar widget, ported from Noctalia Shell, meant for use with compositors using a scrolling layout.
+  A standalone indicator bar widget or floating panel, meant for use with compositors using a scrolling layout.

@@ -1,0 +1,102 @@
+{
+  "id": "scrollbar2",
+  "name": "Scrollbar2",
+  "version": "1.0.0",
+  "minNoctaliaVersion": "4.6.6",
+  "author": "rigerc",
+  "license": "MIT",
+  "repository": "https://github.com/noctalia-dev/noctalia-plugins",
+  "description": "A configurable window bar with equal-width segments, animated focus tracking, and optional floating panel placement.",
+  "tags": [
+    "Bar",
+    "Utility"
+  ],
+  "entryPoints": {
+    "main": "Main.qml",
+    "barWidget": "BarWidget.qml",
+    "settings": "Settings.qml"
+  },
+  "dependencies": {
+    "plugins": []
+  },
+  "metadata": {
+    "defaultSettings": {
+      "display": {
+        "mode": "floatingPanel",
+        "spaceMode": "overlay",
+        "offsetH": 0,
+        "offsetV": 0,
+        "scale": 1.0,
+        "margin": 0,
+        "radiusScale": 1.0,
+        "backgroundColor": "none",
+        "backgroundOpacity": 0,
+        "gradientEnabled": false,
+        "gradientColor": "none",
+        "gradientOpacity": 0,
+        "gradientDirection": "vertical"
+      },
+      "filtering": {
+        "onlySameOutput": true,
+        "onlyActiveWorkspaces": true
+      },
+      "track": {
+        "position": "bottom",
+        "thickness": 6,
+        "height": 0,
+        "borderRadius": 3,
+        "shadowEnabled": true,
+        "opacity": 1,
+        "color": "#16161f",
+        "width": 90,
+        "segmentSpacing": 4,
+        "borders": {
+          "top": false,
+          "right": false,
+          "bottom": false,
+          "left": false,
+          "segment": false
+        },
+        "borderColor": "#2a2a42",
+        "borderWidth": 1
+      },
+      "focusLine": {
+        "thickness": 6,
+        "borderRadius": 3,
+        "verticalAlign": "bottom",
+        "shadowEnabled": true,
+        "opacity": 1,
+        "colors": {
+          "focused": "#00e5ff",
+          "hover": "#1a2a36",
+          "default": "#12121e"
+        }
+      },
+      "window": {
+        "showIcon": true,
+        "showTitle": true,
+        "focusedOnly": false,
+        "focusedAlign": "segment",
+        "font": "JetBrains Mono",
+        "fontSize": 11,
+        "iconScale": 1,
+        "titleScale": 1,
+        "iconColors": {
+          "focused": "#ffffff",
+          "hover": "#9090b8",
+          "default": "#404060"
+        },
+        "titleColors": {
+          "focused": "#ffffff",
+          "hover": "#9090b8",
+          "default": "#404060"
+        }
+      },
+      "animation": {
+        "enabled": true,
+        "type": "spring",
+        "speed": 420
+      }
+    }
+  }
+}

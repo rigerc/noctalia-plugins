@@ -6,4 +6,4 @@ CLAUDE.md
 */settings.json
 .notes/
 .fuse*
-scrollbar/scripts/test.sh
+scrollbar/test.sh

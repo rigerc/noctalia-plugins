@@ -1,0 +1,283 @@
+{
+  "menu": {
+    "focus": "Focus window",
+    "closeWindow": "Close window",
+    "settings": "Widget settings"
+  },
+  "options": {
+    "displayModeFloatingPanel": "Floating Panel",
+    "displayModeBar": "Bar",
+    "spaceModeOverlay": "Overlay",
+    "spaceModeReserve": "Reserve Space",
+    "trackPositionTop": "Top",
+    "trackPositionBottom": "Bottom",
+    "focusAlignSegment": "Focused Segment",
+    "focusAlignCenter": "Centered Overlay",
+    "focusAlignLeft": "Left",
+    "focusAlignRight": "Right",
+    "verticalAlignTop": "Top",
+    "verticalAlignCenter": "Center",
+    "verticalAlignBottom": "Bottom",
+    "animationSpring": "Spring",
+    "animationEase": "Ease",
+    "animationLinear": "Linear",
+    "animationFade": "Fade",
+    "gradientVertical": "Vertical",
+    "gradientHorizontal": "Horizontal"
+  },
+  "settings": {
+    "summary": "Configure `scrollbar2` as a compact bar widget or a floating screen-edge window bar. Colors accept theme keys like `primary` or hex values like `#00e5ff`.",
+    "auto": "Auto",
+    "sections": {
+      "display": "Display",
+      "track": "Track",
+      "focusLine": "Focus Line",
+      "window": "Window Labels",
+      "animation": "Animation"
+    },
+    "display": {
+      "mode": {
+        "label": "Placement",
+        "desc": "Choose whether the bar lives in the Noctalia bar or as a floating panel."
+      },
+      "spaceMode": {
+        "label": "Floating Panel Space Mode",
+        "desc": "Overlay keeps the bar above windows; reserve space asks the compositor to keep room for it."
+      },
+      "scale": {
+        "label": "Floating Panel Scale",
+        "desc": "Scale the floating panel renderer without changing the saved base dimensions."
+      },
+      "margin": {
+        "label": "Floating Panel Margin",
+        "desc": "Padding between the floating panel background and the bar itself."
+      },
+      "offsetH": {
+        "label": "Horizontal Offset",
+        "desc": "Move the floating panel left or right from its centered position."
+      },
+      "offsetV": {
+        "label": "Vertical Offset",
+        "desc": "Move the floating panel away from or toward the screen edge."
+      },
+      "radiusScale": {
+        "label": "Background Radius Scale",
+        "desc": "Scale the floating panel background corner radius."
+      },
+      "backgroundColor": {
+        "label": "Background Color",
+        "desc": "Theme key or hex color for the floating panel background, or `none`."
+      },
+      "backgroundOpacity": {
+        "label": "Background Opacity",
+        "desc": "Opacity of the floating panel background."
+      },
+      "gradientEnabled": {
+        "label": "Enable Background Gradient",
+        "desc": "Overlay a transparent-to-color gradient over the floating panel background."
+      },
+      "gradientColor": {
+        "label": "Gradient Color",
+        "desc": "Theme key or hex color for the floating panel gradient."
+      },
+      "gradientOpacity": {
+        "label": "Gradient Opacity",
+        "desc": "Opacity of the floating panel gradient."
+      },
+      "gradientDirection": {
+        "label": "Gradient Direction",
+        "desc": "Choose whether the gradient runs vertically or horizontally."
+      }
+    },
+    "filtering": {
+      "sameOutput": {
+        "label": "Only Same Output",
+        "desc": "Show only windows from the current screen."
+      },
+      "activeWorkspaces": {
+        "label": "Only Active Workspaces",
+        "desc": "Hide windows from inactive workspaces."
+      }
+    },
+    "track": {
+      "position": {
+        "label": "Track Position",
+        "desc": "For Floating Panel mode, pin the track to the top or bottom edge."
+      },
+      "width": {
+        "label": "Track Width",
+        "desc": "Width of the track as a percentage of the screen width."
+      },
+      "height": {
+        "label": "Track Height",
+        "desc": "Fixed height for the track. Set to 0 for automatic height."
+      },
+      "thickness": {
+        "label": "Track Thickness",
+        "desc": "Minimum visual thickness of the track."
+      },
+      "segmentSpacing": {
+        "label": "Segment Spacing",
+        "desc": "Gap between equal-width window segments."
+      },
+      "borderRadius": {
+        "label": "Track Radius",
+        "desc": "Corner radius of the outer track."
+      },
+      "opacity": {
+        "label": "Track Opacity",
+        "desc": "Overall opacity of the track background."
+      },
+      "color": {
+        "label": "Track Color",
+        "desc": "Theme key or hex color for the track background."
+      },
+      "borderColor": {
+        "label": "Border Color",
+        "desc": "Theme key or hex color for enabled borders."
+      },
+      "borderWidth": {
+        "label": "Border Width",
+        "desc": "Thickness of enabled track and segment borders."
+      },
+      "shadowEnabled": {
+        "label": "Enable Track Shadow",
+        "desc": "Render a drop shadow under the track."
+      },
+      "borders": {
+        "top": {
+          "label": "Top Border",
+          "desc": "Enable the top border."
+        },
+        "right": {
+          "label": "Right Border",
+          "desc": "Enable the right border."
+        },
+        "bottom": {
+          "label": "Bottom Border",
+          "desc": "Enable the bottom border."
+        },
+        "left": {
+          "label": "Left Border",
+          "desc": "Enable the left border."
+        },
+        "segment": {
+          "label": "Segment Borders",
+          "desc": "Draw a border around each individual segment."
+        }
+      }
+    },
+    "focusLine": {
+      "thickness": {
+        "label": "Focus Thickness",
+        "desc": "Height of the moving focus indicator or the fade-state fill."
+      },
+      "borderRadius": {
+        "label": "Focus Radius",
+        "desc": "Corner radius of the focus indicator."
+      },
+      "verticalAlign": {
+        "label": "Focus Alignment",
+        "desc": "Where the focus strip sits inside the track."
+      },
+      "opacity": {
+        "label": "Focus Opacity",
+        "desc": "Opacity of the focus indicator."
+      },
+      "shadowEnabled": {
+        "label": "Enable Focus Glow",
+        "desc": "Add a glow around the focus indicator."
+      },
+      "colors": {
+        "focused": {
+          "label": "Focused Color",
+          "desc": "Theme key or hex color for the active segment."
+        },
+        "hover": {
+          "label": "Hover Color",
+          "desc": "Theme key or hex color for hovered segments."
+        },
+        "default": {
+          "label": "Default Color",
+          "desc": "Theme key or hex color for resting segments."
+        }
+      }
+    },
+    "window": {
+      "showIcon": {
+        "label": "Show Icons",
+        "desc": "Render application icons inside each segment."
+      },
+      "showTitle": {
+        "label": "Show Titles",
+        "desc": "Render window titles inside each segment."
+      },
+      "focusedOnly": {
+        "label": "Focused Only",
+        "desc": "Only show label content for the focused segment."
+      },
+      "focusedAlign": {
+        "label": "Focused Label Alignment",
+        "desc": "Where focused-only labels should appear."
+      },
+      "font": {
+        "label": "Font Family",
+        "desc": "Font family used for window titles."
+      },
+      "fontSize": {
+        "label": "Font Size",
+        "desc": "Base size of the window title text."
+      },
+      "iconScale": {
+        "label": "Icon Scale",
+        "desc": "Scale multiplier applied to application icons."
+      },
+      "titleScale": {
+        "label": "Title Scale",
+        "desc": "Scale multiplier applied to title text."
+      },
+      "iconColors": {
+        "focused": {
+          "label": "Focused Icon Color",
+          "desc": "Theme key or hex color for focused icons."
+        },
+        "hover": {
+          "label": "Hover Icon Color",
+          "desc": "Theme key or hex color for hovered icons."
+        },
+        "default": {
+          "label": "Default Icon Color",
+          "desc": "Theme key or hex color for idle icons."
+        }
+      },
+      "titleColors": {
+        "focused": {
+          "label": "Focused Title Color",
+          "desc": "Theme key or hex color for focused titles."
+        },
+        "hover": {
+          "label": "Hover Title Color",
+          "desc": "Theme key or hex color for hovered titles."
+        },
+        "default": {
+          "label": "Default Title Color",
+          "desc": "Theme key or hex color for idle titles."
+        }
+      }
+    },
+    "animation": {
+      "enabled": {
+        "label": "Enable Animation",
+        "desc": "Animate focus movement, fades, and color changes."
+      },
+      "type": {
+        "label": "Animation Type",
+        "desc": "Choose how the focus state transitions between windows."
+      },
+      "speed": {
+        "label": "Animation Speed",
+        "desc": "Transition duration in milliseconds."
+      }
+    }
+  }
+}
