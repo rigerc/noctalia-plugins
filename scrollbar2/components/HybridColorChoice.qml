@@ -310,56 +310,97 @@ ColumnLayout {
         indicatorTooltip: root.indicatorTooltip
     }
 
-    Flow {
+    RowLayout {
         Layout.fillWidth: true
-        spacing: Style.marginS
+        spacing: Style.marginM
 
-        Repeater {
-            model: root.visibleColorOptions
+        Flow {
+            Layout.fillWidth: true
+            spacing: Style.marginS
+
+            Repeater {
+                model: root.visibleColorOptions
+
+                Rectangle {
+                    id: colorCircle
+
+                    required property var modelData
+
+                    readonly property bool isSelected: root.sameValue(root.currentColor, modelData.key)
+                    readonly property color swatchColor: root.resolveColor(modelData.key, Color.mOnSurface)
+
+                    width: root.diameter
+                    height: root.diameter
+                    radius: width * 0.5
+                    color: modelData.key === "none" ? Color.mSurfaceVariant : swatchColor
+                    border.color: circleMouseArea.containsMouse || isSelected ? Color.mOnSurface : Color.mOutline
+                    border.width: Style.borderM
+
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: parent.width - (Style.marginM * 2)
+                        height: Style.borderM
+                        radius: height / 2
+                        rotation: -45
+                        color: Color.mError
+                        visible: colorCircle.modelData.key === "none"
+                    }
+
+                    NIcon {
+                        anchors.centerIn: parent
+                        icon: "check"
+                        pointSize: Math.max(Style.fontSizeXS, colorCircle.width * 0.4)
+                        color: root.contrastColor(colorCircle.swatchColor)
+                        font.weight: Style.fontWeightBold
+                        visible: colorCircle.isSelected
+                    }
+
+                    MouseArea {
+                        id: circleMouseArea
+
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onEntered: TooltipService.show(parent, colorCircle.modelData.name)
+                        onExited: TooltipService.hide()
+                        onClicked: root.colorSelected(colorCircle.modelData.key)
+                    }
+
+                    Behavior on border.color {
+                        ColorAnimation {
+                            duration: Style.animationFast
+                        }
+                    }
+                }
+            }
 
             Rectangle {
-                id: colorCircle
-
-                required property var modelData
-
-                readonly property bool isSelected: root.sameValue(root.currentColor, modelData.key)
-                readonly property color swatchColor: root.resolveColor(modelData.key, Color.mOnSurface)
+                id: customCircle
 
                 width: root.diameter
                 height: root.diameter
                 radius: width * 0.5
-                color: modelData.key === "none" ? Color.mSurfaceVariant : swatchColor
-                border.color: circleMouseArea.containsMouse || isSelected ? Color.mOnSurface : Color.mOutline
+                color: root.customPreviewColor
+                border.color: customMouseArea.containsMouse || root.customSelected ? Color.mOnSurface : Color.mOutline
                 border.width: Style.borderM
-
-                Rectangle {
-                    anchors.centerIn: parent
-                    width: parent.width - (Style.marginM * 2)
-                    height: Style.borderM
-                    radius: height / 2
-                    rotation: -45
-                    color: Color.mError
-                    visible: colorCircle.modelData.key === "none"
-                }
 
                 NIcon {
                     anchors.centerIn: parent
-                    icon: "check"
-                    pointSize: Math.max(Style.fontSizeXS, colorCircle.width * 0.4)
-                    color: root.contrastColor(colorCircle.swatchColor)
+                    icon: root.customSelected ? "check" : "color-picker"
+                    pointSize: Math.max(Style.fontSizeXS, customCircle.width * 0.4)
+                    color: root.customSelected ? root.contrastColor(root.customPreviewColor) : Color.mOnSurface
                     font.weight: Style.fontWeightBold
-                    visible: colorCircle.isSelected
                 }
 
                 MouseArea {
-                    id: circleMouseArea
+                    id: customMouseArea
 
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onEntered: TooltipService.show(parent, colorCircle.modelData.name)
+                    onEntered: TooltipService.show(parent, root.customSelected ? `${root.pluginApi?.tr("settings.colorOptions.custom")} (${String(root.currentColor).toUpperCase()})` : root.pluginApi?.tr("settings.colorOptions.custom"))
                     onExited: TooltipService.hide()
-                    onClicked: root.colorSelected(colorCircle.modelData.key)
+                    onClicked: root.openCustomPicker()
                 }
 
                 Behavior on border.color {
@@ -370,62 +411,152 @@ ColumnLayout {
             }
         }
 
-        Rectangle {
-            id: customCircle
+        ColumnLayout {
+            id: opacityCollapsible
 
-            width: root.diameter
-            height: root.diameter
-            radius: width * 0.5
-            color: root.customPreviewColor
-            border.color: customMouseArea.containsMouse || root.customSelected ? Color.mOnSurface : Color.mOutline
-            border.width: Style.borderM
+            visible: root.showOpacityControl
+            Layout.alignment: Qt.AlignTop
+            Layout.preferredWidth: 200 * Style.uiScaleRatio
+            spacing: 0
 
-            NIcon {
-                anchors.centerIn: parent
-                icon: root.customSelected ? "check" : "color-picker"
-                pointSize: Math.max(Style.fontSizeXS, customCircle.width * 0.4)
-                color: root.customSelected ? root.contrastColor(root.customPreviewColor) : Color.mOnSurface
-                font.weight: Style.fontWeightBold
-            }
+            property bool expanded: false
+            property bool _userInteracted: false
 
-            MouseArea {
-                id: customMouseArea
+            Rectangle {
+                id: opacityHeader
 
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onEntered: TooltipService.show(parent, root.customSelected ? `${root.pluginApi?.tr("settings.colorOptions.custom")} (${String(root.currentColor).toUpperCase()})` : root.pluginApi?.tr("settings.colorOptions.custom"))
-                onExited: TooltipService.hide()
-                onClicked: root.openCustomPicker()
-            }
+                Layout.fillWidth: true
+                Layout.preferredHeight: opacityHeaderContent.implicitHeight + Style.marginS * 2
+                color: Color.mSurfaceVariant
+                radius: Style.iRadiusM
+                border.color: Color.mOutline
+                border.width: Style.borderS
 
-            Behavior on border.color {
-                ColorAnimation {
-                    duration: Style.animationFast
+                Rectangle {
+                    anchors.fill: parent
+                    color: Color.mOnSurface
+                    opacity: opacityCollapsible.expanded ? 0.06 : 0
+                    radius: parent.radius
+
+                    Behavior on opacity {
+                        enabled: opacityCollapsible._userInteracted
+                        NumberAnimation {
+                            duration: Style.animationNormal
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+                }
+
+                MouseArea {
+                    id: opacityHeaderArea
+
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    hoverEnabled: true
+
+                    onClicked: {
+                        opacityCollapsible._userInteracted = true;
+                        opacityCollapsible.expanded = !opacityCollapsible.expanded;
+                    }
+
+                    Rectangle {
+                        anchors.fill: parent
+                        color: Color.mOnSurface
+                        opacity: opacityHeaderArea.containsMouse ? 0.06 : 0
+                        radius: opacityHeader.radius
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: Style.animationFast
+                            }
+                        }
+                    }
+                }
+
+                RowLayout {
+                    id: opacityHeaderContent
+
+                    anchors.fill: parent
+                    anchors.margins: Style.marginS
+                    spacing: Style.marginS
+
+                    NIcon {
+                        icon: "chevron-right"
+                        pointSize: Style.fontSizeM
+                        color: Color.mOnSurfaceVariant
+                        Layout.alignment: Qt.AlignVCenter
+
+                        rotation: opacityCollapsible.expanded ? 90 : 0
+                        Behavior on rotation {
+                            enabled: opacityCollapsible._userInteracted
+                            NumberAnimation {
+                                duration: Style.animationNormal
+                                easing.type: Easing.OutCubic
+                            }
+                        }
+                    }
+
+                    NText {
+                        text: root.pluginApi?.tr("settings.colorPicker.opacity.label")
+                        pointSize: Style.fontSizeM
+                        font.weight: Style.fontWeightSemiBold
+                        color: Color.mOnSurfaceVariant
+                        Layout.fillWidth: true
+                        wrapMode: Text.WordWrap
+                    }
                 }
             }
-        }
-    }
 
-    NCollapsible {
-        visible: root.showOpacityControl
-        Layout.fillWidth: true
-        expanded: false
-        label: root.pluginApi?.tr("settings.colorPicker.opacity.label")
-        description: root.pluginApi?.tr("settings.colorPicker.opacity.desc")
+            Rectangle {
+                id: opacityContent
 
-        NValueSlider {
-            Layout.fillWidth: true
-            label: root.pluginApi?.tr("settings.colorPicker.opacity.valueLabel")
-            description: root.pluginApi?.tr("settings.colorPicker.opacity.valueDesc")
-            from: root.opacityFrom
-            to: root.opacityTo
-            stepSize: root.opacityStepSize
-            value: Math.max(root.opacityFrom, Math.min(root.opacityTo, root.currentOpacity))
-            text: root.describeOpacity(value)
-            defaultValue: root.defaultOpacity !== undefined ? Math.max(root.opacityFrom, Math.min(root.opacityTo, root.defaultOpacity)) : undefined
-            showReset: root.defaultOpacity !== undefined
-            onMoved: sliderValue => root.opacitySelected(Math.round(sliderValue * 100) / 100)
+                Layout.fillWidth: true
+                Layout.topMargin: Style.marginXS
+                visible: opacityCollapsible.expanded
+                color: "transparent"
+                radius: Style.iRadiusM
+
+                Layout.preferredHeight: opacityCollapsible.expanded ? opacityContentLayout.implicitHeight : 0
+
+                Behavior on Layout.preferredHeight {
+                    enabled: opacityCollapsible._userInteracted
+                    NumberAnimation {
+                        duration: Style.animationNormal
+                        easing.type: Easing.OutCubic
+                    }
+                }
+
+                ColumnLayout {
+                    id: opacityContentLayout
+
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    spacing: Style.marginS
+
+                    NValueSlider {
+                        Layout.fillWidth: true
+                        label: root.pluginApi?.tr("settings.colorPicker.opacity.valueLabel")
+                        description: root.pluginApi?.tr("settings.colorPicker.opacity.valueDesc")
+                        from: root.opacityFrom
+                        to: root.opacityTo
+                        stepSize: root.opacityStepSize
+                        value: Math.max(root.opacityFrom, Math.min(root.opacityTo, root.currentOpacity))
+                        text: root.describeOpacity(value)
+                        defaultValue: root.defaultOpacity !== undefined ? Math.max(root.opacityFrom, Math.min(root.opacityTo, root.defaultOpacity)) : undefined
+                        showReset: root.defaultOpacity !== undefined
+                        onMoved: sliderValue => root.opacitySelected(Math.round(sliderValue * 100) / 100)
+                    }
+                }
+
+                opacity: opacityCollapsible.expanded ? 1.0 : 0.0
+                Behavior on opacity {
+                    enabled: opacityCollapsible._userInteracted
+                    NumberAnimation {
+                        duration: Style.animationNormal
+                        easing.type: Easing.OutCubic
+                    }
+                }
+            }
         }
     }
 }
