@@ -306,7 +306,7 @@ Item {
         });
 
         contextMenuModel = model;
-        PanelService.showContextMenu(contextMenu, anchorItem ?? root, root.screen, anchorItem ?? root);
+        PanelService.showContextMenu(contextMenu, root, root.screen, anchorItem ?? root);
     }
 
     Row {
@@ -434,6 +434,7 @@ Item {
                     acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
+                    preventStealing: true
 
                     onEntered: {
                         root.hoveredEntryKey = segmentItem.entryKey;
@@ -447,14 +448,14 @@ Item {
                         TooltipService.hide();
                     }
 
-                    onClicked: mouse => {
-                        if (mouse.button === Qt.LeftButton) {
-                            root.mainInstance?.focusEntry(segmentItem.entryKey);
-                        } else if (mouse.button === Qt.MiddleButton) {
+                    onReleased: mouse => {
+                        if (mouse.button === Qt.MiddleButton) {
                             root.mainInstance?.closeEntry(segmentItem.entryKey);
                         } else if (mouse.button === Qt.RightButton) {
                             TooltipService.hide();
                             root.openContextMenu(segmentItem, segmentItem.modelData);
+                        } else if (mouse.button === Qt.LeftButton) {
+                            root.mainInstance?.focusEntry(segmentItem.entryKey);
                         }
                     }
                 }
@@ -578,17 +579,6 @@ Item {
                 pointSize: root.titleFontSize * root.titleScale
                 font.weight: Style.fontWeightSemiBold
             }
-        }
-    }
-
-    MouseArea {
-        anchors.fill: parent
-        acceptedButtons: Qt.RightButton
-        z: 0
-
-        onClicked: mouse => {
-            if (mouse.button === Qt.RightButton)
-                root.openContextMenu(root, null);
         }
     }
 
