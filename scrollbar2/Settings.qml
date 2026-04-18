@@ -168,6 +168,25 @@ ColumnLayout {
         return normalized;
     }
 
+    function normalizeColorStateMap(settingValue, fallbackMap, fallbackOpacity) {
+        const normalized = ({});
+        const currentValue = (settingValue && typeof settingValue === "object" && !Array.isArray(settingValue)) ? settingValue : ({});
+        const opacityValue = fallbackOpacity === undefined ? 1 : fallbackOpacity;
+
+        for (const key in fallbackMap) {
+            const currentState = currentValue[key];
+            normalized[key] = normalizeColorSetting(
+                currentState,
+                currentState,
+                undefined,
+                fallbackMap[key],
+                opacityValue
+            );
+        }
+
+        return normalized;
+    }
+
     function normalizeSettingsSnapshot(settings) {
         const next = deepCopy(settings || ({}));
         if (!next.display)
@@ -203,6 +222,31 @@ ColumnLayout {
             "surface",
             1
         );
+        next.focusLine.colors = normalizeColorStateMap(
+            next.focusLine.colors,
+            {
+                "focused": "primary",
+                "hover": "hover",
+                "default": "surface-variant"
+            }
+        );
+        next.window = next.window && typeof next.window === "object" && !Array.isArray(next.window) ? next.window : ({});
+        next.window.iconColors = normalizeColorStateMap(
+            next.window.iconColors,
+            {
+                "focused": "on-surface",
+                "hover": "on-hover",
+                "default": "on-surface-variant"
+            }
+        );
+        next.window.titleColors = normalizeColorStateMap(
+            next.window.titleColors,
+            {
+                "focused": "on-surface",
+                "hover": "on-hover",
+                "default": "on-surface-variant"
+            }
+        );
         next.focusLine.opacity = normalizeOpacityValue(next.focusLine.opacity, 1);
 
         delete next.display.backgroundColor;
@@ -229,6 +273,13 @@ ColumnLayout {
         return nestedSettingValue(groupKey, objectKey, nestedKey);
     }
 
+    function stateSettingValue(groupKey, objectKey, stateKey, nestedKey) {
+        const group = editSettings ? editSettings[groupKey] : undefined;
+        const objectGroup = group ? group[objectKey] : undefined;
+        const stateGroup = objectGroup ? objectGroup[stateKey] : undefined;
+        return stateGroup ? stateGroup[nestedKey] : undefined;
+    }
+
     function defaultValue(groupKey, nestedKey) {
         const group = defaultSettings ? defaultSettings[groupKey] : undefined;
         return group ? group[nestedKey] : undefined;
@@ -242,6 +293,13 @@ ColumnLayout {
 
     function defaultObjectValue(groupKey, objectKey, nestedKey) {
         return defaultNestedValue(groupKey, objectKey, nestedKey);
+    }
+
+    function defaultStateValue(groupKey, objectKey, stateKey, nestedKey) {
+        const group = defaultSettings ? defaultSettings[groupKey] : undefined;
+        const objectGroup = group ? group[objectKey] : undefined;
+        const stateGroup = objectGroup ? objectGroup[stateKey] : undefined;
+        return stateGroup ? stateGroup[nestedKey] : undefined;
     }
 
     function setSetting(groupKey, nestedKey, value) {
@@ -264,6 +322,18 @@ ColumnLayout {
 
     function setObjectSetting(groupKey, objectKey, nestedKey, value) {
         setNestedSetting(groupKey, objectKey, nestedKey, value);
+    }
+
+    function setStateSetting(groupKey, objectKey, stateKey, nestedKey, value) {
+        const next = deepCopy(editSettings);
+        if (!next[groupKey])
+            next[groupKey] = ({});
+        if (!next[groupKey][objectKey])
+            next[groupKey][objectKey] = ({});
+        if (!next[groupKey][objectKey][stateKey])
+            next[groupKey][objectKey][stateKey] = ({});
+        next[groupKey][objectKey][stateKey][nestedKey] = value;
+        editSettings = next;
     }
 
     function conditionValue(key) {

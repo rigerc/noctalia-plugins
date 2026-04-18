@@ -75,9 +75,13 @@ ColumnLayout {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.focusLine.colors.focused.label")
                 description: rootSettings?.pluginApi?.tr("settings.focusLine.colors.focused.desc")
-                currentColor: rootSettings?.nestedSettingValue("focusLine", "colors", "focused") ?? "primary"
-                defaultColor: rootSettings?.defaultNestedValue("focusLine", "colors", "focused") ?? "primary"
-                onColorSelected: value => rootSettings?.setNestedSetting("focusLine", "colors", "focused", value)
+                currentColor: rootSettings?.stateSettingValue("focusLine", "colors", "focused", "color") ?? "primary"
+                defaultColor: rootSettings?.defaultStateValue("focusLine", "colors", "focused", "color") ?? "primary"
+                currentOpacity: rootSettings?.stateSettingValue("focusLine", "colors", "focused", "opacity") ?? 1
+                defaultOpacity: rootSettings?.defaultStateValue("focusLine", "colors", "focused", "opacity") ?? 1
+                showOpacityControl: true
+                onColorSelected: value => rootSettings?.setStateSetting("focusLine", "colors", "focused", "color", value)
+                onOpacitySelected: value => rootSettings?.setStateSetting("focusLine", "colors", "focused", "opacity", value)
             }
 
             HybridColorChoice {
@@ -85,9 +89,13 @@ ColumnLayout {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.focusLine.colors.hover.label")
                 description: rootSettings?.pluginApi?.tr("settings.focusLine.colors.hover.desc")
-                currentColor: rootSettings?.nestedSettingValue("focusLine", "colors", "hover") ?? "hover"
-                defaultColor: rootSettings?.defaultNestedValue("focusLine", "colors", "hover") ?? "hover"
-                onColorSelected: value => rootSettings?.setNestedSetting("focusLine", "colors", "hover", value)
+                currentColor: rootSettings?.stateSettingValue("focusLine", "colors", "hover", "color") ?? "hover"
+                defaultColor: rootSettings?.defaultStateValue("focusLine", "colors", "hover", "color") ?? "hover"
+                currentOpacity: rootSettings?.stateSettingValue("focusLine", "colors", "hover", "opacity") ?? 1
+                defaultOpacity: rootSettings?.defaultStateValue("focusLine", "colors", "hover", "opacity") ?? 1
+                showOpacityControl: true
+                onColorSelected: value => rootSettings?.setStateSetting("focusLine", "colors", "hover", "color", value)
+                onOpacitySelected: value => rootSettings?.setStateSetting("focusLine", "colors", "hover", "opacity", value)
             }
 
             HybridColorChoice {
@@ -95,9 +103,13 @@ ColumnLayout {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.focusLine.colors.default.label")
                 description: rootSettings?.pluginApi?.tr("settings.focusLine.colors.default.desc")
-                currentColor: rootSettings?.nestedSettingValue("focusLine", "colors", "default") ?? "surface-variant"
-                defaultColor: rootSettings?.defaultNestedValue("focusLine", "colors", "default") ?? "surface-variant"
-                onColorSelected: value => rootSettings?.setNestedSetting("focusLine", "colors", "default", value)
+                currentColor: rootSettings?.stateSettingValue("focusLine", "colors", "default", "color") ?? "surface-variant"
+                defaultColor: rootSettings?.defaultStateValue("focusLine", "colors", "default", "color") ?? "surface-variant"
+                currentOpacity: rootSettings?.stateSettingValue("focusLine", "colors", "default", "opacity") ?? 1
+                defaultOpacity: rootSettings?.defaultStateValue("focusLine", "colors", "default", "opacity") ?? 1
+                showOpacityControl: true
+                onColorSelected: value => rootSettings?.setStateSetting("focusLine", "colors", "default", "color", value)
+                onOpacitySelected: value => rootSettings?.setStateSetting("focusLine", "colors", "default", "opacity", value)
             }
         }
     }
@@ -124,9 +136,13 @@ ColumnLayout {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.window.iconColors.focused.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.iconColors.focused.desc")
-                currentColor: rootSettings?.nestedSettingValue("window", "iconColors", "focused") ?? "on-surface"
-                defaultColor: rootSettings?.defaultNestedValue("window", "iconColors", "focused") ?? "on-surface"
-                onColorSelected: value => rootSettings?.setNestedSetting("window", "iconColors", "focused", value)
+                currentColor: rootSettings?.stateSettingValue("window", "iconColors", "focused", "color") ?? "on-surface"
+                defaultColor: rootSettings?.defaultStateValue("window", "iconColors", "focused", "color") ?? "on-surface"
+                currentOpacity: rootSettings?.stateSettingValue("window", "iconColors", "focused", "opacity") ?? 1
+                defaultOpacity: rootSettings?.defaultStateValue("window", "iconColors", "focused", "opacity") ?? 1
+                showOpacityControl: true
+                onColorSelected: value => rootSettings?.setStateSetting("window", "iconColors", "focused", "color", value)
+                onOpacitySelected: value => rootSettings?.setStateSetting("window", "iconColors", "focused", "opacity", value)
             }
 
             HybridColorChoice {
@@ -135,9 +151,13 @@ ColumnLayout {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.window.iconColors.hover.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.iconColors.hover.desc")
-                currentColor: rootSettings?.nestedSettingValue("window", "iconColors", "hover") ?? "on-hover"
-                defaultColor: rootSettings?.defaultNestedValue("window", "iconColors", "hover") ?? "on-hover"
-                onColorSelected: value => rootSettings?.setNestedSetting("window", "iconColors", "hover", value)
+                currentColor: rootSettings?.stateSettingValue("window", "iconColors", "hover", "color") ?? "on-hover"
+                defaultColor: rootSettings?.defaultStateValue("window", "iconColors", "hover", "color") ?? "on-hover"
+                currentOpacity: rootSettings?.stateSettingValue("window", "iconColors", "hover", "opacity") ?? 1
+                defaultOpacity: rootSettings?.defaultStateValue("window", "iconColors", "hover", "opacity") ?? 1
+                showOpacityControl: true
+                onColorSelected: value => rootSettings?.setStateSetting("window", "iconColors", "hover", "color", value)
+                onOpacitySelected: value => rootSettings?.setStateSetting("window", "iconColors", "hover", "opacity", value)
             }
 
             HybridColorChoice {
@@ -146,9 +166,13 @@ ColumnLayout {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.window.iconColors.default.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.iconColors.default.desc")
-                currentColor: rootSettings?.nestedSettingValue("window", "iconColors", "default") ?? "on-surface-variant"
-                defaultColor: rootSettings?.defaultNestedValue("window", "iconColors", "default") ?? "on-surface-variant"
-                onColorSelected: value => rootSettings?.setNestedSetting("window", "iconColors", "default", value)
+                currentColor: rootSettings?.stateSettingValue("window", "iconColors", "default", "color") ?? "on-surface-variant"
+                defaultColor: rootSettings?.defaultStateValue("window", "iconColors", "default", "color") ?? "on-surface-variant"
+                currentOpacity: rootSettings?.stateSettingValue("window", "iconColors", "default", "opacity") ?? 1
+                defaultOpacity: rootSettings?.defaultStateValue("window", "iconColors", "default", "opacity") ?? 1
+                showOpacityControl: true
+                onColorSelected: value => rootSettings?.setStateSetting("window", "iconColors", "default", "color", value)
+                onOpacitySelected: value => rootSettings?.setStateSetting("window", "iconColors", "default", "opacity", value)
             }
 
             HybridColorChoice {
@@ -157,9 +181,13 @@ ColumnLayout {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.window.titleColors.focused.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.titleColors.focused.desc")
-                currentColor: rootSettings?.nestedSettingValue("window", "titleColors", "focused") ?? "on-surface"
-                defaultColor: rootSettings?.defaultNestedValue("window", "titleColors", "focused") ?? "on-surface"
-                onColorSelected: value => rootSettings?.setNestedSetting("window", "titleColors", "focused", value)
+                currentColor: rootSettings?.stateSettingValue("window", "titleColors", "focused", "color") ?? "on-surface"
+                defaultColor: rootSettings?.defaultStateValue("window", "titleColors", "focused", "color") ?? "on-surface"
+                currentOpacity: rootSettings?.stateSettingValue("window", "titleColors", "focused", "opacity") ?? 1
+                defaultOpacity: rootSettings?.defaultStateValue("window", "titleColors", "focused", "opacity") ?? 1
+                showOpacityControl: true
+                onColorSelected: value => rootSettings?.setStateSetting("window", "titleColors", "focused", "color", value)
+                onOpacitySelected: value => rootSettings?.setStateSetting("window", "titleColors", "focused", "opacity", value)
             }
 
             HybridColorChoice {
@@ -168,9 +196,13 @@ ColumnLayout {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.window.titleColors.hover.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.titleColors.hover.desc")
-                currentColor: rootSettings?.nestedSettingValue("window", "titleColors", "hover") ?? "on-hover"
-                defaultColor: rootSettings?.defaultNestedValue("window", "titleColors", "hover") ?? "on-hover"
-                onColorSelected: value => rootSettings?.setNestedSetting("window", "titleColors", "hover", value)
+                currentColor: rootSettings?.stateSettingValue("window", "titleColors", "hover", "color") ?? "on-hover"
+                defaultColor: rootSettings?.defaultStateValue("window", "titleColors", "hover", "color") ?? "on-hover"
+                currentOpacity: rootSettings?.stateSettingValue("window", "titleColors", "hover", "opacity") ?? 1
+                defaultOpacity: rootSettings?.defaultStateValue("window", "titleColors", "hover", "opacity") ?? 1
+                showOpacityControl: true
+                onColorSelected: value => rootSettings?.setStateSetting("window", "titleColors", "hover", "color", value)
+                onOpacitySelected: value => rootSettings?.setStateSetting("window", "titleColors", "hover", "opacity", value)
             }
 
             HybridColorChoice {
@@ -179,9 +211,13 @@ ColumnLayout {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.window.titleColors.default.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.titleColors.default.desc")
-                currentColor: rootSettings?.nestedSettingValue("window", "titleColors", "default") ?? "on-surface-variant"
-                defaultColor: rootSettings?.defaultNestedValue("window", "titleColors", "default") ?? "on-surface-variant"
-                onColorSelected: value => rootSettings?.setNestedSetting("window", "titleColors", "default", value)
+                currentColor: rootSettings?.stateSettingValue("window", "titleColors", "default", "color") ?? "on-surface-variant"
+                defaultColor: rootSettings?.defaultStateValue("window", "titleColors", "default", "color") ?? "on-surface-variant"
+                currentOpacity: rootSettings?.stateSettingValue("window", "titleColors", "default", "opacity") ?? 1
+                defaultOpacity: rootSettings?.defaultStateValue("window", "titleColors", "default", "opacity") ?? 1
+                showOpacityControl: true
+                onColorSelected: value => rootSettings?.setStateSetting("window", "titleColors", "default", "color", value)
+                onOpacitySelected: value => rootSettings?.setStateSetting("window", "titleColors", "default", "opacity", value)
             }
         }
     }

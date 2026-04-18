@@ -70,24 +70,36 @@ Item {
 
     function nestedStateColor(groupKey, stateKey, fallbackValue) {
         const group = currentSettings?.[groupKey]?.colors;
-        if (group && group[stateKey] !== undefined)
-            return group[stateKey];
+        const value = group ? group[stateKey] : undefined;
+        if (value && typeof value === "object" && !Array.isArray(value) && value.color !== undefined)
+            return value.color;
+        if (value !== undefined)
+            return value;
 
         const defaultGroup = defaults?.[groupKey]?.colors;
-        if (defaultGroup && defaultGroup[stateKey] !== undefined)
-            return defaultGroup[stateKey];
+        const defaultValue = defaultGroup ? defaultGroup[stateKey] : undefined;
+        if (defaultValue && typeof defaultValue === "object" && !Array.isArray(defaultValue) && defaultValue.color !== undefined)
+            return defaultValue.color;
+        if (defaultValue !== undefined)
+            return defaultValue;
 
         return fallbackValue;
     }
 
     function nestedWindowStateColor(groupKey, stateKey, fallbackValue) {
         const group = currentSettings?.window?.[groupKey];
-        if (group && group[stateKey] !== undefined)
-            return group[stateKey];
+        const value = group ? group[stateKey] : undefined;
+        if (value && typeof value === "object" && !Array.isArray(value) && value.color !== undefined)
+            return value.color;
+        if (value !== undefined)
+            return value;
 
         const defaultGroup = defaults?.window?.[groupKey];
-        if (defaultGroup && defaultGroup[stateKey] !== undefined)
-            return defaultGroup[stateKey];
+        const defaultValue = defaultGroup ? defaultGroup[stateKey] : undefined;
+        if (defaultValue && typeof defaultValue === "object" && !Array.isArray(defaultValue) && defaultValue.color !== undefined)
+            return defaultValue.color;
+        if (defaultValue !== undefined)
+            return defaultValue;
 
         return fallbackValue;
     }
@@ -105,6 +117,30 @@ Item {
         if (numericValue > 1)
             return Math.max(0, Math.min(1, numericValue / 100));
         return Math.max(0, Math.min(1, numericValue));
+    }
+
+    function nestedStateOpacity(groupKey, stateKey, fallbackValue) {
+        const value = currentSettings?.[groupKey]?.colors?.[stateKey];
+        if (value && typeof value === "object" && !Array.isArray(value) && value.opacity !== undefined)
+            return normalizeOpacityValue(value.opacity, fallbackValue);
+
+        const defaultValue = defaults?.[groupKey]?.colors?.[stateKey];
+        if (defaultValue && typeof defaultValue === "object" && !Array.isArray(defaultValue) && defaultValue.opacity !== undefined)
+            return normalizeOpacityValue(defaultValue.opacity, fallbackValue);
+
+        return fallbackValue;
+    }
+
+    function nestedWindowStateOpacity(groupKey, stateKey, fallbackValue) {
+        const value = currentSettings?.window?.[groupKey]?.[stateKey];
+        if (value && typeof value === "object" && !Array.isArray(value) && value.opacity !== undefined)
+            return normalizeOpacityValue(value.opacity, fallbackValue);
+
+        const defaultValue = defaults?.window?.[groupKey]?.[stateKey];
+        if (defaultValue && typeof defaultValue === "object" && !Array.isArray(defaultValue) && defaultValue.opacity !== undefined)
+            return normalizeOpacityValue(defaultValue.opacity, fallbackValue);
+
+        return fallbackValue;
     }
 
     readonly property bool onlySameOutput: settingValue("filtering", "onlySameOutput", true)
@@ -125,9 +161,15 @@ Item {
     readonly property string focusLineVerticalAlign: settingValue("focusLine", "verticalAlign", "bottom")
     readonly property bool focusLineShadowEnabled: settingValue("focusLine", "shadowEnabled", true)
     readonly property real focusLineOpacity: normalizeOpacityValue(settingValue("focusLine", "opacity", 1), 1)
-    readonly property color focusLineFocusedColor: resolveColor(nestedStateColor("focusLine", "focused", "primary"), Color.mPrimary)
-    readonly property color focusLineHoverColor: resolveColor(nestedStateColor("focusLine", "hover", "hover"), Color.mHover)
-    readonly property color focusLineDefaultColor: resolveColor(nestedStateColor("focusLine", "default", "surface-variant"), Color.mSurfaceVariant)
+    readonly property string focusLineFocusedColorKey: nestedStateColor("focusLine", "focused", "primary")
+    readonly property string focusLineHoverColorKey: nestedStateColor("focusLine", "hover", "hover")
+    readonly property string focusLineDefaultColorKey: nestedStateColor("focusLine", "default", "surface-variant")
+    readonly property real focusLineFocusedOpacity: nestedStateOpacity("focusLine", "focused", 1)
+    readonly property real focusLineHoverOpacity: nestedStateOpacity("focusLine", "hover", 1)
+    readonly property real focusLineDefaultOpacity: nestedStateOpacity("focusLine", "default", 1)
+    readonly property color focusLineFocusedColor: resolveColor(focusLineFocusedColorKey, Color.mPrimary)
+    readonly property color focusLineHoverColor: resolveColor(focusLineHoverColorKey, Color.mHover)
+    readonly property color focusLineDefaultColor: resolveColor(focusLineDefaultColorKey, Color.mSurfaceVariant)
 
     readonly property bool showIcon: settingValue("window", "showIcon", true)
     readonly property bool showTitle: settingValue("window", "showTitle", true)
@@ -146,12 +188,24 @@ Item {
     readonly property string titleWeightFocused: currentSettings?.window?.fontWeights?.focused ?? defaults?.window?.fontWeights?.focused ?? "semibold"
     readonly property string titleWeightHover: currentSettings?.window?.fontWeights?.hover ?? defaults?.window?.fontWeights?.hover ?? "medium"
     readonly property string titleWeightDefault: currentSettings?.window?.fontWeights?.default ?? defaults?.window?.fontWeights?.default ?? "medium"
-    readonly property color iconColorFocused: resolveColor(nestedWindowStateColor("iconColors", "focused", "on-surface"), Color.mOnSurface)
-    readonly property color iconColorHover: resolveColor(nestedWindowStateColor("iconColors", "hover", "on-hover"), Color.mOnHover)
-    readonly property color iconColorDefault: resolveColor(nestedWindowStateColor("iconColors", "default", "on-surface-variant"), Color.mOnSurfaceVariant)
-    readonly property color titleColorFocused: resolveColor(nestedWindowStateColor("titleColors", "focused", "on-surface"), Color.mOnSurface)
-    readonly property color titleColorHover: resolveColor(nestedWindowStateColor("titleColors", "hover", "on-hover"), Color.mOnHover)
-    readonly property color titleColorDefault: resolveColor(nestedWindowStateColor("titleColors", "default", "on-surface-variant"), Color.mOnSurfaceVariant)
+    readonly property string iconColorFocusedKey: nestedWindowStateColor("iconColors", "focused", "on-surface")
+    readonly property string iconColorHoverKey: nestedWindowStateColor("iconColors", "hover", "on-hover")
+    readonly property string iconColorDefaultKey: nestedWindowStateColor("iconColors", "default", "on-surface-variant")
+    readonly property real iconColorFocusedOpacity: nestedWindowStateOpacity("iconColors", "focused", 1)
+    readonly property real iconColorHoverOpacity: nestedWindowStateOpacity("iconColors", "hover", 1)
+    readonly property real iconColorDefaultOpacity: nestedWindowStateOpacity("iconColors", "default", 1)
+    readonly property string titleColorFocusedKey: nestedWindowStateColor("titleColors", "focused", "on-surface")
+    readonly property string titleColorHoverKey: nestedWindowStateColor("titleColors", "hover", "on-hover")
+    readonly property string titleColorDefaultKey: nestedWindowStateColor("titleColors", "default", "on-surface-variant")
+    readonly property real titleColorFocusedOpacity: nestedWindowStateOpacity("titleColors", "focused", 1)
+    readonly property real titleColorHoverOpacity: nestedWindowStateOpacity("titleColors", "hover", 1)
+    readonly property real titleColorDefaultOpacity: nestedWindowStateOpacity("titleColors", "default", 1)
+    readonly property color iconColorFocused: resolveColor(iconColorFocusedKey, Color.mOnSurface)
+    readonly property color iconColorHover: resolveColor(iconColorHoverKey, Color.mOnHover)
+    readonly property color iconColorDefault: resolveColor(iconColorDefaultKey, Color.mOnSurfaceVariant)
+    readonly property color titleColorFocused: resolveColor(titleColorFocusedKey, Color.mOnSurface)
+    readonly property color titleColorHover: resolveColor(titleColorHoverKey, Color.mOnHover)
+    readonly property color titleColorDefault: resolveColor(titleColorDefaultKey, Color.mOnSurfaceVariant)
 
     readonly property bool animationEnabled: settingValue("animation", "enabled", true)
     readonly property int animationSpeed: Math.max(0, Math.round(settingValue("animation", "speed", 420)))
@@ -212,26 +266,35 @@ Item {
     function segmentBackgroundColor(entryKey) {
         const state = segmentState(entryKey);
         if (state === "focused")
-            return focusLineFocusedColor;
+            return Qt.alpha(focusLineFocusedColor, focusLineOpacity * focusLineFocusedOpacity);
         if (state === "hover")
-            return focusLineHoverColor;
-        return focusLineDefaultColor;
+            return Qt.alpha(focusLineHoverColor, focusLineOpacity * focusLineHoverOpacity);
+        return Qt.alpha(focusLineDefaultColor, focusLineOpacity * focusLineDefaultOpacity);
     }
 
     function labelColor(entryKey, kind) {
         const state = segmentState(entryKey);
         if (kind === "icon") {
             if (state === "focused")
-                return iconColorFocused;
+                return Qt.alpha(iconColorFocused, iconColorFocusedOpacity);
             if (state === "hover")
-                return iconColorHover;
-            return iconColorDefault;
+                return Qt.alpha(iconColorHover, iconColorHoverOpacity);
+            return Qt.alpha(iconColorDefault, iconColorDefaultOpacity);
         }
         if (state === "focused")
-            return titleColorFocused;
+            return Qt.alpha(titleColorFocused, titleColorFocusedOpacity);
         if (state === "hover")
-            return titleColorHover;
-        return titleColorDefault;
+            return Qt.alpha(titleColorHover, titleColorHoverOpacity);
+        return Qt.alpha(titleColorDefault, titleColorDefaultOpacity);
+    }
+
+    function iconTintEnabled(entryKey) {
+        const state = segmentState(entryKey);
+        if (state === "focused")
+            return iconColorFocusedKey !== "none";
+        if (state === "hover")
+            return iconColorHoverKey !== "none";
+        return iconColorDefaultKey !== "none";
     }
 
     function titleWeight(entryKey) {
@@ -444,12 +507,20 @@ Item {
                             asynchronous: true
                             visible: status === Image.Ready
 
-                            layer.enabled: visible
+                            layer.enabled: visible && root.iconTintEnabled(segmentItem.entryKey)
                             layer.effect: ShaderEffect {
                                 property color targetColor: root.labelColor(segmentItem.entryKey, "icon")
                                 property real colorizeMode: 0.0
 
                                 fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/appicon_colorize.frag.qsb")
+                            }
+                            opacity: {
+                                const state = root.segmentState(segmentItem.entryKey);
+                                if (state === "focused")
+                                    return root.iconColorFocusedOpacity;
+                                if (state === "hover")
+                                    return root.iconColorHoverOpacity;
+                                return root.iconColorDefaultOpacity;
                             }
                         }
 
@@ -615,7 +686,7 @@ Item {
             width: parent.width
             height: root.visibleFocusLineThickness
             radius: root.focusLineRadius
-            color: Qt.alpha(root.focusLineFocusedColor, root.focusLineOpacity)
+            color: Qt.alpha(root.focusLineFocusedColor, root.focusLineOpacity * root.focusLineFocusedOpacity)
         }
     }
 
@@ -649,13 +720,14 @@ Item {
                     asynchronous: true
                     visible: status === Image.Ready
 
-                    layer.enabled: visible
+                    layer.enabled: visible && root.iconColorFocusedKey !== "none"
                     layer.effect: ShaderEffect {
                         property color targetColor: root.iconColorFocused
                         property real colorizeMode: 0.0
 
                         fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/appicon_colorize.frag.qsb")
                     }
+                    opacity: root.iconColorFocusedOpacity
                 }
 
                 NText {
@@ -664,7 +736,7 @@ Item {
                     text: root.currentTitle(root.focusedEntry()).length > 0 ? root.currentTitle(root.focusedEntry()).charAt(0).toUpperCase() : "?"
                     pointSize: Math.max(Style.fontSizeXS, root.titleFontSize * root.titleScale * 0.95)
                     font.weight: Style.fontWeightBold
-                    color: root.iconColorFocused
+                    color: Qt.alpha(root.iconColorFocused, root.iconColorFocusedOpacity)
                 }
             }
 
@@ -673,7 +745,7 @@ Item {
                 text: root.currentTitle(root.focusedEntry())
                 elide: Text.ElideRight
                 maximumLineCount: 1
-                color: root.titleColorFocused
+                color: Qt.alpha(root.titleColorFocused, root.titleColorFocusedOpacity)
                 font.family: root.titleFontFamily || Qt.application.font.family
                 pointSize: root.titleFontSize * root.titleScale
                 font.weight: root.fontWeightValue(root.titleWeightFocused, Style.fontWeightSemiBold)

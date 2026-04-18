@@ -65,9 +65,18 @@
         "shadowEnabled": true,
         "opacity": 1,
         "colors": {
-          "focused": "primary",
-          "hover": "hover",
-          "default": "surface-variant"
+          "focused": {
+            "color": "primary",
+            "opacity": 1
+          },
+          "hover": {
+            "color": "hover",
+            "opacity": 1
+          },
+          "default": {
+            "color": "surface-variant",
+            "opacity": 1
+          }
         }
       },
       "window": {
@@ -91,14 +100,32 @@
           "default": "medium"
         },
         "iconColors": {
-          "focused": "on-surface",
-          "hover": "on-hover",
-          "default": "on-surface-variant"
+          "focused": {
+            "color": "on-surface",
+            "opacity": 1
+          },
+          "hover": {
+            "color": "on-hover",
+            "opacity": 1
+          },
+          "default": {
+            "color": "on-surface-variant",
+            "opacity": 1
+          }
         },
         "titleColors": {
-          "focused": "on-surface",
-          "hover": "on-hover",
-          "default": "on-surface-variant"
+          "focused": {
+            "color": "on-surface",
+            "opacity": 1
+          },
+          "hover": {
+            "color": "on-hover",
+            "opacity": 1
+          },
+          "default": {
+            "color": "on-surface-variant",
+            "opacity": 1
+          }
         }
       },
       "animation": {

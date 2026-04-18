@@ -21,32 +21,79 @@ ColumnLayout {
     property real opacityStepSize: 0.01
 
     readonly property bool colorChanged: (defaultColor !== undefined) && !sameValue(currentColor, defaultColor)
-    readonly property bool opacityChanged: showOpacityControl && defaultOpacity !== undefined
-        && !sameNumber(currentOpacity, defaultOpacity)
+    readonly property bool opacityChanged: showOpacityControl && defaultOpacity !== undefined && !sameNumber(currentOpacity, defaultOpacity)
     readonly property bool isValueChanged: colorChanged || opacityChanged
     readonly property string indicatorTooltip: defaultSummary()
     readonly property int diameter: Math.round(Style.baseWidgetSize * 0.9 * Style.uiScaleRatio)
     readonly property bool customSelected: isCustomColor(currentColor)
     readonly property color customPreviewColor: resolveColor(customSelected ? currentColor : "surface", Color.mSurface)
     readonly property var preferredColorOptions: [
-        { "key": "none", "name": pluginApi?.tr("settings.colorOptions.none") },
-        { "key": "primary", "name": pluginApi?.tr("settings.colorOptions.primary") },
-        { "key": "secondary", "name": pluginApi?.tr("settings.colorOptions.secondary") },
-        { "key": "tertiary", "name": pluginApi?.tr("settings.colorOptions.tertiary") },
-        { "key": "surface", "name": pluginApi?.tr("settings.colorOptions.surface") },
-        { "key": "error", "name": pluginApi?.tr("settings.colorOptions.error") }
+        {
+            "key": "none",
+            "name": pluginApi?.tr("settings.colorOptions.none")
+        },
+        {
+            "key": "primary",
+            "name": pluginApi?.tr("settings.colorOptions.primary")
+        },
+        {
+            "key": "secondary",
+            "name": pluginApi?.tr("settings.colorOptions.secondary")
+        },
+        {
+            "key": "tertiary",
+            "name": pluginApi?.tr("settings.colorOptions.tertiary")
+        },
+        {
+            "key": "surface",
+            "name": pluginApi?.tr("settings.colorOptions.surface")
+        },
+        {
+            "key": "error",
+            "name": pluginApi?.tr("settings.colorOptions.error")
+        }
     ]
     readonly property var legacyColorOptions: [
-        { "key": "on-primary", "name": pluginApi?.tr("settings.colorOptions.onPrimary") },
-        { "key": "on-secondary", "name": pluginApi?.tr("settings.colorOptions.onSecondary") },
-        { "key": "on-tertiary", "name": pluginApi?.tr("settings.colorOptions.onTertiary") },
-        { "key": "on-error", "name": pluginApi?.tr("settings.colorOptions.onError") },
-        { "key": "on-surface", "name": pluginApi?.tr("settings.colorOptions.onSurface") },
-        { "key": "surface-variant", "name": pluginApi?.tr("settings.colorOptions.surfaceVariant") },
-        { "key": "on-surface-variant", "name": pluginApi?.tr("settings.colorOptions.onSurfaceVariant") },
-        { "key": "outline", "name": pluginApi?.tr("settings.colorOptions.outline") },
-        { "key": "hover", "name": pluginApi?.tr("settings.colorOptions.hover") },
-        { "key": "on-hover", "name": pluginApi?.tr("settings.colorOptions.onHover") }
+        {
+            "key": "on-primary",
+            "name": pluginApi?.tr("settings.colorOptions.onPrimary")
+        },
+        {
+            "key": "on-secondary",
+            "name": pluginApi?.tr("settings.colorOptions.onSecondary")
+        },
+        {
+            "key": "on-tertiary",
+            "name": pluginApi?.tr("settings.colorOptions.onTertiary")
+        },
+        {
+            "key": "on-error",
+            "name": pluginApi?.tr("settings.colorOptions.onError")
+        },
+        {
+            "key": "on-surface",
+            "name": pluginApi?.tr("settings.colorOptions.onSurface")
+        },
+        {
+            "key": "surface-variant",
+            "name": pluginApi?.tr("settings.colorOptions.surfaceVariant")
+        },
+        {
+            "key": "on-surface-variant",
+            "name": pluginApi?.tr("settings.colorOptions.onSurfaceVariant")
+        },
+        {
+            "key": "outline",
+            "name": pluginApi?.tr("settings.colorOptions.outline")
+        },
+        {
+            "key": "hover",
+            "name": pluginApi?.tr("settings.colorOptions.hover")
+        },
+        {
+            "key": "on-hover",
+            "name": pluginApi?.tr("settings.colorOptions.onHover")
+        }
     ]
     readonly property var visibleColorOptions: buildVisibleColorOptions()
 
@@ -95,9 +142,7 @@ ColumnLayout {
     }
 
     function isCustomColor(value) {
-        return typeof value === "string"
-            && !isThemeColorKey(value)
-            && /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(value);
+        return typeof value === "string" && !isThemeColorKey(value) && /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(value);
     }
 
     function resolveThemeColor(key) {
@@ -226,7 +271,9 @@ ColumnLayout {
                 return;
             options.push({
                 "key": legacy.key,
-                "name": pluginApi?.tr(suffixKey, { "value": legacy.name }) ?? legacy.name
+                "name": pluginApi?.tr(suffixKey, {
+                    "value": legacy.name
+                }) ?? legacy.name
             });
         }
 
@@ -347,9 +394,7 @@ ColumnLayout {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onEntered: TooltipService.show(parent, root.customSelected
-                    ? `${root.pluginApi?.tr("settings.colorOptions.custom")} (${String(root.currentColor).toUpperCase()})`
-                    : root.pluginApi?.tr("settings.colorOptions.custom"))
+                onEntered: TooltipService.show(parent, root.customSelected ? `${root.pluginApi?.tr("settings.colorOptions.custom")} (${String(root.currentColor).toUpperCase()})` : root.pluginApi?.tr("settings.colorOptions.custom"))
                 onExited: TooltipService.hide()
                 onClicked: root.openCustomPicker()
             }
