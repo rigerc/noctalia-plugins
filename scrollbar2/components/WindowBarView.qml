@@ -112,10 +112,14 @@ Item {
     readonly property bool showTitle: settingValue("window", "showTitle", true)
     readonly property bool focusedOnly: settingValue("window", "focusedOnly", false)
     readonly property string focusedAlign: settingValue("window", "focusedAlign", "segment")
+    readonly property real windowBorderRadius: Math.max(0, settingValue("window", "borderRadius", 6) * Style.uiScaleRatio)
+    readonly property real windowMargin: Math.max(0, settingValue("window", "margin", 2) * Style.uiScaleRatio)
     readonly property string titleFontFamily: settingValue("window", "font", "JetBrains Mono")
     readonly property real titleFontSize: Math.max(1, settingValue("window", "fontSize", 11) * Style.uiScaleRatio)
     readonly property real iconScale: Math.max(0.5, settingValue("window", "iconScale", 1.0))
     readonly property real titleScale: Math.max(0.5, settingValue("window", "titleScale", 1.0))
+    readonly property string iconAlign: settingValue("window", "iconAlign", "center")
+    readonly property string titleAlign: settingValue("window", "titleAlign", "left")
     readonly property color iconColorFocused: resolveColor(nestedWindowStateColor("iconColors", "focused", "on-surface"), Color.mOnSurface)
     readonly property color iconColorHover: resolveColor(nestedWindowStateColor("iconColors", "hover", "on-hover"), Color.mOnHover)
     readonly property color iconColorDefault: resolveColor(nestedWindowStateColor("iconColors", "default", "on-surface-variant"), Color.mOnSurfaceVariant)
@@ -266,6 +270,28 @@ Item {
         return entries[focusedIndex];
     }
 
+    function horizontalAlignment(alignKey) {
+        switch (alignKey) {
+        case "center":
+            return Text.AlignHCenter;
+        case "right":
+            return Text.AlignRight;
+        default:
+            return Text.AlignLeft;
+        }
+    }
+
+    function iconAnchor(alignKey) {
+        switch (alignKey) {
+        case "left":
+            return 0;
+        case "right":
+            return 1;
+        default:
+            return 0.5;
+        }
+    }
+
     function currentTitle(entry) {
         if (!entry)
             return "";
@@ -339,7 +365,8 @@ Item {
 
                 Rectangle {
                     anchors.fill: parent
-                    radius: Math.max(0, root.trackBorderRadius - Style.borderS)
+                    anchors.margins: root.windowMargin
+                    radius: Math.min(Math.max(0, root.windowBorderRadius), Math.max(0, Math.min(width, height) / 2))
                     color: root.segmentBackgroundColor(segmentItem.entryKey)
 
                     Behavior on color {
@@ -352,15 +379,17 @@ Item {
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: root.labelPaddingH
-                    anchors.rightMargin: root.labelPaddingH
+                    anchors.margins: root.windowMargin
+                    anchors.leftMargin: root.windowMargin + root.labelPaddingH
+                    anchors.rightMargin: root.windowMargin + root.labelPaddingH
                     spacing: root.labelGap
                     visible: root.showIcon || root.showTitle
                     layoutDirection: root.focusedOnly && root.focusedAlign === "right" && segmentItem.showLabel ? Qt.RightToLeft : Qt.LeftToRight
 
                     Item {
-                        Layout.preferredWidth: root.showIcon ? root.computedIconSize : 0
+                        Layout.preferredWidth: root.showIcon ? (root.showTitle ? root.computedIconSize : Math.max(root.computedIconSize, segmentItem.width - (root.windowMargin * 2) - (root.labelPaddingH * 2))) : 0
                         Layout.preferredHeight: root.showIcon ? root.computedIconSize : 0
+                        Layout.alignment: Qt.AlignVCenter
                         visible: root.showIcon
                         opacity: segmentItem.showLabel ? 1 : 0
 
@@ -373,7 +402,11 @@ Item {
 
                         IconImage {
                             id: appIcon
-                            anchors.fill: parent
+                            width: root.computedIconSize
+                            height: root.computedIconSize
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.horizontalCenterOffset: Math.round((parent.width - width) * (root.iconAnchor(root.iconAlign) - 0.5))
                             source: ThemeIcons.iconForAppId(segmentItem.modelData.appId)
                             smooth: true
                             asynchronous: true
@@ -389,7 +422,11 @@ Item {
                         }
 
                         NText {
-                            anchors.centerIn: parent
+                            width: root.computedIconSize
+                            horizontalAlignment: root.horizontalAlignment(root.iconAlign)
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.horizontalCenterOffset: Math.round((parent.width - width) * (root.iconAnchor(root.iconAlign) - 0.5))
                             visible: !appIcon.visible
                             text: segmentItem.title.length > 0 ? segmentItem.title.charAt(0).toUpperCase() : "?"
                             pointSize: Math.max(Style.fontSizeXS, root.titleFontSize * root.titleScale * 0.95)
@@ -407,12 +444,14 @@ Item {
 
                     NText {
                         Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignVCenter
                         visible: root.showTitle
                         text: segmentItem.title
                         elide: Text.ElideRight
                         maximumLineCount: 1
                         opacity: segmentItem.showLabel ? 1 : 0
                         color: root.labelColor(segmentItem.entryKey, "title")
+                        horizontalAlignment: root.horizontalAlignment(root.titleAlign)
                         font.family: root.titleFontFamily || Qt.application.font.family
                         pointSize: root.titleFontSize * root.titleScale
                         font.weight: root.segmentState(segmentItem.entryKey) === "focused" ? Style.fontWeightSemiBold : Style.fontWeightMedium
@@ -558,7 +597,7 @@ Item {
 
     Item {
         anchors.fill: parent
-        z: 1
+        z: 10
         visible: root.focusedOnly && root.focusedAlign === "center" && root.focusedEntry() !== null
 
         RowLayout {

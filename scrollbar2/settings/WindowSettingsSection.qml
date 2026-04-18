@@ -66,6 +66,32 @@ ColumnLayout {
                 onSelected: key => rootSettings?.setSetting("window", "focusedAlign", key)
             }
 
+            NValueSlider {
+                label: rootSettings?.pluginApi?.tr("settings.window.borderRadius.label")
+                description: rootSettings?.pluginApi?.tr("settings.window.borderRadius.desc")
+                from: 0
+                to: 24
+                stepSize: 1
+                value: rootSettings?.settingValue("window", "borderRadius") ?? 6
+                text: Math.round(value) + " px"
+                defaultValue: rootSettings?.defaultValue("window", "borderRadius") ?? 6
+                showReset: true
+                onMoved: sliderValue => rootSettings?.setSetting("window", "borderRadius", Math.round(sliderValue))
+            }
+
+            NValueSlider {
+                label: rootSettings?.pluginApi?.tr("settings.window.margin.label")
+                description: rootSettings?.pluginApi?.tr("settings.window.margin.desc")
+                from: 0
+                to: 24
+                stepSize: 1
+                value: rootSettings?.settingValue("window", "margin") ?? 2
+                text: Math.round(value) + " px"
+                defaultValue: rootSettings?.defaultValue("window", "margin") ?? 2
+                showReset: true
+                onMoved: sliderValue => rootSettings?.setSetting("window", "margin", Math.round(sliderValue))
+            }
+
             NSearchableComboBox {
                 visible: rootSettings?.isVisibleByConditions(["showTitle"]) ?? true
                 Layout.fillWidth: true
@@ -91,6 +117,17 @@ ColumnLayout {
                 onMoved: sliderValue => rootSettings?.setSetting("window", "fontSize", Math.round(sliderValue))
             }
 
+            NComboBox {
+                visible: rootSettings?.isVisibleByConditions(["showIcons"]) ?? true
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.window.iconAlign.label")
+                description: rootSettings?.pluginApi?.tr("settings.window.iconAlign.desc")
+                model: rootSettings?.horizontalAlignModel
+                currentKey: rootSettings?.settingValue("window", "iconAlign") ?? "center"
+                defaultValue: rootSettings?.defaultValue("window", "iconAlign") ?? "center"
+                onSelected: key => rootSettings?.setSetting("window", "iconAlign", key)
+            }
+
             NValueSlider {
                 visible: rootSettings?.isVisibleByConditions(["showIcons"]) ?? true
                 label: rootSettings?.pluginApi?.tr("settings.window.iconScale.label")
@@ -103,6 +140,17 @@ ColumnLayout {
                 defaultValue: rootSettings?.defaultValue("window", "iconScale") ?? 1.0
                 showReset: true
                 onMoved: sliderValue => rootSettings?.setSetting("window", "iconScale", Math.round(sliderValue * 100) / 100)
+            }
+
+            NComboBox {
+                visible: rootSettings?.isVisibleByConditions(["showTitle"]) ?? true
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.window.titleAlign.label")
+                description: rootSettings?.pluginApi?.tr("settings.window.titleAlign.desc")
+                model: rootSettings?.horizontalAlignModel
+                currentKey: rootSettings?.settingValue("window", "titleAlign") ?? "left"
+                defaultValue: rootSettings?.defaultValue("window", "titleAlign") ?? "left"
+                onSelected: key => rootSettings?.setSetting("window", "titleAlign", key)
             }
 
             NValueSlider {

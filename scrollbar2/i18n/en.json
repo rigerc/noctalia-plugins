@@ -24,7 +24,10 @@
     "animationLinear": "Linear",
     "animationFade": "Fade",
     "gradientVertical": "Vertical",
-    "gradientHorizontal": "Horizontal"
+    "gradientHorizontal": "Horizontal",
+    "horizontalAlignLeft": "Left",
+    "horizontalAlignCenter": "Center",
+    "horizontalAlignRight": "Right"
   },
   "settings": {
     "summary": "Configure `scrollbar2` as a compact bar widget or a reserve-space floating panel. Theme-aware colors use Noctalia color pickers and also allow custom hex values.",
@@ -245,6 +248,14 @@
         "label": "Focused Label Alignment",
         "desc": "Where focused-only labels should appear."
       },
+      "borderRadius": {
+        "label": "Window Radius",
+        "desc": "Corner radius of each window segment background."
+      },
+      "margin": {
+        "label": "Window Margin",
+        "desc": "Inset around each window segment background and its content."
+      },
       "font": {
         "label": "Font Family",
         "desc": "Font family used for window titles."
@@ -257,9 +268,17 @@
         "label": "Icon Scale",
         "desc": "Scale multiplier applied to application icons."
       },
+      "iconAlign": {
+        "label": "Icon Alignment",
+        "desc": "Horizontal alignment of icons inside each segment."
+      },
       "titleScale": {
         "label": "Title Scale",
         "desc": "Scale multiplier applied to title text."
+      },
+      "titleAlign": {
+        "label": "Title Alignment",
+        "desc": "Horizontal alignment of window titles inside each segment."
       },
       "iconColors": {
         "focused": {

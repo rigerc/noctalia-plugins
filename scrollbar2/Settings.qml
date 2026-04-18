@@ -66,6 +66,20 @@ ColumnLayout {
             "name": pluginApi?.tr("options.verticalAlignBottom")
         }
     ]
+    readonly property var horizontalAlignModel: [
+        {
+            "key": "left",
+            "name": pluginApi?.tr("options.horizontalAlignLeft")
+        },
+        {
+            "key": "center",
+            "name": pluginApi?.tr("options.horizontalAlignCenter")
+        },
+        {
+            "key": "right",
+            "name": pluginApi?.tr("options.horizontalAlignRight")
+        }
+    ]
     readonly property var animationTypeModel: [
         {
             "key": "spring",
