@@ -1,9 +1,12 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Quickshell
+import Quickshell.Io
 import qs.Commons
 import qs.Widgets
 import "./settings"
+import "PresetUtils.js" as PresetUtils
 
 ColumnLayout {
     id: root
@@ -11,6 +14,12 @@ ColumnLayout {
     property var pluginApi: null
     property var defaults: pluginApi?.manifest?.metadata?.defaultSettings || ({})
     property real preferredWidth: 720 * Style.uiScaleRatio
+    property string selectedBuiltinPresetKey: ""
+    property string selectedCustomPresetName: ""
+    property string customPresetNameInput: ""
+    property string presetTransferMessage: ""
+    property bool presetSelectionClearedByEdit: false
+    readonly property string presetExportFileName: "scrollbar-custom-presets.json"
 
     readonly property var fontWeightModel: ListModel {
         ListElement {
@@ -92,167 +101,326 @@ ColumnLayout {
             "name": pluginApi?.tr("options.widgetSizeModeFixed")
         }
     ]
+    readonly property var renderModeModel: [
+        {
+            "key": "bar",
+            "name": pluginApi?.tr("options.renderModeBar")
+        },
+        {
+            "key": "window",
+            "name": pluginApi?.tr("options.renderModeWindow")
+        }
+    ]
+    readonly property var windowSpaceModeModel: [
+        {
+            "key": "overlay",
+            "name": pluginApi?.tr("options.windowSpaceOverlay")
+        },
+        {
+            "key": "reserve",
+            "name": pluginApi?.tr("options.windowSpaceReserve")
+        }
+    ]
+    readonly property var gradientDirectionModel: [
+        {
+            "key": "vertical",
+            "name": pluginApi?.tr("options.gradientDirectionVertical")
+        },
+        {
+            "key": "horizontal",
+            "name": pluginApi?.tr("options.gradientDirectionHorizontal")
+        }
+    ]
+    readonly property var builtInPresetModel: [
+        {
+            "key": "",
+            "name": pluginApi?.tr("settings.presets.builtIn.placeholder")
+        },
+        {
+            "key": "standard",
+            "name": pluginApi?.tr("settings.presets.builtIn.standard.name")
+        },
+        {
+            "key": "focusTrack",
+            "name": pluginApi?.tr("settings.presets.builtIn.focusTrack.name")
+        },
+        {
+            "key": "iconStrip",
+            "name": pluginApi?.tr("settings.presets.builtIn.iconStrip.name")
+        },
+        {
+            "key": "titleTrack",
+            "name": pluginApi?.tr("settings.presets.builtIn.titleTrack.name")
+        },
+        {
+            "key": "trackOnly",
+            "name": pluginApi?.tr("settings.presets.builtIn.trackOnly.name")
+        },
+        {
+            "key": "denseStrip",
+            "name": pluginApi?.tr("settings.presets.builtIn.denseStrip.name")
+        },
+        {
+            "key": "floatingPanel",
+            "name": pluginApi?.tr("settings.presets.builtIn.floatingPanel.name")
+        },
+        {
+            "key": "edgePill",
+            "name": pluginApi?.tr("settings.presets.builtIn.edgePill.name")
+        }
+    ]
     readonly property var defaultSettings: createSettingsSnapshot(defaults, ({}))
     property var editSettings: createSettingsSnapshot(pluginApi?.pluginSettings || ({}), defaults)
+    property var customPresets: createCustomPresetList(pluginApi?.pluginSettings || ({}), defaults)
+    readonly property string selectedPresetDescription: presetDescription(selectedBuiltinPresetKey)
+    readonly property string trimmedCustomPresetName: normalizePresetName(customPresetNameInput)
+    readonly property int matchingCustomPresetIndex: findCustomPresetIndex(trimmedCustomPresetName)
+    readonly property bool canSaveCustomPreset: trimmedCustomPresetName !== "" && matchingCustomPresetIndex === -1
+    readonly property bool canOverwriteCustomPreset: trimmedCustomPresetName !== "" && matchingCustomPresetIndex !== -1
+    readonly property bool canDeleteCustomPreset: selectedCustomPresetName !== "" && findCustomPresetIndex(selectedCustomPresetName) !== -1
+    readonly property string presetStatusSummary: {
+        if (presetSelectionClearedByEdit)
+            return pluginApi?.tr("settings.presets.summary.modified");
+        if (selectedCustomPresetName !== "")
+            return pluginApi?.tr("settings.presets.summary.custom", {
+                "name": selectedCustomPresetName
+            });
+        if (selectedBuiltinPresetKey !== "")
+            return pluginApi?.tr("settings.presets.summary.builtin", {
+                "name": presetName(selectedBuiltinPresetKey)
+            });
+        if (customPresets.length > 0)
+            return pluginApi?.tr("settings.presets.summary.count", {
+                "count": customPresets.length
+            });
+        return pluginApi?.tr("settings.presets.summary.empty");
+    }
 
     spacing: Style.marginM
     implicitWidth: preferredWidth
 
     function deepCopy(value) {
-        return JSON.parse(JSON.stringify(value));
+        return PresetUtils.deepCopy(value);
     }
 
-    function readSetting(primary, secondary, groupKey, nestedKey, legacyKey, fallbackValue) {
-        const primaryGroup = primary ? primary[groupKey] : undefined;
-        const nestedPrimary = primaryGroup ? primaryGroup[nestedKey] : undefined;
-        if (nestedPrimary !== undefined)
-            return nestedPrimary;
-
-        const legacyPrimary = primary ? primary[legacyKey] : undefined;
-        if (legacyPrimary !== undefined)
-            return legacyPrimary;
-
-        const secondaryGroup = secondary ? secondary[groupKey] : undefined;
-        const nestedSecondary = secondaryGroup ? secondaryGroup[nestedKey] : undefined;
-        if (nestedSecondary !== undefined)
-            return nestedSecondary;
-
-        const legacySecondary = secondary ? secondary[legacyKey] : undefined;
-        if (legacySecondary !== undefined)
-            return legacySecondary;
-
-        return fallbackValue;
+    function mergeDeep(base, overrides) {
+        return PresetUtils.mergeDeep(base, overrides);
     }
 
     function createSettingsSnapshot(primary, secondary) {
-        return {
-            "filtering": {
-                "onlySameOutput": readSetting(primary, secondary, "filtering", "onlySameOutput", "onlySameOutput", true),
-                "onlyActiveWorkspaces": readSetting(primary, secondary, "filtering", "onlyActiveWorkspaces", "onlyActiveWorkspaces", true)
-            },
-            "interaction": {
-                "enableReorder": readSetting(primary, secondary, "interaction", "enableReorder", "enableReorder", true),
-                "enableScrollWheel": readSetting(primary, secondary, "interaction", "enableScrollWheel", "enableScrollWheel", true)
-            },
-            "autoScroll": {
-                "centerFocusedWindow": readSetting(primary, secondary, "autoScroll", "centerFocusedWindow", "centerFocusedWindow", true),
-                "centerAnimationMs": readSetting(primary, secondary, "autoScroll", "centerAnimationMs", "centerAnimationMs", 200)
-            },
-            "advanced": {
-                "debugLogging": readSetting(primary, secondary, "advanced", "debugLogging", "debugLogging", false)
-            },
-            "layout": {
-                "widgetSizeMode": readSetting(primary, secondary, "layout", "widgetSizeMode", "widgetSizeMode", "dynamic"),
-                "fixedWidgetSize": readSetting(primary, secondary, "layout", "fixedWidgetSize", "fixedWidgetSize", 360),
-                "maxWidgetWidth": readSetting(primary, secondary, "layout", "maxWidgetWidth", "maxWidgetWidth", 40),
-                "showSlots": readSetting(primary, secondary, "layout", "showSlots", "showSlots", true),
-                "slotWidth": readSetting(primary, secondary, "layout", "slotWidth", "slotWidth", 112),
-                "slotSpacingUnits": readSetting(primary, secondary, "layout", "slotSpacingUnits", "slotSpacingUnits", 1),
-                "radiusScale": readSetting(primary, secondary, "layout", "radiusScale", "radiusScale", 1.0),
-                "slotCapsuleScale": readSetting(primary, secondary, "layout", "slotCapsuleScale", "slotCapsuleScale", 1.0)
-            },
-            "icons": {
-                "showIcons": readSetting(primary, secondary, "icons", "showIcons", "showIcons", true),
-                "iconScale": readSetting(primary, secondary, "icons", "iconScale", "iconScale", 0.8),
-                "iconTintColor": readSetting(primary, secondary, "icons", "iconTintColor", "iconTintColor", "none"),
-                "iconTintOpacity": readSetting(primary, secondary, "icons", "iconTintOpacity", "iconTintOpacity", 100)
-            },
-            "title": {
-                "showTitle": readSetting(primary, secondary, "title", "showTitle", "showTitle", true),
-                "titleFontFamily": readSetting(primary, secondary, "title", "titleFontFamily", "titleFontFamily", ""),
-                "titleFontSize": readSetting(primary, secondary, "title", "titleFontSize", "titleFontSize", 0),
-                "titleFontWeight": readSetting(primary, secondary, "title", "titleFontWeight", "titleFontWeight", "default")
-            },
-            "focusedTitle": {
-                "enabled": readSetting(primary, secondary, "focusedTitle", "enabled", "focusedTitleEnabled", false),
-                "textColor": readSetting(primary, secondary, "focusedTitle", "textColor", "focusedTitleTextColor", "on-surface"),
-                "opacity": readSetting(primary, secondary, "focusedTitle", "opacity", "focusedTitleOpacity", 100)
-            },
-            "workspaceIndicator": {
-                "enabled": readSetting(primary, secondary, "workspaceIndicator", "enabled", "workspaceIndicatorEnabled", false),
-                "labelMode": readSetting(primary, secondary, "workspaceIndicator", "labelMode", "workspaceIndicatorLabelMode", "id"),
-                "position": readSetting(primary, secondary, "workspaceIndicator", "position", "workspaceIndicatorPosition", "before"),
-                "spacing": readSetting(primary, secondary, "workspaceIndicator", "spacing", "workspaceIndicatorSpacing", 8),
-                "padding": readSetting(primary, secondary, "workspaceIndicator", "padding", "workspaceIndicatorPadding", 0),
-                "fontFamily": readSetting(primary, secondary, "workspaceIndicator", "fontFamily", "workspaceIndicatorFontFamily", ""),
-                "fontSize": readSetting(primary, secondary, "workspaceIndicator", "fontSize", "workspaceIndicatorFontSize", 0),
-                "textColor": readSetting(primary, secondary, "workspaceIndicator", "textColor", "workspaceIndicatorTextColor", "primary"),
-                "opacity": readSetting(primary, secondary, "workspaceIndicator", "opacity", "workspaceIndicatorOpacity", 100)
-            },
-            "edgeFade": {
-                "enabled": (() => {
-                    const configuredEnabled = readSetting(primary, secondary, "edgeFade", "enabled", "edgeFadeEnabled", undefined);
-                    if (configuredEnabled !== undefined)
-                        return configuredEnabled;
+        return PresetUtils.createSettingsSnapshot(primary, secondary);
+    }
 
-                    const configuredMode = readSetting(primary, secondary, "edgeFade", "mode", "edgeFadeMode", undefined);
-                    if (configuredMode !== undefined)
-                        return configuredMode !== "off";
+    function createCustomPresetList(primary, secondary) {
+        return PresetUtils.createCustomPresetList(primary, secondary);
+    }
 
-                    const legacySize = readSetting(primary, secondary, "edgeFade", "size", "edgeFadeSize", undefined);
-                    if (legacySize !== undefined)
-                        return legacySize > 0;
+    function createCustomPresetListFromData(data) {
+        return PresetUtils.createCustomPresetListFromData(data, defaults);
+    }
 
-                    return true;
-                })(),
-                "fadeSize": (() => {
-                    const configuredFadeSize = readSetting(primary, secondary, "edgeFade", "fadeSize", "edgeFadeFadeSize", undefined);
-                    if (configuredFadeSize !== undefined)
-                        return configuredFadeSize;
-                    return readSetting(primary, secondary, "edgeFade", "size", "edgeFadeSize", 48);
-                })(),
-                "fadeOpacity": readSetting(primary, secondary, "edgeFade", "fadeOpacity", "edgeFadeOpacity", 100)
-            },
-            "background": {
-                "color": readSetting(primary, secondary, "background", "color", "backgroundColor", "none"),
-                "opacity": readSetting(primary, secondary, "background", "opacity", "backgroundOpacity", 0)
-            },
-            "focused": {
-                "showFill": readSetting(primary, secondary, "focused", "showFill", "showFocusedFill", true),
-                "fillColor": readSetting(primary, secondary, "focused", "fillColor", "focusedFillColor", "primary"),
-                "fillOpacity": readSetting(primary, secondary, "focused", "fillOpacity", "focusedFillOpacity", 92),
-                "showBorder": readSetting(primary, secondary, "focused", "showBorder", "showFocusedBorder", true),
-                "borderColor": readSetting(primary, secondary, "focused", "borderColor", "focusedBorderColor", "primary"),
-                "borderOpacity": readSetting(primary, secondary, "focused", "borderOpacity", "focusedBorderOpacity", 100),
-                "textColor": readSetting(primary, secondary, "focused", "textColor", "focusedTextColor", "on-primary")
-            },
-            "unfocused": {
-                "showFill": readSetting(primary, secondary, "unfocused", "showFill", "showUnfocusedFill", true),
-                "fillColor": readSetting(primary, secondary, "unfocused", "fillColor", "unfocusedFillColor", "surface-variant"),
-                "fillOpacity": readSetting(primary, secondary, "unfocused", "fillOpacity", "unfocusedFillOpacity", 8),
-                "showBorder": readSetting(primary, secondary, "unfocused", "showBorder", "showUnfocusedBorder", true),
-                "borderColor": readSetting(primary, secondary, "unfocused", "borderColor", "unfocusedBorderColor", "outline"),
-                "borderOpacity": readSetting(primary, secondary, "unfocused", "borderOpacity", "unfocusedBorderOpacity", 45),
-                "textColor": readSetting(primary, secondary, "unfocused", "textColor", "unfocusedTextColor", "on-surface"),
-                "inactiveOpacity": readSetting(primary, secondary, "unfocused", "inactiveOpacity", "inactiveOpacity", 45)
-            },
-            "hover": {
-                "fillColor": readSetting(primary, secondary, "hover", "fillColor", "hoverFillColor", "hover"),
-                "fillOpacity": readSetting(primary, secondary, "hover", "fillOpacity", "hoverFillOpacity", 55),
-                "showBorder": readSetting(primary, secondary, "hover", "showBorder", "showHoverBorder", true),
-                "borderColor": readSetting(primary, secondary, "hover", "borderColor", "hoverBorderColor", "outline"),
-                "borderOpacity": readSetting(primary, secondary, "hover", "borderOpacity", "hoverBorderOpacity", 100),
-                "textColor": readSetting(primary, secondary, "hover", "textColor", "hoverTextColor", "on-hover"),
-                "scalePercent": readSetting(primary, secondary, "hover", "scalePercent", "hoverScalePercent", 2.5),
-                "transitionDurationMs": readSetting(primary, secondary, "hover", "transitionDurationMs", "hoverTransitionDurationMs", 120)
-            },
-            "indicators": {
-                "showTrackLine": readSetting(primary, secondary, "indicators", "showTrackLine", "showTrackLine", true),
-                "trackOpacity": readSetting(primary, secondary, "indicators", "trackOpacity", "trackOpacity", 35),
-                "trackLinePosition": readSetting(primary, secondary, "indicators", "trackLinePosition", "trackLinePosition", "end"),
-                "trackLineThickness": readSetting(primary, secondary, "indicators", "trackLineThickness", "trackLineThickness", 2),
-                "trackThumbColor": readSetting(primary, secondary, "indicators", "trackThumbColor", "trackThumbColor", "primary"),
-                "showFocusLine": readSetting(primary, secondary, "indicators", "showFocusLine", "showFocusLine", true),
-                "focusLineColor": readSetting(primary, secondary, "indicators", "focusLineColor", "focusLineColor", "secondary"),
-                "focusLineOpacity": readSetting(primary, secondary, "indicators", "focusLineOpacity", "focusLineOpacity", 96),
-                "focusLineThickness": readSetting(primary, secondary, "indicators", "focusLineThickness", "focusLineThickness", 2),
-                "focusLineAnimationMs": readSetting(primary, secondary, "indicators", "focusLineAnimationMs", "focusLineAnimationMs", 120)
-            },
-            "workspaceAnimation": {
-                "enabled": readSetting(primary, secondary, "workspaceAnimation", "enabled", "workspaceAnimationEnabled", false),
-                "axis": readSetting(primary, secondary, "workspaceAnimation", "axis", "workspaceAnimationAxis", "horizontal")
-            }
+    function normalizePresetName(name) {
+        return PresetUtils.normalizePresetName(name);
+    }
+
+    function findCustomPresetIndex(name, presets) {
+        return PresetUtils.findCustomPresetIndex(name, presets || customPresets);
+    }
+
+    function presetDescription(key) {
+        switch (key) {
+        case "standard":
+            return pluginApi?.tr("settings.presets.builtIn.standard.desc");
+        case "focusTrack":
+            return pluginApi?.tr("settings.presets.builtIn.focusTrack.desc");
+        case "iconStrip":
+            return pluginApi?.tr("settings.presets.builtIn.iconStrip.desc");
+        case "titleTrack":
+            return pluginApi?.tr("settings.presets.builtIn.titleTrack.desc");
+        case "trackOnly":
+            return pluginApi?.tr("settings.presets.builtIn.trackOnly.desc");
+        case "denseStrip":
+            return pluginApi?.tr("settings.presets.builtIn.denseStrip.desc");
+        case "floatingPanel":
+            return pluginApi?.tr("settings.presets.builtIn.floatingPanel.desc");
+        case "edgePill":
+            return pluginApi?.tr("settings.presets.builtIn.edgePill.desc");
+        default:
+            return pluginApi?.tr("settings.presets.builtIn.desc");
+        }
+    }
+
+    function presetName(key) {
+        switch (key) {
+        case "standard":
+            return pluginApi?.tr("settings.presets.builtIn.standard.name");
+        case "focusTrack":
+            return pluginApi?.tr("settings.presets.builtIn.focusTrack.name");
+        case "iconStrip":
+            return pluginApi?.tr("settings.presets.builtIn.iconStrip.name");
+        case "titleTrack":
+            return pluginApi?.tr("settings.presets.builtIn.titleTrack.name");
+        case "trackOnly":
+            return pluginApi?.tr("settings.presets.builtIn.trackOnly.name");
+        case "denseStrip":
+            return pluginApi?.tr("settings.presets.builtIn.denseStrip.name");
+        case "floatingPanel":
+            return pluginApi?.tr("settings.presets.builtIn.floatingPanel.name");
+        case "edgePill":
+            return pluginApi?.tr("settings.presets.builtIn.edgePill.name");
+        default:
+            return "";
+        }
+    }
+
+    function builtInPresetSnapshot(key) {
+        return PresetUtils.builtInPresetSnapshot(key, defaultSettings);
+    }
+
+    function applyPresetSnapshot(snapshot) {
+        editSettings = createSettingsSnapshot(snapshot, defaults);
+    }
+
+    function clearPresetSelection(markDirty) {
+        if (markDirty === undefined)
+            markDirty = false;
+
+        presetSelectionClearedByEdit = markDirty && (selectedBuiltinPresetKey !== "" || selectedCustomPresetName !== "");
+        selectedBuiltinPresetKey = "";
+        selectedCustomPresetName = "";
+    }
+
+    function applyBuiltInPreset(key) {
+        if (key === "") {
+            clearPresetSelection(false);
+            return;
+        }
+
+        applyPresetSnapshot(builtInPresetSnapshot(key));
+        presetSelectionClearedByEdit = false;
+        selectedBuiltinPresetKey = key;
+        selectedCustomPresetName = "";
+        customPresetNameInput = "";
+    }
+
+    function loadCustomPreset(name) {
+        const index = findCustomPresetIndex(name);
+        if (index === -1)
+            return;
+
+        applyPresetSnapshot(customPresets[index].settings);
+        presetSelectionClearedByEdit = false;
+        selectedBuiltinPresetKey = "";
+        selectedCustomPresetName = customPresets[index].name;
+        customPresetNameInput = customPresets[index].name;
+    }
+
+    function saveNewCustomPreset() {
+        if (!canSaveCustomPreset)
+            return;
+
+        const next = deepCopy(customPresets);
+        next.push({
+            "name": trimmedCustomPresetName,
+            "settings": deepCopy(editSettings)
+        });
+        customPresets = next;
+        selectedCustomPresetName = trimmedCustomPresetName;
+        selectedBuiltinPresetKey = "";
+        presetSelectionClearedByEdit = false;
+        customPresetNameInput = trimmedCustomPresetName;
+    }
+
+    function overwriteCustomPreset() {
+        if (!canOverwriteCustomPreset)
+            return;
+
+        const next = deepCopy(customPresets);
+        next[matchingCustomPresetIndex] = {
+            "name": next[matchingCustomPresetIndex].name,
+            "settings": deepCopy(editSettings)
         };
+        customPresets = next;
+        selectedCustomPresetName = next[matchingCustomPresetIndex].name;
+        selectedBuiltinPresetKey = "";
+        presetSelectionClearedByEdit = false;
+        customPresetNameInput = next[matchingCustomPresetIndex].name;
+    }
+
+    function deleteSelectedCustomPreset() {
+        if (!canDeleteCustomPreset)
+            return;
+
+        const index = findCustomPresetIndex(selectedCustomPresetName);
+        if (index === -1)
+            return;
+
+        const next = deepCopy(customPresets);
+        next.splice(index, 1);
+        customPresets = next;
+        selectedCustomPresetName = "";
+        customPresetNameInput = "";
+        presetSelectionClearedByEdit = false;
+    }
+
+    function exportCustomPresetsToFolder(folderPath) {
+        const targetFolder = (folderPath ?? "").trim();
+        if (targetFolder === "")
+            return;
+
+        exportAdapter.pluginId = pluginApi?.pluginId || pluginApi?.manifest?.id || "scrollbar";
+        exportAdapter.version = 1;
+        exportAdapter.exportedAt = new Date().toISOString();
+        exportAdapter.customPresets = deepCopy(customPresets);
+        exportFileView.path = targetFolder + "/" + presetExportFileName;
+        exportFileView.writeAdapter();
+        presetTransferMessage = pluginApi?.tr("settings.presets.custom.transfer.exported", {
+            "path": exportFileView.path
+        });
+    }
+
+    function importCustomPresetsFromContent(content, sourcePath) {
+        let parsed = null;
+        try {
+            parsed = JSON.parse(content);
+        } catch (error) {
+            presetTransferMessage = pluginApi?.tr("settings.presets.custom.transfer.invalidJson");
+            return;
+        }
+
+        const importedPresets = createCustomPresetListFromData(parsed);
+        if (importedPresets.length === 0) {
+            presetTransferMessage = pluginApi?.tr("settings.presets.custom.transfer.noPresets");
+            return;
+        }
+
+        const next = deepCopy(customPresets);
+        let added = 0;
+        let overwritten = 0;
+
+        for (let i = 0; i < importedPresets.length; i++) {
+            const preset = importedPresets[i];
+            const existingIndex = findCustomPresetIndex(preset.name, next);
+            if (existingIndex === -1) {
+                next.push(preset);
+                added += 1;
+            } else {
+                next[existingIndex] = preset;
+                overwritten += 1;
+            }
+        }
+
+        customPresets = next;
+        selectedBuiltinPresetKey = "";
+        selectedCustomPresetName = "";
+        customPresetNameInput = "";
+        presetSelectionClearedByEdit = false;
+        presetTransferMessage = pluginApi?.tr("settings.presets.custom.transfer.imported", {
+            "count": importedPresets.length,
+            "added": added,
+            "overwritten": overwritten,
+            "path": sourcePath || ""
+        });
     }
 
     function settingValue(groupKey, nestedKey) {
@@ -296,6 +464,10 @@ ColumnLayout {
             return settingValue("indicators", "showFocusLine") ?? true;
         case "centerFocusedWindow":
             return settingValue("autoScroll", "centerFocusedWindow") ?? true;
+        case "renderModeWindow":
+            return (settingValue("window", "renderMode") ?? "bar") === "window";
+        case "windowGradientEnabled":
+            return settingValue("window", "gradientEnabled") ?? false;
         case "workspaceAnimationEnabled":
             return settingValue("workspaceAnimation", "enabled") ?? false;
         default:
@@ -338,10 +510,15 @@ ColumnLayout {
             next[groupKey] = ({});
         next[groupKey][nestedKey] = value;
         editSettings = next;
+        clearPresetSelection(true);
     }
 
     function refreshEditSettings() {
         editSettings = createSettingsSnapshot(pluginApi?.pluginSettings || ({}), defaults);
+        customPresets = createCustomPresetList(pluginApi?.pluginSettings || ({}), defaults);
+        clearPresetSelection(false);
+        customPresetNameInput = "";
+        presetTransferMessage = "";
     }
 
     onPluginApiChanged: refreshEditSettings()
@@ -358,8 +535,76 @@ ColumnLayout {
         if (!pluginApi)
             return;
 
-        pluginApi.pluginSettings = deepCopy(editSettings);
+        const nextSettings = mergeDeep(pluginApi?.pluginSettings || ({}), editSettings);
+        nextSettings.presets = {
+            "custom": deepCopy(customPresets)
+        };
+        pluginApi.pluginSettings = nextSettings;
         pluginApi.saveSettings();
+    }
+
+    function openExportPresetPicker() {
+        exportPresetPicker.openFilePicker();
+    }
+
+    function openImportPresetPicker() {
+        importPresetPicker.openFilePicker();
+    }
+
+    NFilePicker {
+        id: exportPresetPicker
+        selectionMode: "folders"
+        title: pluginApi?.tr("settings.presets.custom.actions.export")
+        initialPath: Quickshell.env("HOME") || "/home"
+        onAccepted: paths => {
+            if (paths.length > 0)
+                root.exportCustomPresetsToFolder(paths[0]);
+        }
+    }
+
+    NFilePicker {
+        id: importPresetPicker
+        selectionMode: "files"
+        nameFilters: ["*.json"]
+        title: pluginApi?.tr("settings.presets.custom.actions.import")
+        initialPath: Quickshell.env("HOME") || "/home"
+        onAccepted: paths => {
+            if (paths.length > 0) {
+                importFileView.path = paths[0];
+                importFileView.reload();
+            }
+        }
+    }
+
+    FileView {
+        id: exportFileView
+        path: ""
+        printErrors: false
+        watchChanges: false
+
+        adapter: JsonAdapter {
+            id: exportAdapter
+            property string pluginId: "scrollbar"
+            property int version: 1
+            property string exportedAt: ""
+            property var customPresets: []
+        }
+
+        onLoadFailed: function (_) {
+            writeAdapter();
+        }
+    }
+
+    FileView {
+        id: importFileView
+        path: ""
+        printErrors: false
+        watchChanges: false
+
+        onLoaded: root.importCustomPresetsFromContent(text(), path)
+        onLoadFailed: function (_) {
+            root.presetTransferMessage = pluginApi?.tr("settings.presets.custom.transfer.readFailed");
+        }
     }
 
     NTabBar {
@@ -386,6 +631,12 @@ ColumnLayout {
             checked: tabView.currentIndex === 2
             onClicked: tabView.currentIndex = 2
         }
+        NTabButton {
+            text: pluginApi?.tr("settings.tabs.presets")
+            tabIndex: 3
+            checked: tabView.currentIndex === 3
+            onClicked: tabView.currentIndex = 3
+        }
     }
 
     NTabView {
@@ -401,6 +652,10 @@ ColumnLayout {
         }
 
         BehaviorSettingsTab {
+            rootSettings: root
+        }
+
+        PresetsTab {
             rootSettings: root
         }
     }

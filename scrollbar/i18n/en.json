@@ -22,13 +22,119 @@
     "trackLinePositionCenter": "Center",
     "trackLinePositionEnd": "Bottom / Right",
     "widgetSizeModeDynamic": "Dynamic",
-    "widgetSizeModeFixed": "Fixed"
+    "widgetSizeModeFixed": "Fixed",
+    "renderModeBar": "Bar widget",
+    "renderModeWindow": "Window",
+    "windowSpaceOverlay": "Overlay",
+    "windowSpaceReserve": "Reserve space",
+    "gradientDirectionVertical": "Vertical",
+    "gradientDirectionHorizontal": "Horizontal"
   },
   "settings": {
     "tabs": {
       "layout": "Layout",
       "colors": "Colors",
-      "behavior": "Behavior"
+      "behavior": "Behavior",
+      "presets": "Presets"
+    },
+    "presets": {
+      "label": "Presets",
+      "desc": "Apply built-in presets, load saved custom presets, and manage reusable preset snapshots for this widget.",
+      "tab": {
+        "label": "Presets",
+        "desc": "Use built-in presets for quick starting points, then save and reuse your own custom configurations."
+      },
+      "status": {
+        "label": "Current preset status"
+      },
+      "summary": {
+        "empty": "No preset selected.",
+        "modified": "Preset selection cleared after manual edits.",
+        "builtin": "Built-in selected: {name}",
+        "custom": "Custom loaded: {name}",
+        "count": "{count} custom presets saved."
+      },
+      "builtIn": {
+        "label": "Built-in presets",
+        "desc": "Pre-configured scrollbar modes that replace the full editable settings snapshot.",
+        "placeholder": "Choose a built-in preset",
+        "actions": {
+          "apply": "Apply preset",
+          "active": "Active preset"
+        },
+        "standard": {
+          "name": "Standard",
+          "desc": "Default strip layout with slots, icons, and titles, without the track or focus line."
+        },
+        "focusTrack": {
+          "name": "Focus Track",
+          "desc": "Standard strip layout with the passive track and focus indicator enabled."
+        },
+        "iconStrip": {
+          "name": "Icon Strip",
+          "desc": "Normal strip layout with slots and icons, but no window titles."
+        },
+        "titleTrack": {
+          "name": "Title Track",
+          "desc": "Hide slots and show the focused window title together with the track and focus line."
+        },
+        "trackOnly": {
+          "name": "Track Only",
+          "desc": "Hide slots and the focused title, leaving only the track and focus indicator."
+        },
+        "denseStrip": {
+          "name": "Dense Strip",
+          "desc": "Compact icon-first strip with tighter spacing so more windows fit in view."
+        },
+        "floatingPanel": {
+          "name": "Floating Panel",
+          "desc": "Window mode with a semi-transparent background, subtle gradient, rounded corners, and slightly scaled-down strip."
+        },
+        "edgePill": {
+          "name": "Edge Pill",
+          "desc": "Window mode with an opaque pill-shaped background, compact margins, and track-only view without slots."
+        }
+      },
+      "custom": {
+        "label": "Custom presets",
+        "desc": "Load a saved custom preset into the editor, or save the current editor state as a named preset.",
+        "loadDesc": "Search and load a saved custom preset into the editor.",
+        "placeholder": "Choose a custom preset",
+        "empty": "No custom presets saved yet.",
+        "selectedDesc": "Loaded custom preset: {name}",
+        "manage": {
+          "label": "Manage saved presets",
+          "desc": "Save the current editor state as a new preset, replace an existing one, or remove an outdated preset."
+        },
+        "name": {
+          "label": "Preset name",
+          "desc": "Names are trimmed and must be unique across custom presets.",
+          "placeholder": "Enter a preset name"
+        },
+        "actions": {
+          "import": "Import Presets",
+          "export": "Export Presets",
+          "save": "Save New",
+          "overwrite": "Overwrite",
+          "delete": "Delete"
+        },
+        "transfer": {
+          "label": "Import & export",
+          "desc": "Move custom presets between machines or back them up as JSON.",
+          "exported": "Exported custom presets to {path}",
+          "invalidJson": "The selected file is not valid JSON.",
+          "noPresets": "The selected file does not contain any custom presets.",
+          "imported": "Imported {count} presets from {path}. Added: {added}. Overwritten: {overwritten}.",
+          "readFailed": "Failed to read the selected preset file."
+        },
+        "validation": {
+          "empty": "Enter a name to save or overwrite a custom preset.",
+          "duplicate": "This preset name already exists. Use Overwrite to update it."
+        }
+      },
+      "actions": {
+        "clear": "Clear selection"
+      }
     },
     "colorPicker": {
       "label": "Select color",
@@ -59,6 +165,10 @@
       "slotSize": {
         "label": "Slot Size & Spacing",
         "desc": "Size, spacing, and structural dimensions for each window slot."
+      },
+      "renderMode": {
+        "label": "Render Mode",
+        "desc": "Choose whether Scrollbar lives in the bar or in a standalone edge window."
       },
       "icons": {
         "label": "Icons",
@@ -123,6 +233,10 @@
       "advanced": {
         "label": "Advanced",
         "desc": "Diagnostic options for troubleshooting."
+      },
+      "windowPanel": {
+        "label": "Window Panel",
+        "desc": "Customize the standalone window's position, size, background, and border shape."
       }
     },
     "onlySameOutput": {
@@ -136,6 +250,62 @@
     "enableReorder": {
       "label": "Enable drag reorder",
       "desc": "Allow drag-to-reorder on compositors that expose safe live reorder support."
+    },
+    "renderMode": {
+      "label": "Render mode",
+      "desc": "Show Scrollbar inside the bar or as a standalone edge window."
+    },
+    "windowSpaceMode": {
+      "label": "Window space mode",
+      "desc": "Choose whether the standalone window floats above content or reserves edge space."
+    },
+    "windowOffsetH": {
+      "label": "Horizontal offset",
+      "desc": "Shift the window horizontally from its auto-centered position. Negative moves left, positive moves right."
+    },
+    "windowOffsetV": {
+      "label": "Vertical offset",
+      "desc": "Shift the window vertically from its auto-centered position. Negative moves up, positive moves down."
+    },
+    "windowScale": {
+      "label": "Content scale",
+      "desc": "Scale the strip content within the window. Values below 100% shrink it; above 100% enlarge it."
+    },
+    "windowBackgroundColor": {
+      "label": "Panel background color",
+      "desc": "Background fill color for the entire window panel behind the strip."
+    },
+    "windowBackgroundOpacity": {
+      "label": "Panel background opacity",
+      "desc": "Opacity of the window panel background."
+    },
+    "windowMargin": {
+      "label": "Panel margin",
+      "desc": "Outer margin between the window panel edge and the strip content."
+    },
+    "windowHeight": {
+      "label": "Panel height",
+      "desc": "Cross-axis thickness of the panel in pixels. Set to 0 to use the bar default capsule height."
+    },
+    "windowRadiusScale": {
+      "label": "Panel corner roundness",
+      "desc": "Scale the window panel corner radius independently from slot rounding."
+    },
+    "windowGradientEnabled": {
+      "label": "Enable gradient",
+      "desc": "Apply a directional gradient overlay on the window panel background."
+    },
+    "windowGradientColor": {
+      "label": "Gradient color",
+      "desc": "End color for the panel gradient overlay."
+    },
+    "windowGradientOpacity": {
+      "label": "Gradient opacity",
+      "desc": "Opacity of the gradient end color."
+    },
+    "windowGradientDirection": {
+      "label": "Gradient direction",
+      "desc": "Direction of the gradient: top-to-bottom or left-to-right."
     },
     "debugLogging": {
       "label": "Debug logging",
@@ -332,6 +502,18 @@
     "focusedTitleOpacity": {
       "label": "Focused title opacity",
       "desc": "Opacity of the centered focused-window title when slots are hidden."
+    },
+    "focusedTitleBackgroundColor": {
+      "label": "Focused title background",
+      "desc": "Background fill color behind the centered focused-window title."
+    },
+    "focusedTitleBackgroundOpacity": {
+      "label": "Focused title background opacity",
+      "desc": "Opacity of the focused title background."
+    },
+    "focusedTitleOffsetV": {
+      "label": "Focused title vertical offset",
+      "desc": "Shift the focused title up or down from its centered position. Negative moves up, positive moves down."
     },
     "showFocusedFill": {
       "label": "Show focused fill",

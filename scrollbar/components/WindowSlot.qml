@@ -17,7 +17,7 @@ Item {
     required property int index
 
     readonly property var liveEntry: (barRoot?.liveEntriesByKey && barRoot.liveEntriesByKey[modelData.entryKey]) || ({})
-    readonly property string liveTitle: liveEntry.title || modelData.fallbackTitle || ""
+    readonly property string liveTitle: ((barRoot?.titleEntriesByKey && barRoot.titleEntriesByKey[modelData.entryKey]) || modelData.fallbackTitle || "")
     readonly property bool isFocused: !!liveEntry.isFocused
     readonly property bool slotsVisible: barRoot?.showSlots ?? true
     readonly property bool isHovered: slotsVisible && barRoot?.hoveredEntryKey === modelData.entryKey

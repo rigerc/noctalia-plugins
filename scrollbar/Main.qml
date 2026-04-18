@@ -1,9 +1,13 @@
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
+import Quickshell.Io
 import Quickshell.Niri
+import Quickshell.Wayland
 import qs.Commons
 import qs.Services.Compositor
+import "./components"
+import "PresetUtils.js" as PresetUtils
 
 Item {
     id: root
@@ -48,11 +52,88 @@ Item {
         return fallbackValue;
     }
 
+    function resolveThemeColor(key) {
+        switch (key) {
+        case "none":
+            return "transparent";
+        case "primary":
+            return Color.mPrimary;
+        case "on-primary":
+            return Color.mOnPrimary;
+        case "secondary":
+            return Color.mSecondary;
+        case "on-secondary":
+            return Color.mOnSecondary;
+        case "tertiary":
+            return Color.mTertiary;
+        case "on-tertiary":
+            return Color.mOnTertiary;
+        case "error":
+            return Color.mError;
+        case "on-error":
+            return Color.mOnError;
+        case "surface":
+            return Color.mSurface;
+        case "on-surface":
+            return Color.mOnSurface;
+        case "surface-variant":
+            return Color.mSurfaceVariant;
+        case "on-surface-variant":
+            return Color.mOnSurfaceVariant;
+        case "outline":
+            return Color.mOutline;
+        case "hover":
+            return Color.mHover;
+        case "on-hover":
+            return Color.mOnHover;
+        default:
+            return undefined;
+        }
+    }
+
+    function isHexColorString(value) {
+        return typeof value === "string"
+            && /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(value);
+    }
+
+    function resolveSettingColor(value, fallbackColor) {
+        const themeColor = resolveThemeColor(value);
+        if (themeColor !== undefined)
+            return themeColor;
+        if (isHexColorString(value))
+            return value;
+        return fallbackColor;
+    }
+
     readonly property bool debugLogging: settingValue("advanced", "debugLogging", "debugLogging", false)
     readonly property bool supportsLiveReorder: CompositorService.isNiri || CompositorService.isHyprland
+    readonly property string renderMode: settingValue("window", "renderMode", "renderMode", "bar")
+    readonly property string windowSpaceMode: settingValue("window", "spaceMode", "windowSpaceMode", "overlay")
+
+    readonly property real windowOffsetH: settingValue("window", "offsetH", "windowOffsetH", 0)
+    readonly property real windowOffsetV: settingValue("window", "offsetV", "windowOffsetV", 0)
+    readonly property real windowScale: Math.max(0.5, settingValue("window", "scale", "windowScale", 1.0))
+    readonly property string windowBackgroundColorKey: settingValue("window", "backgroundColor", "windowBackgroundColor", "none")
+    readonly property real windowBackgroundOpacity: Math.max(0, Math.min(100, settingValue("window", "backgroundOpacity", "windowBackgroundOpacity", 0)))
+    readonly property real windowMargin: Math.max(0, Math.round(settingValue("window", "margin", "windowMargin", 0) * Style.uiScaleRatio))
+    readonly property real windowHeight: Math.max(0, Math.round(settingValue("window", "height", "windowHeight", 0) * Style.uiScaleRatio))
+    readonly property real windowRadiusScale: Math.max(0, settingValue("window", "radiusScale", "windowRadiusScale", 1.0))
+    readonly property bool windowGradientEnabled: settingValue("window", "gradientEnabled", "windowGradientEnabled", false)
+    readonly property string windowGradientColorKey: settingValue("window", "gradientColor", "windowGradientColor", "none")
+    readonly property real windowGradientOpacity: Math.max(0, Math.min(100, settingValue("window", "gradientOpacity", "windowGradientOpacity", 0)))
+    readonly property string windowGradientDirection: settingValue("window", "gradientDirection", "windowGradientDirection", "vertical")
+
+    readonly property bool windowBackgroundEnabled: windowBackgroundColorKey !== "none" && windowBackgroundOpacity > 0
+    readonly property color windowBackgroundBaseColor: resolveSettingColor(windowBackgroundColorKey, "transparent")
+    readonly property color windowBackgroundResolvedColor: windowBackgroundEnabled ? Qt.alpha(windowBackgroundBaseColor, windowBackgroundOpacity / 100) : "transparent"
+    readonly property bool windowGradientActive: windowGradientEnabled && windowGradientColorKey !== "none" && windowGradientOpacity > 0
+    readonly property color windowGradientBaseColor: resolveSettingColor(windowGradientColorKey, "transparent")
+    readonly property color windowGradientResolvedColor: windowGradientActive ? Qt.alpha(windowGradientBaseColor, windowGradientOpacity / 100) : "transparent"
+    readonly property real effectiveWindowRadius: Style.radiusL * windowRadiusScale
 
     property var allEntries: []
     property var liveEntriesByKey: ({})
+    property var titleEntriesByKey: ({})
     property string activeEntryKey: ""
     property var compositorWorkspaces: []
     property int structureRevision: 0
@@ -61,13 +142,129 @@ Item {
 
     property bool pendingStructuralRefresh: false
     property string lastStructureSignature: ""
+    property string lastStateSignature: ""
     property string lastTitleSignature: ""
     property string lastWorkspaceSignature: ""
-    property var pendingLiveEntriesByKey: null
+    property var pendingTitleEntriesByKey: null
+    property bool startupFocusSyncPending: true
+    property int startupFocusSyncAttempts: 0
+    readonly property int startupFocusSyncMaxAttempts: 12
 
     function debugLog(message) {
         if (debugLogging)
             Logger.d("Scrollbar", message);
+    }
+
+    function currentCustomPresets() {
+        return PresetUtils.createCustomPresetList(currentSettings || ({}), defaults);
+    }
+
+    function comparableSettingsSnapshot(settings) {
+        return PresetUtils.createComparableSnapshot(settings || ({}), defaults);
+    }
+
+    function pluginSettingsSnapshot(settings) {
+        return PresetUtils.createPluginSettingsSnapshot(settings || ({}), defaults);
+    }
+
+    function comparableSnapshotWithCurrentCustomPresets(snapshot) {
+        const normalized = PresetUtils.deepCopy(snapshot || ({}));
+        normalized.presets = {
+            "custom": PresetUtils.deepCopy(currentCustomPresets())
+        };
+        return pluginSettingsSnapshot(normalized);
+    }
+
+    function savePluginSettings(nextSettings) {
+        if (!pluginApi)
+            return false;
+
+        pluginApi.pluginSettings = nextSettings;
+        pluginApi.saveSettings();
+        refreshSettingsSnapshot();
+        return true;
+    }
+
+    function applyComparablePresetSnapshot(snapshot) {
+        if (!pluginApi)
+            return false;
+
+        const nextSettings = PresetUtils.mergeDeep(pluginApi?.pluginSettings || ({}), comparableSnapshotWithCurrentCustomPresets(snapshot));
+        return savePluginSettings(nextSettings);
+    }
+
+    function applyFullSettingsSnapshot(snapshot) {
+        if (!pluginApi)
+            return false;
+
+        const nextSettings = PresetUtils.mergeDeep(pluginApi?.pluginSettings || ({}), pluginSettingsSnapshot(snapshot || ({})));
+        return savePluginSettings(nextSettings);
+    }
+
+    function applySettingsSnapshotJson(snapshotJson) {
+        if (!pluginApi)
+            return false;
+
+        try {
+            const parsed = JSON.parse(snapshotJson || "{}");
+            return applyFullSettingsSnapshot(parsed);
+        } catch (error) {
+            Logger.e("Scrollbar", "Failed to parse settings snapshot: " + error);
+            return false;
+        }
+    }
+
+    function presetCatalog() {
+        return PresetUtils.createPresetCatalog(currentSettings || ({}), defaults);
+    }
+
+    function presetDescriptors() {
+        return presetCatalog().map(function (preset) {
+            return {
+                "id": preset.id,
+                "type": preset.type,
+                "key": preset.key ?? "",
+                "name": preset.name
+            };
+        });
+    }
+
+    function currentPresetId() {
+        return PresetUtils.findMatchingPresetId(currentSettings || ({}), defaults);
+    }
+
+    function loadPresetById(presetId) {
+        const preset = PresetUtils.findPresetById(presetId, currentSettings || ({}), defaults);
+        if (!preset)
+            return false;
+
+        return applyComparablePresetSnapshot(preset.settings);
+    }
+
+    function cyclePreset(step) {
+        const presets = presetCatalog();
+        if (presets.length === 0)
+            return "";
+
+        const currentId = currentPresetId();
+        let currentIndex = -1;
+        for (let i = 0; i < presets.length; i++) {
+            if (presets[i].id === currentId) {
+                currentIndex = i;
+                break;
+            }
+        }
+
+        let nextIndex = 0;
+        if (step < 0)
+            nextIndex = currentIndex === -1 ? (presets.length - 1) : ((currentIndex - 1 + presets.length) % presets.length);
+        else
+            nextIndex = currentIndex === -1 ? 0 : ((currentIndex + 1) % presets.length);
+
+        if (!applyComparablePresetSnapshot(presets[nextIndex].settings))
+            return "";
+
+        return presets[nextIndex].id;
     }
 
     function getAppNameFromDesktopEntry(appId) {
@@ -180,9 +377,9 @@ Item {
         });
     }
 
-    function buildLiveEntries(entries, windows) {
+    function buildStateEntries(entries, windows) {
         const windowsByKey = ({});
-        const liveEntries = ({});
+        const stateEntries = ({});
 
         (windows || []).forEach(function (window) {
             const key = getWindowKey(window);
@@ -192,14 +389,31 @@ Item {
 
         (entries || []).forEach(function (entry) {
             const window = windowsByKey[entry.entryKey] || null;
-            liveEntries[entry.entryKey] = {
+            stateEntries[entry.entryKey] = {
                 "id": window?.id ?? entry.id ?? "",
-                "title": window?.title || entry.fallbackTitle || "",
                 "isFocused": !!window?.isFocused
             };
         });
 
-        return liveEntries;
+        return stateEntries;
+    }
+
+    function buildTitleEntries(entries, windows) {
+        const windowsByKey = ({});
+        const titleEntries = ({});
+
+        (windows || []).forEach(function (window) {
+            const key = getWindowKey(window);
+            if (key)
+                windowsByKey[key] = window;
+        });
+
+        (entries || []).forEach(function (entry) {
+            const window = windowsByKey[entry.entryKey] || null;
+            titleEntries[entry.entryKey] = window?.title || entry.fallbackTitle || "";
+        });
+
+        return titleEntries;
     }
 
     function getStructureSignature(entries) {
@@ -208,10 +422,16 @@ Item {
         }).join("||");
     }
 
-    function getTitleSignature(entries, liveEntries) {
+    function getStateSignature(entries, stateEntries) {
         return (entries || []).map(function (entry) {
-            const liveEntry = liveEntries ? liveEntries[entry.entryKey] : undefined;
-            return entry.entryKey + "|" + (liveEntry?.title || "");
+            const stateEntry = stateEntries ? stateEntries[entry.entryKey] : undefined;
+            return entry.entryKey + "|" + String(stateEntry?.id ?? "") + "|" + String(stateEntry?.isFocused === true);
+        }).join("||");
+    }
+
+    function getTitleSignature(entries, titleEntries) {
+        return (entries || []).map(function (entry) {
+            return entry.entryKey + "|" + String(titleEntries ? titleEntries[entry.entryKey] || "" : "");
         }).join("||");
     }
 
@@ -237,12 +457,18 @@ Item {
         debugLog("applyStructuralEntries(" + (reason || "unknown") + "): windows=" + allEntries.length);
     }
 
-    function applyLiveEntries(entries, reason) {
+    function applyStateEntries(entries, reason) {
         liveEntriesByKey = entries || ({});
         activeEntryKey = getFocusedEntryKey(liveEntriesByKey);
-        lastTitleSignature = getTitleSignature(allEntries, liveEntriesByKey);
+        lastStateSignature = getStateSignature(allEntries, liveEntriesByKey);
         liveRevision += 1;
-        debugLog("applyLiveEntries(" + (reason || "unknown") + "): focus=" + activeEntryKey + " windows=" + allEntries.length);
+        debugLog("applyStateEntries(" + (reason || "unknown") + "): focus=" + activeEntryKey + " windows=" + allEntries.length);
+    }
+
+    function applyTitleEntries(entries, reason) {
+        titleEntriesByKey = entries || ({});
+        lastTitleSignature = getTitleSignature(allEntries, titleEntriesByKey);
+        debugLog("applyTitleEntries(" + (reason || "unknown") + "): windows=" + allEntries.length);
     }
 
     function refreshWorkspaceSnapshot(reason) {
@@ -305,20 +531,47 @@ Item {
     }
 
     function flushPendingTitleUpdates(reason) {
-        if (!pendingLiveEntriesByKey)
+        if (!pendingTitleEntriesByKey)
             return;
 
-        const windows = collectWindows();
-        const nextLiveEntries = buildLiveEntries(allEntries, windows);
-        pendingLiveEntriesByKey = null;
-        applyLiveEntries(nextLiveEntries, reason || "title-debounce");
+        const nextTitleEntries = pendingTitleEntriesByKey;
+        pendingTitleEntriesByKey = null;
+        applyTitleEntries(nextTitleEntries, reason || "title-debounce");
     }
 
-    function updateSnapshots(reason, forceStructural) {
-        refreshWorkspaceSnapshot(reason);
+    function hasStartupFocusSyncSettled() {
+        if (activeEntryKey !== "")
+            return true;
+        return allEntries.length === 0;
+    }
 
-        const windows = collectWindows();
-        const nextEntries = buildStructuralEntries(windows);
+    function stopStartupFocusSync(reason) {
+        if (!startupFocusSyncPending)
+            return;
+
+        startupFocusSyncPending = false;
+        startupFocusSyncTimer.stop();
+        debugLog("stopStartupFocusSync(" + (reason || "unknown") + ")");
+    }
+
+    function evaluateStartupFocusSync(reason) {
+        if (!startupFocusSyncPending)
+            return;
+
+        if (hasStartupFocusSyncSettled()) {
+            stopStartupFocusSync(reason || "settled");
+            return;
+        }
+
+        if (startupFocusSyncAttempts >= startupFocusSyncMaxAttempts) {
+            stopStartupFocusSync(reason || "max-attempts");
+            return;
+        }
+
+        startupFocusSyncTimer.restart();
+    }
+
+    function applySnapshots(reason, forceStructural, windows, nextEntries) {
         const nextStructureSignature = getStructureSignature(nextEntries);
         const structuralChanged = (forceStructural === true) || pendingStructuralRefresh || nextStructureSignature !== lastStructureSignature;
 
@@ -328,23 +581,49 @@ Item {
             applyStructuralEntries(nextEntries, reason);
 
         const effectiveEntries = structuralChanged ? nextEntries : allEntries;
-        const nextLiveEntries = buildLiveEntries(effectiveEntries, windows);
-        const nextTitleSignature = getTitleSignature(effectiveEntries, nextLiveEntries);
-        const nextFocusedEntryKey = getFocusedEntryKey(nextLiveEntries);
-        const focusChanged = nextFocusedEntryKey !== activeEntryKey;
+        const nextStateEntries = buildStateEntries(effectiveEntries, windows);
+        const nextTitleEntries = buildTitleEntries(effectiveEntries, windows);
+        const nextStateSignature = getStateSignature(effectiveEntries, nextStateEntries);
+        const nextTitleSignature = getTitleSignature(effectiveEntries, nextTitleEntries);
+        const stateChanged = structuralChanged || nextStateSignature !== lastStateSignature || Object.keys(liveEntriesByKey).length === 0;
         const titleChanged = nextTitleSignature !== lastTitleSignature;
 
-        if (structuralChanged || focusChanged || Object.keys(liveEntriesByKey).length === 0) {
-            pendingLiveEntriesByKey = null;
-            titleRefreshDebounce.stop();
-            applyLiveEntries(nextLiveEntries, reason);
+        if (stateChanged) {
+            applyStateEntries(nextStateEntries, reason);
+
+            if (structuralChanged || Object.keys(titleEntriesByKey).length === 0) {
+                pendingTitleEntriesByKey = null;
+                titleRefreshDebounce.stop();
+                applyTitleEntries(nextTitleEntries, reason);
+                return;
+            }
+
+            if (titleChanged) {
+                pendingTitleEntriesByKey = nextTitleEntries;
+                titleRefreshDebounce.restart();
+            } else {
+                pendingTitleEntriesByKey = null;
+                titleRefreshDebounce.stop();
+            }
             return;
         }
 
         if (titleChanged) {
-            pendingLiveEntriesByKey = nextLiveEntries;
+            pendingTitleEntriesByKey = nextTitleEntries;
             titleRefreshDebounce.restart();
+        } else {
+            pendingTitleEntriesByKey = null;
+            titleRefreshDebounce.stop();
         }
+    }
+
+    function updateSnapshots(reason, forceStructural) {
+        refreshWorkspaceSnapshot(reason);
+
+        const windows = collectWindows();
+        const nextEntries = buildStructuralEntries(windows);
+        applySnapshots(reason, forceStructural, windows, nextEntries);
+        evaluateStartupFocusSync(reason);
     }
 
     function scheduleStructuralRefresh(reason) {
@@ -478,10 +757,39 @@ Item {
         });
     }
 
+    IpcHandler {
+        target: "plugin:scrollbar"
+
+        function listPresets(): string {
+            return JSON.stringify(root.presetDescriptors());
+        }
+
+        function loadPreset(id: string): bool {
+            return root.loadPresetById(id);
+        }
+
+        function nextPreset(): string {
+            return root.cyclePreset(1);
+        }
+
+        function previousPreset(): string {
+            return root.cyclePreset(-1);
+        }
+
+        function getSettingsSnapshot(): string {
+            return JSON.stringify(root.pluginSettingsSnapshot(root.currentSettings || ({})));
+        }
+
+        function applySettingsSnapshot(snapshotJson: string): bool {
+            return root.applySettingsSnapshotJson(snapshotJson);
+        }
+    }
+
     Component.onCompleted: {
         Qt.callLater(function () {
             refreshWorkspaceSnapshot("init");
             updateSnapshots("init", true);
+            evaluateStartupFocusSync("init");
         });
     }
 
@@ -489,15 +797,28 @@ Item {
         target: CompositorService
 
         function onWindowListChanged() {
-            scheduleStructuralRefresh("windowListChanged");
+            updateSnapshots("windowListChanged", false);
         }
 
         function onWorkspaceChanged() {
-            scheduleStructuralRefresh("workspaceChanged");
+            updateSnapshots("workspaceChanged", false);
         }
 
         function onActiveWindowChanged() {
-            updateSnapshots("activeWindowChanged", pendingStructuralRefresh);
+            updateSnapshots("activeWindowChanged", false);
+        }
+    }
+
+    Timer {
+        id: startupFocusSyncTimer
+        interval: 75
+        repeat: false
+        onTriggered: {
+            if (!root.startupFocusSyncPending)
+                return;
+
+            root.startupFocusSyncAttempts += 1;
+            root.updateSnapshots("startup-focus-sync", false);
         }
     }
 
@@ -516,6 +837,134 @@ Item {
         repeat: false
         onTriggered: {
             flushPendingTitleUpdates("title-debounce");
+        }
+    }
+
+    Timer {
+        id: windowOrderPollTimer
+        interval: 500
+        repeat: true
+        running: allEntries.length > 0
+        onTriggered: {
+            var windows = collectWindows();
+            var nextEntries = buildStructuralEntries(windows);
+            var nextSignature = getStructureSignature(nextEntries);
+            if (nextSignature !== lastStructureSignature) {
+                debugLog("windowOrderPoll: order changed");
+                refreshWorkspaceSnapshot("windowOrderPoll");
+                applySnapshots("windowOrderPoll", false, windows, nextEntries);
+            }
+        }
+    }
+
+    Variants {
+        model: Quickshell.screens
+
+        delegate: Loader {
+            id: screenWindowLoader
+
+            required property ShellScreen modelData
+
+            active: root.renderMode === "window"
+
+            sourceComponent: PanelWindow {
+                id: windowHost
+
+                screen: screenWindowLoader.modelData
+                focusable: false
+                color: "transparent"
+
+                readonly property string edge: Settings.getBarPositionForScreen(screen?.name)
+                readonly property bool isVerticalEdge: edge === "left" || edge === "right"
+                readonly property bool isTopOrLeft: edge === "top" || edge === "left"
+                readonly property real contentBaseWidth: Math.ceil(windowView.implicitWidth * root.windowScale) + root.windowMargin * 2
+                readonly property real contentBaseHeight: Math.ceil(windowView.implicitHeight * root.windowScale) + root.windowMargin * 2
+                readonly property real effectiveOffsetH: Math.round(root.windowOffsetH * Style.uiScaleRatio)
+                readonly property real effectiveOffsetV: Math.round(root.windowOffsetV * Style.uiScaleRatio)
+
+                anchors.top: isVerticalEdge || edge === "top"
+                anchors.bottom: isVerticalEdge || edge === "bottom"
+                anchors.left: !isVerticalEdge || edge === "left"
+                anchors.right: !isVerticalEdge || edge === "right"
+
+                implicitWidth: isVerticalEdge ? contentBaseWidth + Math.abs(effectiveOffsetH) : Math.round(screen?.width || contentBaseWidth)
+                implicitHeight: isVerticalEdge ? Math.round(screen?.height || contentBaseHeight) : contentBaseHeight + Math.abs(effectiveOffsetV)
+
+                WlrLayershell.namespace: "scrollbar-window-" + (screen?.name || "unknown")
+                WlrLayershell.layer: root.windowSpaceMode === "reserve" ? WlrLayer.Top : WlrLayer.Overlay
+                WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+                WlrLayershell.exclusionMode: root.windowSpaceMode === "reserve" ? ExclusionMode.Auto : ExclusionMode.Ignore
+
+                visible: windowContent.width > 0 && windowContent.height > 0
+                mask: Region {
+                    item: windowContent
+                }
+
+                Item {
+                    id: windowContent
+                    width: contentBaseWidth
+                    height: contentBaseHeight
+                    x: isVerticalEdge
+                        ? (isTopOrLeft ? Math.max(0, effectiveOffsetH) : Math.max(0, -effectiveOffsetH))
+                        : Style.pixelAlignCenter(parent.width, width) + effectiveOffsetH
+                    y: isVerticalEdge
+                        ? Style.pixelAlignCenter(parent.height, height) + effectiveOffsetV
+                        : (isTopOrLeft ? Math.max(0, effectiveOffsetV) : Math.max(0, -effectiveOffsetV))
+
+                    Rectangle {
+                        id: windowBackgroundRect
+                        anchors.fill: parent
+                        radius: root.effectiveWindowRadius
+                        color: root.windowBackgroundResolvedColor
+                        visible: root.windowBackgroundEnabled || root.windowGradientActive
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: root.effectiveWindowRadius
+                            visible: root.windowGradientActive
+                            color: "transparent"
+
+                            gradient: Gradient {
+                                orientation: root.windowGradientDirection === "horizontal" ? Gradient.Horizontal : Gradient.Vertical
+                                GradientStop {
+                                    position: 0.0
+                                    color: "transparent"
+                                }
+                                GradientStop {
+                                    position: 1.0
+                                    color: root.windowGradientResolvedColor
+                                }
+                            }
+                        }
+                    }
+
+                    Item {
+                        id: windowScaledContent
+                        anchors.fill: parent
+                        anchors.margins: root.windowMargin
+
+                        ScrollbarView {
+                            id: windowView
+                            anchors.centerIn: parent
+                            width: implicitWidth
+                            height: implicitHeight
+                            pluginApi: root.pluginApi
+                            screen: windowHost.screen
+                            hostMode: "window"
+                            fillHostThickness: false
+                            hostThickness: root.windowHeight > 0 ? root.windowHeight : Style.getCapsuleHeightForScreen(windowHost.screen?.name)
+                            visibleInCurrentMode: root.renderMode === "window"
+
+                            transform: Scale {
+                                origin.x: windowView.width / 2
+                                origin.y: windowView.height / 2
+                                xScale: root.windowScale
+                                yScale: root.windowScale
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
