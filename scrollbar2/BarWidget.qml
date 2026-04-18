@@ -19,6 +19,7 @@ Item {
     readonly property string screenName: screen?.name ?? ""
     readonly property string barPosition: Settings.getBarPositionForScreen(screenName)
     readonly property bool isVerticalBar: barPosition === "left" || barPosition === "right"
+    readonly property real capsuleHeight: Style.getCapsuleHeightForScreen(screenName)
     readonly property string displayMode: {
         const configuredMode = currentSettings?.display?.mode;
         if (configuredMode !== undefined)
@@ -45,7 +46,7 @@ Item {
     }
 
     implicitWidth: renderInBar ? view.implicitWidth : 0
-    implicitHeight: renderInBar ? view.implicitHeight : 0
+    implicitHeight: renderInBar ? capsuleHeight : 0
     visible: renderInBar
     opacity: renderInBar ? 1 : 0
 

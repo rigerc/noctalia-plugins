@@ -42,6 +42,7 @@
       },
       "track": {
         "position": "bottom",
+        "verticalAlign": "bottom",
         "thickness": 6,
         "height": 0,
         "borderRadius": 3,
@@ -49,16 +50,7 @@
         "opacity": 1,
         "color": "surface",
         "width": 40,
-        "segmentSpacing": 4,
-        "borders": {
-          "top": false,
-          "right": false,
-          "bottom": false,
-          "left": false,
-          "segment": false
-        },
-        "borderColor": "outline",
-        "borderWidth": 1
+        "segmentSpacing": 4
       },
       "focusLine": {
         "thickness": 6,

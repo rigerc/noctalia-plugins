@@ -90,8 +90,7 @@ Item {
     }
 
     function isHexColorString(value) {
-        return typeof value === "string"
-            && /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(value);
+        return typeof value === "string" && /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(value);
     }
 
     function resolveSettingColor(value, fallbackColor) {
@@ -140,8 +139,7 @@ Item {
                 if (directEntry?.name)
                     return directEntry.name;
             }
-        } catch (error) {
-        }
+        } catch (error) {}
 
         return appId;
     }
@@ -167,8 +165,7 @@ Item {
                 if (window)
                     windows.push(window);
             }
-        } catch (error) {
-        }
+        } catch (error) {}
         return windows;
     }
 

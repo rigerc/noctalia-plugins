@@ -122,12 +122,16 @@
         "desc": "Width of the track as a percentage of the screen width."
       },
       "height": {
-        "label": "Track Height",
-        "desc": "Fixed height for the track. Set to 0 for automatic height."
+        "label": "Container Height",
+        "desc": "Fixed height for the transparent container. Set to 0 for automatic height."
       },
       "thickness": {
         "label": "Track Thickness",
-        "desc": "Minimum visual thickness of the track."
+        "desc": "Thickness of the track line."
+      },
+      "verticalAlign": {
+        "label": "Track Alignment",
+        "desc": "Where the track line sits inside the transparent container."
       },
       "segmentSpacing": {
         "label": "Segment Spacing",
@@ -135,49 +139,19 @@
       },
       "borderRadius": {
         "label": "Track Radius",
-        "desc": "Corner radius of the outer track."
+        "desc": "Corner radius of the track line."
       },
       "opacity": {
         "label": "Track Opacity",
-        "desc": "Overall opacity of the track background."
+        "desc": "Overall opacity of the track line."
       },
       "color": {
         "label": "Track Color",
-        "desc": "Theme key or hex color for the track background."
-      },
-      "borderColor": {
-        "label": "Border Color",
-        "desc": "Theme key or hex color for enabled borders."
-      },
-      "borderWidth": {
-        "label": "Border Width",
-        "desc": "Thickness of enabled track and segment borders."
+        "desc": "Theme key or hex color for the track line."
       },
       "shadowEnabled": {
         "label": "Enable Track Shadow",
-        "desc": "Render a drop shadow under the track."
-      },
-      "borders": {
-        "top": {
-          "label": "Top Border",
-          "desc": "Enable the top border."
-        },
-        "right": {
-          "label": "Right Border",
-          "desc": "Enable the right border."
-        },
-        "bottom": {
-          "label": "Bottom Border",
-          "desc": "Enable the bottom border."
-        },
-        "left": {
-          "label": "Left Border",
-          "desc": "Enable the left border."
-        },
-        "segment": {
-          "label": "Segment Borders",
-          "desc": "Draw a border around each individual segment."
-        }
+        "desc": "Render a drop shadow under the track line."
       }
     },
     "section": {
@@ -187,7 +161,7 @@
       },
       "track": {
         "label": "Track Geometry",
-        "desc": "Width, spacing, sizing, and shadow controls for the main track."
+        "desc": "Width, spacing, sizing, and alignment controls for the track line."
       },
       "window": {
         "label": "Window Labels",
@@ -198,8 +172,8 @@
         "desc": "Animation strip geometry and behavior."
       },
       "trackColors": {
-        "label": "Track Colors & Borders",
-        "desc": "Theme-aware colors and border toggles for the track."
+        "label": "Track Color",
+        "desc": "Theme-aware color for the track line."
       },
       "focusColors": {
         "label": "Focus Colors",
@@ -229,7 +203,7 @@
       },
       "verticalAlign": {
         "label": "Focus Alignment",
-        "desc": "Where the focus strip sits inside the track."
+        "desc": "Where the focus strip sits inside the transparent container."
       },
       "opacity": {
         "label": "Focus Opacity",

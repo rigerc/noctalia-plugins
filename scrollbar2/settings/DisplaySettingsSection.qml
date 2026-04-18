@@ -247,6 +247,16 @@ ColumnLayout {
                 onMoved: sliderValue => rootSettings?.setSetting("track", "thickness", Math.round(sliderValue))
             }
 
+            NComboBox {
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.track.verticalAlign.label")
+                description: rootSettings?.pluginApi?.tr("settings.track.verticalAlign.desc")
+                model: rootSettings?.focusVerticalModel
+                currentKey: rootSettings?.settingValue("track", "verticalAlign") ?? "bottom"
+                defaultValue: rootSettings?.defaultValue("track", "verticalAlign") ?? "bottom"
+                onSelected: key => rootSettings?.setSetting("track", "verticalAlign", key)
+            }
+
             NValueSlider {
                 label: rootSettings?.pluginApi?.tr("settings.track.segmentSpacing.label")
                 description: rootSettings?.pluginApi?.tr("settings.track.segmentSpacing.desc")

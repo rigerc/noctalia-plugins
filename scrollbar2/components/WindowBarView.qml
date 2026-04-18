@@ -80,18 +80,6 @@ Item {
         return fallbackValue;
     }
 
-    function nestedBorderValue(borderKey, fallbackValue) {
-        const borders = currentSettings?.track?.borders;
-        if (borders && borders[borderKey] !== undefined)
-            return borders[borderKey];
-
-        const defaultBorders = defaults?.track?.borders;
-        if (defaultBorders && defaultBorders[borderKey] !== undefined)
-            return defaultBorders[borderKey];
-
-        return fallbackValue;
-    }
-
     function resolveColor(value, fallbackColor) {
         if (mainInstance?.resolveSettingColor)
             return mainInstance.resolveSettingColor(value, fallbackColor);
@@ -101,6 +89,7 @@ Item {
     readonly property bool onlySameOutput: settingValue("filtering", "onlySameOutput", true)
     readonly property bool onlyActiveWorkspaces: settingValue("filtering", "onlyActiveWorkspaces", true)
     readonly property string trackPosition: settingValue("track", "position", "bottom")
+    readonly property string trackVerticalAlign: settingValue("track", "verticalAlign", "bottom")
     readonly property real trackThickness: Math.max(1, settingValue("track", "thickness", 6) * Style.uiScaleRatio)
     readonly property real trackHeightSetting: Math.max(0, settingValue("track", "height", 0) * Style.uiScaleRatio)
     readonly property real trackBorderRadius: Math.max(0, settingValue("track", "borderRadius", 3) * Style.uiScaleRatio)
@@ -109,15 +98,6 @@ Item {
     readonly property color trackColor: resolveColor(settingValue("track", "color", "surface"), Color.mSurface)
     readonly property real trackWidthPercent: Math.max(5, Math.min(100, settingValue("track", "width", 90)))
     readonly property real segmentSpacing: Math.max(0, settingValue("track", "segmentSpacing", 4) * Style.uiScaleRatio)
-    readonly property bool borderTop: nestedBorderValue("top", false)
-    readonly property bool borderRight: nestedBorderValue("right", false)
-    readonly property bool borderBottom: nestedBorderValue("bottom", false)
-    readonly property bool borderLeft: nestedBorderValue("left", false)
-    readonly property bool borderSegment: nestedBorderValue("segment", false)
-    readonly property color borderColor: resolveColor(settingValue("track", "borderColor", "outline"), Color.mOutline)
-    readonly property real borderWidth: Math.max(0, settingValue("track", "borderWidth", 1) * Style.uiScaleRatio)
-    readonly property real contentTopInset: borderTop ? borderWidth : 0
-    readonly property real contentBottomInset: borderBottom ? borderWidth : 0
 
     readonly property real focusLineThickness: Math.max(1, settingValue("focusLine", "thickness", 6) * Style.uiScaleRatio)
     readonly property real focusLineRadius: Math.max(0, settingValue("focusLine", "borderRadius", 3) * Style.uiScaleRatio)
@@ -162,14 +142,15 @@ Item {
     readonly property real labelGap: Math.max(4, Math.round(5 * Style.uiScaleRatio))
     readonly property real computedIconSize: Math.max(12 * Style.uiScaleRatio, Math.round((titleFontSize + 5 * Style.uiScaleRatio) * iconScale))
     readonly property real computedLabelHeight: Math.max(computedIconSize, Math.round(titleFontSize * titleScale * 1.5))
-    readonly property real computedTrackHeight: {
+    readonly property real computedContentHeight: {
         if (!showIcon && !showTitle)
             return trackHeightSetting > 0 ? Math.max(trackHeightSetting, trackThickness) : trackThickness;
-        const contentHeight = computedLabelHeight + horizontalPadding * 2;
-        return trackHeightSetting > 0 ? Math.max(trackHeightSetting, trackThickness) : Math.max(trackThickness, contentHeight);
+        const windowContentHeight = computedLabelHeight + horizontalPadding * 2;
+        return trackHeightSetting > 0 ? Math.max(trackHeightSetting, trackThickness, focusLineThickness) : Math.max(trackThickness, focusLineThickness, windowContentHeight);
     }
-    readonly property real windowHeight: Math.max(0, computedTrackHeight - contentTopInset - contentBottomInset)
-    readonly property real visibleFocusLineThickness: Math.min(windowHeight, focusLineThickness)
+    readonly property real availableContainerHeight: hostMode === "bar" ? Math.max(1, Style.getCapsuleHeightForScreen(screenName)) : computedContentHeight
+    readonly property real visibleTrackThickness: Math.min(availableContainerHeight, trackThickness)
+    readonly property real visibleFocusLineThickness: Math.min(availableContainerHeight, focusLineThickness)
     readonly property real segmentWidth: {
         if (segmentCount <= 0)
             return 0;
@@ -188,12 +169,8 @@ Item {
     }
 
     implicitWidth: hostVisible && segmentCount > 0 ? actualTrackWidth : 0
-    implicitHeight: hostVisible && segmentCount > 0 ? computedTrackHeight : 0
+    implicitHeight: hostVisible && segmentCount > 0 ? availableContainerHeight : 0
     visible: hostVisible && segmentCount > 0
-
-    function hasBorder(flag) {
-        return flag ? borderWidth : 0;
-    }
 
     function segmentState(entryKey) {
         const isFocused = mainInstance?.activeEntryKey === entryKey;
@@ -248,12 +225,20 @@ Item {
         return horizontalPadding + index * (segmentWidth + segmentSpacing);
     }
 
-    function indicatorY() {
-        if (focusLineVerticalAlign === "top")
+    function alignedY(alignKey, itemThickness) {
+        if (alignKey === "top")
             return 0;
-        if (focusLineVerticalAlign === "center")
-            return Math.round((windowHeight - visibleFocusLineThickness) / 2);
-        return Math.max(0, windowHeight - visibleFocusLineThickness);
+        if (alignKey === "center")
+            return Math.round((availableContainerHeight - itemThickness) / 2);
+        return Math.max(0, availableContainerHeight - itemThickness);
+    }
+
+    function trackLineY() {
+        return alignedY(trackVerticalAlign, visibleTrackThickness);
+    }
+
+    function indicatorY() {
+        return alignedY(focusLineVerticalAlign, visibleFocusLineThickness);
     }
 
     function focusLineEasingType() {
@@ -324,89 +309,34 @@ Item {
         PanelService.showContextMenu(contextMenu, anchorItem ?? root, root.screen, anchorItem ?? root);
     }
 
-    Rectangle {
-        id: trackRect
+    Row {
+        id: segmentsRow
         anchors.fill: parent
-        radius: trackBorderRadius
-        color: Qt.alpha(trackColor, trackOpacity)
-        border.width: 0
-
-        Rectangle {
-            visible: borderTop
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            height: borderWidth
-            color: borderColor
-        }
-
-        Rectangle {
-            visible: borderBottom
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            height: borderWidth
-            color: borderColor
-        }
-
-        Rectangle {
-            visible: borderLeft
-            anchors.left: parent.left
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            width: borderWidth
-            color: borderColor
-        }
-
-        Rectangle {
-            visible: borderRight
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            width: borderWidth
-            color: borderColor
-        }
-    }
-
-    NDropShadow {
-        anchors.fill: trackRect
-        source: trackRect
-        autoPaddingEnabled: true
-        visible: trackShadowEnabled
-        z: -1
-    }
-
-    Item {
-        id: contentLane
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.topMargin: contentTopInset
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: contentBottomInset
-        clip: true
+        anchors.leftMargin: horizontalPadding
+        anchors.rightMargin: horizontalPadding
+        spacing: segmentSpacing
         z: 1
 
-        Row {
-            id: segmentBackgroundsRow
-            anchors.fill: parent
-            anchors.leftMargin: horizontalPadding
-            anchors.rightMargin: horizontalPadding
-            spacing: segmentSpacing
-            z: 1
+        Repeater {
+            model: root.entries
 
-            Repeater {
-                model: root.entries
+            delegate: Item {
+                id: segmentItem
 
-                delegate: Rectangle {
-                    required property var modelData
+                required property var modelData
+                required property int index
 
-                    width: root.segmentWidth
-                    height: parent ? parent.height : root.windowHeight
+                readonly property string entryKey: modelData.entryKey ?? ""
+                readonly property string title: root.currentTitle(modelData)
+                readonly property bool showLabel: root.labelVisible(entryKey)
+
+                width: root.segmentWidth
+                height: parent ? parent.height : root.availableContainerHeight
+
+                Rectangle {
+                    anchors.fill: parent
                     radius: Math.max(0, root.trackBorderRadius - Style.borderS)
-                    color: root.segmentBackgroundColor(modelData.entryKey ?? "")
-                    border.width: root.borderSegment ? root.borderWidth : 0
-                    border.color: root.borderColor
+                    color: root.segmentBackgroundColor(segmentItem.entryKey)
 
                     Behavior on color {
                         enabled: root.animationEnabled
@@ -414,153 +344,53 @@ Item {
                             duration: root.animationSpeed
                         }
                     }
+                }
 
-                    Behavior on border.color {
-                        enabled: root.animationEnabled
-                        ColorAnimation {
-                            duration: root.animationSpeed
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: root.labelPaddingH
+                    anchors.rightMargin: root.labelPaddingH
+                    spacing: root.labelGap
+                    visible: root.showIcon || root.showTitle
+                    layoutDirection: root.focusedOnly && root.focusedAlign === "right" && segmentItem.showLabel ? Qt.RightToLeft : Qt.LeftToRight
+
+                    Item {
+                        Layout.preferredWidth: root.showIcon ? root.computedIconSize : 0
+                        Layout.preferredHeight: root.showIcon ? root.computedIconSize : 0
+                        visible: root.showIcon
+                        opacity: segmentItem.showLabel ? 1 : 0
+
+                        Behavior on opacity {
+                            enabled: root.animationEnabled
+                            NumberAnimation {
+                                duration: root.animationSpeed
+                            }
                         }
-                    }
-                }
-            }
-        }
 
-        Item {
-            id: focusIndicator
-            visible: !isFadeAnimation && focusedIndex >= 0 && windowHeight > 0
-            x: indicatorOffset(focusedIndex)
-            y: 0
-            width: segmentWidth
-            height: windowHeight
-            z: 10
+                        IconImage {
+                            id: appIcon
+                            anchors.fill: parent
+                            source: ThemeIcons.iconForAppId(segmentItem.modelData.appId)
+                            smooth: true
+                            asynchronous: true
+                            visible: status === Image.Ready
 
-            Behavior on x {
-                enabled: root.animationEnabled
-                NumberAnimation {
-                    duration: root.animationSpeed
-                    easing.type: root.focusLineEasingType()
-                    easing.overshoot: root.focusLineOvershoot()
-                }
-            }
+                            layer.enabled: visible
+                            layer.effect: ShaderEffect {
+                                property color targetColor: root.labelColor(segmentItem.entryKey, "icon")
+                                property real colorizeMode: 0.0
 
-            Behavior on width {
-                enabled: root.animationEnabled
-                NumberAnimation {
-                    duration: root.animationSpeed
-                    easing.type: root.focusLineEasingType()
-                    easing.overshoot: root.focusLineOvershoot()
-                }
-            }
-
-            Rectangle {
-                id: focusLineFill
-                x: 0
-                y: root.indicatorY()
-                width: parent.width
-                height: root.visibleFocusLineThickness
-                radius: root.focusLineRadius
-                color: Qt.alpha(root.focusLineFocusedColor, root.focusLineOpacity)
-            }
-        }
-
-        NDropShadow {
-            anchors.fill: focusIndicator
-            source: focusLineFill
-            autoPaddingEnabled: true
-            visible: focusIndicator.visible && focusLineShadowEnabled
-            z: 9
-        }
-
-        Row {
-            id: segmentsLabelsRow
-            anchors.fill: parent
-            anchors.leftMargin: horizontalPadding
-            anchors.rightMargin: horizontalPadding
-            spacing: segmentSpacing
-            z: 20
-
-            Repeater {
-                model: root.entries
-
-                delegate: Item {
-                    id: segmentItem
-
-                    required property var modelData
-                    required property int index
-
-                    readonly property string entryKey: modelData.entryKey ?? ""
-                    readonly property string title: root.currentTitle(modelData)
-                    readonly property bool showLabel: root.labelVisible(entryKey)
-
-                    width: root.segmentWidth
-                    height: parent ? parent.height : root.windowHeight
-
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: root.labelPaddingH
-                        anchors.rightMargin: root.labelPaddingH
-                        spacing: root.labelGap
-                        visible: root.showIcon || root.showTitle
-                        layoutDirection: root.focusedOnly && root.focusedAlign === "right" && segmentItem.showLabel ? Qt.RightToLeft : Qt.LeftToRight
-
-                        Item {
-                            Layout.preferredWidth: root.showIcon ? root.computedIconSize : 0
-                            Layout.preferredHeight: root.showIcon ? root.computedIconSize : 0
-                            visible: root.showIcon
-                            opacity: segmentItem.showLabel ? 1 : 0
-
-                            Behavior on opacity {
-                                enabled: root.animationEnabled
-                                NumberAnimation {
-                                    duration: root.animationSpeed
-                                }
-                            }
-
-                            IconImage {
-                                id: appIcon
-                                anchors.fill: parent
-                                source: ThemeIcons.iconForAppId(segmentItem.modelData.appId)
-                                smooth: true
-                                asynchronous: true
-                                visible: status === Image.Ready
-
-                                layer.enabled: visible
-                                layer.effect: ShaderEffect {
-                                    property color targetColor: root.labelColor(segmentItem.entryKey, "icon")
-                                    property real colorizeMode: 0.0
-
-                                    fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/appicon_colorize.frag.qsb")
-                                }
-                            }
-
-                            NText {
-                                anchors.centerIn: parent
-                                visible: !appIcon.visible
-                                text: segmentItem.title.length > 0 ? segmentItem.title.charAt(0).toUpperCase() : "?"
-                                pointSize: Math.max(Style.fontSizeXS, root.titleFontSize * root.titleScale * 0.95)
-                                font.weight: Style.fontWeightBold
-                                color: root.labelColor(segmentItem.entryKey, "icon")
-
-                                Behavior on color {
-                                    enabled: root.animationEnabled
-                                    ColorAnimation {
-                                        duration: root.animationSpeed
-                                    }
-                                }
+                                fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/appicon_colorize.frag.qsb")
                             }
                         }
 
                         NText {
-                            Layout.fillWidth: true
-                            visible: root.showTitle
-                            text: segmentItem.title
-                            elide: Text.ElideRight
-                            maximumLineCount: 1
-                            opacity: segmentItem.showLabel ? 1 : 0
-                            color: root.labelColor(segmentItem.entryKey, "title")
-                            font.family: root.titleFontFamily || Qt.application.font.family
-                            pointSize: root.titleFontSize * root.titleScale
-                            font.weight: root.segmentState(segmentItem.entryKey) === "focused" ? Style.fontWeightSemiBold : Style.fontWeightMedium
+                            anchors.centerIn: parent
+                            visible: !appIcon.visible
+                            text: segmentItem.title.length > 0 ? segmentItem.title.charAt(0).toUpperCase() : "?"
+                            pointSize: Math.max(Style.fontSizeXS, root.titleFontSize * root.titleScale * 0.95)
+                            font.weight: Style.fontWeightBold
+                            color: root.labelColor(segmentItem.entryKey, "icon")
 
                             Behavior on color {
                                 enabled: root.animationEnabled
@@ -568,43 +398,63 @@ Item {
                                     duration: root.animationSpeed
                                 }
                             }
-
-                            Behavior on opacity {
-                                enabled: root.animationEnabled
-                                NumberAnimation {
-                                    duration: root.animationSpeed
-                                }
-                            }
                         }
                     }
 
-                    MouseArea {
-                        anchors.fill: parent
-                        acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
+                    NText {
+                        Layout.fillWidth: true
+                        visible: root.showTitle
+                        text: segmentItem.title
+                        elide: Text.ElideRight
+                        maximumLineCount: 1
+                        opacity: segmentItem.showLabel ? 1 : 0
+                        color: root.labelColor(segmentItem.entryKey, "title")
+                        font.family: root.titleFontFamily || Qt.application.font.family
+                        pointSize: root.titleFontSize * root.titleScale
+                        font.weight: root.segmentState(segmentItem.entryKey) === "focused" ? Style.fontWeightSemiBold : Style.fontWeightMedium
 
-                        onEntered: {
-                            root.hoveredEntryKey = segmentItem.entryKey;
-                            if (segmentItem.title)
-                                TooltipService.show(segmentItem, segmentItem.title, BarService.getTooltipDirection(root.screen?.name));
-                        }
-
-                        onExited: {
-                            if (root.hoveredEntryKey === segmentItem.entryKey)
-                                root.hoveredEntryKey = "";
-                            TooltipService.hide();
-                        }
-
-                        onClicked: mouse => {
-                            if (mouse.button === Qt.LeftButton) {
-                                root.mainInstance?.focusEntry(segmentItem.entryKey);
-                            } else if (mouse.button === Qt.MiddleButton) {
-                                root.mainInstance?.closeEntry(segmentItem.entryKey);
-                            } else if (mouse.button === Qt.RightButton) {
-                                TooltipService.hide();
-                                root.openContextMenu(segmentItem, segmentItem.modelData);
+                        Behavior on color {
+                            enabled: root.animationEnabled
+                            ColorAnimation {
+                                duration: root.animationSpeed
                             }
+                        }
+
+                        Behavior on opacity {
+                            enabled: root.animationEnabled
+                            NumberAnimation {
+                                duration: root.animationSpeed
+                            }
+                        }
+                    }
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+
+                    onEntered: {
+                        root.hoveredEntryKey = segmentItem.entryKey;
+                        if (segmentItem.title)
+                            TooltipService.show(segmentItem, segmentItem.title, BarService.getTooltipDirection(root.screen?.name));
+                    }
+
+                    onExited: {
+                        if (root.hoveredEntryKey === segmentItem.entryKey)
+                            root.hoveredEntryKey = "";
+                        TooltipService.hide();
+                    }
+
+                    onClicked: mouse => {
+                        if (mouse.button === Qt.LeftButton) {
+                            root.mainInstance?.focusEntry(segmentItem.entryKey);
+                        } else if (mouse.button === Qt.MiddleButton) {
+                            root.mainInstance?.closeEntry(segmentItem.entryKey);
+                        } else if (mouse.button === Qt.RightButton) {
+                            TooltipService.hide();
+                            root.openContextMenu(segmentItem, segmentItem.modelData);
                         }
                     }
                 }
@@ -612,9 +462,74 @@ Item {
         }
     }
 
+    Rectangle {
+        id: trackLine
+        x: 0
+        y: trackLineY()
+        width: root.width
+        height: visibleTrackThickness
+        radius: Math.min(trackBorderRadius, height / 2)
+        color: Qt.alpha(trackColor, trackOpacity)
+        z: 10
+    }
+
+    NDropShadow {
+        anchors.fill: trackLine
+        source: trackLine
+        autoPaddingEnabled: true
+        visible: trackShadowEnabled
+        z: 9
+    }
+
     Item {
-        anchors.fill: contentLane
-        z: 4
+        id: focusIndicator
+        visible: !isFadeAnimation && focusedIndex >= 0 && availableContainerHeight > 0
+        x: indicatorOffset(focusedIndex)
+        y: 0
+        width: segmentWidth
+        height: availableContainerHeight
+        z: 20
+
+        Behavior on x {
+            enabled: root.animationEnabled
+            NumberAnimation {
+                duration: root.animationSpeed
+                easing.type: root.focusLineEasingType()
+                easing.overshoot: root.focusLineOvershoot()
+            }
+        }
+
+        Behavior on width {
+            enabled: root.animationEnabled
+            NumberAnimation {
+                duration: root.animationSpeed
+                easing.type: root.focusLineEasingType()
+                easing.overshoot: root.focusLineOvershoot()
+            }
+        }
+
+        Rectangle {
+            id: focusLineFill
+            x: 0
+            y: root.indicatorY()
+            width: parent.width
+            height: root.visibleFocusLineThickness
+            radius: root.focusLineRadius
+            color: Qt.alpha(root.focusLineFocusedColor, root.focusLineOpacity)
+        }
+    }
+
+    NDropShadow {
+        anchors.fill: focusIndicator
+        source: focusLineFill
+        autoPaddingEnabled: true
+        visible: focusIndicator.visible && focusLineShadowEnabled
+        z: 19
+    }
+
+    Item {
+        anchors.fill: parent
+        z: 1
         visible: root.focusedOnly && root.focusedAlign === "center" && root.focusedEntry() !== null
 
         RowLayout {
