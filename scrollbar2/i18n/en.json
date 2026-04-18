@@ -1,6 +1,7 @@
 {
   "common": {
-    "auto": "Auto"
+    "auto": "Auto",
+    "cancel": "Cancel"
   },
   "menu": {
     "focus": "Focus window",
@@ -349,6 +350,111 @@
       "speed": {
         "label": "Animation Speed",
         "desc": "Transition duration in milliseconds."
+      }
+    },
+    "tabs": {
+      "settings": "Settings",
+      "presets": "Presets"
+    },
+    "presets": {
+      "section": {
+        "label": "Presets",
+        "desc": "Save, load, and manage configuration presets."
+      },
+      "builtin": {
+        "label": "Built-in Presets",
+        "desc": "Curated starting points that cannot be modified."
+      },
+      "custom": {
+        "label": "Custom Presets",
+        "desc": "Your saved presets."
+      },
+      "empty": {
+        "label": "No custom presets yet",
+        "desc": "Save your current settings to create a preset."
+      },
+      "badge": "Built-in",
+      "active": "Active",
+      "actions": {
+        "save": "Save Current as Preset",
+        "rename": "Rename",
+        "update": "Update with Current",
+        "duplicate": "Duplicate",
+        "delete": "Delete",
+        "deleteAll": "Delete All Custom Presets"
+      },
+      "dialog": {
+        "save": {
+          "title": "Save Preset",
+          "desc": "Save your current settings as a new preset.",
+          "nameLabel": "Preset Name",
+          "nameDesc": "A short name for this preset.",
+          "namePlaceholder": "My Preset",
+          "descLabel": "Description",
+          "descDesc": "Optional description of this preset.",
+          "descPlaceholder": "A brief description...",
+          "save": "Save",
+          "nameRequired": "Name is required.",
+          "nameTooLong": "Name must be 32 characters or less.",
+          "descTooLong": "Description must be 120 characters or less.",
+          "nameExists": "A preset with this name already exists."
+        },
+        "delete": {
+          "title": "Delete Preset",
+          "desc": "Are you sure you want to delete \"{name}\"? This cannot be undone.",
+          "confirm": "Delete"
+        },
+        "deleteAll": {
+          "title": "Delete All Custom Presets",
+          "desc": "Are you sure you want to delete all {count} custom presets? This cannot be undone.",
+          "confirm": "Delete All"
+        },
+        "rename": {
+          "title": "Rename Preset",
+          "desc": "Enter a new name for this preset.",
+          "confirm": "Rename"
+        },
+        "duplicate": {
+          "title": "Duplicate Preset",
+          "desc": "Create a copy of \"{name}\".",
+          "confirm": "Duplicate"
+        },
+        "update": {
+          "title": "Update Preset",
+          "desc": "Overwrite \"{name}\" with your current settings?",
+          "confirm": "Update"
+        }
+      },
+      "builtinPresets": {
+        "default": {
+          "name": "Default",
+          "desc": "Factory default configuration."
+        },
+        "minimal": {
+          "name": "Minimal",
+          "desc": "Ultra-thin track with no labels."
+        },
+        "bordered": {
+          "name": "Bordered",
+          "desc": "Thick track with sharp corners and visible separators."
+        },
+        "floating": {
+          "name": "Floating",
+          "desc": "Floating panel with background and gradient."
+        },
+        "compact": {
+          "name": "Compact",
+          "desc": "Tiny track with focused-only labels."
+        }
+      },
+      "notifications": {
+        "saved": "Preset \"{name}\" saved.",
+        "renamed": "Preset renamed to \"{name}\".",
+        "duplicated": "Preset duplicated as \"{name}\".",
+        "deleted": "Preset \"{name}\" deleted.",
+        "deletedAll": "All custom presets deleted.",
+        "updated": "Preset \"{name}\" updated.",
+        "applied": "Preset \"{name}\" applied."
       }
     }
   }

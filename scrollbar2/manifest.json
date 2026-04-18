@@ -131,7 +131,9 @@
       "animation": {
         "enabled": true,
         "speed": 420
-      }
+      },
+      "_presets": [],
+      "_activePresetId": ""
     }
   }
 }

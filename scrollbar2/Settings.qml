@@ -13,6 +13,8 @@ ColumnLayout {
     property var defaultSettings: normalizeSettingsSnapshot(deepCopy(defaults))
     property var editSettings: createSettingsSnapshot(pluginApi?.pluginSettings || ({}), defaults)
     property real preferredWidth: 760 * Style.uiScaleRatio
+    property int selectedTab: 0
+    property string _activePresetId: pluginApi?.pluginSettings?._activePresetId || ""
 
     readonly property var displayModeModel: [
         {
@@ -126,6 +128,10 @@ ColumnLayout {
     function createSettingsSnapshot(primary, secondary) {
         const base = deepCopy(secondary || ({}));
         const overrides = deepCopy(primary || ({}));
+        delete base._presets;
+        delete base._activePresetId;
+        delete overrides._presets;
+        delete overrides._activePresetId;
 
         function merge(target, source) {
             for (const key in source) {
@@ -308,6 +314,7 @@ ColumnLayout {
             next[groupKey] = ({});
         next[groupKey][nestedKey] = value;
         editSettings = next;
+        _activePresetId = "";
     }
 
     function setNestedSetting(groupKey, nestedGroupKey, nestedKey, value) {
@@ -318,6 +325,7 @@ ColumnLayout {
             next[groupKey][nestedGroupKey] = ({});
         next[groupKey][nestedGroupKey][nestedKey] = value;
         editSettings = next;
+        _activePresetId = "";
     }
 
     function setObjectSetting(groupKey, objectKey, nestedKey, value) {
@@ -334,6 +342,7 @@ ColumnLayout {
             next[groupKey][objectKey][stateKey] = ({});
         next[groupKey][objectKey][stateKey][nestedKey] = value;
         editSettings = next;
+        _activePresetId = "";
     }
 
     function conditionValue(key) {
@@ -365,9 +374,15 @@ ColumnLayout {
         return true;
     }
 
+    function applyPreset(settingsObj, presetId) {
+        editSettings = createSettingsSnapshot(settingsObj, defaults);
+        _activePresetId = presetId || "";
+    }
+
     function refreshEditSettings() {
         defaultSettings = normalizeSettingsSnapshot(deepCopy(defaults));
         editSettings = createSettingsSnapshot(pluginApi?.pluginSettings || ({}), defaults);
+        _activePresetId = pluginApi?.pluginSettings?._activePresetId || "";
     }
 
     Connections {
@@ -380,38 +395,73 @@ ColumnLayout {
 
     Component.onCompleted: refreshEditSettings()
 
-    NText {
-        text: pluginApi?.tr("settings.summary")
-        color: Color.mOnSurfaceVariant
-        wrapMode: Text.WordWrap
+    NTabBar {
+        currentIndex: selectedTab
         Layout.fillWidth: true
+
+        NTabButton {
+            text: pluginApi?.tr("settings.tabs.settings") ?? "Settings"
+            tabIndex: 0
+            checked: selectedTab === 0
+            onClicked: selectedTab = 0
+        }
+
+        NTabButton {
+            text: pluginApi?.tr("settings.tabs.presets") ?? "Presets"
+            tabIndex: 1
+            checked: selectedTab === 1
+            onClicked: selectedTab = 1
+        }
     }
 
-    DisplaySettingsSection {
+    NTabView {
+        currentIndex: selectedTab
         Layout.fillWidth: true
-        rootSettings: root
-    }
 
-    WindowSettingsSection {
-        Layout.fillWidth: true
-        rootSettings: root
-    }
+        ColumnLayout {
+            spacing: Style.marginM
 
-    ColorSettingsSection {
-        Layout.fillWidth: true
-        rootSettings: root
-    }
+            NText {
+                text: pluginApi?.tr("settings.summary")
+                color: Color.mOnSurfaceVariant
+                wrapMode: Text.WordWrap
+                Layout.fillWidth: true
+            }
 
-    BehaviorSettingsSection {
-        Layout.fillWidth: true
-        rootSettings: root
+            DisplaySettingsSection {
+                Layout.fillWidth: true
+                rootSettings: root
+            }
+
+            WindowSettingsSection {
+                Layout.fillWidth: true
+                rootSettings: root
+            }
+
+            ColorSettingsSection {
+                Layout.fillWidth: true
+                rootSettings: root
+            }
+
+            BehaviorSettingsSection {
+                Layout.fillWidth: true
+                rootSettings: root
+            }
+        }
+
+        PresetsSection {
+            rootSettings: root
+        }
     }
 
     function saveSettings() {
         if (!pluginApi)
             return;
 
-        pluginApi.pluginSettings = normalizeSettingsSnapshot(editSettings);
+        const normalized = normalizeSettingsSnapshot(editSettings);
+        normalized._presets = deepCopy(pluginApi.pluginSettings._presets || []);
+        normalized._activePresetId = _activePresetId;
+        pluginApi.pluginSettings = normalized;
         pluginApi.saveSettings();
     }
 }
