@@ -148,7 +148,7 @@ Item {
         const windowContentHeight = computedLabelHeight + horizontalPadding * 2;
         return trackHeightSetting > 0 ? Math.max(trackHeightSetting, trackThickness, focusLineThickness) : Math.max(trackThickness, focusLineThickness, windowContentHeight);
     }
-    readonly property real availableContainerHeight: hostMode === "bar" ? Math.max(1, Style.getCapsuleHeightForScreen(screenName)) : computedContentHeight
+    readonly property real availableContainerHeight: Math.max(1, root.height > 0 ? root.height : (hostMode === "bar" ? Style.getCapsuleHeightForScreen(screenName) : computedContentHeight))
     readonly property real visibleTrackThickness: Math.min(availableContainerHeight, trackThickness)
     readonly property real visibleFocusLineThickness: Math.min(availableContainerHeight, focusLineThickness)
     readonly property real segmentWidth: {
