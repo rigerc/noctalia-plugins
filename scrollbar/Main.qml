@@ -1,11 +1,13 @@
 import QtQuick
 import Quickshell
 import Quickshell.Hyprland
+import Quickshell.Io
 import Quickshell.Niri
 import Quickshell.Wayland
 import qs.Commons
 import qs.Services.Compositor
 import "./components"
+import "PresetUtils.js" as PresetUtils
 
 Item {
     id: root
@@ -151,6 +153,118 @@ Item {
     function debugLog(message) {
         if (debugLogging)
             Logger.d("Scrollbar", message);
+    }
+
+    function currentCustomPresets() {
+        return PresetUtils.createCustomPresetList(currentSettings || ({}), defaults);
+    }
+
+    function comparableSettingsSnapshot(settings) {
+        return PresetUtils.createComparableSnapshot(settings || ({}), defaults);
+    }
+
+    function pluginSettingsSnapshot(settings) {
+        return PresetUtils.createPluginSettingsSnapshot(settings || ({}), defaults);
+    }
+
+    function comparableSnapshotWithCurrentCustomPresets(snapshot) {
+        const normalized = PresetUtils.deepCopy(snapshot || ({}));
+        normalized.presets = {
+            "custom": PresetUtils.deepCopy(currentCustomPresets())
+        };
+        return pluginSettingsSnapshot(normalized);
+    }
+
+    function savePluginSettings(nextSettings) {
+        if (!pluginApi)
+            return false;
+
+        pluginApi.pluginSettings = nextSettings;
+        pluginApi.saveSettings();
+        refreshSettingsSnapshot();
+        return true;
+    }
+
+    function applyComparablePresetSnapshot(snapshot) {
+        if (!pluginApi)
+            return false;
+
+        const nextSettings = PresetUtils.mergeDeep(pluginApi?.pluginSettings || ({}), comparableSnapshotWithCurrentCustomPresets(snapshot));
+        return savePluginSettings(nextSettings);
+    }
+
+    function applyFullSettingsSnapshot(snapshot) {
+        if (!pluginApi)
+            return false;
+
+        const nextSettings = PresetUtils.mergeDeep(pluginApi?.pluginSettings || ({}), pluginSettingsSnapshot(snapshot || ({})));
+        return savePluginSettings(nextSettings);
+    }
+
+    function applySettingsSnapshotJson(snapshotJson) {
+        if (!pluginApi)
+            return false;
+
+        try {
+            const parsed = JSON.parse(snapshotJson || "{}");
+            return applyFullSettingsSnapshot(parsed);
+        } catch (error) {
+            Logger.e("Scrollbar", "Failed to parse settings snapshot: " + error);
+            return false;
+        }
+    }
+
+    function presetCatalog() {
+        return PresetUtils.createPresetCatalog(currentSettings || ({}), defaults);
+    }
+
+    function presetDescriptors() {
+        return presetCatalog().map(function (preset) {
+            return {
+                "id": preset.id,
+                "type": preset.type,
+                "key": preset.key ?? "",
+                "name": preset.name
+            };
+        });
+    }
+
+    function currentPresetId() {
+        return PresetUtils.findMatchingPresetId(currentSettings || ({}), defaults);
+    }
+
+    function loadPresetById(presetId) {
+        const preset = PresetUtils.findPresetById(presetId, currentSettings || ({}), defaults);
+        if (!preset)
+            return false;
+
+        return applyComparablePresetSnapshot(preset.settings);
+    }
+
+    function cyclePreset(step) {
+        const presets = presetCatalog();
+        if (presets.length === 0)
+            return "";
+
+        const currentId = currentPresetId();
+        let currentIndex = -1;
+        for (let i = 0; i < presets.length; i++) {
+            if (presets[i].id === currentId) {
+                currentIndex = i;
+                break;
+            }
+        }
+
+        let nextIndex = 0;
+        if (step < 0)
+            nextIndex = currentIndex === -1 ? (presets.length - 1) : ((currentIndex - 1 + presets.length) % presets.length);
+        else
+            nextIndex = currentIndex === -1 ? 0 : ((currentIndex + 1) % presets.length);
+
+        if (!applyComparablePresetSnapshot(presets[nextIndex].settings))
+            return "";
+
+        return presets[nextIndex].id;
     }
 
     function getAppNameFromDesktopEntry(appId) {
@@ -641,6 +755,34 @@ Item {
         Qt.callLater(function () {
             updateSnapshots("reorder", true);
         });
+    }
+
+    IpcHandler {
+        target: "plugin:scrollbar"
+
+        function listPresets(): string {
+            return JSON.stringify(root.presetDescriptors());
+        }
+
+        function loadPreset(id: string): bool {
+            return root.loadPresetById(id);
+        }
+
+        function nextPreset(): string {
+            return root.cyclePreset(1);
+        }
+
+        function previousPreset(): string {
+            return root.cyclePreset(-1);
+        }
+
+        function getSettingsSnapshot(): string {
+            return JSON.stringify(root.pluginSettingsSnapshot(root.currentSettings || ({})));
+        }
+
+        function applySettingsSnapshot(snapshotJson: string): bool {
+            return root.applySettingsSnapshotJson(snapshotJson);
+        }
     }
 
     Component.onCompleted: {

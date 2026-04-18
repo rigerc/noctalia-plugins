@@ -6,6 +6,7 @@ import Quickshell.Io
 import qs.Commons
 import qs.Widgets
 import "./settings"
+import "PresetUtils.js" as PresetUtils
 
 ColumnLayout {
     id: root
@@ -199,272 +200,31 @@ ColumnLayout {
     implicitWidth: preferredWidth
 
     function deepCopy(value) {
-        return JSON.parse(JSON.stringify(value));
-    }
-
-    function isPlainObject(value) {
-        return value !== null && typeof value === "object" && !Array.isArray(value);
+        return PresetUtils.deepCopy(value);
     }
 
     function mergeDeep(base, overrides) {
-        const result = deepCopy(base);
-        applyDeepOverride(result, overrides);
-        return result;
-    }
-
-    function applyDeepOverride(target, overrides) {
-        if (!isPlainObject(overrides))
-            return;
-
-        for (const key in overrides) {
-            const nextValue = overrides[key];
-            if (isPlainObject(nextValue)) {
-                if (!isPlainObject(target[key]))
-                    target[key] = ({});
-                applyDeepOverride(target[key], nextValue);
-            } else {
-                target[key] = deepCopy(nextValue);
-            }
-        }
-    }
-
-    function readSetting(primary, secondary, groupKey, nestedKey, legacyKey, fallbackValue) {
-        const primaryGroup = primary ? primary[groupKey] : undefined;
-        const nestedPrimary = primaryGroup ? primaryGroup[nestedKey] : undefined;
-        if (nestedPrimary !== undefined)
-            return nestedPrimary;
-
-        const legacyPrimary = primary ? primary[legacyKey] : undefined;
-        if (legacyPrimary !== undefined)
-            return legacyPrimary;
-
-        const secondaryGroup = secondary ? secondary[groupKey] : undefined;
-        const nestedSecondary = secondaryGroup ? secondaryGroup[nestedKey] : undefined;
-        if (nestedSecondary !== undefined)
-            return nestedSecondary;
-
-        const legacySecondary = secondary ? secondary[legacyKey] : undefined;
-        if (legacySecondary !== undefined)
-            return legacySecondary;
-
-        return fallbackValue;
+        return PresetUtils.mergeDeep(base, overrides);
     }
 
     function createSettingsSnapshot(primary, secondary) {
-        return {
-            "filtering": {
-                "onlySameOutput": readSetting(primary, secondary, "filtering", "onlySameOutput", "onlySameOutput", true),
-                "onlyActiveWorkspaces": readSetting(primary, secondary, "filtering", "onlyActiveWorkspaces", "onlyActiveWorkspaces", true)
-            },
-            "interaction": {
-                "enableReorder": readSetting(primary, secondary, "interaction", "enableReorder", "enableReorder", true),
-                "enableScrollWheel": readSetting(primary, secondary, "interaction", "enableScrollWheel", "enableScrollWheel", true)
-            },
-            "autoScroll": {
-                "centerFocusedWindow": readSetting(primary, secondary, "autoScroll", "centerFocusedWindow", "centerFocusedWindow", true),
-                "centerAnimationMs": readSetting(primary, secondary, "autoScroll", "centerAnimationMs", "centerAnimationMs", 200)
-            },
-            "window": {
-                "renderMode": readSetting(primary, secondary, "window", "renderMode", "renderMode", "bar"),
-                "spaceMode": readSetting(primary, secondary, "window", "spaceMode", "windowSpaceMode", "overlay"),
-                "offsetH": readSetting(primary, secondary, "window", "offsetH", "windowOffsetH", 0),
-                "offsetV": readSetting(primary, secondary, "window", "offsetV", "windowOffsetV", 0),
-                "scale": readSetting(primary, secondary, "window", "scale", "windowScale", 1.0),
-                "backgroundColor": readSetting(primary, secondary, "window", "backgroundColor", "windowBackgroundColor", "none"),
-                "backgroundOpacity": readSetting(primary, secondary, "window", "backgroundOpacity", "windowBackgroundOpacity", 0),
-                "margin": readSetting(primary, secondary, "window", "margin", "windowMargin", 0),
-                "height": readSetting(primary, secondary, "window", "height", "windowHeight", 0),
-                "radiusScale": readSetting(primary, secondary, "window", "radiusScale", "windowRadiusScale", 1.0),
-                "gradientEnabled": readSetting(primary, secondary, "window", "gradientEnabled", "windowGradientEnabled", false),
-                "gradientColor": readSetting(primary, secondary, "window", "gradientColor", "windowGradientColor", "none"),
-                "gradientOpacity": readSetting(primary, secondary, "window", "gradientOpacity", "windowGradientOpacity", 0),
-                "gradientDirection": readSetting(primary, secondary, "window", "gradientDirection", "windowGradientDirection", "vertical")
-            },
-            "advanced": {
-                "debugLogging": readSetting(primary, secondary, "advanced", "debugLogging", "debugLogging", false)
-            },
-            "layout": {
-                "widgetSizeMode": readSetting(primary, secondary, "layout", "widgetSizeMode", "widgetSizeMode", "dynamic"),
-                "fixedWidgetSize": readSetting(primary, secondary, "layout", "fixedWidgetSize", "fixedWidgetSize", 360),
-                "maxWidgetWidth": readSetting(primary, secondary, "layout", "maxWidgetWidth", "maxWidgetWidth", 40),
-                "showSlots": readSetting(primary, secondary, "layout", "showSlots", "showSlots", true),
-                "slotWidth": readSetting(primary, secondary, "layout", "slotWidth", "slotWidth", 112),
-                "slotSpacingUnits": readSetting(primary, secondary, "layout", "slotSpacingUnits", "slotSpacingUnits", 1),
-                "radiusScale": readSetting(primary, secondary, "layout", "radiusScale", "radiusScale", 1.0),
-                "slotCapsuleScale": readSetting(primary, secondary, "layout", "slotCapsuleScale", "slotCapsuleScale", 1.0)
-            },
-            "icons": {
-                "showIcons": readSetting(primary, secondary, "icons", "showIcons", "showIcons", true),
-                "iconScale": readSetting(primary, secondary, "icons", "iconScale", "iconScale", 0.8),
-                "iconTintColor": readSetting(primary, secondary, "icons", "iconTintColor", "iconTintColor", "none"),
-                "iconTintOpacity": readSetting(primary, secondary, "icons", "iconTintOpacity", "iconTintOpacity", 100)
-            },
-            "title": {
-                "showTitle": readSetting(primary, secondary, "title", "showTitle", "showTitle", true),
-                "titleFontFamily": readSetting(primary, secondary, "title", "titleFontFamily", "titleFontFamily", ""),
-                "titleFontSize": readSetting(primary, secondary, "title", "titleFontSize", "titleFontSize", 0),
-                "titleFontWeight": readSetting(primary, secondary, "title", "titleFontWeight", "titleFontWeight", "default")
-            },
-            "focusedTitle": {
-                "enabled": readSetting(primary, secondary, "focusedTitle", "enabled", "focusedTitleEnabled", false),
-                "textColor": readSetting(primary, secondary, "focusedTitle", "textColor", "focusedTitleTextColor", "on-surface"),
-                "opacity": readSetting(primary, secondary, "focusedTitle", "opacity", "focusedTitleOpacity", 100),
-                "backgroundColor": readSetting(primary, secondary, "focusedTitle", "backgroundColor", "focusedTitleBackgroundColor", "none"),
-                "backgroundOpacity": readSetting(primary, secondary, "focusedTitle", "backgroundOpacity", "focusedTitleBackgroundOpacity", 0),
-                "offsetV": readSetting(primary, secondary, "focusedTitle", "offsetV", "focusedTitleOffsetV", 0)
-            },
-            "workspaceIndicator": {
-                "enabled": readSetting(primary, secondary, "workspaceIndicator", "enabled", "workspaceIndicatorEnabled", false),
-                "labelMode": readSetting(primary, secondary, "workspaceIndicator", "labelMode", "workspaceIndicatorLabelMode", "id"),
-                "position": readSetting(primary, secondary, "workspaceIndicator", "position", "workspaceIndicatorPosition", "before"),
-                "spacing": readSetting(primary, secondary, "workspaceIndicator", "spacing", "workspaceIndicatorSpacing", 8),
-                "padding": readSetting(primary, secondary, "workspaceIndicator", "padding", "workspaceIndicatorPadding", 0),
-                "fontFamily": readSetting(primary, secondary, "workspaceIndicator", "fontFamily", "workspaceIndicatorFontFamily", ""),
-                "fontSize": readSetting(primary, secondary, "workspaceIndicator", "fontSize", "workspaceIndicatorFontSize", 0),
-                "textColor": readSetting(primary, secondary, "workspaceIndicator", "textColor", "workspaceIndicatorTextColor", "primary"),
-                "opacity": readSetting(primary, secondary, "workspaceIndicator", "opacity", "workspaceIndicatorOpacity", 100)
-            },
-            "edgeFade": {
-                "enabled": (() => {
-                    const configuredEnabled = readSetting(primary, secondary, "edgeFade", "enabled", "edgeFadeEnabled", undefined);
-                    if (configuredEnabled !== undefined)
-                        return configuredEnabled;
-
-                    const configuredMode = readSetting(primary, secondary, "edgeFade", "mode", "edgeFadeMode", undefined);
-                    if (configuredMode !== undefined)
-                        return configuredMode !== "off";
-
-                    const legacySize = readSetting(primary, secondary, "edgeFade", "size", "edgeFadeSize", undefined);
-                    if (legacySize !== undefined)
-                        return legacySize > 0;
-
-                    return true;
-                })(),
-                "fadeSize": (() => {
-                    const configuredFadeSize = readSetting(primary, secondary, "edgeFade", "fadeSize", "edgeFadeFadeSize", undefined);
-                    if (configuredFadeSize !== undefined)
-                        return configuredFadeSize;
-                    return readSetting(primary, secondary, "edgeFade", "size", "edgeFadeSize", 48);
-                })(),
-                "fadeOpacity": readSetting(primary, secondary, "edgeFade", "fadeOpacity", "edgeFadeOpacity", 100)
-            },
-            "background": {
-                "color": readSetting(primary, secondary, "background", "color", "backgroundColor", "none"),
-                "opacity": readSetting(primary, secondary, "background", "opacity", "backgroundOpacity", 0)
-            },
-            "focused": {
-                "showFill": readSetting(primary, secondary, "focused", "showFill", "showFocusedFill", true),
-                "fillColor": readSetting(primary, secondary, "focused", "fillColor", "focusedFillColor", "primary"),
-                "fillOpacity": readSetting(primary, secondary, "focused", "fillOpacity", "focusedFillOpacity", 92),
-                "showBorder": readSetting(primary, secondary, "focused", "showBorder", "showFocusedBorder", true),
-                "borderColor": readSetting(primary, secondary, "focused", "borderColor", "focusedBorderColor", "primary"),
-                "borderOpacity": readSetting(primary, secondary, "focused", "borderOpacity", "focusedBorderOpacity", 100),
-                "textColor": readSetting(primary, secondary, "focused", "textColor", "focusedTextColor", "on-primary")
-            },
-            "unfocused": {
-                "showFill": readSetting(primary, secondary, "unfocused", "showFill", "showUnfocusedFill", true),
-                "fillColor": readSetting(primary, secondary, "unfocused", "fillColor", "unfocusedFillColor", "surface-variant"),
-                "fillOpacity": readSetting(primary, secondary, "unfocused", "fillOpacity", "unfocusedFillOpacity", 8),
-                "showBorder": readSetting(primary, secondary, "unfocused", "showBorder", "showUnfocusedBorder", true),
-                "borderColor": readSetting(primary, secondary, "unfocused", "borderColor", "unfocusedBorderColor", "outline"),
-                "borderOpacity": readSetting(primary, secondary, "unfocused", "borderOpacity", "unfocusedBorderOpacity", 45),
-                "textColor": readSetting(primary, secondary, "unfocused", "textColor", "unfocusedTextColor", "on-surface"),
-                "inactiveOpacity": readSetting(primary, secondary, "unfocused", "inactiveOpacity", "inactiveOpacity", 45)
-            },
-            "hover": {
-                "fillColor": readSetting(primary, secondary, "hover", "fillColor", "hoverFillColor", "hover"),
-                "fillOpacity": readSetting(primary, secondary, "hover", "fillOpacity", "hoverFillOpacity", 55),
-                "showBorder": readSetting(primary, secondary, "hover", "showBorder", "showHoverBorder", true),
-                "borderColor": readSetting(primary, secondary, "hover", "borderColor", "hoverBorderColor", "outline"),
-                "borderOpacity": readSetting(primary, secondary, "hover", "borderOpacity", "hoverBorderOpacity", 100),
-                "textColor": readSetting(primary, secondary, "hover", "textColor", "hoverTextColor", "on-hover"),
-                "scalePercent": readSetting(primary, secondary, "hover", "scalePercent", "hoverScalePercent", 2.5),
-                "transitionDurationMs": readSetting(primary, secondary, "hover", "transitionDurationMs", "hoverTransitionDurationMs", 120)
-            },
-            "indicators": {
-                "showTrackLine": readSetting(primary, secondary, "indicators", "showTrackLine", "showTrackLine", true),
-                "trackOpacity": readSetting(primary, secondary, "indicators", "trackOpacity", "trackOpacity", 35),
-                "trackLinePosition": readSetting(primary, secondary, "indicators", "trackLinePosition", "trackLinePosition", "end"),
-                "trackLineThickness": readSetting(primary, secondary, "indicators", "trackLineThickness", "trackLineThickness", 2),
-                "trackThumbColor": readSetting(primary, secondary, "indicators", "trackThumbColor", "trackThumbColor", "primary"),
-                "showFocusLine": readSetting(primary, secondary, "indicators", "showFocusLine", "showFocusLine", true),
-                "focusLineColor": readSetting(primary, secondary, "indicators", "focusLineColor", "focusLineColor", "secondary"),
-                "focusLineOpacity": readSetting(primary, secondary, "indicators", "focusLineOpacity", "focusLineOpacity", 96),
-                "focusLineThickness": readSetting(primary, secondary, "indicators", "focusLineThickness", "focusLineThickness", 2),
-                "focusLineAnimationMs": readSetting(primary, secondary, "indicators", "focusLineAnimationMs", "focusLineAnimationMs", 120)
-            },
-            "workspaceAnimation": {
-                "enabled": readSetting(primary, secondary, "workspaceAnimation", "enabled", "workspaceAnimationEnabled", false),
-                "axis": readSetting(primary, secondary, "workspaceAnimation", "axis", "workspaceAnimationAxis", "horizontal")
-            }
-        };
+        return PresetUtils.createSettingsSnapshot(primary, secondary);
     }
 
     function createCustomPresetList(primary, secondary) {
-        const primaryPresets = primary?.presets?.custom;
-        const secondaryPresets = secondary?.presets?.custom;
-        const source = Array.isArray(primaryPresets) ? primaryPresets : (Array.isArray(secondaryPresets) ? secondaryPresets : []);
-        const normalized = [];
-
-        for (let i = 0; i < source.length; i++) {
-            const entry = source[i];
-            const name = normalizePresetName(entry?.name ?? "");
-            if (name === "" || findCustomPresetIndex(name, normalized) !== -1)
-                continue;
-
-            normalized.push({
-                "name": name,
-                "settings": createSettingsSnapshot(entry?.settings || ({}), defaults)
-            });
-        }
-
-        return normalized;
+        return PresetUtils.createCustomPresetList(primary, secondary);
     }
 
     function createCustomPresetListFromData(data) {
-        if (Array.isArray(data))
-            return createCustomPresetList({
-                "presets": {
-                    "custom": data
-                }
-            }, ({}));
-
-        if (Array.isArray(data?.customPresets))
-            return createCustomPresetList({
-                "presets": {
-                    "custom": data.customPresets
-                }
-            }, ({}));
-
-        if (Array.isArray(data?.presets?.custom))
-            return createCustomPresetList(data, ({}));
-
-        if (Array.isArray(data?.presets))
-            return createCustomPresetList({
-                "presets": {
-                    "custom": data.presets
-                }
-            }, ({}));
-
-        return [];
+        return PresetUtils.createCustomPresetListFromData(data, defaults);
     }
 
     function normalizePresetName(name) {
-        return (name ?? "").trim();
+        return PresetUtils.normalizePresetName(name);
     }
 
     function findCustomPresetIndex(name, presets) {
-        const normalizedName = normalizePresetName(name).toLowerCase();
-        if (normalizedName === "")
-            return -1;
-
-        const list = presets || customPresets;
-        for (let i = 0; i < list.length; i++) {
-            if ((list[i]?.name ?? "").toLowerCase() === normalizedName)
-                return i;
-        }
-
-        return -1;
+        return PresetUtils.findCustomPresetIndex(name, presets || customPresets);
     }
 
     function presetDescription(key) {
@@ -514,116 +274,7 @@ ColumnLayout {
     }
 
     function builtInPresetSnapshot(key) {
-        switch (key) {
-        case "standard":
-            return mergeDeep(defaultSettings, {
-                "indicators": {
-                    "showTrackLine": false,
-                    "showFocusLine": false
-                }
-            });
-        case "focusTrack":
-            return mergeDeep(defaultSettings, {
-                "indicators": {
-                    "showTrackLine": true,
-                    "showFocusLine": true
-                }
-            });
-        case "iconStrip":
-            return mergeDeep(defaultSettings, {
-                "indicators": {
-                    "showTrackLine": false,
-                    "showFocusLine": false
-                },
-                "title": {
-                    "showTitle": false
-                }
-            });
-        case "titleTrack":
-            return mergeDeep(defaultSettings, {
-                "layout": {
-                    "showSlots": false
-                },
-                "focusedTitle": {
-                    "enabled": true
-                },
-                "indicators": {
-                    "showTrackLine": true,
-                    "showFocusLine": true
-                }
-            });
-        case "trackOnly":
-            return mergeDeep(defaultSettings, {
-                "layout": {
-                    "showSlots": false
-                },
-                "focusedTitle": {
-                    "enabled": false
-                },
-                "indicators": {
-                    "showTrackLine": true,
-                    "showFocusLine": true
-                }
-            });
-        case "denseStrip":
-            return mergeDeep(defaultSettings, {
-                "layout": {
-                    "widgetSizeMode": "dynamic",
-                    "maxWidgetWidth": 60,
-                    "showSlots": true,
-                    "slotWidth": 84,
-                    "slotSpacingUnits": 0,
-                    "slotCapsuleScale": 0.72,
-                    "radiusScale": 0.85
-                },
-                "icons": {
-                    "showIcons": true,
-                    "iconScale": 0.65
-                },
-                "title": {
-                    "showTitle": false
-                },
-                "indicators": {
-                    "showTrackLine": false,
-                    "showFocusLine": false
-                }
-            });
-        case "floatingPanel":
-            return mergeDeep(defaultSettings, {
-                "window": {
-                    "renderMode": "window",
-                    "spaceMode": "overlay",
-                    "backgroundColor": "surface",
-                    "backgroundOpacity": 75,
-                    "gradientEnabled": true,
-                    "gradientColor": "primary",
-                    "gradientOpacity": 15,
-                    "radiusScale": 0.6,
-                    "margin": 8,
-                    "scale": 0.95
-                }
-            });
-        case "edgePill":
-            return mergeDeep(defaultSettings, {
-                "window": {
-                    "renderMode": "window",
-                    "spaceMode": "overlay",
-                    "backgroundColor": "surface",
-                    "backgroundOpacity": 100,
-                    "radiusScale": 1.0,
-                    "margin": 4
-                },
-                "layout": {
-                    "showSlots": false
-                },
-                "indicators": {
-                    "showTrackLine": true,
-                    "showFocusLine": true
-                }
-            });
-        default:
-            return deepCopy(defaultSettings);
-        }
+        return PresetUtils.builtInPresetSnapshot(key, defaultSettings);
     }
 
     function applyPresetSnapshot(snapshot) {
