@@ -8,6 +8,8 @@
     "closeWindow": "Close window",
     "pinToBar": "Pin to bar",
     "unpinFromBar": "Unpin from bar",
+    "addStyleRuleForApp": "Add style rule for app",
+    "addStyleRuleForTitle": "Add style rule for title",
     "settings": "Widget settings"
   },
   "options": {
@@ -235,6 +237,10 @@
       "pinnedApps": {
         "label": "Pinned Apps",
         "desc": "Render pinned launchers beside the track and manage per-app custom icons."
+      },
+      "customStyleRules": {
+        "label": "Custom Style Rules",
+        "desc": "Override segment colors for matching windows using ordered regex rules."
       }
     },
     "focusLine": {
@@ -585,6 +591,45 @@
         "browse": "Browse File",
         "clear": "Clear Icon",
         "none": "No custom icon selected"
+      }
+    },
+    "customStyleRules": {
+      "empty": "No custom style rules yet. Add one here or create one from a segment context menu.",
+      "regexHelp": "Patterns use raw JavaScript regex. Examples: `^firefox$` for an exact app id match, `YouTube` for a title substring regex, or `.*Project.*` for broader title matching. Rules are checked top to bottom and the first match wins.",
+      "ruleTitle": "Rule {index}",
+      "enabled": {
+        "label": "Enabled",
+        "desc": "Disable this rule without removing it."
+      },
+      "matchField": {
+        "label": "Match Field",
+        "desc": "Choose whether this regex should be tested against the canonical app id or the live window title.",
+        "appId": "App ID",
+        "title": "Window Title"
+      },
+      "pattern": {
+        "label": "Regex Pattern",
+        "desc": "Enter a JavaScript regex pattern. Matching is case-sensitive unless you encode it in the pattern itself.",
+        "placeholder": "^firefox$",
+        "invalid": "This regex pattern is invalid and will be ignored until it is fixed."
+      },
+      "segmentColors": {
+        "label": "Segment Colors",
+        "desc": "Background colors applied to matched segments by state."
+      },
+      "iconColors": {
+        "label": "Icon Colors",
+        "desc": "Icon tint colors applied to matched segments by state."
+      },
+      "titleColors": {
+        "label": "Title Colors",
+        "desc": "Title text colors applied to matched segments by state."
+      },
+      "actions": {
+        "add": "Add Rule",
+        "remove": "Remove Rule",
+        "moveUp": "Move Up",
+        "moveDown": "Move Down"
       }
     },
     "tabs": {

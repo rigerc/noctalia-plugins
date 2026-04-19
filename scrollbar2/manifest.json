@@ -1,7 +1,7 @@
 {
   "id": "scrollbar2",
   "name": "Scrollbar2",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "minNoctaliaVersion": "4.6.6",
   "author": "rigerc",
   "license": "MIT",
@@ -213,6 +213,7 @@
         "activateRunningBehavior": "focusCycle",
         "items": []
       },
+      "customStyleRules": [],
       "_presets": [],
       "_activePresetId": ""
     }

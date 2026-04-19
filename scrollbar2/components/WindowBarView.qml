@@ -34,6 +34,7 @@ Item {
     property var displayedSpecialWorkspaceIcons: []
     property var outgoingSpecialWorkspaceIcons: []
     property real specialWorkspaceOverlayTransitionProgress: 1
+    property var invalidStyleRulePatterns: ({})
 
     readonly property string screenName: screen?.name ?? ""
     readonly property string barPosition: Settings.getBarPositionForScreen(screenName)
@@ -142,6 +143,123 @@ Item {
             return normalizeOpacityValue(defaultValue.opacity, fallbackValue);
 
         return fallbackValue;
+    }
+
+    function normalizeStyleRuleColorState(settingValue, fallbackColor, fallbackOpacity) {
+        const currentValue = (settingValue && typeof settingValue === "object" && !Array.isArray(settingValue)) ? settingValue : ({});
+        return {
+            "color": String(currentValue.color ?? fallbackColor),
+            "opacity": normalizeOpacityValue(currentValue.opacity, fallbackOpacity)
+        };
+    }
+
+    function normalizeStyleRule(rule) {
+        const source = (rule && typeof rule === "object" && !Array.isArray(rule)) ? rule : ({});
+        return {
+            "enabled": source.enabled !== false,
+            "matchField": source.matchField === "title" ? "title" : "appId",
+            "pattern": String(source.pattern || ""),
+            "colors": {
+                "segment": {
+                    "focused": normalizeStyleRuleColorState(source.colors?.segment?.focused, focusLineFocusedColorKey, focusLineFocusedOpacity),
+                    "hover": normalizeStyleRuleColorState(source.colors?.segment?.hover, focusLineHoverColorKey, focusLineHoverOpacity),
+                    "default": normalizeStyleRuleColorState(source.colors?.segment?.default, focusLineDefaultColorKey, focusLineDefaultOpacity)
+                },
+                "icon": {
+                    "focused": normalizeStyleRuleColorState(source.colors?.icon?.focused, iconColorFocusedKey, iconColorFocusedOpacity),
+                    "hover": normalizeStyleRuleColorState(source.colors?.icon?.hover, iconColorHoverKey, iconColorHoverOpacity),
+                    "default": normalizeStyleRuleColorState(source.colors?.icon?.default, iconColorDefaultKey, iconColorDefaultOpacity)
+                },
+                "title": {
+                    "focused": normalizeStyleRuleColorState(source.colors?.title?.focused, titleColorFocusedKey, titleColorFocusedOpacity),
+                    "hover": normalizeStyleRuleColorState(source.colors?.title?.hover, titleColorHoverKey, titleColorHoverOpacity),
+                    "default": normalizeStyleRuleColorState(source.colors?.title?.default, titleColorDefaultKey, titleColorDefaultOpacity)
+                }
+            }
+        };
+    }
+
+    function styleRuleItems() {
+        const configuredRules = currentSettings?.customStyleRules;
+        const source = Array.isArray(configuredRules) ? configuredRules : (Array.isArray(defaults?.customStyleRules) ? defaults.customStyleRules : []);
+        return source.map(normalizeStyleRule);
+    }
+
+    function ruleMatchSubject(entry, matchField) {
+        if (!entry)
+            return "";
+        if (matchField === "title")
+            return currentTitle(entry);
+        return String(mainInstance?.resolveToDesktopEntryId(entry?.appId || "") || entry?.appId || "");
+    }
+
+    function matchingStyleRule(entry) {
+        const rules = styleRuleItems();
+        for (let index = 0; index < rules.length; index++) {
+            const rule = rules[index];
+            const pattern = String(rule?.pattern || "").trim();
+            if (!rule?.enabled || pattern === "")
+                continue;
+
+            const subject = ruleMatchSubject(entry, rule.matchField);
+            if (subject === "")
+                continue;
+
+            try {
+                if (new RegExp(pattern).test(subject))
+                    return rule;
+            } catch (error) {
+                if (!invalidStyleRulePatterns[pattern]) {
+                    const nextLogged = Object.assign({}, invalidStyleRulePatterns);
+                    nextLogged[pattern] = true;
+                    invalidStyleRulePatterns = nextLogged;
+                    Logger.w("Scrollbar2", "Invalid custom style rule regex: " + pattern + " (" + error + ")");
+                }
+            }
+        }
+        return null;
+    }
+
+    function styleRuleStateValue(entryKey, groupKey, stateKey) {
+        const entry = entries.find(function (candidate) {
+            return candidate?.entryKey === entryKey;
+        }) || null;
+        const matchingRule = matchingStyleRule(entry);
+        if (!matchingRule)
+            return null;
+        return matchingRule.colors?.[groupKey]?.[stateKey] ?? null;
+    }
+
+    function resolvedSegmentStyle(entryKey) {
+        const state = segmentState(entryKey);
+        const overrideState = styleRuleStateValue(entryKey, "segment", state);
+        if (overrideState) {
+            const overrideColor = resolveColor(overrideState.color, state === "focused" ? focusLineFocusedColor : (state === "hover" ? focusLineHoverColor : focusLineDefaultColor));
+            return Qt.alpha(overrideColor, focusLineOpacity * overrideState.opacity);
+        }
+        return null;
+    }
+
+    function resolvedLabelState(entryKey, kind) {
+        const state = segmentState(entryKey);
+        const fallbackKey = kind === "icon"
+            ? (state === "focused" ? iconColorFocusedKey : (state === "hover" ? iconColorHoverKey : iconColorDefaultKey))
+            : (state === "focused" ? titleColorFocusedKey : (state === "hover" ? titleColorHoverKey : titleColorDefaultKey));
+        const fallbackOpacity = kind === "icon"
+            ? (state === "focused" ? iconColorFocusedOpacity : (state === "hover" ? iconColorHoverOpacity : iconColorDefaultOpacity))
+            : (state === "focused" ? titleColorFocusedOpacity : (state === "hover" ? titleColorHoverOpacity : titleColorDefaultOpacity));
+        const fallbackColor = kind === "icon"
+            ? (state === "focused" ? iconColorFocused : (state === "hover" ? iconColorHover : iconColorDefault))
+            : (state === "focused" ? titleColorFocused : (state === "hover" ? titleColorHover : titleColorDefault));
+        const overrideState = styleRuleStateValue(entryKey, kind, state);
+        const effectiveKey = String(overrideState?.color ?? fallbackKey);
+        const effectiveOpacity = overrideState ? overrideState.opacity : fallbackOpacity;
+        const effectiveColor = overrideState ? resolveColor(effectiveKey, fallbackColor) : fallbackColor;
+        return {
+            "key": effectiveKey,
+            "opacity": effectiveOpacity,
+            "color": effectiveColor
+        };
     }
 
     function nestedWindowStateOpacity(groupKey, stateKey, fallbackValue) {
@@ -556,6 +674,10 @@ Item {
     }
 
     function segmentBackgroundColor(entryKey) {
+        const overrideColor = resolvedSegmentStyle(entryKey);
+        if (overrideColor !== null)
+            return overrideColor;
+
         const state = segmentState(entryKey);
         if (state === "focused")
             return Qt.alpha(focusLineFocusedColor, focusLineOpacity * focusLineFocusedOpacity);
@@ -565,28 +687,12 @@ Item {
     }
 
     function labelColor(entryKey, kind) {
-        const state = segmentState(entryKey);
-        if (kind === "icon") {
-            if (state === "focused")
-                return Qt.alpha(iconColorFocused, iconColorFocusedOpacity);
-            if (state === "hover")
-                return Qt.alpha(iconColorHover, iconColorHoverOpacity);
-            return Qt.alpha(iconColorDefault, iconColorDefaultOpacity);
-        }
-        if (state === "focused")
-            return Qt.alpha(titleColorFocused, titleColorFocusedOpacity);
-        if (state === "hover")
-            return Qt.alpha(titleColorHover, titleColorHoverOpacity);
-        return Qt.alpha(titleColorDefault, titleColorDefaultOpacity);
+        const resolved = resolvedLabelState(entryKey, kind);
+        return Qt.alpha(resolved.color, resolved.opacity);
     }
 
     function iconTintEnabled(entryKey) {
-        const state = segmentState(entryKey);
-        if (state === "focused")
-            return iconColorFocusedKey !== "none";
-        if (state === "hover")
-            return iconColorHoverKey !== "none";
-        return iconColorDefaultKey !== "none";
+        return resolvedLabelState(entryKey, "icon").key !== "none";
     }
 
     function titleWeight(entryKey) {
@@ -775,7 +881,17 @@ Item {
                     "action": appPinned ? "unpin" : "pin",
                     "icon": appPinned ? "unpin" : "pin"
                 });
+                model.push({
+                    "label": pluginApi?.tr("menu.addStyleRuleForApp"),
+                    "action": "style-rule-app",
+                    "icon": "brush"
+                });
             }
+            model.push({
+                "label": pluginApi?.tr("menu.addStyleRuleForTitle"),
+                "action": "style-rule-title",
+                "icon": "typography"
+            });
         } else if (pinnedApp) {
             clearContextSelection();
             selectedAppId = pinnedApp.appId ?? "";
@@ -1479,6 +1595,16 @@ Item {
                 root.mainInstance?.toggleAppPin(root.selectedAppId);
             } else if (action === "unpin") {
                 root.mainInstance?.removePinnedApp(root.selectedAppId);
+            } else if (action === "style-rule-app") {
+                const appRule = root.mainInstance?.buildPrefilledStyleRule(root.selectedEntryKey, "appId");
+                if (appRule)
+                    root.mainInstance?.appendStyleRule(appRule, true);
+                BarService.openPluginSettings(root.screen, pluginApi.manifest);
+            } else if (action === "style-rule-title") {
+                const titleRule = root.mainInstance?.buildPrefilledStyleRule(root.selectedEntryKey, "title");
+                if (titleRule)
+                    root.mainInstance?.appendStyleRule(titleRule, true);
+                BarService.openPluginSettings(root.screen, pluginApi.manifest);
             } else if (action === "settings") {
                 BarService.openPluginSettings(root.screen, pluginApi.manifest);
             } else if (action.startsWith("desktop-action-") && item?.desktopAction) {
@@ -1499,6 +1625,14 @@ Item {
         function onStructureRevisionChanged() {
             root.hoveredEntryKey = "";
             root.hoveredPinnedAppId = "";
+        }
+    }
+
+    Connections {
+        target: pluginApi
+
+        function onPluginSettingsChanged() {
+            root.invalidStyleRulePatterns = ({});
         }
     }
 }

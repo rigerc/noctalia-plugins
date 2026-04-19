@@ -275,6 +275,41 @@ ColumnLayout {
         return normalized;
     }
 
+    function normalizeCustomStyleRule(rule) {
+        const source = (rule && typeof rule === "object" && !Array.isArray(rule)) ? rule : ({});
+        return {
+            "enabled": source.enabled !== false,
+            "matchField": source.matchField === "title" ? "title" : "appId",
+            "pattern": String(source.pattern || ""),
+            "colors": {
+                "segment": normalizeColorStateMap(
+                    source.colors?.segment,
+                    {
+                        "focused": "primary",
+                        "hover": "hover",
+                        "default": "surface-variant"
+                    }
+                ),
+                "icon": normalizeColorStateMap(
+                    source.colors?.icon,
+                    {
+                        "focused": "on-surface",
+                        "hover": "on-hover",
+                        "default": "on-surface-variant"
+                    }
+                ),
+                "title": normalizeColorStateMap(
+                    source.colors?.title,
+                    {
+                        "focused": "on-surface",
+                        "hover": "on-hover",
+                        "default": "on-surface-variant"
+                    }
+                )
+            }
+        };
+    }
+
     function normalizeSettingsSnapshot(settings) {
         const next = deepCopy(settings || ({}));
         if (!next.display)
@@ -391,6 +426,7 @@ ColumnLayout {
         }).filter(function (item) {
             return item.appId !== "";
         }) : [];
+        next.customStyleRules = Array.isArray(next.customStyleRules) ? next.customStyleRules.map(normalizeCustomStyleRule) : [];
 
         delete next.display.backgroundColor;
         delete next.display.backgroundOpacity;
@@ -570,6 +606,120 @@ ColumnLayout {
         }));
     }
 
+    function styleRuleItems() {
+        return Array.isArray(editSettings?.customStyleRules) ? editSettings.customStyleRules : [];
+    }
+
+    function defaultStyleRuleItems() {
+        return Array.isArray(defaultSettings?.customStyleRules) ? defaultSettings.customStyleRules : [];
+    }
+
+    function currentGlobalStyleRuleColors() {
+        return {
+            "segment": normalizeColorStateMap(
+                editSettings?.focusLine?.colors,
+                {
+                    "focused": "primary",
+                    "hover": "hover",
+                    "default": "surface-variant"
+                }
+            ),
+            "icon": normalizeColorStateMap(
+                editSettings?.window?.iconColors,
+                {
+                    "focused": "on-surface",
+                    "hover": "on-hover",
+                    "default": "on-surface-variant"
+                }
+            ),
+            "title": normalizeColorStateMap(
+                editSettings?.window?.titleColors,
+                {
+                    "focused": "on-surface",
+                    "hover": "on-hover",
+                    "default": "on-surface-variant"
+                }
+            )
+        };
+    }
+
+    function createEmptyStyleRule() {
+        return normalizeCustomStyleRule({
+            "enabled": true,
+            "matchField": "appId",
+            "pattern": "",
+            "colors": currentGlobalStyleRuleColors()
+        });
+    }
+
+    function setStyleRuleItems(items) {
+        const next = deepCopy(editSettings);
+        next.customStyleRules = Array.isArray(items) ? items.map(normalizeCustomStyleRule) : [];
+        editSettings = next;
+        _activePresetId = "";
+    }
+
+    function addStyleRule() {
+        const nextItems = styleRuleItems().slice();
+        nextItems.push(createEmptyStyleRule());
+        setStyleRuleItems(nextItems);
+    }
+
+    function updateStyleRule(index, patch) {
+        if (index < 0 || index >= styleRuleItems().length)
+            return;
+
+        const nextItems = styleRuleItems().slice();
+        nextItems[index] = normalizeCustomStyleRule(Object.assign({}, nextItems[index] || ({}), patch || ({})));
+        setStyleRuleItems(nextItems);
+    }
+
+    function updateStyleRuleColorState(index, colorGroup, stateKey, nestedKey, value) {
+        if (index < 0 || index >= styleRuleItems().length)
+            return;
+
+        const nextItems = deepCopy(styleRuleItems());
+        if (!nextItems[index].colors)
+            nextItems[index].colors = ({});
+        if (!nextItems[index].colors[colorGroup])
+            nextItems[index].colors[colorGroup] = ({});
+        if (!nextItems[index].colors[colorGroup][stateKey])
+            nextItems[index].colors[colorGroup][stateKey] = ({});
+        nextItems[index].colors[colorGroup][stateKey][nestedKey] = value;
+        setStyleRuleItems(nextItems);
+    }
+
+    function moveStyleRule(index, direction) {
+        const nextIndex = index + direction;
+        const nextItems = styleRuleItems().slice();
+        if (index < 0 || index >= nextItems.length || nextIndex < 0 || nextIndex >= nextItems.length)
+            return;
+
+        const swapped = nextItems[index];
+        nextItems[index] = nextItems[nextIndex];
+        nextItems[nextIndex] = swapped;
+        setStyleRuleItems(nextItems);
+    }
+
+    function removeStyleRule(index) {
+        setStyleRuleItems(styleRuleItems().filter(function (_item, itemIndex) {
+            return itemIndex !== index;
+        }));
+    }
+
+    function isValidRegex(pattern) {
+        const text = String(pattern || "").trim();
+        if (text === "")
+            return true;
+
+        try {
+            new RegExp(text);
+            return true;
+        } catch (error) {
+            return false;
+        }
+    }
+
     Connections {
         target: pluginApi
 
@@ -638,6 +788,11 @@ ColumnLayout {
                 rootSettings: root
             }
 
+            CustomStyleRulesSettingsSection {
+                Layout.fillWidth: true
+                rootSettings: root
+            }
+
             ColorSettingsSection {
                 Layout.fillWidth: true
                 rootSettings: root
@@ -659,6 +814,9 @@ ColumnLayout {
             return;
 
         const normalized = normalizeSettingsSnapshot(editSettings);
+        normalized.customStyleRules = normalized.customStyleRules.filter(function (rule) {
+            return String(rule?.pattern || "").trim() !== "";
+        });
         normalized._presets = deepCopy(pluginApi.pluginSettings._presets || []);
         normalized._activePresetId = _activePresetId;
         pluginApi.pluginSettings = normalized;

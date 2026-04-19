@@ -321,6 +321,120 @@ Item {
         refreshSettingsSnapshot();
     }
 
+    function normalizeStyleRuleColorState(source, fallbackColor, fallbackOpacity) {
+        const currentValue = (source && typeof source === "object" && !Array.isArray(source)) ? source : ({});
+        return {
+            "color": String(currentValue.color ?? fallbackColor),
+            "opacity": normalizeOpacityValue(currentValue.opacity ?? fallbackOpacity)
+        };
+    }
+
+    function normalizeStyleRule(rule) {
+        const source = (rule && typeof rule === "object" && !Array.isArray(rule)) ? rule : ({});
+        return {
+            "enabled": source.enabled !== false,
+            "matchField": source.matchField === "title" ? "title" : "appId",
+            "pattern": String(source.pattern || ""),
+            "colors": {
+                "segment": {
+                    "focused": normalizeStyleRuleColorState(source.colors?.segment?.focused, nestedStateColorValue("focusLine", "focused", "primary"), nestedStateOpacityValue("focusLine", "focused", 1)),
+                    "hover": normalizeStyleRuleColorState(source.colors?.segment?.hover, nestedStateColorValue("focusLine", "hover", "hover"), nestedStateOpacityValue("focusLine", "hover", 1)),
+                    "default": normalizeStyleRuleColorState(source.colors?.segment?.default, nestedStateColorValue("focusLine", "default", "surface-variant"), nestedStateOpacityValue("focusLine", "default", 1))
+                },
+                "icon": {
+                    "focused": normalizeStyleRuleColorState(source.colors?.icon?.focused, objectWindowSettingValue("iconColors", "focused", "on-surface"), nestedWindowStateOpacityValue("iconColors", "focused", 1)),
+                    "hover": normalizeStyleRuleColorState(source.colors?.icon?.hover, objectWindowSettingValue("iconColors", "hover", "on-hover"), nestedWindowStateOpacityValue("iconColors", "hover", 1)),
+                    "default": normalizeStyleRuleColorState(source.colors?.icon?.default, objectWindowSettingValue("iconColors", "default", "on-surface-variant"), nestedWindowStateOpacityValue("iconColors", "default", 1))
+                },
+                "title": {
+                    "focused": normalizeStyleRuleColorState(source.colors?.title?.focused, objectWindowSettingValue("titleColors", "focused", "on-surface"), nestedWindowStateOpacityValue("titleColors", "focused", 1)),
+                    "hover": normalizeStyleRuleColorState(source.colors?.title?.hover, objectWindowSettingValue("titleColors", "hover", "on-hover"), nestedWindowStateOpacityValue("titleColors", "hover", 1)),
+                    "default": normalizeStyleRuleColorState(source.colors?.title?.default, objectWindowSettingValue("titleColors", "default", "on-surface-variant"), nestedWindowStateOpacityValue("titleColors", "default", 1))
+                }
+            }
+        };
+    }
+
+    function nestedStateColorValue(groupKey, stateKey, fallbackValue) {
+        const value = currentSettings?.[groupKey]?.colors?.[stateKey]?.color;
+        if (value !== undefined)
+            return value;
+
+        const defaultValue = defaults?.[groupKey]?.colors?.[stateKey]?.color;
+        if (defaultValue !== undefined)
+            return defaultValue;
+
+        return fallbackValue;
+    }
+
+    function objectWindowSettingValue(groupKey, stateKey, fallbackValue) {
+        const value = currentSettings?.window?.[groupKey]?.[stateKey]?.color;
+        if (value !== undefined)
+            return value;
+
+        const defaultValue = defaults?.window?.[groupKey]?.[stateKey]?.color;
+        if (defaultValue !== undefined)
+            return defaultValue;
+
+        return fallbackValue;
+    }
+
+    function nestedStateOpacityValue(groupKey, stateKey, fallbackValue) {
+        const value = currentSettings?.[groupKey]?.colors?.[stateKey]?.opacity;
+        if (value !== undefined)
+            return normalizeOpacityValue(value);
+
+        const defaultValue = defaults?.[groupKey]?.colors?.[stateKey]?.opacity;
+        if (defaultValue !== undefined)
+            return normalizeOpacityValue(defaultValue);
+
+        return fallbackValue;
+    }
+
+    function nestedWindowStateOpacityValue(groupKey, stateKey, fallbackValue) {
+        const value = currentSettings?.window?.[groupKey]?.[stateKey]?.opacity;
+        if (value !== undefined)
+            return normalizeOpacityValue(value);
+
+        const defaultValue = defaults?.window?.[groupKey]?.[stateKey]?.opacity;
+        if (defaultValue !== undefined)
+            return normalizeOpacityValue(defaultValue);
+
+        return fallbackValue;
+    }
+
+    function escapeRegexLiteral(text) {
+        return String(text || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+
+    function appendStyleRule(rule, insertAtFront) {
+        updatePluginSettings(function (nextSettings) {
+            const currentRules = Array.isArray(nextSettings.customStyleRules) ? nextSettings.customStyleRules.slice() : [];
+            const normalizedRule = normalizeStyleRule(rule);
+            if (insertAtFront)
+                currentRules.unshift(normalizedRule);
+            else
+                currentRules.push(normalizedRule);
+            nextSettings.customStyleRules = currentRules;
+        });
+    }
+
+    function buildPrefilledStyleRule(entryKey, matchField) {
+        const window = getWindowByEntry(entryKey);
+        const resolvedMatchField = matchField === "title" ? "title" : "appId";
+        const rawValue = resolvedMatchField === "title"
+            ? String(titleEntriesByKey?.[entryKey] ?? window?.title ?? "")
+            : String(resolveToDesktopEntryId(window?.appId || "") || window?.appId || "");
+        if (String(rawValue).trim() === "")
+            return null;
+
+        return normalizeStyleRule({
+            "enabled": true,
+            "matchField": resolvedMatchField,
+            "pattern": "^" + escapeRegexLiteral(rawValue) + "$"
+        });
+    }
+
     function toggleAppPin(appId) {
         const canonicalId = resolveToDesktopEntryId(appId);
         if (!canonicalId)
