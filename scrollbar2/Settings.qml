@@ -370,6 +370,7 @@ ColumnLayout {
         next.specialWorkspaceOverlay = next.specialWorkspaceOverlay && typeof next.specialWorkspaceOverlay === "object" && !Array.isArray(next.specialWorkspaceOverlay) ? next.specialWorkspaceOverlay : ({});
         if (["stripped", "raw", "custom"].indexOf(next.specialWorkspaceOverlay.textMode) < 0)
             next.specialWorkspaceOverlay.textMode = "stripped";
+        next.specialWorkspaceOverlay.showWindowIcons = next.specialWorkspaceOverlay.showWindowIcons === true;
         next.specialWorkspaceOverlay.widthPercent = Math.max(50, Math.min(100, Number(next.specialWorkspaceOverlay.widthPercent ?? 100)));
         next.specialWorkspaceOverlay.heightPercent = Math.max(50, Math.min(100, Number(next.specialWorkspaceOverlay.heightPercent ?? 70)));
         next.specialWorkspaceOverlay.background = normalizeColorSetting(next.specialWorkspaceOverlay.background, undefined, undefined, "surface", 0.82);

@@ -7,3 +7,6 @@ CLAUDE.md
 .notes/
 .fuse*
 scrollbar/test.sh
+.vsync.json
+opencode.json
+.mcp.json

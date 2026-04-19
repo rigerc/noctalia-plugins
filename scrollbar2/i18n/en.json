@@ -514,6 +514,10 @@
         "label": "Custom Label",
         "desc": "Fixed text shown when the label mode is set to custom."
       },
+      "showWindowIcons": {
+        "label": "Show Window Icons",
+        "desc": "Render icons for windows currently open on the active special workspace to the right of the overlay label."
+      },
       "widthPercent": {
         "label": "Overlay Width",
         "desc": "Width of the overlay as a percentage of the track width."

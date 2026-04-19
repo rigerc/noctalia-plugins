@@ -58,6 +58,16 @@ ColumnLayout {
                 onTextChanged: rootSettings?.setSetting("specialWorkspaceOverlay", "customLabel", text)
             }
 
+            NToggle {
+                visible: rootSettings?.isVisibleByConditions(["specialWorkspaceOverlayEnabled"]) ?? false
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.showWindowIcons.label")
+                description: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.showWindowIcons.desc")
+                checked: rootSettings?.settingValue("specialWorkspaceOverlay", "showWindowIcons") ?? false
+                defaultValue: rootSettings?.defaultValue("specialWorkspaceOverlay", "showWindowIcons") ?? false
+                onToggled: checked => rootSettings?.setSetting("specialWorkspaceOverlay", "showWindowIcons", checked)
+            }
+
             NValueSlider {
                 visible: rootSettings?.isVisibleByConditions(["specialWorkspaceOverlayEnabled"]) ?? false
                 label: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.widthPercent.label")

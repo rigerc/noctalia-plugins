@@ -29,13 +29,17 @@ Item {
     property int displayedWorkspaceBadgeCount: 0
     property int outgoingWorkspaceBadgeCount: 0
     property real workspaceIndicatorTransitionProgress: 1
+    property string displayedSpecialWorkspaceText: ""
+    property string outgoingSpecialWorkspaceText: ""
+    property var displayedSpecialWorkspaceIcons: []
+    property var outgoingSpecialWorkspaceIcons: []
+    property real specialWorkspaceOverlayTransitionProgress: 1
 
     readonly property string screenName: screen?.name ?? ""
     readonly property string barPosition: Settings.getBarPositionForScreen(screenName)
     readonly property bool isVerticalBar: barPosition === "left" || barPosition === "right"
     readonly property bool hostVisible: visibleInCurrentMode && (hostMode !== "bar" || !isVerticalBar)
     readonly property var hyprlandMonitor: Hyprland.monitorFor(screen)
-    readonly property string fallbackSpecialWorkspaceName: String(mainInstance?.resolveSpecialWorkspaceForScreen(String(hyprlandMonitor?.name || screenName).trim())?.name || "").trim()
 
     function refreshSettingsSnapshot() {
         currentSettings = pluginApi?.pluginSettings || ({});
@@ -256,6 +260,7 @@ Item {
     readonly property bool specialWorkspaceOverlayEnabled: settingValue("specialWorkspaceOverlay", "enabled", false)
     readonly property string specialWorkspaceOverlayTextMode: settingValue("specialWorkspaceOverlay", "textMode", "stripped")
     readonly property string specialWorkspaceOverlayCustomLabel: String(settingValue("specialWorkspaceOverlay", "customLabel", "") || "").trim()
+    readonly property bool specialWorkspaceOverlayShowWindowIcons: settingValue("specialWorkspaceOverlay", "showWindowIcons", false)
     readonly property real specialWorkspaceOverlayWidthPercent: Math.max(50, Math.min(100, settingValue("specialWorkspaceOverlay", "widthPercent", 100)))
     readonly property real specialWorkspaceOverlayHeightPercent: Math.max(50, Math.min(100, settingValue("specialWorkspaceOverlay", "heightPercent", 70)))
     readonly property color specialWorkspaceOverlayBackgroundColor: resolveColor(objectSettingValue("specialWorkspaceOverlay", "background", "color", "surface"), Color.mSurface)
@@ -331,21 +336,6 @@ Item {
     }
     readonly property bool showSpecialWorkspaceOverlay: specialWorkspaceOverlayEnabled && hostVisible && specialWorkspaceOverlayLabelText !== ""
 
-    function logSpecialWorkspaceOverlayState(reason) {
-        Logger.i(
-            "Scrollbar2",
-            "[SpecialOverlay]",
-            reason,
-            "screen=", screenName,
-            "monitor=", String(hyprlandMonitor?.name || ""),
-            "directSpecial=", String(hyprlandMonitor?.specialWorkspace?.name || ""),
-            "fallbackSpecial=", fallbackSpecialWorkspaceName,
-            "enabled=", specialWorkspaceOverlayEnabled,
-            "hostVisible=", hostVisible,
-            "label=", specialWorkspaceOverlayLabelText,
-            "visible=", showSpecialWorkspaceOverlay
-        );
-    }
     readonly property string workspaceIndicatorValueText: {
         if (!activeWorkspace)
             return "";
@@ -390,6 +380,9 @@ Item {
     readonly property real effectiveTrackWidth: (segmentCount > 0 || showSpecialWorkspaceOverlay) ? Math.max(actualTrackWidth, availableWidth) : actualTrackWidth
     readonly property real specialWorkspaceOverlayWidth: Math.max(1, Math.round(effectiveTrackWidth * specialWorkspaceOverlayWidthPercent / 100))
     readonly property real specialWorkspaceOverlayHeight: Math.max(1, Math.round(availableContainerHeight * specialWorkspaceOverlayHeightPercent / 100))
+    readonly property real specialWorkspaceOverlayContentPadding: Math.max(8, Math.round(10 * Style.uiScaleRatio))
+    readonly property real specialWorkspaceOverlayIconSize: Math.max(14 * Style.uiScaleRatio, specialWorkspaceOverlayFontSize * 1.2)
+    readonly property real specialWorkspaceOverlayIconGap: Math.max(8, Math.round(10 * Style.uiScaleRatio))
     readonly property real totalIndicatorWidth: showWorkspaceIndicator ? (workspaceIndicatorMarginLeft + workspaceContainer.width + workspaceIndicatorMarginRight) : 0
     readonly property real pinnedSlotSize: Math.max(Math.round(availableContainerHeight * 0.82), computedIconSize + horizontalPadding * 2)
     readonly property real pinnedAreaContentWidth: pinnedSegmentCount > 0 ? (pinnedSegmentCount * pinnedSlotSize) + (Math.max(0, pinnedSegmentCount - 1) * segmentSpacing) : 0
@@ -425,6 +418,23 @@ Item {
 
     function workspaceIndicatorOvershoot() {
         return workspaceIndicatorAnimationType === "spring" ? 1.12 : 0;
+    }
+
+    function specialWorkspaceOverlayEasingType() {
+        switch (animationType) {
+        case "linear":
+            return Easing.Linear;
+        case "ease":
+            return Easing.InOutQuad;
+        case "spring":
+            return Easing.OutBack;
+        default:
+            return Easing.OutCubic;
+        }
+    }
+
+    function specialWorkspaceOverlayOvershoot() {
+        return animationType === "spring" ? 1.08 : 0;
     }
 
     function workspaceIndicatorAlignedY() {
@@ -479,11 +489,61 @@ Item {
         workspaceIndicatorSwap.restart();
     }
 
+    function updateSpecialWorkspaceOverlayPresentation() {
+        const nextText = specialWorkspaceOverlayLabelText;
+        const nextIcons = currentSpecialWorkspaceOverlayIcons();
+        if (nextText === "") {
+            displayedSpecialWorkspaceText = "";
+            outgoingSpecialWorkspaceText = "";
+            displayedSpecialWorkspaceIcons = [];
+            outgoingSpecialWorkspaceIcons = [];
+            specialWorkspaceOverlayTransitionProgress = 1;
+            return;
+        }
+
+        if (displayedSpecialWorkspaceText === "") {
+            displayedSpecialWorkspaceText = nextText;
+            outgoingSpecialWorkspaceText = "";
+            displayedSpecialWorkspaceIcons = nextIcons;
+            outgoingSpecialWorkspaceIcons = [];
+            specialWorkspaceOverlayTransitionProgress = 1;
+            return;
+        }
+
+        if (displayedSpecialWorkspaceText === nextText && JSON.stringify(displayedSpecialWorkspaceIcons) === JSON.stringify(nextIcons))
+            return;
+
+        if (!animationEnabled || animationSpeed <= 0) {
+            displayedSpecialWorkspaceText = nextText;
+            outgoingSpecialWorkspaceText = "";
+            displayedSpecialWorkspaceIcons = nextIcons;
+            outgoingSpecialWorkspaceIcons = [];
+            specialWorkspaceOverlayTransitionProgress = 1;
+            return;
+        }
+
+        outgoingSpecialWorkspaceText = displayedSpecialWorkspaceText;
+        outgoingSpecialWorkspaceIcons = displayedSpecialWorkspaceIcons.slice();
+        displayedSpecialWorkspaceText = nextText;
+        displayedSpecialWorkspaceIcons = nextIcons;
+        specialWorkspaceOverlayTransitionProgress = 0;
+        specialWorkspaceOverlaySwap.restart();
+    }
+
+    function currentSpecialWorkspaceOverlayIcons() {
+        if (!specialWorkspaceOverlayShowWindowIcons || !activeSpecialWorkspace)
+            return [];
+        const icons = mainInstance?.getWorkspaceWindowAppIds(screenName, activeSpecialWorkspace.id, activeSpecialWorkspace.name) || [];
+        return Array.isArray(icons) ? icons.slice() : [];
+    }
+
     onWorkspaceIndicatorTextChanged: updateWorkspaceIndicatorPresentation()
     onWorkspaceIndicatorBadgeCountChanged: updateWorkspaceIndicatorPresentation()
+    onSpecialWorkspaceOverlayLabelTextChanged: updateSpecialWorkspaceOverlayPresentation()
+    onRevisionTokenChanged: updateSpecialWorkspaceOverlayPresentation()
     Component.onCompleted: {
         updateWorkspaceIndicatorPresentation();
-        logSpecialWorkspaceOverlayState("componentCompleted");
+        updateSpecialWorkspaceOverlayPresentation();
     }
 
     function segmentState(entryKey) {
@@ -574,10 +634,9 @@ Item {
         return trackLineY() + visibleTrackThickness / 2;
     }
 
-    onHyprlandMonitorChanged: logSpecialWorkspaceOverlayState("hyprlandMonitorChanged")
-    onActiveSpecialWorkspaceNameTextChanged: logSpecialWorkspaceOverlayState("activeSpecialWorkspaceNameChanged")
-    onSpecialWorkspaceOverlayLabelTextChanged: logSpecialWorkspaceOverlayState("overlayLabelChanged")
-    onShowSpecialWorkspaceOverlayChanged: logSpecialWorkspaceOverlayState("overlayVisibilityChanged")
+    function specialWorkspaceOverlayY() {
+        return Math.max(0, Math.round((implicitHeight - specialWorkspaceOverlayHeight) / 2));
+    }
 
     function indicatorY() {
         return alignedY(focusLineVerticalAlign, visibleFocusLineThickness);
@@ -752,6 +811,23 @@ Item {
             if (root.workspaceIndicatorTransitionProgress >= 1) {
                 root.outgoingWorkspaceText = "";
                 root.outgoingWorkspaceBadgeCount = 0;
+            }
+        }
+    }
+
+    NumberAnimation {
+        id: specialWorkspaceOverlaySwap
+        target: root
+        property: "specialWorkspaceOverlayTransitionProgress"
+        from: 0
+        to: 1
+        duration: root.animationSpeed
+        easing.type: root.specialWorkspaceOverlayEasingType()
+        easing.overshoot: root.specialWorkspaceOverlayOvershoot()
+        onStopped: {
+            if (root.specialWorkspaceOverlayTransitionProgress >= 1) {
+                root.outgoingSpecialWorkspaceText = "";
+                root.outgoingSpecialWorkspaceIcons = [];
             }
         }
     }
@@ -1151,23 +1227,111 @@ Item {
         id: specialWorkspaceOverlay
         visible: root.showSpecialWorkspaceOverlay
         x: root.leftAccessoryWidth + Math.round((root.effectiveTrackWidth - width) / 2)
-        y: Math.round(root.trackCenterY() - height / 2)
+        y: root.specialWorkspaceOverlayY()
         width: root.specialWorkspaceOverlayWidth
         height: root.specialWorkspaceOverlayHeight
         radius: Math.min(root.trackBorderRadius, Math.min(width, height) / 2)
         color: Qt.alpha(root.specialWorkspaceOverlayBackgroundColor, root.specialWorkspaceOverlayBackgroundOpacity)
         z: 22
+        opacity: root.showSpecialWorkspaceOverlay ? 1 : 0
+        scale: root.showSpecialWorkspaceOverlay ? 1 : 0.92
 
-        NText {
-            anchors.centerIn: parent
-            width: Math.max(0, parent.width - Math.round(12 * Style.uiScaleRatio))
-            text: root.specialWorkspaceOverlayLabelText
-            horizontalAlignment: Text.AlignHCenter
-            elide: Text.ElideRight
-            color: Qt.alpha(root.specialWorkspaceOverlayTextColor, root.specialWorkspaceOverlayTextOpacity)
-            font.family: root.specialWorkspaceOverlayFontFamily || Qt.application.font.family
-            font.weight: root.fontWeightValue(root.specialWorkspaceOverlayFontWeightKey, Style.fontWeightMedium)
-            pointSize: root.specialWorkspaceOverlayFontSize
+        Behavior on opacity {
+            enabled: root.animationEnabled
+            NumberAnimation {
+                duration: root.animationSpeed
+                easing.type: root.specialWorkspaceOverlayEasingType()
+                easing.overshoot: root.specialWorkspaceOverlayOvershoot()
+            }
+        }
+
+        Behavior on scale {
+            enabled: root.animationEnabled
+            NumberAnimation {
+                duration: root.animationSpeed
+                easing.type: root.specialWorkspaceOverlayEasingType()
+                easing.overshoot: root.specialWorkspaceOverlayOvershoot()
+            }
+        }
+
+        Item {
+            anchors.fill: parent
+            clip: true
+
+            Row {
+                anchors.centerIn: parent
+                spacing: (root.outgoingSpecialWorkspaceText !== "" && root.outgoingSpecialWorkspaceIcons.length > 0) ? root.specialWorkspaceOverlayIconGap : 0
+                visible: root.outgoingSpecialWorkspaceText !== "" && root.specialWorkspaceOverlayTransitionProgress < 1
+                opacity: 1 - root.specialWorkspaceOverlayTransitionProgress
+                y: Math.round(-Math.max(4, root.specialWorkspaceOverlayHeight * 0.14) * root.specialWorkspaceOverlayTransitionProgress)
+
+                NText {
+                    readonly property real iconsWidth: root.outgoingSpecialWorkspaceIcons.length > 0
+                        ? (root.outgoingSpecialWorkspaceIcons.length * root.specialWorkspaceOverlayIconSize) + ((root.outgoingSpecialWorkspaceIcons.length - 1) * root.specialWorkspaceOverlayIconGap)
+                        : 0
+                    readonly property real maxTextWidth: Math.max(0, specialWorkspaceOverlay.width - (root.specialWorkspaceOverlayContentPadding * 2) - iconsWidth - (root.outgoingSpecialWorkspaceIcons.length > 0 ? root.specialWorkspaceOverlayIconGap : 0))
+                    width: Math.min(implicitWidth, maxTextWidth)
+                    text: root.outgoingSpecialWorkspaceText
+                    horizontalAlignment: Text.AlignHCenter
+                    elide: Text.ElideRight
+                    color: Qt.alpha(root.specialWorkspaceOverlayTextColor, root.specialWorkspaceOverlayTextOpacity)
+                    font.family: root.specialWorkspaceOverlayFontFamily || Qt.application.font.family
+                    font.weight: root.fontWeightValue(root.specialWorkspaceOverlayFontWeightKey, Style.fontWeightMedium)
+                    pointSize: root.specialWorkspaceOverlayFontSize
+                }
+
+                Repeater {
+                    model: root.outgoingSpecialWorkspaceIcons
+
+                    delegate: IconImage {
+                        required property var modelData
+
+                        width: root.specialWorkspaceOverlayIconSize
+                        height: width
+                        anchors.verticalCenter: parent ? parent.verticalCenter : undefined
+                        source: ThemeIcons.iconForAppId(String(modelData || ""))
+                        smooth: true
+                        asynchronous: true
+                    }
+                }
+            }
+
+            Row {
+                anchors.centerIn: parent
+                spacing: (root.displayedSpecialWorkspaceText !== "" && root.displayedSpecialWorkspaceIcons.length > 0) ? root.specialWorkspaceOverlayIconGap : 0
+                opacity: root.animationEnabled ? root.specialWorkspaceOverlayTransitionProgress : 1
+                y: root.animationEnabled ? Math.round((1 - root.specialWorkspaceOverlayTransitionProgress) * Math.max(4, root.specialWorkspaceOverlayHeight * 0.14)) : 0
+
+                NText {
+                    readonly property real iconsWidth: root.displayedSpecialWorkspaceIcons.length > 0
+                        ? (root.displayedSpecialWorkspaceIcons.length * root.specialWorkspaceOverlayIconSize) + ((root.displayedSpecialWorkspaceIcons.length - 1) * root.specialWorkspaceOverlayIconGap)
+                        : 0
+                    readonly property real maxTextWidth: Math.max(0, specialWorkspaceOverlay.width - (root.specialWorkspaceOverlayContentPadding * 2) - iconsWidth - (root.displayedSpecialWorkspaceIcons.length > 0 ? root.specialWorkspaceOverlayIconGap : 0))
+                    width: Math.min(implicitWidth, maxTextWidth)
+                    text: root.displayedSpecialWorkspaceText
+                    horizontalAlignment: Text.AlignHCenter
+                    elide: Text.ElideRight
+                    color: Qt.alpha(root.specialWorkspaceOverlayTextColor, root.specialWorkspaceOverlayTextOpacity)
+                    font.family: root.specialWorkspaceOverlayFontFamily || Qt.application.font.family
+                    font.weight: root.fontWeightValue(root.specialWorkspaceOverlayFontWeightKey, Style.fontWeightMedium)
+                    pointSize: root.specialWorkspaceOverlayFontSize
+                }
+
+                Repeater {
+                    model: root.displayedSpecialWorkspaceIcons
+
+                    delegate: IconImage {
+                        required property var modelData
+
+                        width: root.specialWorkspaceOverlayIconSize
+                        height: width
+                        anchors.verticalCenter: parent ? parent.verticalCenter : undefined
+                        source: ThemeIcons.iconForAppId(String(modelData || ""))
+                        smooth: true
+                        asynchronous: true
+                    }
+                }
+            }
         }
     }
 

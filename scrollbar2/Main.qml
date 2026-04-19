@@ -522,6 +522,36 @@ Item {
         return count;
     }
 
+    function getWorkspaceWindowAppIds(screenName, workspaceId, workspaceName) {
+        const normalizedScreenName = String(screenName || "").toLowerCase();
+        const normalizedWorkspaceId = String(workspaceId ?? "").trim();
+        const normalizedWorkspaceName = String(workspaceName ?? "").trim();
+        const windows = collectWindows();
+        const appIds = [];
+
+        for (let i = 0; i < windows.length; i++) {
+            const window = windows[i];
+            if (!window)
+                continue;
+
+            const windowWorkspaceId = String(window.workspaceId ?? "").trim();
+            const windowWorkspaceName = String(window.workspaceName ?? "").trim();
+            const matchesWorkspace = (normalizedWorkspaceId !== "" && windowWorkspaceId === normalizedWorkspaceId)
+                || (normalizedWorkspaceName !== "" && windowWorkspaceName === normalizedWorkspaceName);
+            if (!matchesWorkspace)
+                continue;
+
+            if (!workspaceOutputMatches({
+                "output": window.output || ""
+            }, normalizedScreenName))
+                continue;
+
+            appIds.push(String(window.appId || ""));
+        }
+
+        return appIds;
+    }
+
     function buildEntries(windows) {
         return (windows || []).map(function (window) {
             return {
