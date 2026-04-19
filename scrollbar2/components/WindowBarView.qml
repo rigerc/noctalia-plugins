@@ -151,9 +151,22 @@ Item {
         return fallbackValue;
     }
 
+    function nestedStateEnabled(groupKey, stateKey, fallbackValue) {
+        const value = currentSettings?.[groupKey]?.colors?.[stateKey];
+        if (value && typeof value === "object" && !Array.isArray(value) && value.enabled !== undefined)
+            return value.enabled !== false;
+
+        const defaultValue = defaults?.[groupKey]?.colors?.[stateKey];
+        if (defaultValue && typeof defaultValue === "object" && !Array.isArray(defaultValue) && defaultValue.enabled !== undefined)
+            return defaultValue.enabled !== false;
+
+        return fallbackValue;
+    }
+
     function normalizeStyleRuleColorState(settingValue, fallbackColor, fallbackOpacity) {
         const currentValue = (settingValue && typeof settingValue === "object" && !Array.isArray(settingValue)) ? settingValue : ({});
         return {
+            "enabled": currentValue.enabled !== false,
             "color": String(currentValue.color ?? fallbackColor),
             "opacity": normalizeOpacityValue(currentValue.opacity, fallbackOpacity)
         };
@@ -241,6 +254,8 @@ Item {
         const state = segmentState(entryKey);
         const overrideState = styleRuleStateValue(entryKey, "segment", state);
         if (overrideState) {
+            if (overrideState.enabled === false)
+                return "transparent";
             const overrideColor = resolveColor(overrideState.color, state === "focused" ? focusLineFocusedColor : (state === "hover" ? focusLineHoverColor : focusLineDefaultColor));
             return colorWithOpacity(overrideColor, focusLineOpacity * overrideState.opacity);
         }
@@ -316,6 +331,9 @@ Item {
     readonly property real focusLineFocusedOpacity: nestedStateOpacity("focusLine", "focused", 1)
     readonly property real focusLineHoverOpacity: nestedStateOpacity("focusLine", "hover", 1)
     readonly property real focusLineDefaultOpacity: nestedStateOpacity("focusLine", "default", 1)
+    readonly property bool focusLineFocusedEnabled: nestedStateEnabled("focusLine", "focused", true)
+    readonly property bool focusLineHoverEnabled: nestedStateEnabled("focusLine", "hover", true)
+    readonly property bool focusLineDefaultEnabled: nestedStateEnabled("focusLine", "default", true)
     readonly property color focusLineFocusedColor: resolveColor(focusLineFocusedColorKey, Color.mPrimary)
     readonly property color focusLineHoverColor: resolveColor(focusLineHoverColorKey, Color.mHover)
     readonly property color focusLineDefaultColor: resolveColor(focusLineDefaultColorKey, Color.mSurfaceVariant)
@@ -575,11 +593,7 @@ Item {
     }
 
     function workspaceIndicatorAlignedY() {
-        if (workspaceIndicatorVerticalAlign === "top")
-            return 0;
-        if (workspaceIndicatorVerticalAlign === "bottom")
-            return Math.max(0, root.implicitHeight - workspaceContainer.height);
-        return Math.max(0, Math.round((root.implicitHeight - workspaceContainer.height) / 2));
+        return alignedY(workspaceIndicatorVerticalAlign, workspaceContainer.height);
     }
 
     function pinnedAppsAlignedY() {
@@ -699,10 +713,10 @@ Item {
 
         const state = segmentState(entryKey);
         if (state === "focused")
-            return colorWithOpacity(focusLineFocusedColor, focusLineOpacity * focusLineFocusedOpacity);
+            return focusLineFocusedEnabled ? colorWithOpacity(focusLineFocusedColor, focusLineOpacity * focusLineFocusedOpacity) : "transparent";
         if (state === "hover")
-            return colorWithOpacity(focusLineHoverColor, focusLineOpacity * focusLineHoverOpacity);
-        return colorWithOpacity(focusLineDefaultColor, focusLineOpacity * focusLineDefaultOpacity);
+            return focusLineHoverEnabled ? colorWithOpacity(focusLineHoverColor, focusLineOpacity * focusLineHoverOpacity) : "transparent";
+        return focusLineDefaultEnabled ? colorWithOpacity(focusLineDefaultColor, focusLineOpacity * focusLineDefaultOpacity) : "transparent";
     }
 
     function labelColor(entryKey, kind) {

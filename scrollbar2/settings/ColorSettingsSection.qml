@@ -70,9 +70,19 @@ ColumnLayout {
                 description: rootSettings?.pluginApi?.tr("settings.section.focusColors.desc")
             }
 
+            NToggle {
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.focusLine.colors.focused.enabled.label")
+                description: rootSettings?.pluginApi?.tr("settings.focusLine.colors.focused.enabled.desc")
+                checked: rootSettings?.stateSettingValue("focusLine", "colors", "focused", "enabled") ?? true
+                defaultValue: rootSettings?.defaultStateValue("focusLine", "colors", "focused", "enabled") ?? true
+                onToggled: checked => rootSettings?.setStateSetting("focusLine", "colors", "focused", "enabled", checked)
+            }
+
             HybridColorChoice {
                 pluginApi: rootSettings?.pluginApi
                 Layout.fillWidth: true
+                enabled: rootSettings?.stateSettingValue("focusLine", "colors", "focused", "enabled") ?? true
                 label: rootSettings?.pluginApi?.tr("settings.focusLine.colors.focused.label")
                 description: rootSettings?.pluginApi?.tr("settings.focusLine.colors.focused.desc")
                 currentColor: rootSettings?.stateSettingValue("focusLine", "colors", "focused", "color") ?? "primary"
@@ -84,9 +94,19 @@ ColumnLayout {
                 onOpacitySelected: value => rootSettings?.setStateSetting("focusLine", "colors", "focused", "opacity", value)
             }
 
+            NToggle {
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.focusLine.colors.hover.enabled.label")
+                description: rootSettings?.pluginApi?.tr("settings.focusLine.colors.hover.enabled.desc")
+                checked: rootSettings?.stateSettingValue("focusLine", "colors", "hover", "enabled") ?? true
+                defaultValue: rootSettings?.defaultStateValue("focusLine", "colors", "hover", "enabled") ?? true
+                onToggled: checked => rootSettings?.setStateSetting("focusLine", "colors", "hover", "enabled", checked)
+            }
+
             HybridColorChoice {
                 pluginApi: rootSettings?.pluginApi
                 Layout.fillWidth: true
+                enabled: rootSettings?.stateSettingValue("focusLine", "colors", "hover", "enabled") ?? true
                 label: rootSettings?.pluginApi?.tr("settings.focusLine.colors.hover.label")
                 description: rootSettings?.pluginApi?.tr("settings.focusLine.colors.hover.desc")
                 currentColor: rootSettings?.stateSettingValue("focusLine", "colors", "hover", "color") ?? "hover"
@@ -98,9 +118,19 @@ ColumnLayout {
                 onOpacitySelected: value => rootSettings?.setStateSetting("focusLine", "colors", "hover", "opacity", value)
             }
 
+            NToggle {
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.focusLine.colors.default.enabled.label")
+                description: rootSettings?.pluginApi?.tr("settings.focusLine.colors.default.enabled.desc")
+                checked: rootSettings?.stateSettingValue("focusLine", "colors", "default", "enabled") ?? true
+                defaultValue: rootSettings?.defaultStateValue("focusLine", "colors", "default", "enabled") ?? true
+                onToggled: checked => rootSettings?.setStateSetting("focusLine", "colors", "default", "enabled", checked)
+            }
+
             HybridColorChoice {
                 pluginApi: rootSettings?.pluginApi
                 Layout.fillWidth: true
+                enabled: rootSettings?.stateSettingValue("focusLine", "colors", "default", "enabled") ?? true
                 label: rootSettings?.pluginApi?.tr("settings.focusLine.colors.default.label")
                 description: rootSettings?.pluginApi?.tr("settings.focusLine.colors.default.desc")
                 currentColor: rootSettings?.stateSettingValue("focusLine", "colors", "default", "color") ?? "surface-variant"

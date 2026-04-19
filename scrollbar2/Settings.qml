@@ -298,6 +298,7 @@ ColumnLayout {
                 fallbackMap[key],
                 opacityValue
             );
+            normalized[key].enabled = currentState?.enabled !== false;
         }
 
         return normalized;

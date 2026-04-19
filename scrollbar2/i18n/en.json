@@ -304,14 +304,26 @@
       },
       "colors": {
         "focused": {
+          "enabled": {
+            "label": "Enable Focused Color",
+            "desc": "Show a background fill for the active segment."
+          },
           "label": "Focused Color",
           "desc": "Theme key or hex color for the active segment."
         },
         "hover": {
+          "enabled": {
+            "label": "Enable Hover Color",
+            "desc": "Show a background fill when hovering a segment."
+          },
           "label": "Hover Color",
           "desc": "Theme key or hex color for hovered segments."
         },
         "default": {
+          "enabled": {
+            "label": "Enable Default Color",
+            "desc": "Show a background fill for resting segments."
+          },
           "label": "Default Color",
           "desc": "Theme key or hex color for resting segments."
         }
