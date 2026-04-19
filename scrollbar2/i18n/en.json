@@ -6,6 +6,8 @@
   "menu": {
     "focus": "Focus window",
     "closeWindow": "Close window",
+    "pinToBar": "Pin to bar",
+    "unpinFromBar": "Unpin from bar",
     "settings": "Widget settings"
   },
   "options": {
@@ -33,6 +35,10 @@
     "workspaceIndicatorName": "Workspace Name",
     "workspaceIndicatorLeft": "Left of Track",
     "workspaceIndicatorRight": "Right of Track",
+    "pinnedAppsLeft": "Left of Track",
+    "pinnedAppsRight": "Right of Track",
+    "pinnedAppsFocusCycle": "Focus and Cycle",
+    "pinnedAppsStartNew": "Start New Instance",
     "axisHorizontal": "Horizontal",
     "axisVertical": "Vertical",
     "fontWeightLight": "Light",
@@ -218,6 +224,10 @@
       "workspaceIndicator": {
         "label": "Workspace Indicator",
         "desc": "Show the active workspace beside the track with optional count badge styling."
+      },
+      "pinnedApps": {
+        "label": "Pinned Apps",
+        "desc": "Render pinned launchers beside the track and manage per-app custom icons."
       }
     },
     "focusLine": {
@@ -482,6 +492,44 @@
           "label": "Animation Speed",
           "desc": "Transition duration in milliseconds for workspace changes."
         }
+      }
+    },
+    "pinnedApps": {
+      "position": {
+        "label": "Position",
+        "desc": "Place the pinned apps strip on the left or right side of the track."
+      },
+      "iconColor": {
+        "label": "Icon Color",
+        "desc": "Theme key or hex color applied to pinned app icons."
+      },
+      "marginLeft": {
+        "label": "Left Margin",
+        "desc": "Spacing on the left side of the pinned apps strip."
+      },
+      "marginRight": {
+        "label": "Right Margin",
+        "desc": "Spacing on the right side of the pinned apps strip."
+      },
+      "hideWhenActive": {
+        "label": "Hide When Active",
+        "desc": "Hide a pinned app whenever this widget already shows a visible window for that app."
+      },
+      "activateRunningBehavior": {
+        "label": "When Already Running",
+        "desc": "Choose whether clicking a visible pinned app focuses and cycles its visible windows or starts a new instance."
+      },
+      "items": {
+        "label": "Pinned App Overrides",
+        "desc": "Manage pinned apps added from the context menu and set custom icons for each one.",
+        "empty": "No pinned apps yet. Right-click a window segment and choose Pin to bar.",
+        "remove": "Remove"
+      },
+      "customIcon": {
+        "title": "Select Custom Icon",
+        "browse": "Browse File",
+        "clear": "Clear Icon",
+        "none": "No custom icon selected"
       }
     },
     "tabs": {

@@ -142,6 +142,26 @@ ColumnLayout {
             "name": pluginApi?.tr("options.workspaceIndicatorRight")
         }
     ]
+    readonly property var pinnedAppsPositionModel: [
+        {
+            "key": "left",
+            "name": pluginApi?.tr("options.pinnedAppsLeft")
+        },
+        {
+            "key": "right",
+            "name": pluginApi?.tr("options.pinnedAppsRight")
+        }
+    ]
+    readonly property var pinnedAppsActivateBehaviorModel: [
+        {
+            "key": "focusCycle",
+            "name": pluginApi?.tr("options.pinnedAppsFocusCycle")
+        },
+        {
+            "key": "startNew",
+            "name": pluginApi?.tr("options.pinnedAppsStartNew")
+        }
+    ]
     readonly property var axisModel: [
         {
             "key": "horizontal",
@@ -333,6 +353,21 @@ ColumnLayout {
             next.workspaceIndicator.animation.type = "ease";
         if (["spring", "ease", "linear", "smooth"].indexOf(next.workspaceIndicator.animation.type) < 0)
             next.workspaceIndicator.animation.type = "smooth";
+        next.pinnedApps = next.pinnedApps && typeof next.pinnedApps === "object" && !Array.isArray(next.pinnedApps) ? next.pinnedApps : ({});
+        if (["left", "right"].indexOf(next.pinnedApps.position) < 0)
+            next.pinnedApps.position = "left";
+        if (["focusCycle", "startNew"].indexOf(next.pinnedApps.activateRunningBehavior) < 0)
+            next.pinnedApps.activateRunningBehavior = "focusCycle";
+        if (next.pinnedApps.iconColor === undefined || next.pinnedApps.iconColor === null || next.pinnedApps.iconColor === "")
+            next.pinnedApps.iconColor = "on-surface";
+        next.pinnedApps.items = Array.isArray(next.pinnedApps.items) ? next.pinnedApps.items.map(function (item) {
+            return {
+                "appId": String(item?.appId || ""),
+                "customIcon": String(item?.customIcon || "")
+            };
+        }).filter(function (item) {
+            return item.appId !== "";
+        }) : [];
 
         delete next.display.backgroundColor;
         delete next.display.backgroundOpacity;
@@ -437,6 +472,8 @@ ColumnLayout {
             return nestedSettingValue("workspaceIndicator", "badge", "enabled") ?? false;
         case "workspaceIndicatorAnimationEnabled":
             return nestedSettingValue("workspaceIndicator", "animation", "enabled") ?? true;
+        case "pinnedAppsEnabled":
+            return pinnedAppItems().length > 0;
         case "showIcons":
             return settingValue("window", "showIcon") ?? true;
         case "showTitle":
@@ -469,6 +506,41 @@ ColumnLayout {
         defaultSettings = normalizeSettingsSnapshot(deepCopy(defaults));
         editSettings = createSettingsSnapshot(pluginApi?.pluginSettings || ({}), defaults);
         _activePresetId = pluginApi?.pluginSettings?._activePresetId || "";
+    }
+
+    function pinnedAppItems() {
+        return Array.isArray(editSettings?.pinnedApps?.items) ? editSettings.pinnedApps.items : [];
+    }
+
+    function defaultPinnedAppItems() {
+        return Array.isArray(defaultSettings?.pinnedApps?.items) ? defaultSettings.pinnedApps.items : [];
+    }
+
+    function setPinnedAppItems(items) {
+        const next = deepCopy(editSettings);
+        if (!next.pinnedApps || typeof next.pinnedApps !== "object" || Array.isArray(next.pinnedApps))
+            next.pinnedApps = ({});
+        next.pinnedApps.items = Array.isArray(items) ? items : [];
+        editSettings = next;
+        _activePresetId = "";
+    }
+
+    function setPinnedAppCustomIcon(appId, customIcon) {
+        const nextItems = pinnedAppItems().map(function (item) {
+            if (item?.appId !== appId)
+                return item;
+            return {
+                "appId": appId,
+                "customIcon": String(customIcon || "")
+            };
+        });
+        setPinnedAppItems(nextItems);
+    }
+
+    function removePinnedApp(appId) {
+        setPinnedAppItems(pinnedAppItems().filter(function (item) {
+            return item?.appId !== appId;
+        }));
     }
 
     Connections {
@@ -525,6 +597,11 @@ ColumnLayout {
             }
 
             WorkspaceIndicatorSettingsSection {
+                Layout.fillWidth: true
+                rootSettings: root
+            }
+
+            PinnedAppsSettingsSection {
                 Layout.fillWidth: true
                 rootSettings: root
             }

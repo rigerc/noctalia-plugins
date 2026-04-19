@@ -23,6 +23,8 @@ Item {
     property int liveRevision: 0
     property int titleRevision: 0
     property int workspaceRevision: 0
+    property var cycleStateByApp: ({})
+    property var _desktopEntryIdCache: ({})
 
     function refreshSettingsSnapshot() {
         currentSettings = pluginApi?.pluginSettings || ({});
@@ -125,6 +127,14 @@ Item {
         return fallbackColor;
     }
 
+    function deepCopy(value) {
+        try {
+            return JSON.parse(JSON.stringify(value || ({})));
+        } catch (error) {
+            return ({});
+        }
+    }
+
     readonly property string displayMode: settingValue("display", "mode", "floatingPanel")
     readonly property real displayOffsetH: settingValue("display", "offsetH", 0)
     readonly property real displayOffsetV: settingValue("display", "offsetV", 0)
@@ -165,6 +175,138 @@ Item {
         } catch (error) {}
 
         return appId;
+    }
+
+    function normalizeAppId(appId) {
+        if (!appId || typeof appId !== "string")
+            return "";
+        return appId.toLowerCase().trim();
+    }
+
+    function getDesktopEntry(appId) {
+        if (!appId || typeof DesktopEntries === "undefined")
+            return null;
+
+        try {
+            if (DesktopEntries.heuristicLookup) {
+                const heuristicEntry = DesktopEntries.heuristicLookup(appId);
+                if (heuristicEntry)
+                    return heuristicEntry;
+            }
+        } catch (error) {}
+
+        try {
+            if (DesktopEntries.byId) {
+                const directEntry = DesktopEntries.byId(appId);
+                if (directEntry)
+                    return directEntry;
+            }
+        } catch (error) {}
+
+        return null;
+    }
+
+    function resolveToDesktopEntryId(appId) {
+        if (!appId)
+            return "";
+        if (_desktopEntryIdCache.hasOwnProperty(appId))
+            return _desktopEntryIdCache[appId];
+
+        const desktopEntryId = getDesktopEntry(appId)?.id || appId;
+        _desktopEntryIdCache[appId] = desktopEntryId;
+        return desktopEntryId;
+    }
+
+    function pinnedAppItems() {
+        const configuredItems = currentSettings?.pinnedApps?.items;
+        if (Array.isArray(configuredItems))
+            return configuredItems;
+        const defaultItems = defaults?.pinnedApps?.items;
+        return Array.isArray(defaultItems) ? defaultItems : [];
+    }
+
+    function getPinnedAppRecord(appId) {
+        const canonicalId = resolveToDesktopEntryId(appId);
+        if (!canonicalId)
+            return null;
+
+        const items = pinnedAppItems();
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            if (resolveToDesktopEntryId(item?.appId || "") === canonicalId)
+                return item;
+        }
+        return null;
+    }
+
+    function isAppPinned(appId) {
+        return !!getPinnedAppRecord(appId);
+    }
+
+    function updatePluginSettings(mutator) {
+        if (!pluginApi)
+            return;
+
+        const nextSettings = deepCopy(pluginApi.pluginSettings || ({}));
+        mutator(nextSettings);
+        pluginApi.pluginSettings = nextSettings;
+        pluginApi.saveSettings();
+        refreshSettingsSnapshot();
+    }
+
+    function toggleAppPin(appId) {
+        const canonicalId = resolveToDesktopEntryId(appId);
+        if (!canonicalId)
+            return;
+
+        updatePluginSettings(function (nextSettings) {
+            if (!nextSettings.pinnedApps || typeof nextSettings.pinnedApps !== "object" || Array.isArray(nextSettings.pinnedApps))
+                nextSettings.pinnedApps = ({});
+            const currentItems = Array.isArray(nextSettings.pinnedApps.items) ? nextSettings.pinnedApps.items : [];
+            const existingIndex = currentItems.findIndex(function (item) {
+                return resolveToDesktopEntryId(item?.appId || "") === canonicalId;
+            });
+
+            if (existingIndex >= 0) {
+                currentItems.splice(existingIndex, 1);
+                delete cycleStateByApp[canonicalId];
+            } else {
+                currentItems.push({
+                    "appId": canonicalId,
+                    "customIcon": ""
+                });
+            }
+
+            nextSettings.pinnedApps.items = currentItems;
+        });
+    }
+
+    function setPinnedAppCustomIcon(appId, customIcon) {
+        const canonicalId = resolveToDesktopEntryId(appId);
+        if (!canonicalId)
+            return;
+
+        updatePluginSettings(function (nextSettings) {
+            if (!nextSettings.pinnedApps || typeof nextSettings.pinnedApps !== "object" || Array.isArray(nextSettings.pinnedApps))
+                nextSettings.pinnedApps = ({});
+            const currentItems = Array.isArray(nextSettings.pinnedApps.items) ? nextSettings.pinnedApps.items : [];
+            const existingIndex = currentItems.findIndex(function (item) {
+                return resolveToDesktopEntryId(item?.appId || "") === canonicalId;
+            });
+            if (existingIndex < 0)
+                return;
+
+            currentItems[existingIndex] = {
+                "appId": canonicalId,
+                "customIcon": String(customIcon || "")
+            };
+            nextSettings.pinnedApps.items = currentItems;
+        });
+    }
+
+    function removePinnedApp(appId) {
+        if (isAppPinned(appId))
+            toggleAppPin(appId);
     }
 
     function getWindowKey(window) {
@@ -390,6 +532,36 @@ Item {
         });
     }
 
+    function getVisibleEntriesForApp(screenName, appId, onlySameOutput, onlyActiveWorkspaces) {
+        const canonicalId = resolveToDesktopEntryId(appId);
+        if (!canonicalId)
+            return [];
+
+        return getFilteredEntries(screenName, onlySameOutput, onlyActiveWorkspaces).filter(function (entry) {
+            return resolveToDesktopEntryId(entry?.appId || "") === canonicalId;
+        });
+    }
+
+    function getVisiblePinnedApps(screenName, onlySameOutput, onlyActiveWorkspaces) {
+        return pinnedAppItems().filter(function (item) {
+            const canonicalId = resolveToDesktopEntryId(item?.appId || "");
+            if (!canonicalId)
+                return false;
+
+            return true;
+        }).map(function (item) {
+            const canonicalId = resolveToDesktopEntryId(item?.appId || "");
+            const visibleEntries = getVisibleEntriesForApp(screenName, canonicalId, onlySameOutput, onlyActiveWorkspaces);
+            return {
+                "appId": canonicalId,
+                "customIcon": String(item?.customIcon || ""),
+                "name": getAppNameFromDesktopEntry(canonicalId),
+                "visibleWindowCount": visibleEntries.length,
+                "hasVisibleWindows": visibleEntries.length > 0
+            };
+        });
+    }
+
     function getWindowByEntry(entryKey) {
         const windows = collectWindows();
         for (let i = 0; i < windows.length; i++) {
@@ -422,6 +594,66 @@ Item {
         } catch (error) {
             Logger.e("Scrollbar2", "Failed to close window: " + error);
         }
+    }
+
+    function cycleFocusVisibleInstances(screenName, appId, onlySameOutput, onlyActiveWorkspaces) {
+        const canonicalId = resolveToDesktopEntryId(appId);
+        const visibleEntries = getVisibleEntriesForApp(screenName, canonicalId, onlySameOutput, onlyActiveWorkspaces);
+        if (visibleEntries.length === 0)
+            return false;
+
+        let nextIndex = 0;
+        for (let i = 0; i < visibleEntries.length; i++) {
+            if (visibleEntries[i]?.entryKey === activeEntryKey) {
+                nextIndex = (i + 1) % visibleEntries.length;
+                cycleStateByApp[canonicalId] = nextIndex;
+                focusEntry(visibleEntries[nextIndex].entryKey);
+                return true;
+            }
+        }
+
+        nextIndex = cycleStateByApp[canonicalId] ?? 0;
+        nextIndex = ((nextIndex % visibleEntries.length) + visibleEntries.length) % visibleEntries.length;
+        cycleStateByApp[canonicalId] = (nextIndex + 1) % visibleEntries.length;
+        focusEntry(visibleEntries[nextIndex].entryKey);
+        return true;
+    }
+
+    function launchPinnedApp(appId) {
+        const canonicalId = resolveToDesktopEntryId(appId);
+        if (!canonicalId)
+            return false;
+
+        try {
+            const app = getDesktopEntry(canonicalId);
+            if (!app)
+                return false;
+
+            if (Settings.data.appLauncher.customLaunchPrefixEnabled && Settings.data.appLauncher.customLaunchPrefix) {
+                const prefix = Settings.data.appLauncher.customLaunchPrefix.split(" ");
+                if (app.runInTerminal) {
+                    const terminal = Settings.data.appLauncher.terminalCommand.split(" ");
+                    Quickshell.execDetached(prefix.concat(terminal.concat(app.command)));
+                } else {
+                    Quickshell.execDetached(prefix.concat(app.command));
+                }
+            } else if (app.runInTerminal) {
+                const terminal = Settings.data.appLauncher.terminalCommand.split(" ");
+                CompositorService.spawn(terminal.concat(app.command));
+            } else if (app.command && app.command.length > 0) {
+                CompositorService.spawn(app.command);
+            } else if (app.execute) {
+                app.execute();
+            } else {
+                Logger.w("Scrollbar2", "No launch method found for " + canonicalId);
+                return false;
+            }
+        } catch (error) {
+            Logger.e("Scrollbar2", "Failed to launch pinned app: " + error);
+            return false;
+        }
+
+        return true;
     }
 
     function desktopEntryActionsForApp(appId) {
@@ -470,6 +702,7 @@ Item {
         target: typeof DesktopEntries !== "undefined" ? DesktopEntries.applications : null
 
         function onValuesChanged() {
+            root._desktopEntryIdCache = ({});
             root.updateSnapshots("desktopEntriesChanged");
         }
     }

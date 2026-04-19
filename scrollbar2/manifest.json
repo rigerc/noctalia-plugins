@@ -183,6 +183,15 @@
           "speed": 220
         }
       },
+      "pinnedApps": {
+        "position": "left",
+        "iconColor": "on-surface",
+        "marginLeft": 8,
+        "marginRight": 8,
+        "hideWhenActive": false,
+        "activateRunningBehavior": "focusCycle",
+        "items": []
+      },
       "_presets": [],
       "_activePresetId": ""
     }

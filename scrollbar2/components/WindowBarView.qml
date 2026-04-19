@@ -19,6 +19,7 @@ Item {
     readonly property var mainInstance: pluginApi?.mainInstance ?? null
 
     property string hoveredEntryKey: ""
+    property string hoveredPinnedAppId: ""
     property string selectedEntryKey: ""
     property string selectedAppId: ""
     property var contextMenuModel: []
@@ -249,6 +250,13 @@ Item {
     readonly property string workspaceIndicatorAnimationAxis: currentSettings?.workspaceIndicator?.animation?.axis ?? defaults?.workspaceIndicator?.animation?.axis ?? "horizontal"
     readonly property string workspaceIndicatorAnimationType: currentSettings?.workspaceIndicator?.animation?.type ?? defaults?.workspaceIndicator?.animation?.type ?? "smooth"
     readonly property int workspaceIndicatorAnimationSpeed: Math.max(0, Math.round(currentSettings?.workspaceIndicator?.animation?.speed ?? defaults?.workspaceIndicator?.animation?.speed ?? 220))
+    readonly property string pinnedAppsPosition: settingValue("pinnedApps", "position", "left")
+    readonly property string pinnedAppsIconColorKey: settingValue("pinnedApps", "iconColor", "on-surface")
+    readonly property color pinnedAppsIconColor: resolveColor(pinnedAppsIconColorKey, Color.mOnSurface)
+    readonly property real pinnedAppsMarginLeft: Math.max(0, settingValue("pinnedApps", "marginLeft", 8) * Style.uiScaleRatio)
+    readonly property real pinnedAppsMarginRight: Math.max(0, settingValue("pinnedApps", "marginRight", 8) * Style.uiScaleRatio)
+    readonly property bool pinnedAppsHideWhenActive: settingValue("pinnedApps", "hideWhenActive", false)
+    readonly property string pinnedAppsActivateRunningBehavior: settingValue("pinnedApps", "activateRunningBehavior", "focusCycle")
 
     readonly property int revisionToken: (mainInstance?.structureRevision ?? 0) + (mainInstance?.liveRevision ?? 0) + (mainInstance?.titleRevision ?? 0) + (mainInstance?.workspaceRevision ?? 0)
     readonly property var entries: {
@@ -256,6 +264,15 @@ Item {
         if (!mainInstance)
             return [];
         return mainInstance.getFilteredEntries(screenName, onlySameOutput, onlyActiveWorkspaces) || [];
+    }
+    readonly property var pinnedEntries: {
+        revisionToken;
+        if (!mainInstance)
+            return [];
+        const source = mainInstance.getVisiblePinnedApps(screenName, onlySameOutput, onlyActiveWorkspaces) || [];
+        return source.filter(function (item) {
+            return !(pinnedAppsHideWhenActive && item?.hasVisibleWindows);
+        });
     }
     readonly property var activeWorkspace: mainInstance?.resolveWorkspaceForScreen(screenName) ?? null
     readonly property string activeWorkspaceIdText: {
@@ -286,6 +303,7 @@ Item {
     readonly property int workspaceIndicatorBadgeCount: workspaceIndicatorBadgeEnabled && activeWorkspace ? (mainInstance?.countWindowsForWorkspace(screenName, activeWorkspace.id) ?? 0) : 0
     readonly property bool showWorkspaceIndicator: workspaceIndicatorEnabled && workspaceIndicatorText !== ""
     readonly property int segmentCount: entries.length
+    readonly property int pinnedSegmentCount: pinnedEntries.length
     readonly property real availableWidth: Math.max(160 * Style.uiScaleRatio, Math.round((screen?.width || 1200) * trackWidthPercent / 100))
     readonly property real horizontalPadding: Math.max(2, Math.round(2 * Style.uiScaleRatio))
     readonly property real labelPaddingH: Math.max(6, Math.round(7 * Style.uiScaleRatio))
@@ -308,10 +326,12 @@ Item {
         return Math.max(1, Math.floor((availableWidth - totalSpacing - horizontalPadding * 2) / segmentCount));
     }
     readonly property real actualTrackWidth: segmentCount > 0 ? (segmentWidth * segmentCount) + (Math.max(0, segmentCount - 1) * segmentSpacing) + horizontalPadding * 2 : 0
-    readonly property real indicatorLeadingGap: showWorkspaceIndicator && workspaceIndicatorPosition === "left" ? workspaceIndicatorMarginLeft : 0
-    readonly property real indicatorTrailingGap: showWorkspaceIndicator && workspaceIndicatorPosition === "left" ? workspaceIndicatorMarginRight : 0
-    readonly property real indicatorOffsetX: showWorkspaceIndicator && workspaceIndicatorPosition === "left" ? (indicatorLeadingGap + workspaceContainer.width + indicatorTrailingGap) : 0
     readonly property real totalIndicatorWidth: showWorkspaceIndicator ? (workspaceIndicatorMarginLeft + workspaceContainer.width + workspaceIndicatorMarginRight) : 0
+    readonly property real pinnedSlotSize: Math.max(Math.round(availableContainerHeight * 0.82), computedIconSize + horizontalPadding * 2)
+    readonly property real pinnedAreaContentWidth: pinnedSegmentCount > 0 ? (pinnedSegmentCount * pinnedSlotSize) + (Math.max(0, pinnedSegmentCount - 1) * segmentSpacing) : 0
+    readonly property real pinnedAreaWidth: pinnedSegmentCount > 0 ? (pinnedAppsMarginLeft + pinnedAreaContentWidth + pinnedAppsMarginRight) : 0
+    readonly property real leftAccessoryWidth: (showWorkspaceIndicator && workspaceIndicatorPosition === "left" ? totalIndicatorWidth : 0) + (pinnedSegmentCount > 0 && pinnedAppsPosition === "left" ? pinnedAreaWidth : 0)
+    readonly property real rightAccessoryWidth: (showWorkspaceIndicator && workspaceIndicatorPosition === "right" ? totalIndicatorWidth : 0) + (pinnedSegmentCount > 0 && pinnedAppsPosition === "right" ? pinnedAreaWidth : 0)
     readonly property int focusedIndex: {
         if (!mainInstance?.activeEntryKey)
             return -1;
@@ -322,9 +342,9 @@ Item {
         return -1;
     }
 
-    implicitWidth: hostVisible && (segmentCount > 0 || showWorkspaceIndicator) ? actualTrackWidth + totalIndicatorWidth : 0
-    implicitHeight: hostVisible && (segmentCount > 0 || showWorkspaceIndicator) ? Math.max(availableContainerHeight, workspaceContainer.height) : 0
-    visible: hostVisible && (segmentCount > 0 || showWorkspaceIndicator)
+    implicitWidth: hostVisible && (segmentCount > 0 || showWorkspaceIndicator || pinnedSegmentCount > 0) ? leftAccessoryWidth + actualTrackWidth + rightAccessoryWidth : 0
+    implicitHeight: hostVisible && (segmentCount > 0 || showWorkspaceIndicator || pinnedSegmentCount > 0) ? Math.max(availableContainerHeight, workspaceContainer.height, pinnedAppsContainer.height) : 0
+    visible: hostVisible && (segmentCount > 0 || showWorkspaceIndicator || pinnedSegmentCount > 0)
 
     function workspaceIndicatorEasingType() {
         switch (workspaceIndicatorAnimationType) {
@@ -349,6 +369,10 @@ Item {
         if (workspaceIndicatorVerticalAlign === "bottom")
             return Math.max(0, root.implicitHeight - workspaceContainer.height);
         return Math.max(0, Math.round((root.implicitHeight - workspaceContainer.height) / 2));
+    }
+
+    function pinnedAppsAlignedY() {
+        return Math.max(0, Math.round((root.implicitHeight - pinnedAppsContainer.height) / 2));
     }
 
     function updateWorkspaceIndicatorPresentation() {
@@ -558,7 +582,38 @@ Item {
         selectedAppId = "";
     }
 
-    function openContextMenu(anchorItem, entry) {
+    function pinnedSlotBackgroundColor(appId) {
+        const isHovered = hoveredPinnedAppId === appId;
+        if (isHovered)
+            return Qt.alpha(focusLineHoverColor, focusLineOpacity * focusLineHoverOpacity);
+        return Qt.alpha(focusLineDefaultColor, focusLineOpacity * focusLineDefaultOpacity);
+    }
+
+    function pinnedAppIconSource(item) {
+        const customIcon = String(item?.customIcon || "");
+        if (customIcon !== "")
+            return customIcon.startsWith("file://") ? customIcon : "file://" + customIcon;
+        return ThemeIcons.iconForAppId(item?.appId || "");
+    }
+
+    function activatePinnedApp(appId) {
+        const canonicalAppId = mainInstance?.resolveToDesktopEntryId(appId) || appId;
+        const visibleEntries = mainInstance?.getVisibleEntriesForApp(screenName, canonicalAppId, onlySameOutput, onlyActiveWorkspaces) || [];
+
+        if (visibleEntries.length === 0) {
+            mainInstance?.launchPinnedApp(canonicalAppId);
+            return;
+        }
+
+        if (pinnedAppsActivateRunningBehavior === "startNew") {
+            mainInstance?.launchPinnedApp(canonicalAppId);
+            return;
+        }
+
+        mainInstance?.cycleFocusVisibleInstances(screenName, canonicalAppId, onlySameOutput, onlyActiveWorkspaces);
+    }
+
+    function openContextMenu(anchorItem, entry, pinnedApp) {
         const model = [];
 
         if (entry) {
@@ -577,6 +632,22 @@ Item {
             const desktopActions = mainInstance?.desktopEntryActionsForApp(selectedAppId) || [];
             desktopActions.forEach(function (item) {
                 model.push(item);
+            });
+            if (selectedAppId) {
+                const appPinned = mainInstance?.isAppPinned(selectedAppId) ?? false;
+                model.push({
+                    "label": pluginApi?.tr(appPinned ? "menu.unpinFromBar" : "menu.pinToBar"),
+                    "action": appPinned ? "unpin" : "pin",
+                    "icon": appPinned ? "unpin" : "pin"
+                });
+            }
+        } else if (pinnedApp) {
+            clearContextSelection();
+            selectedAppId = pinnedApp.appId ?? "";
+            model.push({
+                "label": pluginApi?.tr("menu.unpinFromBar"),
+                "action": "unpin",
+                "icon": "unpin"
             });
         } else {
             clearContextSelection();
@@ -612,7 +683,11 @@ Item {
     Item {
         id: workspaceContainer
         visible: root.showWorkspaceIndicator
-        x: root.workspaceIndicatorPosition === "left" ? root.workspaceIndicatorMarginLeft : Math.max(0, root.actualTrackWidth + root.workspaceIndicatorMarginLeft)
+        x: {
+            if (root.workspaceIndicatorPosition === "left")
+                return (root.pinnedSegmentCount > 0 && root.pinnedAppsPosition === "left" ? root.pinnedAreaWidth : 0) + root.workspaceIndicatorMarginLeft;
+            return root.leftAccessoryWidth + root.actualTrackWidth + root.workspaceIndicatorMarginLeft;
+        }
         y: root.workspaceIndicatorAlignedY()
         width: workspaceBackground.width
         height: workspaceBackground.height
@@ -703,9 +778,114 @@ Item {
         }
     }
 
+    Item {
+        id: pinnedAppsContainer
+        visible: root.pinnedSegmentCount > 0
+        x: {
+            if (root.pinnedAppsPosition === "left")
+                return root.pinnedAppsMarginLeft;
+            return root.leftAccessoryWidth + root.actualTrackWidth + (root.showWorkspaceIndicator && root.workspaceIndicatorPosition === "right" ? root.totalIndicatorWidth : 0) + root.pinnedAppsMarginLeft;
+        }
+        y: root.pinnedAppsAlignedY()
+        width: root.pinnedAreaContentWidth
+        height: root.pinnedSegmentCount > 0 ? root.pinnedSlotSize : 0
+        z: 25
+
+        Row {
+            anchors.fill: parent
+            spacing: root.segmentSpacing
+
+            Repeater {
+                model: root.pinnedEntries
+
+                delegate: Item {
+                    id: pinnedItem
+
+                    required property var modelData
+
+                    readonly property string appId: modelData?.appId ?? ""
+                    readonly property string title: modelData?.name ?? appId
+
+                    width: root.pinnedSlotSize
+                    height: root.pinnedSlotSize
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: Math.min(root.windowBorderRadius, Math.min(width, height) / 2)
+                        color: root.pinnedSlotBackgroundColor(pinnedItem.appId)
+
+                        Behavior on color {
+                            enabled: root.animationEnabled
+                            ColorAnimation {
+                                duration: root.animationSpeed
+                            }
+                        }
+                    }
+
+                    IconImage {
+                        id: pinnedCustomIcon
+                        anchors.centerIn: parent
+                        width: root.computedIconSize
+                        height: root.computedIconSize
+                        source: root.pinnedAppIconSource(pinnedItem.modelData)
+                        smooth: true
+                        asynchronous: true
+                        visible: status === Image.Ready
+
+                        layer.enabled: visible && root.pinnedAppsIconColorKey !== "none"
+                        layer.effect: ShaderEffect {
+                            property color targetColor: root.pinnedAppsIconColor
+                            property real colorizeMode: 0.0
+
+                            fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/appicon_colorize.frag.qsb")
+                        }
+                    }
+
+                    NText {
+                        anchors.centerIn: parent
+                        visible: !pinnedCustomIcon.visible
+                        text: pinnedItem.title.length > 0 ? pinnedItem.title.charAt(0).toUpperCase() : "?"
+                        pointSize: Math.max(Style.fontSizeXS, root.titleFontSize * root.titleScale * 0.95)
+                        font.weight: Style.fontWeightBold
+                        color: root.pinnedAppsIconColorKey === "none" ? Color.mOnSurface : root.pinnedAppsIconColor
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        acceptedButtons: Qt.LeftButton | Qt.RightButton
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        preventStealing: true
+
+                        onEntered: {
+                            root.hoveredPinnedAppId = pinnedItem.appId;
+                            if (pinnedItem.title)
+                                TooltipService.show(pinnedItem, pinnedItem.title, BarService.getTooltipDirection(root.screen?.name));
+                        }
+
+                        onExited: {
+                            if (root.hoveredPinnedAppId === pinnedItem.appId)
+                                root.hoveredPinnedAppId = "";
+                            TooltipService.hide();
+                        }
+
+                        onReleased: mouse => {
+                            if (mouse.button === Qt.RightButton) {
+                                TooltipService.hide();
+                                root.openContextMenu(pinnedItem, null, pinnedItem.modelData);
+                            } else if (mouse.button === Qt.LeftButton) {
+                                root.activatePinnedApp(pinnedItem.appId);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     Row {
         id: segmentsRow
-        x: root.indicatorOffsetX + horizontalPadding
+        x: root.leftAccessoryWidth + horizontalPadding
         y: 0
         width: Math.max(0, root.actualTrackWidth - horizontalPadding * 2)
         height: root.availableContainerHeight
@@ -881,7 +1061,7 @@ Item {
 
     Rectangle {
         id: trackLine
-        x: root.indicatorOffsetX
+        x: root.leftAccessoryWidth
         y: trackLineY()
         width: root.actualTrackWidth
         height: visibleTrackThickness
@@ -893,7 +1073,7 @@ Item {
 
     Item {
         id: trackSeparators
-        x: root.indicatorOffsetX
+        x: root.leftAccessoryWidth
         y: trackLine.y
         width: root.actualTrackWidth
         height: trackLine.height
@@ -926,7 +1106,7 @@ Item {
     Item {
         id: focusIndicator
         visible: focusedIndex >= 0 && availableContainerHeight > 0
-        x: root.indicatorOffsetX + indicatorOffset(focusedIndex)
+        x: root.leftAccessoryWidth + indicatorOffset(focusedIndex)
         y: 0
         width: segmentWidth
         height: availableContainerHeight
@@ -962,7 +1142,7 @@ Item {
     }
 
     Item {
-        x: root.indicatorOffsetX
+        x: root.leftAccessoryWidth
         y: 0
         width: root.actualTrackWidth
         height: root.availableContainerHeight
@@ -1031,6 +1211,10 @@ Item {
                 root.mainInstance?.focusEntry(root.selectedEntryKey);
             } else if (action === "close") {
                 root.mainInstance?.closeEntry(root.selectedEntryKey);
+            } else if (action === "pin") {
+                root.mainInstance?.toggleAppPin(root.selectedAppId);
+            } else if (action === "unpin") {
+                root.mainInstance?.removePinnedApp(root.selectedAppId);
             } else if (action === "settings") {
                 BarService.openPluginSettings(root.screen, pluginApi.manifest);
             } else if (action.startsWith("desktop-action-") && item?.desktopAction) {
@@ -1050,6 +1234,7 @@ Item {
 
         function onStructureRevisionChanged() {
             root.hoveredEntryKey = "";
+            root.hoveredPinnedAppId = "";
         }
     }
 }
