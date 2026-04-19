@@ -8,6 +8,8 @@ ColumnLayout {
     id: root
 
     property var rootSettings: null
+    property alias displaySectionTarget: displayContent
+    property alias trackSectionTarget: trackContent
 
     Layout.fillWidth: true
     spacing: Style.marginL

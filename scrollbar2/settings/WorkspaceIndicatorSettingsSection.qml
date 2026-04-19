@@ -9,6 +9,9 @@ ColumnLayout {
     id: root
 
     property var rootSettings: null
+    property alias indicatorSectionTarget: indicatorContent
+    property alias badgeSectionTarget: badgeContent
+    property alias animationSectionTarget: animationContent
 
     Layout.fillWidth: true
     spacing: Style.marginL

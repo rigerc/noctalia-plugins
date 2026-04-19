@@ -11,6 +11,38 @@ SettingsTabPage {
     title: rootSettings?.pluginApi?.tr("settings.navTabs.appearance")
     description: rootSettings?.pluginApi?.tr("settings.pages.appearance")
     icon: "palette"
+    navigationSections: [
+        {
+            "id": "window",
+            "label": rootSettings?.pluginApi?.tr("settings.section.window.label"),
+            "icon": "typography",
+            "target": windowSection.windowSectionTarget
+        },
+        {
+            "id": "focus-line",
+            "label": rootSettings?.pluginApi?.tr("settings.section.focusLine.label"),
+            "icon": "line",
+            "target": windowSection.focusLineSectionTarget
+        },
+        {
+            "id": "colors",
+            "label": rootSettings?.pluginApi?.tr("settings.section.trackColors.label"),
+            "icon": "paint",
+            "target": colorSection.trackColorsSectionTarget
+        },
+        {
+            "id": "workspace-indicator",
+            "label": rootSettings?.pluginApi?.tr("settings.section.workspaceIndicator.label"),
+            "icon": "apps",
+            "target": workspaceIndicatorSection.indicatorSectionTarget
+        },
+        {
+            "id": "special-workspace",
+            "label": rootSettings?.pluginApi?.tr("settings.section.specialWorkspaceOverlay.label"),
+            "icon": "stack-2",
+            "target": specialWorkspaceSection.specialWorkspaceSectionTarget
+        }
+    ]
 
     NLabel {
         Layout.fillWidth: true
@@ -21,6 +53,7 @@ SettingsTabPage {
     }
 
     WindowSettingsSection {
+        id: windowSection
         Layout.fillWidth: true
         rootSettings: root.rootSettings
     }
@@ -38,6 +71,7 @@ SettingsTabPage {
     }
 
     ColorSettingsSection {
+        id: colorSection
         Layout.fillWidth: true
         rootSettings: root.rootSettings
     }
@@ -55,11 +89,13 @@ SettingsTabPage {
     }
 
     WorkspaceIndicatorSettingsSection {
+        id: workspaceIndicatorSection
         Layout.fillWidth: true
         rootSettings: root.rootSettings
     }
 
     SpecialWorkspaceOverlaySettingsSection {
+        id: specialWorkspaceSection
         Layout.fillWidth: true
         rootSettings: root.rootSettings
     }

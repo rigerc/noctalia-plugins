@@ -11,6 +11,32 @@ SettingsTabPage {
     title: rootSettings?.pluginApi?.tr("settings.navTabs.layout")
     description: rootSettings?.pluginApi?.tr("settings.pages.layout")
     icon: "layout-grid"
+    navigationSections: [
+        {
+            "id": "display",
+            "label": rootSettings?.pluginApi?.tr("settings.section.display.label"),
+            "icon": "device-desktop",
+            "target": displaySection.displaySectionTarget
+        },
+        {
+            "id": "track",
+            "label": rootSettings?.pluginApi?.tr("settings.section.track.label"),
+            "icon": "line",
+            "target": displaySection.trackSectionTarget
+        },
+        {
+            "id": "filtering",
+            "label": rootSettings?.pluginApi?.tr("settings.section.filtering.label"),
+            "icon": "filter",
+            "target": behaviorSection.filteringSectionTarget
+        },
+        {
+            "id": "animation",
+            "label": rootSettings?.pluginApi?.tr("settings.section.animation.label"),
+            "icon": "transition-right",
+            "target": behaviorSection.animationSectionTarget
+        }
+    ]
 
     NLabel {
         Layout.fillWidth: true
@@ -21,6 +47,7 @@ SettingsTabPage {
     }
 
     DisplaySettingsSection {
+        id: displaySection
         Layout.fillWidth: true
         rootSettings: root.rootSettings
     }
@@ -38,6 +65,7 @@ SettingsTabPage {
     }
 
     BehaviorSettingsSection {
+        id: behaviorSection
         Layout.fillWidth: true
         rootSettings: root.rootSettings
     }

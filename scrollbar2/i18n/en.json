@@ -717,6 +717,8 @@
       "badge": "Built-in",
       "active": "Active",
       "actions": {
+        "apply": "Apply",
+        "details": "Details",
         "save": "Save Current as Preset",
         "rename": "Rename",
         "update": "Update with Current",
@@ -764,6 +766,15 @@
           "title": "Update Preset",
           "desc": "Overwrite \"{name}\" with your current settings?",
           "confirm": "Update"
+        },
+        "details": {
+          "title": "Preset Details",
+          "desc": "Review the exact settings stored in this preset.",
+          "rowCount": "{count} values",
+          "empty": {
+            "label": "No stored settings",
+            "desc": "This preset does not contain any serialized settings."
+          }
         }
       },
       "builtinPresets": {

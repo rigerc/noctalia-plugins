@@ -11,6 +11,8 @@ ColumnLayout {
     property var pluginApi: rootSettings?.pluginApi ?? null
     property var builtInPresets: []
     property var customPresets: []
+    property alias builtInSectionTarget: builtInHeader
+    property alias customSectionTarget: customSectionRow
 
     spacing: Style.marginL
 
@@ -371,6 +373,123 @@ ColumnLayout {
         api.saveSettings();
     }
 
+    function _detailsSectionLabel(sectionKey) {
+        switch (sectionKey) {
+        case "display":
+            return pluginApi?.tr("settings.section.display.label") ?? "Display";
+        case "track":
+            return pluginApi?.tr("settings.section.track.label") ?? "Track";
+        case "filtering":
+            return pluginApi?.tr("settings.section.filtering.label") ?? "Filtering";
+        case "animation":
+            return pluginApi?.tr("settings.section.animation.label") ?? "Animation";
+        case "focusLine":
+            return pluginApi?.tr("settings.section.focusLine.label") ?? "Focus Line";
+        case "window":
+            return pluginApi?.tr("settings.section.window.label") ?? "Window";
+        case "workspaceIndicator":
+            return pluginApi?.tr("settings.section.workspaceIndicator.label") ?? "Workspace Indicator";
+        case "specialWorkspaceOverlay":
+            return pluginApi?.tr("settings.section.specialWorkspaceOverlay.label") ?? "Special Workspace Overlay";
+        case "pinnedApps":
+            return pluginApi?.tr("settings.section.pinnedApps.label") ?? "Pinned Apps";
+        case "customStyleRules":
+            return pluginApi?.tr("settings.section.customStyleRules.label") ?? "Style Rules";
+        default:
+            return sectionKey;
+        }
+    }
+
+    function _detailsValueToString(value) {
+        if (value === undefined)
+            return "undefined";
+        if (value === null)
+            return "null";
+        if (typeof value === "string")
+            return value === "" ? "\"\"" : value;
+        if (typeof value === "number" || typeof value === "boolean")
+            return String(value);
+        return JSON.stringify(value);
+    }
+
+    function _flattenDetails(value, prefix, rows) {
+        if (Array.isArray(value)) {
+            if (value.length === 0 && prefix)
+                rows.push({ "path": prefix, "value": "[]" });
+            for (var i = 0; i < value.length; i++)
+                _flattenDetails(value[i], prefix + "[" + i + "]", rows);
+            return rows;
+        }
+
+        if (value && typeof value === "object") {
+            var keys = Object.keys(value);
+            if (keys.length === 0 && prefix) {
+                rows.push({ "path": prefix, "value": "{}" });
+                return rows;
+            }
+
+            for (var j = 0; j < keys.length; j++) {
+                var key = keys[j];
+                _flattenDetails(value[key], prefix ? (prefix + "." + key) : key, rows);
+            }
+            return rows;
+        }
+
+        if (prefix)
+            rows.push({ "path": prefix, "value": _detailsValueToString(value) });
+        return rows;
+    }
+
+    function _detailsGroupsForPreset(preset) {
+        var settings = preset?.settings || ({});
+        var groups = [];
+        var seen = ({});
+        var orderedKeys = [
+            "display",
+            "track",
+            "filtering",
+            "animation",
+            "focusLine",
+            "window",
+            "workspaceIndicator",
+            "specialWorkspaceOverlay",
+            "pinnedApps",
+            "customStyleRules"
+        ];
+
+        function addGroup(sectionKey) {
+            if (seen[sectionKey] || sectionKey.indexOf("_") === 0)
+                return;
+            seen[sectionKey] = true;
+            var rows = [];
+            root._flattenDetails(settings[sectionKey], "", rows);
+            if (rows.length > 0) {
+                groups.push({
+                    "key": sectionKey,
+                    "label": root._detailsSectionLabel(sectionKey),
+                    "rows": rows
+                });
+            }
+        }
+
+        for (var i = 0; i < orderedKeys.length; i++) {
+            if (settings[orderedKeys[i]] !== undefined)
+                addGroup(orderedKeys[i]);
+        }
+
+        var extraKeys = Object.keys(settings);
+        for (var j = 0; j < extraKeys.length; j++)
+            addGroup(extraKeys[j]);
+
+        return groups;
+    }
+
+    function _openDetails(preset) {
+        detailsDialog._preset = preset || null;
+        detailsDialog._groups = root._detailsGroupsForPreset(preset);
+        detailsDialog.open();
+    }
+
     NHeader {
         label: pluginApi?.tr("settings.presets.section.label") ?? "Presets"
         description: pluginApi?.tr("settings.presets.section.desc") ?? ""
@@ -378,6 +497,7 @@ ColumnLayout {
     }
 
     NLabel {
+        id: builtInHeader
         label: pluginApi?.tr("settings.presets.builtin.label") ?? "Built-in Presets"
         description: pluginApi?.tr("settings.presets.builtin.desc") ?? ""
         Layout.fillWidth: true
@@ -398,6 +518,7 @@ ColumnLayout {
                 isActive: rootSettings?._activePresetId === modelData.id
                 pluginApi: root.pluginApi
                 onClicked: root._applyPreset(modelData.id)
+                onDetailsRequested: root._openDetails(modelData)
             }
         }
     }
@@ -407,6 +528,7 @@ ColumnLayout {
     }
 
     RowLayout {
+        id: customSectionRow
         Layout.fillWidth: true
         spacing: Style.marginM
 
@@ -450,6 +572,7 @@ ColumnLayout {
                 isActive: rootSettings?._activePresetId === modelData.id
                 pluginApi: root.pluginApi
                 onClicked: root._applyPreset(modelData.id)
+                onDetailsRequested: root._openDetails(modelData)
                 onRenameRequested: {
                     renameDialog._targetId = modelData.id;
                     renameDialog._targetName = modelData.name;
@@ -494,6 +617,152 @@ ColumnLayout {
                 color: Color.mOnSurfaceVariant
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
+            }
+        }
+    }
+
+    Popup {
+        id: detailsDialog
+        parent: Overlay.overlay
+        modal: true
+        dim: false
+        anchors.centerIn: parent
+        width: 760 * Style.uiScaleRatio
+        padding: Style.marginL
+        closePolicy: Popup.CloseOnEscape
+
+        property var _preset: null
+        property var _groups: []
+
+        background: Rectangle {
+            color: Color.mSurface
+            radius: Style.radiusS
+            border.color: Color.mPrimary
+            border.width: Style.borderM
+        }
+
+        contentItem: ColumnLayout {
+            width: detailsDialog.width - detailsDialog.padding * 2
+            spacing: Style.marginL
+
+            NHeader {
+                label: root.pluginApi?.tr("settings.presets.dialog.details.title") ?? "Preset Details"
+                description: root.pluginApi?.tr("settings.presets.dialog.details.desc") ?? ""
+            }
+
+            NLabel {
+                Layout.fillWidth: true
+                label: detailsDialog._preset?.name ?? ""
+                description: detailsDialog._preset?.description || (detailsDialog._preset?.builtIn ? (root.pluginApi?.tr("settings.presets.badge") ?? "") : "")
+                icon: detailsDialog._preset?.builtIn ? "template" : "device-floppy"
+                visible: detailsDialog._preset !== null
+            }
+
+            NScrollView {
+                id: detailsScroll
+
+                Layout.fillWidth: true
+                Layout.preferredHeight: 480 * Style.uiScaleRatio
+                horizontalPolicy: ScrollBar.AlwaysOff
+
+                ColumnLayout {
+                    width: detailsScroll.availableWidth
+                    spacing: Style.marginL
+
+                    NBox {
+                        visible: detailsDialog._groups.length === 0
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: emptyDetailsContent.implicitHeight + Style.marginL * 2
+
+                        ColumnLayout {
+                            id: emptyDetailsContent
+                            anchors.fill: parent
+                            anchors.margins: Style.marginL
+                            spacing: Style.marginS
+
+                            NText {
+                                Layout.fillWidth: true
+                                text: root.pluginApi?.tr("settings.presets.dialog.details.empty.label") ?? "No stored settings"
+                                pointSize: Style.fontSizeM
+                                color: Color.mOnSurfaceVariant
+                            }
+
+                            NText {
+                                Layout.fillWidth: true
+                                text: root.pluginApi?.tr("settings.presets.dialog.details.empty.desc") ?? "This preset does not contain any serialized settings."
+                                pointSize: Style.fontSizeS
+                                color: Color.mOnSurfaceVariant
+                                wrapMode: Text.WordWrap
+                            }
+                        }
+                    }
+
+                    Repeater {
+                        model: detailsDialog._groups
+
+                        delegate: NBox {
+                            required property var modelData
+
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: groupContent.implicitHeight + Style.marginL * 2
+
+                            ColumnLayout {
+                                id: groupContent
+                                anchors.fill: parent
+                                anchors.margins: Style.marginL
+                                spacing: Style.marginM
+
+                                NLabel {
+                                    Layout.fillWidth: true
+                                    label: modelData.label || ""
+                                    description: (root.pluginApi?.tr("settings.presets.dialog.details.rowCount") ?? "{count} values")
+                                        .replace("{count}", modelData.rows?.length ?? 0)
+                                    icon: "list-details"
+                                }
+
+                                Repeater {
+                                    model: modelData.rows || []
+
+                                    delegate: RowLayout {
+                                        required property var modelData
+
+                                        Layout.fillWidth: true
+                                        spacing: Style.marginM
+
+                                        NText {
+                                            Layout.preferredWidth: Math.max(180 * Style.uiScaleRatio, detailsScroll.availableWidth * 0.34)
+                                            text: modelData.path || ""
+                                            color: Color.mOnSurface
+                                            wrapMode: Text.WrapAnywhere
+                                        }
+
+                                        NText {
+                                            Layout.fillWidth: true
+                                            text: modelData.value || ""
+                                            color: Color.mOnSurfaceVariant
+                                            wrapMode: Text.WrapAnywhere
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: Style.marginM
+
+                Item {
+                    Layout.fillWidth: true
+                }
+
+                NButton {
+                    text: root.pluginApi?.tr("common.cancel") ?? "Close"
+                    outlined: true
+                    onClicked: detailsDialog.close()
+                }
             }
         }
     }

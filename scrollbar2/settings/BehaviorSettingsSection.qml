@@ -7,6 +7,8 @@ ColumnLayout {
     id: root
 
     property var rootSettings: null
+    property alias filteringSectionTarget: filteringContent
+    property alias animationSectionTarget: animationContent
 
     Layout.fillWidth: true
     spacing: Style.marginL

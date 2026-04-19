@@ -8,6 +8,7 @@ ColumnLayout {
     id: root
 
     property var rootSettings: null
+    property alias rulesSectionTarget: sectionContent
     readonly property var mainInstance: rootSettings?.mainInstance ?? null
 
     Layout.fillWidth: true

@@ -9,6 +9,8 @@ ColumnLayout {
     id: root
 
     property var rootSettings: null
+    property alias windowSectionTarget: windowContent
+    property alias focusLineSectionTarget: focusLineContent
 
     Layout.fillWidth: true
     spacing: Style.marginL

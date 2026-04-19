@@ -15,6 +15,7 @@ Item {
     property bool isActive: false
 
     signal clicked()
+    signal detailsRequested()
     signal renameRequested()
     signal updateRequested()
     signal duplicateRequested()
@@ -37,7 +38,7 @@ Item {
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: Style.marginM
-        anchors.rightMargin: root.isBuiltIn ? Style.marginM : (Style.marginM + moreBtn.buttonSize + Style.marginXS)
+        anchors.rightMargin: Style.marginM + moreBtn.buttonSize + Style.marginXS
         spacing: Style.marginXXS
 
         NText {
@@ -72,7 +73,7 @@ Item {
 
     NIconButton {
         id: moreBtn
-        visible: !root.isBuiltIn
+        visible: true
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.margins: Style.marginXS
@@ -92,30 +93,49 @@ Item {
     NContextMenu {
         id: ctxMenu
         parent: Overlay.overlay
-        model: [
-            {
-                "label": root.pluginApi?.tr("settings.presets.actions.rename") ?? "",
-                "action": "rename",
-                "icon": "pencil"
-            },
-            {
-                "label": root.pluginApi?.tr("settings.presets.actions.update") ?? "",
-                "action": "update",
-                "icon": "refresh"
-            },
-            {
-                "label": root.pluginApi?.tr("settings.presets.actions.duplicate") ?? "",
-                "action": "duplicate",
-                "icon": "copy"
-            },
-            {
-                "label": root.pluginApi?.tr("settings.presets.actions.delete") ?? "",
-                "action": "delete",
-                "icon": "trash"
+        model: {
+            var actions = [
+                {
+                    "label": root.pluginApi?.tr("settings.presets.actions.apply") ?? "",
+                    "action": "apply",
+                    "icon": "check"
+                },
+                {
+                    "label": root.pluginApi?.tr("settings.presets.actions.details") ?? "",
+                    "action": "details",
+                    "icon": "list-details"
+                }
+            ];
+
+            if (!root.isBuiltIn) {
+                actions.push({
+                    "label": root.pluginApi?.tr("settings.presets.actions.rename") ?? "",
+                    "action": "rename",
+                    "icon": "pencil"
+                });
+                actions.push({
+                    "label": root.pluginApi?.tr("settings.presets.actions.update") ?? "",
+                    "action": "update",
+                    "icon": "refresh"
+                });
+                actions.push({
+                    "label": root.pluginApi?.tr("settings.presets.actions.duplicate") ?? "",
+                    "action": "duplicate",
+                    "icon": "copy"
+                });
+                actions.push({
+                    "label": root.pluginApi?.tr("settings.presets.actions.delete") ?? "",
+                    "action": "delete",
+                    "icon": "trash"
+                });
             }
-        ]
+
+            return actions;
+        }
         onTriggered: action => {
             switch (action) {
+            case "apply":      root.clicked(); break;
+            case "details":    root.detailsRequested(); break;
             case "rename":     root.renameRequested(); break;
             case "update":     root.updateRequested(); break;
             case "duplicate":  root.duplicateRequested(); break;

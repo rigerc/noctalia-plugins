@@ -8,6 +8,9 @@ ColumnLayout {
     id: root
 
     property var rootSettings: null
+    property alias trackColorsSectionTarget: trackColorsContent
+    property alias focusColorsSectionTarget: focusColorsContent
+    property alias windowColorsSectionTarget: windowColorsContent
 
     Layout.fillWidth: true
     spacing: Style.marginL

@@ -9,6 +9,7 @@ ColumnLayout {
     id: root
 
     property var rootSettings: null
+    property alias specialWorkspaceSectionTarget: content
 
     Layout.fillWidth: true
     spacing: Style.marginL

@@ -11,8 +11,23 @@ SettingsTabPage {
     title: rootSettings?.pluginApi?.tr("settings.navTabs.presets")
     description: rootSettings?.pluginApi?.tr("settings.pages.presets")
     icon: "template"
+    navigationSections: [
+        {
+            "id": "built-in",
+            "label": rootSettings?.pluginApi?.tr("settings.presets.builtin.label"),
+            "icon": "template",
+            "target": presetsSection.builtInSectionTarget
+        },
+        {
+            "id": "custom",
+            "label": rootSettings?.pluginApi?.tr("settings.presets.custom.label"),
+            "icon": "device-floppy",
+            "target": presetsSection.customSectionTarget
+        }
+    ]
 
     PresetsSection {
+        id: presetsSection
         Layout.fillWidth: true
         rootSettings: root.rootSettings
     }

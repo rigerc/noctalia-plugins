@@ -10,6 +10,8 @@ ColumnLayout {
     id: root
 
     property var rootSettings: null
+    property alias behaviorSectionTarget: content
+    property alias itemsSectionTarget: pinnedList
 
     Layout.fillWidth: true
     spacing: Style.marginL

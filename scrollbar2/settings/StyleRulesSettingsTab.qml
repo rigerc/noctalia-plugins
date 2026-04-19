@@ -11,8 +11,17 @@ SettingsTabPage {
     title: rootSettings?.pluginApi?.tr("settings.navTabs.styleRules")
     description: rootSettings?.pluginApi?.tr("settings.pages.styleRules")
     icon: "filter-code"
+    navigationSections: [
+        {
+            "id": "rules",
+            "label": rootSettings?.pluginApi?.tr("settings.section.customStyleRules.label"),
+            "icon": "filter-code",
+            "target": styleRulesSection.rulesSectionTarget
+        }
+    ]
 
     CustomStyleRulesSettingsSection {
+        id: styleRulesSection
         Layout.fillWidth: true
         rootSettings: root.rootSettings
     }
