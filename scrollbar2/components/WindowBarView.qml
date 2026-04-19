@@ -159,6 +159,7 @@ Item {
             "enabled": source.enabled !== false,
             "matchField": source.matchField === "title" ? "title" : "appId",
             "pattern": String(source.pattern || ""),
+            "customIcon": String(source.customIcon || ""),
             "colors": {
                 "segment": {
                     "focused": normalizeStyleRuleColorState(source.colors?.segment?.focused, focusLineFocusedColorKey, focusLineFocusedOpacity),
@@ -238,6 +239,18 @@ Item {
             return Qt.alpha(overrideColor, focusLineOpacity * overrideState.opacity);
         }
         return null;
+    }
+
+    function customStyleRuleForEntry(entryKey) {
+        const entry = entries.find(function (candidate) {
+            return candidate?.entryKey === entryKey;
+        }) || null;
+        return matchingStyleRule(entry);
+    }
+
+    function customRuleIconName(entryKey) {
+        const matchingRule = customStyleRuleForEntry(entryKey);
+        return String(matchingRule?.customIcon || "");
     }
 
     function resolvedLabelState(entryKey, kind) {
@@ -876,19 +889,21 @@ Item {
             });
             if (selectedAppId) {
                 const appPinned = mainInstance?.isAppPinned(selectedAppId) ?? false;
+                const hasExistingAppStyleRule = (mainInstance?.findPrefilledStyleRuleIndex(selectedEntryKey, "appId") ?? -1) >= 0;
                 model.push({
                     "label": pluginApi?.tr(appPinned ? "menu.unpinFromBar" : "menu.pinToBar"),
                     "action": appPinned ? "unpin" : "pin",
                     "icon": appPinned ? "unpin" : "pin"
                 });
                 model.push({
-                    "label": pluginApi?.tr("menu.addStyleRuleForApp"),
+                    "label": pluginApi?.tr(hasExistingAppStyleRule ? "menu.editStyleRuleForApp" : "menu.addStyleRuleForApp"),
                     "action": "style-rule-app",
                     "icon": "brush"
                 });
             }
+            const hasExistingTitleStyleRule = (mainInstance?.findPrefilledStyleRuleIndex(selectedEntryKey, "title") ?? -1) >= 0;
             model.push({
-                "label": pluginApi?.tr("menu.addStyleRuleForTitle"),
+                "label": pluginApi?.tr(hasExistingTitleStyleRule ? "menu.editStyleRuleForTitle" : "menu.addStyleRuleForTitle"),
                 "action": "style-rule-title",
                 "icon": "typography"
             });
@@ -1223,7 +1238,7 @@ Item {
                             source: ThemeIcons.iconForAppId(segmentItem.modelData.appId)
                             smooth: true
                             asynchronous: true
-                            visible: status === Image.Ready
+                            visible: status === Image.Ready && customRuleIcon.visible === false
 
                             layer.enabled: visible && root.iconTintEnabled(segmentItem.entryKey)
                             layer.effect: ShaderEffect {
@@ -1242,13 +1257,33 @@ Item {
                             }
                         }
 
+                        NIcon {
+                            id: customRuleIcon
+                            width: root.computedIconSize
+                            height: root.computedIconSize
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.horizontalCenterOffset: Math.round((parent.width - width) * (root.iconAnchor(root.iconAlign) - 0.5))
+                            icon: root.customRuleIconName(segmentItem.entryKey)
+                            pointSize: root.computedIconSize
+                            visible: icon !== ""
+                            color: root.labelColor(segmentItem.entryKey, "icon")
+
+                            Behavior on color {
+                                enabled: root.animationEnabled
+                                ColorAnimation {
+                                    duration: root.animationSpeed
+                                }
+                            }
+                        }
+
                         NText {
                             width: root.computedIconSize
                             horizontalAlignment: root.horizontalAlignment(root.iconAlign)
                             anchors.verticalCenter: parent.verticalCenter
                             anchors.horizontalCenter: parent.horizontalCenter
                             anchors.horizontalCenterOffset: Math.round((parent.width - width) * (root.iconAnchor(root.iconAlign) - 0.5))
-                            visible: !appIcon.visible
+                            visible: !appIcon.visible && !customRuleIcon.visible
                             text: segmentItem.title.length > 0 ? segmentItem.title.charAt(0).toUpperCase() : "?"
                             pointSize: Math.max(Style.fontSizeXS, root.titleFontSize * root.titleScale * 0.95)
                             font.weight: Style.fontWeightBold
@@ -1596,14 +1631,22 @@ Item {
             } else if (action === "unpin") {
                 root.mainInstance?.removePinnedApp(root.selectedAppId);
             } else if (action === "style-rule-app") {
-                const appRule = root.mainInstance?.buildPrefilledStyleRule(root.selectedEntryKey, "appId");
-                if (appRule)
-                    root.mainInstance?.appendStyleRule(appRule, true);
+                const existingAppRuleIndex = root.mainInstance?.findPrefilledStyleRuleIndex(root.selectedEntryKey, "appId") ?? -1;
+                if (existingAppRuleIndex < 0) {
+                    const appRule = root.mainInstance?.buildPrefilledStyleRule(root.selectedEntryKey, "appId");
+                    if (appRule)
+                        root.mainInstance?.appendStyleRule(appRule, true);
+                }
+                root.mainInstance?.requestPrefilledStyleRuleEdit(root.selectedEntryKey, "appId");
                 BarService.openPluginSettings(root.screen, pluginApi.manifest);
             } else if (action === "style-rule-title") {
-                const titleRule = root.mainInstance?.buildPrefilledStyleRule(root.selectedEntryKey, "title");
-                if (titleRule)
-                    root.mainInstance?.appendStyleRule(titleRule, true);
+                const existingTitleRuleIndex = root.mainInstance?.findPrefilledStyleRuleIndex(root.selectedEntryKey, "title") ?? -1;
+                if (existingTitleRuleIndex < 0) {
+                    const titleRule = root.mainInstance?.buildPrefilledStyleRule(root.selectedEntryKey, "title");
+                    if (titleRule)
+                        root.mainInstance?.appendStyleRule(titleRule, true);
+                }
+                root.mainInstance?.requestPrefilledStyleRuleEdit(root.selectedEntryKey, "title");
                 BarService.openPluginSettings(root.screen, pluginApi.manifest);
             } else if (action === "settings") {
                 BarService.openPluginSettings(root.screen, pluginApi.manifest);

@@ -8,9 +8,48 @@ ColumnLayout {
     id: root
 
     property var rootSettings: null
+    readonly property var mainInstance: rootSettings?.mainInstance ?? null
 
     Layout.fillWidth: true
     spacing: Style.marginL
+
+    function previewIconColor(colorKey) {
+        const key = String(colorKey || "");
+        switch (key) {
+        case "primary":
+            return Color.mPrimary;
+        case "on-primary":
+            return Color.mOnPrimary;
+        case "secondary":
+            return Color.mSecondary;
+        case "on-secondary":
+            return Color.mOnSecondary;
+        case "tertiary":
+            return Color.mTertiary;
+        case "on-tertiary":
+            return Color.mOnTertiary;
+        case "error":
+            return Color.mError;
+        case "on-error":
+            return Color.mOnError;
+        case "surface":
+            return Color.mSurface;
+        case "on-surface":
+            return Color.mOnSurface;
+        case "surface-variant":
+            return Color.mSurfaceVariant;
+        case "on-surface-variant":
+            return Color.mOnSurfaceVariant;
+        case "outline":
+            return Color.mOutline;
+        case "hover":
+            return Color.mHover;
+        case "on-hover":
+            return Color.mOnHover;
+        default:
+            return Color.mOnSurfaceVariant;
+        }
+    }
 
     NBox {
         Layout.fillWidth: true
@@ -42,7 +81,7 @@ ColumnLayout {
             }
 
             NText {
-                visible: (rootSettings?.styleRuleItems().length ?? 0) === 0
+                visible: (rootSettings?.styleRuleSnapshot.length ?? 0) === 0
                 Layout.fillWidth: true
                 text: rootSettings?.pluginApi?.tr("settings.customStyleRules.empty")
                 color: Color.mOnSurfaceVariant
@@ -50,9 +89,11 @@ ColumnLayout {
             }
 
             Repeater {
-                model: rootSettings?.styleRuleItems() ?? []
+                model: rootSettings?.styleRuleSnapshot ?? []
 
                 delegate: NBox {
+                    id: ruleCard
+
                     required property var modelData
                     required property int index
 
@@ -60,6 +101,9 @@ ColumnLayout {
                     Layout.preferredHeight: ruleContent.implicitHeight + Style.marginM * 2
 
                     readonly property bool regexValid: rootSettings?.isValidRegex(modelData?.pattern) ?? true
+                    readonly property bool editTarget: (root.mainInstance?.requestedStyleRuleRevision ?? 0) > 0
+                        && String(root.mainInstance?.requestedStyleRuleMatchField || "") === String(modelData?.matchField || "appId")
+                        && String(root.mainInstance?.requestedStyleRulePattern || "") === String(modelData?.pattern || "").trim()
 
                     ColumnLayout {
                         id: ruleContent
@@ -79,6 +123,13 @@ ColumnLayout {
                                 color: Color.mOnSurface
                             }
 
+                            NText {
+                                visible: ruleCard.editTarget
+                                text: rootSettings?.pluginApi?.tr("settings.customStyleRules.editing")
+                                color: Color.mPrimary
+                                font.weight: Style.fontWeightSemiBold
+                            }
+
                             Item {
                                 Layout.fillWidth: true
                             }
@@ -93,7 +144,7 @@ ColumnLayout {
                             NButton {
                                 text: rootSettings?.pluginApi?.tr("settings.customStyleRules.actions.moveDown")
                                 icon: "chevron-down"
-                                enabled: index < ((rootSettings?.styleRuleItems().length ?? 0) - 1)
+                                enabled: index < ((rootSettings?.styleRuleSnapshot.length ?? 0) - 1)
                                 onClicked: rootSettings?.moveStyleRule(index, 1)
                             }
 
@@ -153,6 +204,41 @@ ColumnLayout {
                             text: rootSettings?.pluginApi?.tr("settings.customStyleRules.pattern.invalid")
                             color: Color.mError
                             wrapMode: Text.WordWrap
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: Style.marginM
+
+                            NLabel {
+                                Layout.fillWidth: true
+                                label: rootSettings?.pluginApi?.tr("settings.customStyleRules.customIcon.label")
+                                description: rootSettings?.pluginApi?.tr("settings.customStyleRules.customIcon.desc")
+                            }
+
+                            NIcon {
+                                icon: String(modelData?.customIcon || "")
+                                pointSize: Style.fontSizeXL
+                                visible: icon !== ""
+                                color: root.previewIconColor(String(modelData?.colors?.icon?.default?.color ?? "on-surface-variant"))
+                            }
+
+                            NButton {
+                                text: rootSettings?.pluginApi?.tr("settings.customStyleRules.customIcon.pick")
+                                onClicked: {
+                                    iconPicker.activeIndex = index;
+                                    iconPicker.initialIcon = String(modelData?.customIcon || "");
+                                    iconPicker.open();
+                                }
+                            }
+
+                            NButton {
+                                text: rootSettings?.pluginApi?.tr("settings.customStyleRules.customIcon.clear")
+                                enabled: String(modelData?.customIcon || "") !== ""
+                                onClicked: rootSettings?.updateStyleRule(index, {
+                                        "customIcon": ""
+                                    })
+                            }
                         }
 
                         NHeader {
@@ -301,6 +387,20 @@ ColumnLayout {
                     }
                 }
             }
+        }
+    }
+
+    NIconPicker {
+        id: iconPicker
+
+        property int activeIndex: -1
+
+        initialIcon: ""
+        onIconSelected: iconName => {
+            if (activeIndex >= 0)
+                rootSettings?.updateStyleRule(activeIndex, {
+                        "customIcon": iconName
+                    });
         }
     }
 }

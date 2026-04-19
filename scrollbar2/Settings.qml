@@ -15,6 +15,12 @@ ColumnLayout {
     property real preferredWidth: 760 * Style.uiScaleRatio
     property int selectedTab: 0
     property string _activePresetId: pluginApi?.pluginSettings?._activePresetId || ""
+    property int styleRulesRevision: 0
+    readonly property var mainInstance: pluginApi?.mainInstance ?? null
+    readonly property var styleRuleSnapshot: {
+        styleRulesRevision;
+        return Array.isArray(editSettings?.customStyleRules) ? editSettings.customStyleRules.slice() : [];
+    }
 
     readonly property var displayModeModel: [
         {
@@ -281,6 +287,7 @@ ColumnLayout {
             "enabled": source.enabled !== false,
             "matchField": source.matchField === "title" ? "title" : "appId",
             "pattern": String(source.pattern || ""),
+            "customIcon": String(source.customIcon || ""),
             "colors": {
                 "segment": normalizeColorStateMap(
                     source.colors?.segment,
@@ -562,12 +569,14 @@ ColumnLayout {
 
     function applyPreset(settingsObj, presetId) {
         editSettings = createSettingsSnapshot(settingsObj, defaults);
+        styleRulesRevision += 1;
         _activePresetId = presetId || "";
     }
 
     function refreshEditSettings() {
         defaultSettings = normalizeSettingsSnapshot(deepCopy(defaults));
         editSettings = createSettingsSnapshot(pluginApi?.pluginSettings || ({}), defaults);
+        styleRulesRevision += 1;
         _activePresetId = pluginApi?.pluginSettings?._activePresetId || "";
     }
 
@@ -656,6 +665,7 @@ ColumnLayout {
         const next = deepCopy(editSettings);
         next.customStyleRules = Array.isArray(items) ? items.map(normalizeCustomStyleRule) : [];
         editSettings = next;
+        styleRulesRevision += 1;
         _activePresetId = "";
     }
 

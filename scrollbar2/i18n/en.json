@@ -10,6 +10,8 @@
     "unpinFromBar": "Unpin from bar",
     "addStyleRuleForApp": "Add style rule for app",
     "addStyleRuleForTitle": "Add style rule for title",
+    "editStyleRuleForApp": "Edit style rule for app",
+    "editStyleRuleForTitle": "Edit style rule for title",
     "settings": "Widget settings"
   },
   "options": {
@@ -597,6 +599,7 @@
       "empty": "No custom style rules yet. Add one here or create one from a segment context menu.",
       "regexHelp": "Patterns use raw JavaScript regex. Examples: `^firefox$` for an exact app id match, `YouTube` for a title substring regex, or `.*Project.*` for broader title matching. Rules are checked top to bottom and the first match wins.",
       "ruleTitle": "Rule {index}",
+      "editing": "Editing target",
       "enabled": {
         "label": "Enabled",
         "desc": "Disable this rule without removing it."
@@ -612,6 +615,12 @@
         "desc": "Enter a JavaScript regex pattern. Matching is case-sensitive unless you encode it in the pattern itself.",
         "placeholder": "^firefox$",
         "invalid": "This regex pattern is invalid and will be ignored until it is fixed."
+      },
+      "customIcon": {
+        "label": "Custom Icon",
+        "desc": "Optionally replace the matched app icon with a Noctalia icon from the icon picker.",
+        "pick": "Choose Icon",
+        "clear": "Clear Icon"
       },
       "segmentColors": {
         "label": "Segment Colors",

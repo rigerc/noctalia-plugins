@@ -27,6 +27,9 @@ Item {
     property var cycleStateByApp: ({})
     property var _desktopEntryIdCache: ({})
     property var activeSpecialByMonitor: ({})
+    property string requestedStyleRuleMatchField: ""
+    property string requestedStyleRulePattern: ""
+    property int requestedStyleRuleRevision: 0
 
     function refreshSettingsSnapshot() {
         currentSettings = pluginApi?.pluginSettings || ({});
@@ -335,6 +338,7 @@ Item {
             "enabled": source.enabled !== false,
             "matchField": source.matchField === "title" ? "title" : "appId",
             "pattern": String(source.pattern || ""),
+            "customIcon": String(source.customIcon || ""),
             "colors": {
                 "segment": {
                     "focused": normalizeStyleRuleColorState(source.colors?.segment?.focused, nestedStateColorValue("focusLine", "focused", "primary"), nestedStateOpacityValue("focusLine", "focused", 1)),
@@ -419,6 +423,29 @@ Item {
         });
     }
 
+    function styleRuleItems() {
+        const configuredRules = currentSettings?.customStyleRules;
+        return Array.isArray(configuredRules) ? configuredRules.map(normalizeStyleRule) : [];
+    }
+
+    function findStyleRuleIndex(matchField, pattern) {
+        const normalizedMatchField = matchField === "title" ? "title" : "appId";
+        const normalizedPattern = String(pattern || "").trim();
+        if (normalizedPattern === "")
+            return -1;
+
+        const rules = styleRuleItems();
+        for (let index = 0; index < rules.length; index++) {
+            const rule = rules[index];
+            if ((rule?.matchField ?? "appId") !== normalizedMatchField)
+                continue;
+            if (String(rule?.pattern || "").trim() !== normalizedPattern)
+                continue;
+            return index;
+        }
+        return -1;
+    }
+
     function buildPrefilledStyleRule(entryKey, matchField) {
         const window = getWindowByEntry(entryKey);
         const resolvedMatchField = matchField === "title" ? "title" : "appId";
@@ -433,6 +460,27 @@ Item {
             "matchField": resolvedMatchField,
             "pattern": "^" + escapeRegexLiteral(rawValue) + "$"
         });
+    }
+
+    function findPrefilledStyleRuleIndex(entryKey, matchField) {
+        const rule = buildPrefilledStyleRule(entryKey, matchField);
+        if (!rule)
+            return -1;
+        return findStyleRuleIndex(rule.matchField, rule.pattern);
+    }
+
+    function requestStyleRuleEdit(matchField, pattern) {
+        requestedStyleRuleMatchField = matchField === "title" ? "title" : "appId";
+        requestedStyleRulePattern = String(pattern || "").trim();
+        requestedStyleRuleRevision += 1;
+    }
+
+    function requestPrefilledStyleRuleEdit(entryKey, matchField) {
+        const rule = buildPrefilledStyleRule(entryKey, matchField);
+        if (!rule)
+            return false;
+        requestStyleRuleEdit(rule.matchField, rule.pattern);
+        return true;
     }
 
     function toggleAppPin(appId) {
