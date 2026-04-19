@@ -719,12 +719,36 @@
       "actions": {
         "apply": "Apply",
         "details": "Details",
+        "export": "Export",
         "save": "Save Current as Preset",
         "rename": "Rename",
         "update": "Update with Current",
         "duplicate": "Duplicate",
         "delete": "Delete",
-        "deleteAll": "Delete All Custom Presets"
+        "deleteAll": "Delete All Custom Presets",
+        "exportAll": "Export All",
+        "importPreset": "Import"
+      },
+      "backup": {
+        "label": "Settings Backup",
+        "desc": "Export or import a complete backup of all settings and presets.",
+        "export": "Export Backup",
+        "import": "Import Backup"
+      },
+      "import": {
+        "importedPreset": "Imported Preset",
+        "errors": {
+          "empty": "File is empty.",
+          "invalidJson": "Invalid JSON file.",
+          "invalidFormat": "Unrecognized file format.",
+          "unrecognized": "Not a scrollbar2 export file.",
+          "readFailed": "Failed to read file."
+        },
+        "report": {
+          "label": "Migration Report",
+          "migrated": "{count} deprecated setting(s) migrated to new format.",
+          "unknown": "{count} unrecognized setting(s) removed (file may be from a newer version)."
+        }
       },
       "dialog": {
         "save": {
@@ -775,6 +799,16 @@
             "label": "No stored settings",
             "desc": "This preset does not contain any serialized settings."
           }
+        },
+        "importConfirm": {
+          "title": "Confirm Import",
+          "backupDesc": "This will replace your current settings and merge presets.",
+          "presetDesc": "Add this preset to your custom presets?",
+          "presetsDesc": "Import {count} presets?",
+          "confirm": "Import"
+        },
+        "importError": {
+          "title": "Import Error"
         }
       },
       "builtinPresets": {

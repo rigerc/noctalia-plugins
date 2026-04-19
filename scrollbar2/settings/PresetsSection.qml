@@ -1,8 +1,11 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Quickshell
+import Quickshell.Io
 import qs.Commons
 import qs.Widgets
+import "../Migrations.js" as Migrations
 
 ColumnLayout {
     id: root
@@ -13,6 +16,7 @@ ColumnLayout {
     property var customPresets: []
     property alias builtInSectionTarget: builtInHeader
     property alias customSectionTarget: customSectionRow
+    property alias backupSectionTarget: backupHeader
 
     spacing: Style.marginL
 
@@ -373,6 +377,274 @@ ColumnLayout {
         api.saveSettings();
     }
 
+    function _backupPayload() {
+        return {
+            scrollbar2Backup: true,
+            version: 1,
+            exportedAt: Date.now(),
+            settings: rootSettings.normalizeSettingsSnapshot(rootSettings.deepCopy(rootSettings.editSettings)),
+            presets: rootSettings.deepCopy(customPresets),
+            activePresetId: rootSettings._activePresetId || ""
+        };
+    }
+
+    function _presetPayload(preset) {
+        return {
+            scrollbar2Preset: true,
+            version: 1,
+            exportedAt: Date.now(),
+            preset: {
+                name: preset.name || "",
+                description: preset.description || "",
+                settings: rootSettings.deepCopy(preset.settings || ({}))
+            }
+        };
+    }
+
+    function _presetsBulkPayload() {
+        return {
+            scrollbar2Presets: true,
+            version: 1,
+            exportedAt: Date.now(),
+            presets: rootSettings.deepCopy(customPresets)
+        };
+    }
+
+    function _writeJsonToFile(path, data) {
+        if (!path)
+            return;
+        var dir = path.substring(0, path.lastIndexOf("/"));
+        if (dir)
+            Quickshell.execDetached(["mkdir", "-p", dir]);
+        exportWriter._pendingJson = JSON.stringify(data, null, 2);
+        exportWriter.path = path;
+        exportTimer.start();
+    }
+
+    Timer {
+        id: exportTimer
+        interval: 300
+        repeat: false
+        onTriggered: {
+            if (exportWriter._pendingJson !== "") {
+                exportWriter.setText(exportWriter._pendingJson);
+                exportWriter._pendingJson = "";
+            }
+        }
+    }
+
+    function _exportBackup(path) {
+        if (!path || path.trim() === "")
+            return;
+        path = _ensureFilePath(path, "scrollbar2-backup-" + _timestampString() + ".json");
+        _writeJsonToFile(path, _backupPayload());
+    }
+
+    function _exportPreset(preset, path) {
+        if (!path || path.trim() === "")
+            return;
+        if (!preset)
+            return;
+        path = _ensureFilePath(path, _safeFileName(preset.name || "preset") + ".json");
+        _writeJsonToFile(path, _presetPayload(preset));
+    }
+
+    function _exportAllPresets(path) {
+        if (!path || path.trim() === "")
+            return;
+        path = _ensureFilePath(path, "scrollbar2-presets-" + _timestampString() + ".json");
+        _writeJsonToFile(path, _presetsBulkPayload());
+    }
+
+    function _ensureFilePath(path, defaultName) {
+        if (!path || path.trim() === "")
+            return path;
+        var lastSlash = path.lastIndexOf("/");
+        var lastSegment = lastSlash >= 0 ? path.substring(lastSlash + 1) : path;
+        if (lastSegment.indexOf(".") < 0)
+            return _joinPath(path, defaultName);
+        return path;
+    }
+
+    function _joinPath(dir, file) {
+        return dir + (dir.charAt(dir.length - 1) === "/" ? "" : "/") + file;
+    }
+
+    function _timestampString() {
+        var d = new Date();
+        return d.getFullYear() + "-" + _pad2(d.getMonth() + 1) + "-" + _pad2(d.getDate()) + "-" + _pad2(d.getHours()) + _pad2(d.getMinutes());
+    }
+
+    function _pad2(n) {
+        return n < 10 ? "0" + n : "" + n;
+    }
+
+    function _safeFileName(name) {
+        return name.replace(/[^a-zA-Z0-9_\- ]/g, "").trim().replace(/\s+/g, "-").substring(0, 48);
+    }
+
+    function _parseImportFile(jsonText) {
+        if (!jsonText || jsonText.trim() === "")
+            return { error: pluginApi?.tr("settings.presets.import.errors.empty") ?? "File is empty." };
+
+        var data;
+        try {
+            data = JSON.parse(jsonText);
+        } catch (e) {
+            return { error: pluginApi?.tr("settings.presets.import.errors.invalidJson") ?? "Invalid JSON file." };
+        }
+
+        if (!data || typeof data !== "object" || Array.isArray(data))
+            return { error: pluginApi?.tr("settings.presets.import.errors.invalidFormat") ?? "Unrecognized file format." };
+
+        if (data.scrollbar2Backup) {
+            var backupResult = Migrations.validateImport(data.settings || ({}), rootSettings.defaultSettings);
+            return {
+                type: "backup",
+                settings: backupResult.settings,
+                presets: Array.isArray(data.presets) ? data.presets : [],
+                activePresetId: String(data.activePresetId || ""),
+                report: backupResult.report
+            };
+        }
+
+        if (data.scrollbar2Preset) {
+            var presetObj = data.preset || ({});
+            var presetResult = Migrations.validateImport(presetObj.settings || ({}), rootSettings.defaultSettings);
+            return {
+                type: "preset",
+                preset: {
+                    name: String(presetObj.name || "").trim().substring(0, 32),
+                    description: String(presetObj.description || "").trim().substring(0, 120),
+                    settings: presetResult.settings
+                },
+                report: presetResult.report
+            };
+        }
+
+        if (data.scrollbar2Presets) {
+            var rawPresets = Array.isArray(data.presets) ? data.presets : [];
+            var validatedPresets = [];
+            var allReports = [];
+            for (var i = 0; i < rawPresets.length; i++) {
+                var rp = rawPresets[i];
+                if (!rp || typeof rp !== "object")
+                    continue;
+                var rResult = Migrations.validateImport(rp.settings || ({}), rootSettings.defaultSettings);
+                validatedPresets.push({
+                    name: String(rp.name || "").trim().substring(0, 32),
+                    description: String(rp.description || "").trim().substring(0, 120),
+                    settings: rResult.settings
+                });
+                if (rResult.report.appliedMigrations.length > 0 || rResult.report.unknownKeys.length > 0)
+                    allReports.push({ name: rp.name || "", report: rResult.report });
+            }
+            return {
+                type: "presets",
+                presets: validatedPresets,
+                report: { appliedMigrations: [], unknownKeys: [], details: allReports }
+            };
+        }
+
+        return { error: pluginApi?.tr("settings.presets.import.errors.unrecognized") ?? "Not a scrollbar2 export file." };
+    }
+
+    function _applyImportResult(result) {
+        if (!result)
+            return;
+
+        if (result.type === "backup") {
+            rootSettings.applyPreset(result.settings, "");
+            var api = pluginApi;
+            if (api) {
+                var existingPresets = rootSettings.deepCopy(api.pluginSettings._presets || []);
+                var mergedPresets = existingPresets.concat(result.presets);
+                api.pluginSettings._presets = mergedPresets;
+                rootSettings._activePresetId = result.activePresetId || "";
+            }
+        }
+
+        if (result.type === "preset") {
+            var preset = result.preset;
+            var copyName = preset.name || (pluginApi?.tr("settings.presets.import.importedPreset") ?? "Imported Preset");
+            var suffix = 1;
+            while (_findPresetByName(copyName)) {
+                suffix++;
+                copyName = (preset.name || "Imported") + " " + suffix;
+            }
+            var now = Date.now();
+            var newPreset = {
+                id: _generateId(),
+                name: copyName,
+                description: preset.description || "",
+                createdAt: now,
+                updatedAt: now,
+                settings: preset.settings,
+                version: 1
+            };
+            var presets = rootSettings.deepCopy(customPresets);
+            presets.push(newPreset);
+            var api2 = pluginApi;
+            if (api2) {
+                api2.pluginSettings._presets = presets;
+                api2.saveSettings();
+            }
+        }
+
+        if (result.type === "presets") {
+            var api3 = pluginApi;
+            if (!api3)
+                return;
+            var existing = rootSettings.deepCopy(api3.pluginSettings._presets || []);
+            for (var i = 0; i < result.presets.length; i++) {
+                var ip = result.presets[i];
+                var ipName = ip.name || (pluginApi?.tr("settings.presets.import.importedPreset") ?? "Imported Preset");
+                var ipSuffix = 1;
+                while (_findPresetByName(ipName)) {
+                    ipSuffix++;
+                    ipName = (ip.name || "Imported") + " " + ipSuffix;
+                }
+                var ipNow = Date.now();
+                existing.push({
+                    id: _generateId(),
+                    name: ipName,
+                    description: ip.description || "",
+                    createdAt: ipNow,
+                    updatedAt: ipNow,
+                    settings: ip.settings,
+                    version: 1
+                });
+            }
+            api3.pluginSettings._presets = existing;
+            api3.saveSettings();
+        }
+    }
+
+    function _formatReport(report) {
+        if (!report)
+            return "";
+        var lines = [];
+        if (report.appliedMigrations && report.appliedMigrations.length > 0) {
+            var migLabel = pluginApi?.tr("settings.presets.import.report.migrated") ?? "Deprecated settings migrated";
+            lines.push(migLabel.replace("{count}", report.appliedMigrations.length));
+        }
+        if (report.unknownKeys && report.unknownKeys.length > 0) {
+            var unkLabel = pluginApi?.tr("settings.presets.import.report.unknown") ?? "Unrecognized settings removed";
+            lines.push(unkLabel.replace("{count}", report.unknownKeys.length));
+        }
+        if (report.details && report.details.length > 0) {
+            for (var i = 0; i < report.details.length; i++) {
+                var d = report.details[i];
+                lines.push(d.name + ":");
+                if (d.report.appliedMigrations.length > 0)
+                    lines.push("  " + (pluginApi?.tr("settings.presets.import.report.migrated") ?? "").replace("{count}", d.report.appliedMigrations.length));
+                if (d.report.unknownKeys.length > 0)
+                    lines.push("  " + (pluginApi?.tr("settings.presets.import.report.unknown") ?? "").replace("{count}", d.report.unknownKeys.length));
+            }
+        }
+        return lines.join("\n");
+    }
+
     function _detailsSectionLabel(sectionKey) {
         switch (sectionKey) {
         case "display":
@@ -497,6 +769,36 @@ ColumnLayout {
     }
 
     NLabel {
+        id: backupHeader
+        label: pluginApi?.tr("settings.presets.backup.label") ?? "Settings Backup"
+        description: pluginApi?.tr("settings.presets.backup.desc") ?? "Export or import a complete backup of all settings and presets."
+        Layout.fillWidth: true
+    }
+
+    RowLayout {
+        Layout.fillWidth: true
+        spacing: Style.marginM
+
+        NButton {
+            text: pluginApi?.tr("settings.presets.backup.export") ?? "Export Backup"
+            icon: "download"
+            fontSize: Style.fontSizeS
+            onClicked: backupExportPicker.openFilePicker()
+        }
+
+        NButton {
+            text: pluginApi?.tr("settings.presets.backup.import") ?? "Import Backup"
+            icon: "upload"
+            fontSize: Style.fontSizeS
+            onClicked: backupImportPicker.openFilePicker()
+        }
+    }
+
+    NDivider {
+        Layout.fillWidth: true
+    }
+
+    NLabel {
         id: builtInHeader
         label: pluginApi?.tr("settings.presets.builtin.label") ?? "Built-in Presets"
         description: pluginApi?.tr("settings.presets.builtin.desc") ?? ""
@@ -519,6 +821,10 @@ ColumnLayout {
                 pluginApi: root.pluginApi
                 onClicked: root._applyPreset(modelData.id)
                 onDetailsRequested: root._openDetails(modelData)
+                onExportRequested: {
+                    presetExportPicker._targetPreset = modelData;
+                    presetExportPicker.openFilePicker();
+                }
             }
         }
     }
@@ -543,6 +849,21 @@ ColumnLayout {
             icon: "device-floppy"
             fontSize: Style.fontSizeS
             onClicked: saveDialog.open()
+        }
+
+        NButton {
+            text: pluginApi?.tr("settings.presets.actions.importPreset") ?? "Import"
+            icon: "upload"
+            fontSize: Style.fontSizeS
+            onClicked: presetImportPicker.openFilePicker()
+        }
+
+        NButton {
+            visible: root.customPresets.length > 0
+            text: pluginApi?.tr("settings.presets.actions.exportAll") ?? "Export All"
+            icon: "download"
+            fontSize: Style.fontSizeS
+            onClicked: bulkExportPicker.openFilePicker()
         }
 
         NButton {
@@ -585,6 +906,10 @@ ColumnLayout {
                     updateDialog.open();
                 }
                 onDuplicateRequested: root._duplicatePreset(modelData.id)
+                onExportRequested: {
+                    presetExportPicker._targetPreset = modelData;
+                    presetExportPicker.openFilePicker();
+                }
                 onDeleteRequested: {
                     deleteDialog._targetId = modelData.id;
                     deleteDialog._targetName = modelData.name;
@@ -1107,6 +1432,254 @@ ColumnLayout {
                     onClicked: {
                         root._updatePreset(updateDialog._targetId);
                         updateDialog.close();
+                    }
+                }
+            }
+        }
+    }
+
+    FileView {
+        id: importFileReader
+        watchChanges: false
+        preload: false
+        blockLoading: true
+
+        onLoaded: {
+            var result = _parseImportFile(text());
+            if (result.error) {
+                importErrorDialog._errorMessage = result.error;
+                importErrorDialog.open();
+                return;
+            }
+            importConfirmDialog._importResult = result;
+            importConfirmDialog._reportText = _formatReport(result.report);
+            importConfirmDialog.open();
+        }
+
+        onLoadFailed: {
+            importErrorDialog._errorMessage = pluginApi?.tr("settings.presets.import.errors.readFailed") ?? "Failed to read file.";
+            importErrorDialog.open();
+        }
+    }
+
+    FileView {
+        id: exportWriter
+        watchChanges: false
+        preload: false
+
+        property string _pendingJson: ""
+    }
+
+    NFilePicker {
+        id: backupExportPicker
+        selectionMode: "folders"
+        title: pluginApi?.tr("settings.presets.backup.export") ?? "Export Backup"
+        initialPath: Quickshell.env("HOME") + "/Downloads"
+
+        onAccepted: paths => {
+            if (paths.length > 0)
+                _exportBackup(String(paths[0]));
+        }
+    }
+
+    NFilePicker {
+        id: backupImportPicker
+        selectionMode: "files"
+        title: pluginApi?.tr("settings.presets.backup.import") ?? "Import Backup"
+        initialPath: Quickshell.env("HOME")
+        nameFilters: ["*.json"]
+
+        onAccepted: paths => {
+            if (paths.length > 0)
+                importFileReader.path = String(paths[0]);
+        }
+    }
+
+    NFilePicker {
+        id: presetExportPicker
+        selectionMode: "folders"
+        title: pluginApi?.tr("settings.presets.actions.export") ?? "Export Preset"
+        initialPath: Quickshell.env("HOME") + "/Downloads"
+
+        property var _targetPreset: null
+
+        onAccepted: paths => {
+            if (paths.length > 0 && _targetPreset)
+                _exportPreset(_targetPreset, String(paths[0]));
+            _targetPreset = null;
+        }
+    }
+
+    NFilePicker {
+        id: presetImportPicker
+        selectionMode: "files"
+        title: pluginApi?.tr("settings.presets.actions.importPreset") ?? "Import Preset"
+        initialPath: Quickshell.env("HOME")
+        nameFilters: ["*.json"]
+
+        onAccepted: paths => {
+            if (paths.length > 0)
+                importFileReader.path = String(paths[0]);
+        }
+    }
+
+    NFilePicker {
+        id: bulkExportPicker
+        selectionMode: "folders"
+        title: pluginApi?.tr("settings.presets.actions.exportAll") ?? "Export All Presets"
+        initialPath: Quickshell.env("HOME") + "/Downloads"
+
+        onAccepted: paths => {
+            if (paths.length > 0)
+                _exportAllPresets(String(paths[0]));
+        }
+    }
+
+    Popup {
+        id: importConfirmDialog
+        parent: Overlay.overlay
+        modal: true
+        dim: false
+        anchors.centerIn: parent
+        width: 460 * Style.uiScaleRatio
+        padding: Style.marginL
+        closePolicy: Popup.CloseOnEscape
+
+        property var _importResult: null
+        property string _reportText: ""
+
+        background: Rectangle {
+            color: Color.mSurface
+            radius: Style.radiusS
+            border.color: Color.mPrimary
+            border.width: Style.borderM
+        }
+
+        contentItem: ColumnLayout {
+            width: importConfirmDialog.width - importConfirmDialog.padding * 2
+            spacing: Style.marginL
+
+            NHeader {
+                label: root.pluginApi?.tr("settings.presets.dialog.importConfirm.title") ?? "Confirm Import"
+                description: {
+                    var r = importConfirmDialog._importResult;
+                    if (!r)
+                        return "";
+                    switch (r.type) {
+                    case "backup":
+                        return root.pluginApi?.tr("settings.presets.dialog.importConfirm.backupDesc") ?? "This will replace your current settings and merge presets.";
+                    case "preset":
+                        return root.pluginApi?.tr("settings.presets.dialog.importConfirm.presetDesc") ?? "Add this preset to your custom presets?";
+                    case "presets":
+                        return (root.pluginApi?.tr("settings.presets.dialog.importConfirm.presetsDesc") ?? "Import {count} presets?").replace("{count}", r.presets ? r.presets.length : 0);
+                    default:
+                        return "";
+                    }
+                }
+            }
+
+            NBox {
+                visible: importConfirmDialog._reportText !== ""
+                Layout.fillWidth: true
+                Layout.preferredHeight: reportContent.implicitHeight + Style.marginL * 2
+
+                ColumnLayout {
+                    id: reportContent
+                    anchors.fill: parent
+                    anchors.margins: Style.marginL
+                    spacing: Style.marginS
+
+                    NText {
+                        text: root.pluginApi?.tr("settings.presets.import.report.label") ?? "Migration Report"
+                        pointSize: Style.fontSizeM
+                        font.weight: Style.fontWeightMedium
+                        color: Color.mOnSurface
+                        Layout.fillWidth: true
+                    }
+
+                    NText {
+                        text: importConfirmDialog._reportText
+                        pointSize: Style.fontSizeS
+                        color: Color.mOnSurfaceVariant
+                        Layout.fillWidth: true
+                        wrapMode: Text.WordWrap
+                    }
+                }
+            }
+
+            RowLayout {
+                spacing: Style.marginM
+                Layout.fillWidth: true
+
+                Item {
+                    Layout.fillWidth: true
+                }
+
+                NButton {
+                    text: root.pluginApi?.tr("common.cancel") ?? "Cancel"
+                    outlined: true
+                    onClicked: {
+                        importConfirmDialog._importResult = null;
+                        importConfirmDialog._reportText = "";
+                        importConfirmDialog.close();
+                    }
+                }
+
+                NButton {
+                    text: root.pluginApi?.tr("settings.presets.dialog.importConfirm.confirm") ?? "Import"
+                    onClicked: {
+                        root._applyImportResult(importConfirmDialog._importResult);
+                        importConfirmDialog._importResult = null;
+                        importConfirmDialog._reportText = "";
+                        importConfirmDialog.close();
+                    }
+                }
+            }
+        }
+    }
+
+    Popup {
+        id: importErrorDialog
+        parent: Overlay.overlay
+        modal: true
+        dim: false
+        anchors.centerIn: parent
+        width: 380 * Style.uiScaleRatio
+        padding: Style.marginL
+        closePolicy: Popup.CloseOnEscape
+
+        property string _errorMessage: ""
+
+        background: Rectangle {
+            color: Color.mSurface
+            radius: Style.radiusS
+            border.color: Color.mError
+            border.width: Style.borderM
+        }
+
+        contentItem: ColumnLayout {
+            width: importErrorDialog.width - importErrorDialog.padding * 2
+            spacing: Style.marginL
+
+            NHeader {
+                label: root.pluginApi?.tr("settings.presets.dialog.importError.title") ?? "Import Error"
+                description: importErrorDialog._errorMessage
+            }
+
+            RowLayout {
+                spacing: Style.marginM
+                Layout.fillWidth: true
+
+                Item {
+                    Layout.fillWidth: true
+                }
+
+                NButton {
+                    text: root.pluginApi?.tr("common.cancel") ?? "Close"
+                    outlined: true
+                    onClicked: {
+                        importErrorDialog._errorMessage = "";
+                        importErrorDialog.close();
                     }
                 }
             }

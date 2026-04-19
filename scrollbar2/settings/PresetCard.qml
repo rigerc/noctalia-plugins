@@ -20,6 +20,7 @@ Item {
     signal updateRequested()
     signal duplicateRequested()
     signal deleteRequested()
+    signal exportRequested()
 
     property bool _isHovered: false
 
@@ -104,6 +105,11 @@ Item {
                     "label": root.pluginApi?.tr("settings.presets.actions.details") ?? "",
                     "action": "details",
                     "icon": "list-details"
+                },
+                {
+                    "label": root.pluginApi?.tr("settings.presets.actions.export") ?? "",
+                    "action": "export",
+                    "icon": "download"
                 }
             ];
 
@@ -136,6 +142,7 @@ Item {
             switch (action) {
             case "apply":      root.clicked(); break;
             case "details":    root.detailsRequested(); break;
+            case "export":     root.exportRequested(); break;
             case "rename":     root.renameRequested(); break;
             case "update":     root.updateRequested(); break;
             case "duplicate":  root.duplicateRequested(); break;

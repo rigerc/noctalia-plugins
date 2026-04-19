@@ -4,6 +4,7 @@ import qs.Commons
 import qs.Services.System
 import qs.Widgets
 import "./settings"
+import "Migrations.js" as Migrations
 
 ColumnLayout {
     id: root
@@ -276,11 +277,11 @@ ColumnLayout {
         return clampOpacity(numericValue, fallbackValue);
     }
 
-    function normalizeColorSetting(settingValue, legacyColorValue, legacyOpacityValue, fallbackColor, fallbackOpacity) {
+    function normalizeColorSetting(settingValue, fallbackColor, fallbackOpacity) {
         const normalized = ({});
         const currentValue = (settingValue && typeof settingValue === "object" && !Array.isArray(settingValue)) ? settingValue : ({});
-        normalized.color = currentValue.color ?? legacyColorValue ?? fallbackColor;
-        normalized.opacity = normalizeOpacityValue(currentValue.opacity ?? legacyOpacityValue, fallbackOpacity);
+        normalized.color = currentValue.color ?? fallbackColor;
+        normalized.opacity = normalizeOpacityValue(currentValue.opacity, fallbackOpacity);
         return normalized;
     }
 
@@ -293,8 +294,6 @@ ColumnLayout {
             const currentState = currentValue[key];
             normalized[key] = normalizeColorSetting(
                 currentState,
-                currentState,
-                undefined,
                 fallbackMap[key],
                 opacityValue
             );
@@ -341,7 +340,8 @@ ColumnLayout {
     }
 
     function normalizeSettingsSnapshot(settings) {
-        const next = deepCopy(settings || ({}));
+        const migrated = Migrations.migrateSettings(settings || ({}));
+        const next = deepCopy(migrated.settings);
         if (!next.display)
             next.display = ({});
         if (!next.track)
@@ -349,27 +349,19 @@ ColumnLayout {
         if (!next.focusLine)
             next.focusLine = ({});
         next.display.spaceMode = "reserve";
-        if (next.track && next.track.height !== undefined)
-            delete next.track.height;
 
         next.display.background = normalizeColorSetting(
             next.display.background,
-            next.display.backgroundColor,
-            next.display.backgroundOpacity,
             "none",
             0
         );
         next.display.gradient = normalizeColorSetting(
             next.display.gradient,
-            next.display.gradientColor,
-            next.display.gradientOpacity,
             "none",
             0
         );
         next.track.fill = normalizeColorSetting(
             next.track.fill,
-            next.track.color,
-            next.track.opacity,
             "surface",
             1
         );
@@ -384,8 +376,6 @@ ColumnLayout {
         next.focusLine.width = Math.max(1, Math.min(100, Number(next.focusLine.width ?? 100)));
         next.focusLine.lineColor = normalizeColorSetting(
             next.focusLine.lineColor,
-            undefined,
-            undefined,
             "primary",
             1
         );
@@ -408,8 +398,6 @@ ColumnLayout {
         );
         next.focusLine.opacity = normalizeOpacityValue(next.focusLine.opacity, 1);
         next.animation = next.animation && typeof next.animation === "object" && !Array.isArray(next.animation) ? next.animation : ({});
-        if (next.animation.type === "fade")
-            next.animation.type = "ease";
         if (["spring", "ease", "linear", "smooth"].indexOf(next.animation.type) < 0)
             next.animation.type = "spring";
         next.workspaceIndicator = next.workspaceIndicator && typeof next.workspaceIndicator === "object" && !Array.isArray(next.workspaceIndicator) ? next.workspaceIndicator : ({});
@@ -419,18 +407,16 @@ ColumnLayout {
             next.workspaceIndicator.position = "left";
         if (["top", "center", "bottom"].indexOf(next.workspaceIndicator.verticalAlign) < 0)
             next.workspaceIndicator.verticalAlign = "center";
-        next.workspaceIndicator.background = normalizeColorSetting(next.workspaceIndicator.background, undefined, undefined, "surface", 0.72);
+        next.workspaceIndicator.background = normalizeColorSetting(next.workspaceIndicator.background, "surface", 0.72);
         next.workspaceIndicator.font = next.workspaceIndicator.font && typeof next.workspaceIndicator.font === "object" && !Array.isArray(next.workspaceIndicator.font) ? next.workspaceIndicator.font : ({});
-        next.workspaceIndicator.font.color = normalizeColorSetting(next.workspaceIndicator.font.color, undefined, undefined, "on-surface", 1);
+        next.workspaceIndicator.font.color = normalizeColorSetting(next.workspaceIndicator.font.color, "on-surface", 1);
         next.workspaceIndicator.badge = next.workspaceIndicator.badge && typeof next.workspaceIndicator.badge === "object" && !Array.isArray(next.workspaceIndicator.badge) ? next.workspaceIndicator.badge : ({});
-        next.workspaceIndicator.badge.background = normalizeColorSetting(next.workspaceIndicator.badge.background, undefined, undefined, "primary", 1);
+        next.workspaceIndicator.badge.background = normalizeColorSetting(next.workspaceIndicator.badge.background, "primary", 1);
         next.workspaceIndicator.badge.font = next.workspaceIndicator.badge.font && typeof next.workspaceIndicator.badge.font === "object" && !Array.isArray(next.workspaceIndicator.badge.font) ? next.workspaceIndicator.badge.font : ({});
-        next.workspaceIndicator.badge.font.color = normalizeColorSetting(next.workspaceIndicator.badge.font.color, undefined, undefined, "on-primary", 1);
+        next.workspaceIndicator.badge.font.color = normalizeColorSetting(next.workspaceIndicator.badge.font.color, "on-primary", 1);
         next.workspaceIndicator.animation = next.workspaceIndicator.animation && typeof next.workspaceIndicator.animation === "object" && !Array.isArray(next.workspaceIndicator.animation) ? next.workspaceIndicator.animation : ({});
         if (["horizontal", "vertical"].indexOf(next.workspaceIndicator.animation.axis) < 0)
             next.workspaceIndicator.animation.axis = "horizontal";
-        if (next.workspaceIndicator.animation.type === "fade")
-            next.workspaceIndicator.animation.type = "ease";
         if (["spring", "ease", "linear", "smooth"].indexOf(next.workspaceIndicator.animation.type) < 0)
             next.workspaceIndicator.animation.type = "smooth";
         next.specialWorkspaceOverlay = next.specialWorkspaceOverlay && typeof next.specialWorkspaceOverlay === "object" && !Array.isArray(next.specialWorkspaceOverlay) ? next.specialWorkspaceOverlay : ({});
@@ -439,9 +425,9 @@ ColumnLayout {
         next.specialWorkspaceOverlay.showWindowIcons = next.specialWorkspaceOverlay.showWindowIcons === true;
         next.specialWorkspaceOverlay.widthPercent = Math.max(50, Math.min(100, Number(next.specialWorkspaceOverlay.widthPercent ?? 100)));
         next.specialWorkspaceOverlay.heightPercent = Math.max(50, Math.min(100, Number(next.specialWorkspaceOverlay.heightPercent ?? 70)));
-        next.specialWorkspaceOverlay.background = normalizeColorSetting(next.specialWorkspaceOverlay.background, undefined, undefined, "surface", 0.82);
+        next.specialWorkspaceOverlay.background = normalizeColorSetting(next.specialWorkspaceOverlay.background, "surface", 0.82);
         next.specialWorkspaceOverlay.font = next.specialWorkspaceOverlay.font && typeof next.specialWorkspaceOverlay.font === "object" && !Array.isArray(next.specialWorkspaceOverlay.font) ? next.specialWorkspaceOverlay.font : ({});
-        next.specialWorkspaceOverlay.font.color = normalizeColorSetting(next.specialWorkspaceOverlay.font.color, undefined, undefined, "on-surface", 1);
+        next.specialWorkspaceOverlay.font.color = normalizeColorSetting(next.specialWorkspaceOverlay.font.color, "on-surface", 1);
         next.pinnedApps = next.pinnedApps && typeof next.pinnedApps === "object" && !Array.isArray(next.pinnedApps) ? next.pinnedApps : ({});
         if (["left", "right"].indexOf(next.pinnedApps.position) < 0)
             next.pinnedApps.position = "left";
@@ -459,13 +445,6 @@ ColumnLayout {
         }) : [];
         next.customStyleRules = Array.isArray(next.customStyleRules) ? next.customStyleRules.map(normalizeCustomStyleRule) : [];
 
-        delete next.display.backgroundColor;
-        delete next.display.backgroundOpacity;
-        delete next.display.gradientColor;
-        delete next.display.gradientOpacity;
-        delete next.track.color;
-        delete next.track.opacity;
-        delete next.focusLine.shadowEnabled;
         return next;
     }
 

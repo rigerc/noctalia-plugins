@@ -13,6 +13,12 @@ SettingsTabPage {
     icon: "template"
     navigationSections: [
         {
+            "id": "backup",
+            "label": rootSettings?.pluginApi?.tr("settings.presets.backup.label"),
+            "icon": "download",
+            "target": presetsSection.backupSectionTarget
+        },
+        {
             "id": "built-in",
             "label": rootSettings?.pluginApi?.tr("settings.presets.builtin.label"),
             "icon": "template",
