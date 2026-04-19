@@ -259,6 +259,19 @@ ColumnLayout {
             }
 
             NValueSlider {
+                label: rootSettings?.pluginApi?.tr("settings.focusLine.width.label")
+                description: rootSettings?.pluginApi?.tr("settings.focusLine.width.desc")
+                from: 1
+                to: 100
+                stepSize: 1
+                value: rootSettings?.settingValue("focusLine", "width") ?? 100
+                text: Math.round(value) + "%"
+                defaultValue: rootSettings?.defaultValue("focusLine", "width") ?? 100
+                showReset: true
+                onMoved: sliderValue => rootSettings?.setSetting("focusLine", "width", Math.round(sliderValue))
+            }
+
+            NValueSlider {
                 label: rootSettings?.pluginApi?.tr("settings.focusLine.borderRadius.label")
                 description: rootSettings?.pluginApi?.tr("settings.focusLine.borderRadius.desc")
                 from: 0

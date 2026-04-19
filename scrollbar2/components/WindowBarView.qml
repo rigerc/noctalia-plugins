@@ -322,6 +322,7 @@ Item {
     readonly property real segmentSpacing: Math.max(0, settingValue("track", "segmentSpacing", 4) * Style.uiScaleRatio)
 
     readonly property real focusLineThickness: Math.max(1, settingValue("focusLine", "thickness", 6) * Style.uiScaleRatio)
+    readonly property real focusLineWidthPercent: Math.max(1, Math.min(100, settingValue("focusLine", "width", 100)))
     readonly property real focusLineRadius: Math.max(0, settingValue("focusLine", "borderRadius", 3) * Style.uiScaleRatio)
     readonly property string focusLineVerticalAlign: settingValue("focusLine", "verticalAlign", "bottom")
     readonly property real focusLineOpacity: normalizeOpacityValue(settingValue("focusLine", "opacity", 1), 1)
@@ -1567,12 +1568,13 @@ Item {
 
         Rectangle {
             id: focusLineFill
-            x: 0
+            readonly property real computedWidth: Math.max(0, Math.round(parent.width * root.focusLineWidthPercent / 100))
+            x: Math.max(0, Math.round((parent.width - width) / 2))
             y: root.indicatorY()
-            width: parent.width
+            width: computedWidth
             height: root.visibleFocusLineThickness
             radius: root.focusLineRadius
-            color: Qt.alpha(root.focusLineIndicatorColor, root.focusLineOpacity * root.focusLineIndicatorOpacity)
+            color: root.colorWithOpacity(root.focusLineIndicatorColor, root.focusLineOpacity * root.focusLineIndicatorOpacity)
         }
     }
 

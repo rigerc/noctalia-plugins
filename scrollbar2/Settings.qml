@@ -381,6 +381,7 @@ ColumnLayout {
                 "default": "surface-variant"
             }
         );
+        next.focusLine.width = Math.max(1, Math.min(100, Number(next.focusLine.width ?? 100)));
         next.focusLine.lineColor = normalizeColorSetting(
             next.focusLine.lineColor,
             undefined,

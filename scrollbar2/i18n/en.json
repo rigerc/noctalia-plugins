@@ -286,6 +286,10 @@
         "label": "Focus Thickness",
         "desc": "Height of the moving focus indicator or the fade-state fill."
       },
+      "width": {
+        "label": "Focus Width",
+        "desc": "Width of the moving focus indicator as a percentage of the segment."
+      },
       "borderRadius": {
         "label": "Focus Radius",
         "desc": "Corner radius of the focus indicator."
