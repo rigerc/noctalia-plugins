@@ -142,6 +142,20 @@ ColumnLayout {
             "name": pluginApi?.tr("options.workspaceIndicatorRight")
         }
     ]
+    readonly property var specialWorkspaceOverlayTextModeModel: [
+        {
+            "key": "stripped",
+            "name": pluginApi?.tr("options.specialWorkspaceOverlayStripped")
+        },
+        {
+            "key": "raw",
+            "name": pluginApi?.tr("options.specialWorkspaceOverlayRaw")
+        },
+        {
+            "key": "custom",
+            "name": pluginApi?.tr("options.specialWorkspaceOverlayCustom")
+        }
+    ]
     readonly property var pinnedAppsPositionModel: [
         {
             "key": "left",
@@ -353,6 +367,14 @@ ColumnLayout {
             next.workspaceIndicator.animation.type = "ease";
         if (["spring", "ease", "linear", "smooth"].indexOf(next.workspaceIndicator.animation.type) < 0)
             next.workspaceIndicator.animation.type = "smooth";
+        next.specialWorkspaceOverlay = next.specialWorkspaceOverlay && typeof next.specialWorkspaceOverlay === "object" && !Array.isArray(next.specialWorkspaceOverlay) ? next.specialWorkspaceOverlay : ({});
+        if (["stripped", "raw", "custom"].indexOf(next.specialWorkspaceOverlay.textMode) < 0)
+            next.specialWorkspaceOverlay.textMode = "stripped";
+        next.specialWorkspaceOverlay.widthPercent = Math.max(50, Math.min(100, Number(next.specialWorkspaceOverlay.widthPercent ?? 100)));
+        next.specialWorkspaceOverlay.heightPercent = Math.max(50, Math.min(100, Number(next.specialWorkspaceOverlay.heightPercent ?? 70)));
+        next.specialWorkspaceOverlay.background = normalizeColorSetting(next.specialWorkspaceOverlay.background, undefined, undefined, "surface", 0.82);
+        next.specialWorkspaceOverlay.font = next.specialWorkspaceOverlay.font && typeof next.specialWorkspaceOverlay.font === "object" && !Array.isArray(next.specialWorkspaceOverlay.font) ? next.specialWorkspaceOverlay.font : ({});
+        next.specialWorkspaceOverlay.font.color = normalizeColorSetting(next.specialWorkspaceOverlay.font.color, undefined, undefined, "on-surface", 1);
         next.pinnedApps = next.pinnedApps && typeof next.pinnedApps === "object" && !Array.isArray(next.pinnedApps) ? next.pinnedApps : ({});
         if (["left", "right"].indexOf(next.pinnedApps.position) < 0)
             next.pinnedApps.position = "left";
@@ -472,6 +494,10 @@ ColumnLayout {
             return nestedSettingValue("workspaceIndicator", "badge", "enabled") ?? false;
         case "workspaceIndicatorAnimationEnabled":
             return nestedSettingValue("workspaceIndicator", "animation", "enabled") ?? true;
+        case "specialWorkspaceOverlayEnabled":
+            return settingValue("specialWorkspaceOverlay", "enabled") ?? false;
+        case "specialWorkspaceOverlayCustomMode":
+            return (settingValue("specialWorkspaceOverlay", "textMode") ?? "stripped") === "custom";
         case "pinnedAppsEnabled":
             return pinnedAppItems().length > 0;
         case "showIcons":
@@ -597,6 +623,11 @@ ColumnLayout {
             }
 
             WorkspaceIndicatorSettingsSection {
+                Layout.fillWidth: true
+                rootSettings: root
+            }
+
+            SpecialWorkspaceOverlaySettingsSection {
                 Layout.fillWidth: true
                 rootSettings: root
             }

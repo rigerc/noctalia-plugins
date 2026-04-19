@@ -183,6 +183,26 @@
           "speed": 220
         }
       },
+      "specialWorkspaceOverlay": {
+        "enabled": false,
+        "textMode": "stripped",
+        "customLabel": "",
+        "widthPercent": 100,
+        "heightPercent": 70,
+        "background": {
+          "color": "surface",
+          "opacity": 0.82
+        },
+        "font": {
+          "family": "JetBrains Mono",
+          "size": 11,
+          "weight": "medium",
+          "color": {
+            "color": "on-surface",
+            "opacity": 1
+          }
+        }
+      },
       "pinnedApps": {
         "position": "left",
         "iconColor": "on-surface",

@@ -23,8 +23,10 @@ Item {
     property int liveRevision: 0
     property int titleRevision: 0
     property int workspaceRevision: 0
+    property int activeSpecialRevision: 0
     property var cycleStateByApp: ({})
     property var _desktopEntryIdCache: ({})
+    property var activeSpecialByMonitor: ({})
 
     function refreshSettingsSnapshot() {
         currentSettings = pluginApi?.pluginSettings || ({});
@@ -132,6 +134,71 @@ Item {
             return JSON.parse(JSON.stringify(value || ({})));
         } catch (error) {
             return ({});
+        }
+    }
+
+    function specialWorkspaceRecord(workspaceId, workspaceName) {
+        const trimmedId = String(workspaceId ?? "").trim();
+        const trimmedName = String(workspaceName ?? "").trim();
+        if (trimmedId === "" && trimmedName === "")
+            return null;
+
+        return {
+            "id": trimmedId,
+            "name": trimmedName
+        };
+    }
+
+    function updateActiveSpecialForMonitor(monitorName, workspaceId, workspaceName) {
+        const normalizedMonitorName = String(monitorName || "").trim();
+        if (normalizedMonitorName === "")
+            return;
+
+        const nextState = Object.assign({}, activeSpecialByMonitor);
+        const nextRecord = specialWorkspaceRecord(workspaceId, workspaceName);
+        const previousRecord = nextState[normalizedMonitorName] || null;
+
+        if (!nextRecord) {
+            if (!previousRecord)
+                return;
+            delete nextState[normalizedMonitorName];
+        } else if (previousRecord && previousRecord.id === nextRecord.id && previousRecord.name === nextRecord.name) {
+            return;
+        } else {
+            nextState[normalizedMonitorName] = nextRecord;
+        }
+
+        activeSpecialByMonitor = nextState;
+        activeSpecialRevision += 1;
+    }
+
+    function refreshActiveSpecialSnapshot() {
+        if (!CompositorService.isHyprland) {
+            if (Object.keys(activeSpecialByMonitor).length === 0)
+                return;
+            activeSpecialByMonitor = ({});
+            activeSpecialRevision += 1;
+            return;
+        }
+
+        try {
+            const monitors = Hyprland.monitors.values;
+            const nextState = ({});
+            for (let i = 0; i < monitors.length; i++) {
+                const monitor = monitors[i];
+                const monitorName = String(monitor?.name || "").trim();
+                const record = specialWorkspaceRecord(monitor?.specialWorkspace?.id, monitor?.specialWorkspace?.name);
+                if (monitorName !== "" && record)
+                    nextState[monitorName] = record;
+            }
+
+            if (JSON.stringify(nextState) === JSON.stringify(activeSpecialByMonitor))
+                return;
+
+            activeSpecialByMonitor = nextState;
+            activeSpecialRevision += 1;
+        } catch (error) {
+            Logger.w("Scrollbar2", "Failed to read active special workspaces: " + error);
         }
     }
 
@@ -426,6 +493,15 @@ Item {
         return null;
     }
 
+    function resolveSpecialWorkspaceForScreen(screenName) {
+        const normalizedScreenName = String(screenName || "").trim().toLowerCase();
+        for (const monitorName in activeSpecialByMonitor) {
+            if (String(monitorName || "").trim().toLowerCase() === normalizedScreenName)
+                return activeSpecialByMonitor[monitorName];
+        }
+        return null;
+    }
+
     function countWindowsForWorkspace(screenName, workspaceId) {
         if (workspaceId === undefined || workspaceId === null || workspaceId === "")
             return 0;
@@ -699,6 +775,18 @@ Item {
     }
 
     Connections {
+        target: CompositorService.isHyprland ? Hyprland : null
+
+        function onRawEvent(event) {
+            if (event.name !== "activespecialv2")
+                return;
+
+            const values = event.parse(3);
+            root.updateActiveSpecialForMonitor(values[2], values[0], values[1]);
+        }
+    }
+
+    Connections {
         target: typeof DesktopEntries !== "undefined" ? DesktopEntries.applications : null
 
         function onValuesChanged() {
@@ -707,7 +795,10 @@ Item {
         }
     }
 
-    Component.onCompleted: updateSnapshots("startup")
+    Component.onCompleted: {
+        updateSnapshots("startup");
+        refreshActiveSpecialSnapshot();
+    }
 
     Variants {
         model: Quickshell.screens

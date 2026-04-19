@@ -12,6 +12,18 @@
       "url": "https://github.com/noctalia-dev/noctalia-shell.git",
       "branch": "main",
       "sparse": []
+    },
+    {
+      "name": "quickshell",
+      "url": "https://github.com/quickshell-mirror/quickshell.git",
+      "branch": "master",
+      "sparse": []
+    },
+    {
+      "name": "fix-typegen-compilation",
+      "url": "https://github.com/jakobhellermann/quickshell-docs/tree/fix-typegen-compilation",
+      "branch": "main",
+      "sparse": []
     }
   ]
 }

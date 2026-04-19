@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Widgets
 import qs.Commons
 import qs.Services.UI
@@ -33,6 +34,8 @@ Item {
     readonly property string barPosition: Settings.getBarPositionForScreen(screenName)
     readonly property bool isVerticalBar: barPosition === "left" || barPosition === "right"
     readonly property bool hostVisible: visibleInCurrentMode && (hostMode !== "bar" || !isVerticalBar)
+    readonly property var hyprlandMonitor: Hyprland.monitorFor(screen)
+    readonly property string fallbackSpecialWorkspaceName: String(mainInstance?.resolveSpecialWorkspaceForScreen(String(hyprlandMonitor?.name || screenName).trim())?.name || "").trim()
 
     function refreshSettingsSnapshot() {
         currentSettings = pluginApi?.pluginSettings || ({});
@@ -250,6 +253,19 @@ Item {
     readonly property string workspaceIndicatorAnimationAxis: currentSettings?.workspaceIndicator?.animation?.axis ?? defaults?.workspaceIndicator?.animation?.axis ?? "horizontal"
     readonly property string workspaceIndicatorAnimationType: currentSettings?.workspaceIndicator?.animation?.type ?? defaults?.workspaceIndicator?.animation?.type ?? "smooth"
     readonly property int workspaceIndicatorAnimationSpeed: Math.max(0, Math.round(currentSettings?.workspaceIndicator?.animation?.speed ?? defaults?.workspaceIndicator?.animation?.speed ?? 220))
+    readonly property bool specialWorkspaceOverlayEnabled: settingValue("specialWorkspaceOverlay", "enabled", false)
+    readonly property string specialWorkspaceOverlayTextMode: settingValue("specialWorkspaceOverlay", "textMode", "stripped")
+    readonly property string specialWorkspaceOverlayCustomLabel: String(settingValue("specialWorkspaceOverlay", "customLabel", "") || "").trim()
+    readonly property real specialWorkspaceOverlayWidthPercent: Math.max(50, Math.min(100, settingValue("specialWorkspaceOverlay", "widthPercent", 100)))
+    readonly property real specialWorkspaceOverlayHeightPercent: Math.max(50, Math.min(100, settingValue("specialWorkspaceOverlay", "heightPercent", 70)))
+    readonly property color specialWorkspaceOverlayBackgroundColor: resolveColor(objectSettingValue("specialWorkspaceOverlay", "background", "color", "surface"), Color.mSurface)
+    readonly property real specialWorkspaceOverlayBackgroundOpacity: normalizeOpacityValue(objectSettingValue("specialWorkspaceOverlay", "background", "opacity", 0.82), 0.82)
+    readonly property string specialWorkspaceOverlayFontFamily: currentSettings?.specialWorkspaceOverlay?.font?.family ?? defaults?.specialWorkspaceOverlay?.font?.family ?? "JetBrains Mono"
+    readonly property real specialWorkspaceOverlayFontSize: Math.max(1, (currentSettings?.specialWorkspaceOverlay?.font?.size ?? defaults?.specialWorkspaceOverlay?.font?.size ?? 11) * Style.uiScaleRatio)
+    readonly property string specialWorkspaceOverlayFontWeightKey: currentSettings?.specialWorkspaceOverlay?.font?.weight ?? defaults?.specialWorkspaceOverlay?.font?.weight ?? "medium"
+    readonly property string specialWorkspaceOverlayTextColorKey: currentSettings?.specialWorkspaceOverlay?.font?.color?.color ?? defaults?.specialWorkspaceOverlay?.font?.color?.color ?? "on-surface"
+    readonly property real specialWorkspaceOverlayTextOpacity: normalizeOpacityValue(currentSettings?.specialWorkspaceOverlay?.font?.color?.opacity ?? defaults?.specialWorkspaceOverlay?.font?.color?.opacity ?? 1, 1)
+    readonly property color specialWorkspaceOverlayTextColor: resolveColor(specialWorkspaceOverlayTextColorKey, Color.mOnSurface)
     readonly property string pinnedAppsPosition: settingValue("pinnedApps", "position", "left")
     readonly property string pinnedAppsIconColorKey: settingValue("pinnedApps", "iconColor", "on-surface")
     readonly property color pinnedAppsIconColor: resolveColor(pinnedAppsIconColorKey, Color.mOnSurface)
@@ -258,7 +274,7 @@ Item {
     readonly property bool pinnedAppsHideWhenActive: settingValue("pinnedApps", "hideWhenActive", false)
     readonly property string pinnedAppsActivateRunningBehavior: settingValue("pinnedApps", "activateRunningBehavior", "focusCycle")
 
-    readonly property int revisionToken: (mainInstance?.structureRevision ?? 0) + (mainInstance?.liveRevision ?? 0) + (mainInstance?.titleRevision ?? 0) + (mainInstance?.workspaceRevision ?? 0)
+    readonly property int revisionToken: (mainInstance?.structureRevision ?? 0) + (mainInstance?.liveRevision ?? 0) + (mainInstance?.titleRevision ?? 0) + (mainInstance?.workspaceRevision ?? 0) + (mainInstance?.activeSpecialRevision ?? 0)
     readonly property var entries: {
         revisionToken;
         if (!mainInstance)
@@ -285,6 +301,51 @@ Item {
         return "";
     }
     readonly property string activeWorkspaceNameText: String(activeWorkspace?.name || "").trim()
+    readonly property var activeSpecialWorkspace: {
+        const directMonitorRecord = hyprlandMonitor?.specialWorkspace;
+        if (directMonitorRecord && (String(directMonitorRecord?.id ?? "").trim() !== "" || String(directMonitorRecord?.name ?? "").trim() !== "")) {
+            return {
+                "id": String(directMonitorRecord?.id ?? "").trim(),
+                "name": String(directMonitorRecord?.name ?? "").trim()
+            };
+        }
+
+        const resolvedMonitorName = String(hyprlandMonitor?.name || screenName).trim();
+        return mainInstance?.resolveSpecialWorkspaceForScreen(resolvedMonitorName) ?? null;
+    }
+    readonly property string activeSpecialWorkspaceNameText: String(activeSpecialWorkspace?.name || "").trim()
+    readonly property string activeSpecialWorkspaceStrippedName: {
+        if (activeSpecialWorkspaceNameText.startsWith("special:"))
+            return activeSpecialWorkspaceNameText.slice(8).trim();
+        return activeSpecialWorkspaceNameText;
+    }
+    readonly property string specialWorkspaceOverlayLabelText: {
+        switch (specialWorkspaceOverlayTextMode) {
+        case "raw":
+            return activeSpecialWorkspaceNameText;
+        case "custom":
+            return specialWorkspaceOverlayCustomLabel || activeSpecialWorkspaceStrippedName || activeSpecialWorkspaceNameText;
+        default:
+            return activeSpecialWorkspaceStrippedName || activeSpecialWorkspaceNameText;
+        }
+    }
+    readonly property bool showSpecialWorkspaceOverlay: specialWorkspaceOverlayEnabled && hostVisible && specialWorkspaceOverlayLabelText !== ""
+
+    function logSpecialWorkspaceOverlayState(reason) {
+        Logger.i(
+            "Scrollbar2",
+            "[SpecialOverlay]",
+            reason,
+            "screen=", screenName,
+            "monitor=", String(hyprlandMonitor?.name || ""),
+            "directSpecial=", String(hyprlandMonitor?.specialWorkspace?.name || ""),
+            "fallbackSpecial=", fallbackSpecialWorkspaceName,
+            "enabled=", specialWorkspaceOverlayEnabled,
+            "hostVisible=", hostVisible,
+            "label=", specialWorkspaceOverlayLabelText,
+            "visible=", showSpecialWorkspaceOverlay
+        );
+    }
     readonly property string workspaceIndicatorValueText: {
         if (!activeWorkspace)
             return "";
@@ -326,6 +387,9 @@ Item {
         return Math.max(1, Math.floor((availableWidth - totalSpacing - horizontalPadding * 2) / segmentCount));
     }
     readonly property real actualTrackWidth: segmentCount > 0 ? (segmentWidth * segmentCount) + (Math.max(0, segmentCount - 1) * segmentSpacing) + horizontalPadding * 2 : 0
+    readonly property real effectiveTrackWidth: (segmentCount > 0 || showSpecialWorkspaceOverlay) ? Math.max(actualTrackWidth, availableWidth) : actualTrackWidth
+    readonly property real specialWorkspaceOverlayWidth: Math.max(1, Math.round(effectiveTrackWidth * specialWorkspaceOverlayWidthPercent / 100))
+    readonly property real specialWorkspaceOverlayHeight: Math.max(1, Math.round(availableContainerHeight * specialWorkspaceOverlayHeightPercent / 100))
     readonly property real totalIndicatorWidth: showWorkspaceIndicator ? (workspaceIndicatorMarginLeft + workspaceContainer.width + workspaceIndicatorMarginRight) : 0
     readonly property real pinnedSlotSize: Math.max(Math.round(availableContainerHeight * 0.82), computedIconSize + horizontalPadding * 2)
     readonly property real pinnedAreaContentWidth: pinnedSegmentCount > 0 ? (pinnedSegmentCount * pinnedSlotSize) + (Math.max(0, pinnedSegmentCount - 1) * segmentSpacing) : 0
@@ -342,9 +406,9 @@ Item {
         return -1;
     }
 
-    implicitWidth: hostVisible && (segmentCount > 0 || showWorkspaceIndicator || pinnedSegmentCount > 0) ? leftAccessoryWidth + actualTrackWidth + rightAccessoryWidth : 0
-    implicitHeight: hostVisible && (segmentCount > 0 || showWorkspaceIndicator || pinnedSegmentCount > 0) ? Math.max(availableContainerHeight, workspaceContainer.height, pinnedAppsContainer.height) : 0
-    visible: hostVisible && (segmentCount > 0 || showWorkspaceIndicator || pinnedSegmentCount > 0)
+    implicitWidth: hostVisible && (segmentCount > 0 || showWorkspaceIndicator || pinnedSegmentCount > 0 || showSpecialWorkspaceOverlay) ? leftAccessoryWidth + effectiveTrackWidth + rightAccessoryWidth : 0
+    implicitHeight: hostVisible && (segmentCount > 0 || showWorkspaceIndicator || pinnedSegmentCount > 0 || showSpecialWorkspaceOverlay) ? Math.max(availableContainerHeight, workspaceContainer.height, pinnedAppsContainer.height, specialWorkspaceOverlay.height) : 0
+    visible: hostVisible && (segmentCount > 0 || showWorkspaceIndicator || pinnedSegmentCount > 0 || showSpecialWorkspaceOverlay)
 
     function workspaceIndicatorEasingType() {
         switch (workspaceIndicatorAnimationType) {
@@ -417,7 +481,10 @@ Item {
 
     onWorkspaceIndicatorTextChanged: updateWorkspaceIndicatorPresentation()
     onWorkspaceIndicatorBadgeCountChanged: updateWorkspaceIndicatorPresentation()
-    Component.onCompleted: updateWorkspaceIndicatorPresentation()
+    Component.onCompleted: {
+        updateWorkspaceIndicatorPresentation();
+        logSpecialWorkspaceOverlayState("componentCompleted");
+    }
 
     function segmentState(entryKey) {
         const isFocused = mainInstance?.activeEntryKey === entryKey;
@@ -502,6 +569,15 @@ Item {
     function trackLineY() {
         return alignedY(trackVerticalAlign, visibleTrackThickness);
     }
+
+    function trackCenterY() {
+        return trackLineY() + visibleTrackThickness / 2;
+    }
+
+    onHyprlandMonitorChanged: logSpecialWorkspaceOverlayState("hyprlandMonitorChanged")
+    onActiveSpecialWorkspaceNameTextChanged: logSpecialWorkspaceOverlayState("activeSpecialWorkspaceNameChanged")
+    onSpecialWorkspaceOverlayLabelTextChanged: logSpecialWorkspaceOverlayState("overlayLabelChanged")
+    onShowSpecialWorkspaceOverlayChanged: logSpecialWorkspaceOverlayState("overlayVisibilityChanged")
 
     function indicatorY() {
         return alignedY(focusLineVerticalAlign, visibleFocusLineThickness);
@@ -1063,19 +1139,43 @@ Item {
         id: trackLine
         x: root.leftAccessoryWidth
         y: trackLineY()
-        width: root.actualTrackWidth
+        width: root.effectiveTrackWidth
         height: visibleTrackThickness
         radius: Math.min(trackBorderRadius, height / 2)
         color: Qt.alpha(trackColor, trackOpacity)
-        visible: root.segmentCount > 0
+        visible: root.segmentCount > 0 || root.showSpecialWorkspaceOverlay
         z: 10
+    }
+
+    Rectangle {
+        id: specialWorkspaceOverlay
+        visible: root.showSpecialWorkspaceOverlay
+        x: root.leftAccessoryWidth + Math.round((root.effectiveTrackWidth - width) / 2)
+        y: Math.round(root.trackCenterY() - height / 2)
+        width: root.specialWorkspaceOverlayWidth
+        height: root.specialWorkspaceOverlayHeight
+        radius: Math.min(root.trackBorderRadius, Math.min(width, height) / 2)
+        color: Qt.alpha(root.specialWorkspaceOverlayBackgroundColor, root.specialWorkspaceOverlayBackgroundOpacity)
+        z: 22
+
+        NText {
+            anchors.centerIn: parent
+            width: Math.max(0, parent.width - Math.round(12 * Style.uiScaleRatio))
+            text: root.specialWorkspaceOverlayLabelText
+            horizontalAlignment: Text.AlignHCenter
+            elide: Text.ElideRight
+            color: Qt.alpha(root.specialWorkspaceOverlayTextColor, root.specialWorkspaceOverlayTextOpacity)
+            font.family: root.specialWorkspaceOverlayFontFamily || Qt.application.font.family
+            font.weight: root.fontWeightValue(root.specialWorkspaceOverlayFontWeightKey, Style.fontWeightMedium)
+            pointSize: root.specialWorkspaceOverlayFontSize
+        }
     }
 
     Item {
         id: trackSeparators
         x: root.leftAccessoryWidth
         y: trackLine.y
-        width: root.actualTrackWidth
+        width: root.effectiveTrackWidth
         height: trackLine.height
         visible: root.segmentCount > 1 && root.segmentSpacing > 0 && trackLine.visible
         z: 11

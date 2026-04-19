@@ -35,6 +35,9 @@
     "workspaceIndicatorName": "Workspace Name",
     "workspaceIndicatorLeft": "Left of Track",
     "workspaceIndicatorRight": "Right of Track",
+    "specialWorkspaceOverlayStripped": "Name Without Prefix",
+    "specialWorkspaceOverlayRaw": "Raw Workspace Name",
+    "specialWorkspaceOverlayCustom": "Custom Label",
     "pinnedAppsLeft": "Left of Track",
     "pinnedAppsRight": "Right of Track",
     "pinnedAppsFocusCycle": "Focus and Cycle",
@@ -224,6 +227,10 @@
       "workspaceIndicator": {
         "label": "Workspace Indicator",
         "desc": "Show the active workspace beside the track with optional count badge styling."
+      },
+      "specialWorkspaceOverlay": {
+        "label": "Special Workspace Overlay",
+        "desc": "Show the active Hyprland special workspace centered across the track."
       },
       "pinnedApps": {
         "label": "Pinned Apps",
@@ -491,6 +498,50 @@
         "speed": {
           "label": "Animation Speed",
           "desc": "Transition duration in milliseconds for workspace changes."
+        }
+      }
+    },
+    "specialWorkspaceOverlay": {
+      "enabled": {
+        "label": "Show Special Workspace Overlay",
+        "desc": "Render a centered overlay across the track when this screen has an active Hyprland special workspace."
+      },
+      "textMode": {
+        "label": "Label Mode",
+        "desc": "Choose whether to show the stripped special workspace name, the raw Hyprland name, or a fixed custom label."
+      },
+      "customLabel": {
+        "label": "Custom Label",
+        "desc": "Fixed text shown when the label mode is set to custom."
+      },
+      "widthPercent": {
+        "label": "Overlay Width",
+        "desc": "Width of the overlay as a percentage of the track width."
+      },
+      "heightPercent": {
+        "label": "Overlay Height",
+        "desc": "Height of the overlay as a percentage of the available track container height."
+      },
+      "background": {
+        "label": "Background",
+        "desc": "Background color and opacity for the special workspace overlay."
+      },
+      "font": {
+        "family": {
+          "label": "Font Family",
+          "desc": "Font family used for the overlay label."
+        },
+        "size": {
+          "label": "Font Size",
+          "desc": "Base size of the overlay label text."
+        },
+        "weight": {
+          "label": "Font Weight",
+          "desc": "Font weight used for the overlay label."
+        },
+        "color": {
+          "label": "Text Color",
+          "desc": "Text color and opacity for the overlay label."
         }
       }
     },
