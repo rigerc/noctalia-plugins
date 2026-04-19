@@ -133,6 +133,12 @@ Item {
         return Math.max(0, Math.min(1, numericValue));
     }
 
+    function colorWithOpacity(colorValue, opacityValue) {
+        const sample = Qt.color(colorValue);
+        const clampedOpacity = Math.max(0, Math.min(1, Number(opacityValue)));
+        return Qt.rgba(sample.r, sample.g, sample.b, sample.a * clampedOpacity);
+    }
+
     function nestedStateOpacity(groupKey, stateKey, fallbackValue) {
         const value = currentSettings?.[groupKey]?.colors?.[stateKey];
         if (value && typeof value === "object" && !Array.isArray(value) && value.opacity !== undefined)
@@ -236,7 +242,7 @@ Item {
         const overrideState = styleRuleStateValue(entryKey, "segment", state);
         if (overrideState) {
             const overrideColor = resolveColor(overrideState.color, state === "focused" ? focusLineFocusedColor : (state === "hover" ? focusLineHoverColor : focusLineDefaultColor));
-            return Qt.alpha(overrideColor, focusLineOpacity * overrideState.opacity);
+            return colorWithOpacity(overrideColor, focusLineOpacity * overrideState.opacity);
         }
         return null;
     }
@@ -693,15 +699,15 @@ Item {
 
         const state = segmentState(entryKey);
         if (state === "focused")
-            return Qt.alpha(focusLineFocusedColor, focusLineOpacity * focusLineFocusedOpacity);
+            return colorWithOpacity(focusLineFocusedColor, focusLineOpacity * focusLineFocusedOpacity);
         if (state === "hover")
-            return Qt.alpha(focusLineHoverColor, focusLineOpacity * focusLineHoverOpacity);
-        return Qt.alpha(focusLineDefaultColor, focusLineOpacity * focusLineDefaultOpacity);
+            return colorWithOpacity(focusLineHoverColor, focusLineOpacity * focusLineHoverOpacity);
+        return colorWithOpacity(focusLineDefaultColor, focusLineOpacity * focusLineDefaultOpacity);
     }
 
     function labelColor(entryKey, kind) {
         const resolved = resolvedLabelState(entryKey, kind);
-        return Qt.alpha(resolved.color, resolved.opacity);
+        return colorWithOpacity(resolved.color, resolved.opacity);
     }
 
     function iconTintEnabled(entryKey) {
@@ -839,8 +845,8 @@ Item {
     function pinnedSlotBackgroundColor(appId) {
         const isHovered = hoveredPinnedAppId === appId;
         if (isHovered)
-            return Qt.alpha(focusLineHoverColor, focusLineOpacity * focusLineHoverOpacity);
-        return Qt.alpha(focusLineDefaultColor, focusLineOpacity * focusLineDefaultOpacity);
+            return colorWithOpacity(focusLineHoverColor, focusLineOpacity * focusLineHoverOpacity);
+        return colorWithOpacity(focusLineDefaultColor, focusLineOpacity * focusLineDefaultOpacity);
     }
 
     function pinnedAppIconSource(item) {

@@ -56,6 +56,42 @@
   },
   "settings": {
     "summary": "Configure `scrollbar2` as a compact bar widget or a reserve-space floating panel. Theme-aware colors use Noctalia color pickers and also allow custom hex values.",
+    "navTabs": {
+      "layout": "Layout",
+      "appearance": "Appearance",
+      "pinnedApps": "Pinned Apps",
+      "styleRules": "Style Rules",
+      "presets": "Presets"
+    },
+    "pages": {
+      "layout": "Placement, floating panel sizing, track geometry, and motion settings for the bar itself.",
+      "appearance": "Window labels, focus line styling, theme-aware colors, and workspace-related overlays.",
+      "pinnedApps": "Manage launcher behavior, spacing, colors, and the pinned app list beside the track.",
+      "styleRules": "Match windows by app ID or title and override their icons, segment colors, and text styling.",
+      "presets": "Save, load, and manage complete plugin configurations."
+    },
+    "pageGroups": {
+      "layoutCore": {
+        "label": "Placement & Track",
+        "desc": "Mirror the structure from the design reference with panel controls first and core track geometry immediately after."
+      },
+      "motion": {
+        "label": "Filtering & Motion",
+        "desc": "Control which windows appear in the track and how transitions animate."
+      },
+      "labels": {
+        "label": "Window Labels & Focus Line",
+        "desc": "Adjust segment content, typography, spacing, and the active focus indicator."
+      },
+      "colors": {
+        "label": "Colors",
+        "desc": "Theme-aware track, segment, icon, and title colors, with support for custom hex values."
+      },
+      "workspaces": {
+        "label": "Workspace Extras",
+        "desc": "Optional workspace indicator and special workspace overlay controls grouped under appearance."
+      }
+    },
     "colorPicker": {
       "label": "Select color",
       "desc": "Choose a theme color or pick a custom color.",

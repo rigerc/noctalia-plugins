@@ -12,11 +12,33 @@ ColumnLayout {
     property var defaults: pluginApi?.manifest?.metadata?.defaultSettings || ({})
     property var defaultSettings: normalizeSettingsSnapshot(deepCopy(defaults))
     property var editSettings: createSettingsSnapshot(pluginApi?.pluginSettings || ({}), defaults)
-    property real preferredWidth: 760 * Style.uiScaleRatio
+    property real preferredWidth: 920 * Style.uiScaleRatio
     property int selectedTab: 0
     property string _activePresetId: pluginApi?.pluginSettings?._activePresetId || ""
     property int styleRulesRevision: 0
     readonly property var mainInstance: pluginApi?.mainInstance ?? null
+    readonly property var tabModel: [
+        {
+            "label": pluginApi?.tr("settings.navTabs.layout"),
+            "icon": "layout-grid"
+        },
+        {
+            "label": pluginApi?.tr("settings.navTabs.appearance"),
+            "icon": "palette"
+        },
+        {
+            "label": pluginApi?.tr("settings.navTabs.pinnedApps"),
+            "icon": "apps"
+        },
+        {
+            "label": pluginApi?.tr("settings.navTabs.styleRules"),
+            "icon": "filter-code"
+        },
+        {
+            "label": pluginApi?.tr("settings.navTabs.presets"),
+            "icon": "template"
+        }
+    ]
     readonly property var styleRuleSnapshot: {
         styleRulesRevision;
         return Array.isArray(editSettings?.customStyleRules) ? editSettings.customStyleRules.slice() : [];
@@ -743,19 +765,21 @@ ColumnLayout {
     NTabBar {
         currentIndex: selectedTab
         Layout.fillWidth: true
+        distributeEvenly: true
 
-        NTabButton {
-            text: pluginApi?.tr("settings.tabs.settings") ?? "Settings"
-            tabIndex: 0
-            checked: selectedTab === 0
-            onClicked: selectedTab = 0
-        }
+        Repeater {
+            model: root.tabModel
 
-        NTabButton {
-            text: pluginApi?.tr("settings.tabs.presets") ?? "Presets"
-            tabIndex: 1
-            checked: selectedTab === 1
-            onClicked: selectedTab = 1
+            delegate: NTabButton {
+                required property int index
+                required property var modelData
+
+                text: modelData.label
+                icon: modelData.icon
+                tabIndex: index
+                checked: root.selectedTab === index
+                onClicked: root.selectedTab = index
+            }
         }
     }
 
@@ -763,58 +787,23 @@ ColumnLayout {
         currentIndex: selectedTab
         Layout.fillWidth: true
 
-        ColumnLayout {
-            spacing: Style.marginM
-
-            NText {
-                text: pluginApi?.tr("settings.summary")
-                color: Color.mOnSurfaceVariant
-                wrapMode: Text.WordWrap
-                Layout.fillWidth: true
-            }
-
-            DisplaySettingsSection {
-                Layout.fillWidth: true
-                rootSettings: root
-            }
-
-            WindowSettingsSection {
-                Layout.fillWidth: true
-                rootSettings: root
-            }
-
-            WorkspaceIndicatorSettingsSection {
-                Layout.fillWidth: true
-                rootSettings: root
-            }
-
-            SpecialWorkspaceOverlaySettingsSection {
-                Layout.fillWidth: true
-                rootSettings: root
-            }
-
-            PinnedAppsSettingsSection {
-                Layout.fillWidth: true
-                rootSettings: root
-            }
-
-            CustomStyleRulesSettingsSection {
-                Layout.fillWidth: true
-                rootSettings: root
-            }
-
-            ColorSettingsSection {
-                Layout.fillWidth: true
-                rootSettings: root
-            }
-
-            BehaviorSettingsSection {
-                Layout.fillWidth: true
-                rootSettings: root
-            }
+        LayoutSettingsTab {
+            rootSettings: root
         }
 
-        PresetsSection {
+        AppearanceSettingsTab {
+            rootSettings: root
+        }
+
+        PinnedAppsSettingsTab {
+            rootSettings: root
+        }
+
+        StyleRulesSettingsTab {
+            rootSettings: root
+        }
+
+        PresetsSettingsTab {
             rootSettings: root
         }
     }

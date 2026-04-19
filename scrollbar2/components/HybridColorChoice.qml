@@ -328,11 +328,12 @@ ColumnLayout {
 
                     readonly property bool isSelected: root.sameValue(root.currentColor, modelData.key)
                     readonly property color swatchColor: root.resolveColor(modelData.key, Color.mOnSurface)
+                    readonly property bool isTransparentOption: colorCircle.modelData.key === "none"
 
                     width: root.diameter
                     height: root.diameter
                     radius: width * 0.5
-                    color: modelData.key === "none" ? Color.mSurfaceVariant : swatchColor
+                    color: isTransparentOption ? "transparent" : swatchColor
                     border.color: circleMouseArea.containsMouse || isSelected ? Color.mOnSurface : Color.mOutline
                     border.width: Style.borderM
 
@@ -350,7 +351,7 @@ ColumnLayout {
                         anchors.centerIn: parent
                         icon: "check"
                         pointSize: Math.max(Style.fontSizeXS, colorCircle.width * 0.4)
-                        color: root.contrastColor(colorCircle.swatchColor)
+                        color: colorCircle.isTransparentOption ? Color.mOnSurface : root.contrastColor(colorCircle.swatchColor)
                         font.weight: Style.fontWeightBold
                         visible: colorCircle.isSelected
                     }
