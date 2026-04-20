@@ -11,6 +11,12 @@ ColumnLayout {
     property alias rulesSectionTarget: sectionContent
     readonly property var mainInstance: rootSettings?.mainInstance ?? null
 
+    readonly property int styleRulesRevisionToken: rootSettings?.styleRulesRevision ?? 0
+    readonly property var cachedStyleRuleItems: {
+        styleRulesRevisionToken;
+        return rootSettings?.styleRuleItems() ?? [];
+    }
+
     Layout.fillWidth: true
     spacing: Style.marginL
 
@@ -82,7 +88,7 @@ ColumnLayout {
             }
 
             NText {
-                visible: (rootSettings?.styleRuleItems().length ?? 0) === 0
+                visible: cachedStyleRuleItems.length === 0
                 Layout.fillWidth: true
                 text: rootSettings?.pluginApi?.tr("settings.customStyleRules.empty")
                 color: Color.mOnSurfaceVariant
@@ -90,7 +96,7 @@ ColumnLayout {
             }
 
             Repeater {
-                model: rootSettings?.styleRuleItems() ?? []
+                model: cachedStyleRuleItems
 
                 delegate: NBox {
                     id: ruleCard
@@ -145,7 +151,7 @@ ColumnLayout {
                             NButton {
                                 text: rootSettings?.pluginApi?.tr("settings.customStyleRules.actions.moveDown")
                                 icon: "chevron-down"
-                                enabled: index < ((rootSettings?.styleRuleItems()?.length ?? 0) - 1)
+                                enabled: index < (root.cachedStyleRuleItems.length - 1)
                                 onClicked: rootSettings?.moveStyleRule(index, 1)
                             }
 
