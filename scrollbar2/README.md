@@ -9,7 +9,7 @@ A configurable window bar with equal-width segments, animated focus tracking, an
 </p>
 
 <p>
-<img src="https://img.shields.io/badge/version-1.2.0-blue" alt="Version">
+<img src="https://img.shields.io/badge/version-1.3.0-blue" alt="Version">
 <img src="https://img.shields.io/badge/noctalia-%E2%89%A54.6.6-purple" alt="Min Noctalia Version">
 <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
 </p>
@@ -24,6 +24,7 @@ A configurable window bar with equal-width segments, animated focus tracking, an
 - **Animated focus indicator** — spring, ease, linear, or smooth motion follows the active window
 - **Two display modes** — embed in the Noctalia bar or render as a floating panel anchored to the screen edge
 - **Window labels** — optional app icons and titles with per-state font weights and colors
+- **Compositor-synced drag reorder** — drag tiled window segments to change the real manager order without maintaining a separate local sort
 - **Workspace indicator** — show the active workspace ID or name with an animated capsule and optional window-count badge
 - **Special workspace overlay** — centered overlay for Hyprland special workspaces with window icon previews
 - **Pinned apps** — pin applications to the bar with custom icons, focus-cycle or start-new behavior
@@ -61,6 +62,8 @@ Settings are organized into five tabs:
 | **Pinned Apps** | Manage pinned launchers, custom icons, and click behavior |
 | **Style Rules** | Regex-based per-window color and icon overrides |
 | **Presets** | Save, load, import, and export complete configurations |
+
+Drag reordering is enabled by default in the **Appearance** tab. It only applies to tiled live windows; pinned launchers and floating windows remain non-draggable so the bar always mirrors compositor state exactly.
 
 ### Display Modes
 

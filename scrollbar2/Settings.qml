@@ -380,6 +380,7 @@ ColumnLayout {
             1
         );
         next.window = next.window && typeof next.window === "object" && !Array.isArray(next.window) ? next.window : ({});
+        next.window.dragReorderEnabled = next.window.dragReorderEnabled !== false;
         next.window.iconColors = normalizeColorStateMap(
             next.window.iconColors,
             {

@@ -35,6 +35,22 @@ Item {
     property var outgoingSpecialWorkspaceIcons: []
     property real specialWorkspaceOverlayTransitionProgress: 1
     property var invalidStyleRulePatterns: ({})
+    property int dragSourceIndex: -1
+    property int dragInsertIndex: -1
+    property string dragSourceEntryKey: ""
+    property bool dragDropHandled: false
+
+    Timer {
+        id: dragCleanupTimer
+        interval: 1
+        repeat: false
+        onTriggered: {
+            if (!root.dragSessionActive || root.dragDropHandled)
+                return;
+            Logger.d("Scrollbar2", "Drag preview cleared: source=" + root.dragSourceEntryKey + " raw=" + root.dragInsertIndex + " reason=drag-end-timeout");
+            root.clearDragState();
+        }
+    }
 
     readonly property string screenName: screen?.name ?? ""
     readonly property string barPosition: Settings.getBarPositionForScreen(screenName)
@@ -345,6 +361,7 @@ Item {
 
     readonly property bool showIcon: settingValue("window", "showIcon", true)
     readonly property bool showTitle: settingValue("window", "showTitle", true)
+    readonly property bool dragReorderEnabled: settingValue("window", "dragReorderEnabled", true)
     readonly property bool focusedOnly: settingValue("window", "focusedOnly", false)
     readonly property string focusedAlign: settingValue("window", "focusedAlign", "segment")
     readonly property real windowBorderRadius: Math.max(0, settingValue("window", "borderRadius", 6) * Style.uiScaleRatio)
@@ -554,6 +571,11 @@ Item {
         }
         return -1;
     }
+    readonly property bool dragSessionActive: dragSourceIndex >= 0 && dragSourceEntryKey !== ""
+    readonly property int normalizedPreviewIndex: normalizedInsertIndex(dragInsertIndex)
+    readonly property bool dragPreviewActive: dragSessionActive && dragInsertIndex >= 0 && normalizedPreviewIndex >= 0 && canPreviewInsertIndex(dragSourceEntryKey, dragInsertIndex)
+    readonly property int previewFocusIndex: dragPreviewActive ? normalizedPreviewIndex : -1
+    readonly property int effectiveFocusIndex: previewFocusIndex >= 0 ? previewFocusIndex : focusedIndex
 
     implicitWidth: hostVisible && (segmentCount > 0 || showWorkspaceIndicator || pinnedSegmentCount > 0 || showSpecialWorkspaceOverlay) ? leftAccessoryWidth + effectiveTrackWidth + rightAccessoryWidth : 0
     implicitHeight: hostVisible && (segmentCount > 0 || showWorkspaceIndicator || pinnedSegmentCount > 0 || showSpecialWorkspaceOverlay) ? Math.max(availableContainerHeight, workspaceContainer.height, pinnedAppsContainer.height, specialWorkspaceOverlay.height) : 0
@@ -754,6 +776,35 @@ Item {
         return horizontalPadding + index * (segmentWidth + segmentSpacing);
     }
 
+    function insertionMarkerCenter(rawInsertIndex) {
+        const numericIndex = Number(rawInsertIndex);
+        if (segmentCount <= 0 || isNaN(numericIndex) || numericIndex < 0)
+            return horizontalPadding;
+        const clampedIndex = Math.max(0, Math.min(segmentCount, numericIndex));
+        if (clampedIndex <= 0)
+            return horizontalPadding;
+        if (clampedIndex >= segmentCount)
+            return horizontalPadding + (segmentCount * segmentWidth) + (Math.max(0, segmentCount - 1) * segmentSpacing);
+        return horizontalPadding + (clampedIndex * segmentWidth) + ((clampedIndex - 0.5) * segmentSpacing);
+    }
+
+    function insertionZoneStart(rawInsertIndex) {
+        const clampedIndex = Math.max(0, Math.min(segmentCount, Number(rawInsertIndex)));
+        if (segmentCount <= 0)
+            return 0;
+        if (clampedIndex <= 0)
+            return 0;
+        return insertionMarkerCenter(clampedIndex - 1);
+    }
+
+    function insertionZoneWidth(rawInsertIndex) {
+        const clampedIndex = Math.max(0, Math.min(segmentCount, Number(rawInsertIndex)));
+        const rowWidth = Math.max(0, (segmentCount * segmentWidth) + (Math.max(0, segmentCount - 1) * segmentSpacing));
+        const start = insertionZoneStart(clampedIndex);
+        const end = clampedIndex >= segmentCount ? rowWidth : insertionMarkerCenter(clampedIndex);
+        return Math.max(1, end - start);
+    }
+
     function separatorOffset(index) {
         return horizontalPadding + (index + 1) * segmentWidth + index * segmentSpacing;
     }
@@ -850,6 +901,120 @@ Item {
         if (mainInstance?.titleEntriesByKey && mainInstance.titleEntriesByKey[entry.entryKey] !== undefined)
             return mainInstance.titleEntriesByKey[entry.entryKey];
         return entry.fallbackTitle || "";
+    }
+
+    function clearDragState() {
+        Logger.d("Scrollbar2", "Drag preview cleared: source=" + dragSourceEntryKey + " raw=" + dragInsertIndex + " reason=clear");
+        dragCleanupTimer.stop();
+        dragDropHandled = false;
+        dragSourceIndex = -1;
+        dragInsertIndex = -1;
+        dragSourceEntryKey = "";
+    }
+
+    function entryIndexByKey(entryKey) {
+        for (let i = 0; i < entries.length; i++) {
+            if (entries[i]?.entryKey === entryKey)
+                return i;
+        }
+        return -1;
+    }
+
+    function canDragEntry(entryKey) {
+        if (!dragReorderEnabled || isVerticalBar || mainInstance?.reorderInFlight)
+            return false;
+        return mainInstance?.canReorderEntry(entryKey, screenName, onlySameOutput, onlyActiveWorkspaces) === true;
+    }
+
+    function canDropOnEntry(sourceEntryKey, targetEntryKey) {
+        if (!sourceEntryKey || !targetEntryKey || sourceEntryKey === targetEntryKey)
+            return false;
+
+        const sourceEntry = entries.find(function (candidate) {
+            return candidate?.entryKey === sourceEntryKey;
+        }) || null;
+        const targetEntry = entries.find(function (candidate) {
+            return candidate?.entryKey === targetEntryKey;
+        }) || null;
+        if (!sourceEntry || !targetEntry)
+            return false;
+        if (sourceEntry?.isFloating || targetEntry?.isFloating)
+            return false;
+        if (String(sourceEntry?.workspaceId ?? "") !== String(targetEntry?.workspaceId ?? ""))
+            return false;
+        if (String(sourceEntry?.output || "").toLowerCase() !== String(targetEntry?.output || "").toLowerCase())
+            return false;
+        return canDragEntry(sourceEntryKey) && canDragEntry(targetEntryKey);
+    }
+
+    function normalizedInsertIndex(rawInsertIndex) {
+        if (dragSourceIndex < 0 || segmentCount <= 0)
+            return -1;
+        const numericIndex = Number(rawInsertIndex);
+        if (isNaN(numericIndex) || numericIndex < 0)
+            return -1;
+        const clampedIndex = Math.max(0, Math.min(segmentCount, numericIndex));
+        if (isNaN(clampedIndex))
+            return -1;
+        const normalizedIndex = clampedIndex > dragSourceIndex ? clampedIndex - 1 : clampedIndex;
+        return Math.max(0, Math.min(segmentCount - 1, normalizedIndex));
+    }
+
+    function canPreviewInsertIndex(sourceEntryKey, rawInsertIndex) {
+        if (!sourceEntryKey || segmentCount < 2)
+            return false;
+        const sourceIndex = entryIndexByKey(sourceEntryKey);
+        if (sourceIndex < 0)
+            return false;
+
+        const normalizedIndex = normalizedInsertIndex(rawInsertIndex);
+        if (normalizedIndex < 0 || normalizedIndex === sourceIndex)
+            return false;
+
+        const remainingEntries = entries.filter(function (entry) {
+            return entry?.entryKey !== sourceEntryKey;
+        });
+        const insertIndex = Math.max(0, Math.min(remainingEntries.length, normalizedIndex));
+        const previousNeighbor = insertIndex > 0 ? remainingEntries[insertIndex - 1] : null;
+        const nextNeighbor = insertIndex < remainingEntries.length ? remainingEntries[insertIndex] : null;
+
+        if (!previousNeighbor && !nextNeighbor)
+            return false;
+        if (previousNeighbor && !canDropOnEntry(sourceEntryKey, previousNeighbor.entryKey))
+            return false;
+        if (nextNeighbor && !canDropOnEntry(sourceEntryKey, nextNeighbor.entryKey))
+            return false;
+
+        return mainInstance?.canReorderToIndex(sourceEntryKey, normalizedIndex, screenName, onlySameOutput, onlyActiveWorkspaces) === true;
+    }
+
+    function setDragInsertIndex(rawInsertIndex, sourceEntryKey, reason) {
+        const numericIndex = Number(rawInsertIndex);
+        const nextInsertIndex = (isNaN(numericIndex) || numericIndex < 0) ? -1 : Math.max(0, Math.min(segmentCount, numericIndex));
+        const nextValue = canPreviewInsertIndex(sourceEntryKey, nextInsertIndex) ? nextInsertIndex : -1;
+        if (dragInsertIndex === nextValue)
+            return;
+        dragInsertIndex = nextValue;
+        Logger.d("Scrollbar2", "Drag preview slot: source=" + sourceEntryKey + " raw=" + nextInsertIndex + " normalized=" + normalizedInsertIndex(nextValue) + " reason=" + String(reason || ""));
+    }
+
+    function finalizeDragReorder(sourceEntryKey, reason) {
+        const normalizedIndex = normalizedInsertIndex(dragInsertIndex);
+        const canDrop = dragSessionActive
+            && sourceEntryKey !== ""
+            && normalizedIndex >= 0
+            && canPreviewInsertIndex(sourceEntryKey, dragInsertIndex);
+
+        dragDropHandled = true;
+        dragCleanupTimer.stop();
+        Logger.d("Scrollbar2", "Drag finalize: source=" + sourceEntryKey + " raw=" + dragInsertIndex + " normalized=" + normalizedIndex + " canDrop=" + canDrop + " reason=" + String(reason || ""));
+        Logger.d("Scrollbar2", "Drag preview cleared: source=" + sourceEntryKey + " raw=" + dragInsertIndex + " reason=" + String(reason || ""));
+        clearDragState();
+
+        if (!canDrop)
+            return false;
+
+        return mainInstance?.requestEntryReorderToIndex(sourceEntryKey, normalizedIndex, screenName, onlySameOutput, onlyActiveWorkspaces) ?? false;
     }
 
     function clearContextSelection() {
@@ -1208,130 +1373,91 @@ Item {
                 readonly property string entryKey: modelData.entryKey ?? ""
                 readonly property string title: root.currentTitle(modelData)
                 readonly property bool showLabel: root.labelVisible(entryKey)
+                readonly property bool reorderable: root.canDragEntry(entryKey)
 
                 width: root.segmentWidth
                 height: parent ? parent.height : root.availableContainerHeight
+                z: root.dragSourceIndex === index ? 1000 : 1
+                objectName: "scrollbar2WindowSegment"
 
-                Rectangle {
-                    anchors.fill: parent
-                    anchors.margins: root.windowMargin
-                    radius: Math.min(Math.max(0, root.windowBorderRadius), Math.max(0, Math.min(width, height) / 2))
-                    color: root.segmentBackgroundColor(segmentItem.entryKey)
+                Item {
+                    id: draggableContent
+                    width: parent.width
+                    height: parent.height
 
-                    Behavior on color {
-                        enabled: root.animationEnabled
-                        ColorAnimation {
-                            duration: root.animationSpeed
+                    readonly property bool isDragged: root.dragSourceIndex === index
+                    property real shiftOffset: 0
+                    property bool dragging: segmentMouseArea.drag.active
+
+                    Binding on x {
+                        when: !draggableContent.dragging
+                        value: 0
+                    }
+
+                    Binding on y {
+                        when: !draggableContent.dragging
+                        value: 0
+                    }
+
+                    Binding on shiftOffset {
+                        value: {
+                            if (root.dragSourceIndex !== -1 && root.dragInsertIndex !== -1 && root.dragPreviewActive && !draggableContent.isDragged) {
+                                if (root.dragSourceIndex < root.dragInsertIndex) {
+                                    if (index > root.dragSourceIndex && index < root.dragInsertIndex)
+                                        return -(segmentItem.width + root.segmentSpacing);
+                                } else if (root.dragSourceIndex >= root.dragInsertIndex) {
+                                    if (index >= root.dragInsertIndex && index < root.dragSourceIndex)
+                                        return segmentItem.width + root.segmentSpacing;
+                                }
+                            }
+                            return 0;
                         }
                     }
-                }
 
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.margins: root.windowMargin
-                    anchors.leftMargin: root.windowMargin + root.windowPaddingLeft
-                    anchors.rightMargin: root.windowMargin + root.windowPaddingRight
-                    spacing: root.labelGap
-                    visible: root.showIcon || root.showTitle
-                    layoutDirection: root.focusedOnly && root.focusedAlign === "right" && segmentItem.showLabel ? Qt.RightToLeft : Qt.LeftToRight
+                    transform: Translate {
+                        x: draggableContent.shiftOffset
 
-                    Item {
-                        Layout.preferredWidth: root.showIcon ? (root.showTitle ? root.computedIconSize : Math.max(root.computedIconSize, segmentItem.width - (root.windowMargin * 2) - root.windowPaddingLeft - root.windowPaddingRight)) : 0
-                        Layout.preferredHeight: root.showIcon ? root.computedIconSize : 0
-                        Layout.alignment: Qt.AlignVCenter
-                        visible: root.showIcon
-                        opacity: segmentItem.showLabel ? 1 : 0
-
-                        Behavior on opacity {
-                            enabled: root.animationEnabled
+                        Behavior on x {
                             NumberAnimation {
-                                duration: root.animationSpeed
-                            }
-                        }
-
-                        IconImage {
-                            id: appIcon
-                            width: root.computedIconSize
-                            height: root.computedIconSize
-                            anchors.verticalCenter: parent.verticalCenter
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            anchors.horizontalCenterOffset: Math.round((parent.width - width) * (root.iconAnchor(root.iconAlign) - 0.5))
-                            source: ThemeIcons.iconForAppId(segmentItem.modelData.appId)
-                            smooth: true
-                            asynchronous: true
-                            visible: status === Image.Ready && customRuleIcon.visible === false
-
-                            layer.enabled: visible && root.iconTintEnabled(segmentItem.entryKey)
-                            layer.effect: ShaderEffect {
-                                property color targetColor: root.labelColor(segmentItem.entryKey, "icon")
-                                property real colorizeMode: 0.0
-
-                                fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/appicon_colorize.frag.qsb")
-                            }
-                            opacity: {
-                                const state = root.segmentState(segmentItem.entryKey);
-                                if (state === "focused")
-                                    return root.iconColorFocusedOpacity;
-                                if (state === "hover")
-                                    return root.iconColorHoverOpacity;
-                                return root.iconColorDefaultOpacity;
-                            }
-                        }
-
-                        NIcon {
-                            id: customRuleIcon
-                            width: root.computedIconSize
-                            height: root.computedIconSize
-                            anchors.verticalCenter: parent.verticalCenter
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            anchors.horizontalCenterOffset: Math.round((parent.width - width) * (root.iconAnchor(root.iconAlign) - 0.5))
-                            icon: root.customRuleIconName(segmentItem.entryKey)
-                            pointSize: root.computedIconSize
-                            visible: icon !== ""
-                            color: root.labelColor(segmentItem.entryKey, "icon")
-
-                            Behavior on color {
-                                enabled: root.animationEnabled
-                                ColorAnimation {
-                                    duration: root.animationSpeed
-                                }
-                            }
-                        }
-
-                        NText {
-                            width: root.computedIconSize
-                            horizontalAlignment: root.horizontalAlignment(root.iconAlign)
-                            anchors.verticalCenter: parent.verticalCenter
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            anchors.horizontalCenterOffset: Math.round((parent.width - width) * (root.iconAnchor(root.iconAlign) - 0.5))
-                            visible: !appIcon.visible && !customRuleIcon.visible
-                            text: segmentItem.title.length > 0 ? segmentItem.title.charAt(0).toUpperCase() : "?"
-                            pointSize: Math.max(Style.fontSizeXS, root.titleFontSize * root.titleScale * 0.95)
-                            font.weight: Style.fontWeightBold
-                            color: root.labelColor(segmentItem.entryKey, "icon")
-
-                            Behavior on color {
-                                enabled: root.animationEnabled
-                                ColorAnimation {
-                                    duration: root.animationSpeed
-                                }
+                                duration: Style.animationFast
+                                easing.type: Easing.OutQuad
                             }
                         }
                     }
 
-                    NText {
-                        Layout.fillWidth: true
-                        Layout.alignment: Qt.AlignVCenter
-                        visible: root.showTitle
-                        text: segmentItem.title
-                        elide: Text.ElideRight
-                        maximumLineCount: 1
-                        opacity: segmentItem.showLabel ? 1 : 0
-                        color: root.labelColor(segmentItem.entryKey, "title")
-                        horizontalAlignment: root.horizontalAlignment(root.titleAlign)
-                        font.family: root.titleFontFamily || Qt.application.font.family
-                        pointSize: root.titleFontSize * root.titleScale
-                        font.weight: root.titleWeight(segmentItem.entryKey)
+                    onDraggingChanged: {
+                        if (dragging) {
+                            dragCleanupTimer.stop();
+                            root.dragDropHandled = false;
+                            root.dragSourceIndex = index;
+                            root.dragInsertIndex = index;
+                            root.dragSourceEntryKey = segmentItem.entryKey;
+                            Logger.d("Scrollbar2", "Drag start: entry=" + segmentItem.entryKey + " index=" + index + " focused=" + root.focusedIndex);
+                        } else if (root.dragSourceEntryKey === segmentItem.entryKey) {
+                            Logger.d("Scrollbar2", "Drag end pending: source=" + segmentItem.entryKey + " raw=" + root.dragInsertIndex);
+                            dragCleanupTimer.restart();
+                        }
+                    }
+
+                    Drag.active: dragging && segmentItem.reorderable
+                    Drag.source: segmentItem
+                    Drag.hotSpot.x: width / 2
+                    Drag.hotSpot.y: height / 2
+                    Drag.keys: ["scrollbar2-window"]
+                    z: dragging ? 1000 : 0
+                    scale: dragging ? 1.03 : 1.0
+
+                    Behavior on scale {
+                        NumberAnimation {
+                            duration: Style.animationFast
+                        }
+                    }
+
+                    Rectangle {
+                        anchors.fill: parent
+                        anchors.margins: root.windowMargin
+                        radius: Math.min(Math.max(0, root.windowBorderRadius), Math.max(0, Math.min(width, height) / 2))
+                        color: root.segmentBackgroundColor(segmentItem.entryKey)
 
                         Behavior on color {
                             enabled: root.animationEnabled
@@ -1339,22 +1465,141 @@ Item {
                                 duration: root.animationSpeed
                             }
                         }
+                    }
 
-                        Behavior on opacity {
-                            enabled: root.animationEnabled
-                            NumberAnimation {
-                                duration: root.animationSpeed
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.margins: root.windowMargin
+                        anchors.leftMargin: root.windowMargin + root.windowPaddingLeft
+                        anchors.rightMargin: root.windowMargin + root.windowPaddingRight
+                        spacing: root.labelGap
+                        visible: root.showIcon || root.showTitle
+                        layoutDirection: root.focusedOnly && root.focusedAlign === "right" && segmentItem.showLabel ? Qt.RightToLeft : Qt.LeftToRight
+
+                        Item {
+                            Layout.preferredWidth: root.showIcon ? (root.showTitle ? root.computedIconSize : Math.max(root.computedIconSize, segmentItem.width - (root.windowMargin * 2) - root.windowPaddingLeft - root.windowPaddingRight)) : 0
+                            Layout.preferredHeight: root.showIcon ? root.computedIconSize : 0
+                            Layout.alignment: Qt.AlignVCenter
+                            visible: root.showIcon
+                            opacity: segmentItem.showLabel ? 1 : 0
+
+                            Behavior on opacity {
+                                enabled: root.animationEnabled
+                                NumberAnimation {
+                                    duration: root.animationSpeed
+                                }
+                            }
+
+                            IconImage {
+                                id: appIcon
+                                width: root.computedIconSize
+                                height: root.computedIconSize
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                anchors.horizontalCenterOffset: Math.round((parent.width - width) * (root.iconAnchor(root.iconAlign) - 0.5))
+                                source: ThemeIcons.iconForAppId(segmentItem.modelData.appId)
+                                smooth: true
+                                asynchronous: true
+                                visible: status === Image.Ready && customRuleIcon.visible === false
+
+                                layer.enabled: visible && root.iconTintEnabled(segmentItem.entryKey)
+                                layer.effect: ShaderEffect {
+                                    property color targetColor: root.labelColor(segmentItem.entryKey, "icon")
+                                    property real colorizeMode: 0.0
+
+                                    fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/appicon_colorize.frag.qsb")
+                                }
+                                opacity: {
+                                    const state = root.segmentState(segmentItem.entryKey);
+                                    if (state === "focused")
+                                        return root.iconColorFocusedOpacity;
+                                    if (state === "hover")
+                                        return root.iconColorHoverOpacity;
+                                    return root.iconColorDefaultOpacity;
+                                }
+                            }
+
+                            NIcon {
+                                id: customRuleIcon
+                                width: root.computedIconSize
+                                height: root.computedIconSize
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                anchors.horizontalCenterOffset: Math.round((parent.width - width) * (root.iconAnchor(root.iconAlign) - 0.5))
+                                icon: root.customRuleIconName(segmentItem.entryKey)
+                                pointSize: root.computedIconSize
+                                visible: icon !== ""
+                                color: root.labelColor(segmentItem.entryKey, "icon")
+
+                                Behavior on color {
+                                    enabled: root.animationEnabled
+                                    ColorAnimation {
+                                        duration: root.animationSpeed
+                                    }
+                                }
+                            }
+
+                            NText {
+                                width: root.computedIconSize
+                                horizontalAlignment: root.horizontalAlignment(root.iconAlign)
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                anchors.horizontalCenterOffset: Math.round((parent.width - width) * (root.iconAnchor(root.iconAlign) - 0.5))
+                                visible: !appIcon.visible && !customRuleIcon.visible
+                                text: segmentItem.title.length > 0 ? segmentItem.title.charAt(0).toUpperCase() : "?"
+                                pointSize: Math.max(Style.fontSizeXS, root.titleFontSize * root.titleScale * 0.95)
+                                font.weight: Style.fontWeightBold
+                                color: root.labelColor(segmentItem.entryKey, "icon")
+
+                                Behavior on color {
+                                    enabled: root.animationEnabled
+                                    ColorAnimation {
+                                        duration: root.animationSpeed
+                                    }
+                                }
+                            }
+                        }
+
+                        NText {
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignVCenter
+                            visible: root.showTitle
+                            text: segmentItem.title
+                            elide: Text.ElideRight
+                            maximumLineCount: 1
+                            opacity: segmentItem.showLabel ? 1 : 0
+                            color: root.labelColor(segmentItem.entryKey, "title")
+                            horizontalAlignment: root.horizontalAlignment(root.titleAlign)
+                            font.family: root.titleFontFamily || Qt.application.font.family
+                            pointSize: root.titleFontSize * root.titleScale
+                            font.weight: root.titleWeight(segmentItem.entryKey)
+
+                            Behavior on color {
+                                enabled: root.animationEnabled
+                                ColorAnimation {
+                                    duration: root.animationSpeed
+                                }
+                            }
+
+                            Behavior on opacity {
+                                enabled: root.animationEnabled
+                                NumberAnimation {
+                                    duration: root.animationSpeed
+                                }
                             }
                         }
                     }
                 }
 
                 MouseArea {
+                    id: segmentMouseArea
                     anchors.fill: parent
                     acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
                     hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
+                    cursorShape: segmentItem.reorderable ? (drag.active ? Qt.ClosedHandCursor : Qt.OpenHandCursor) : Qt.PointingHandCursor
                     preventStealing: true
+                    drag.target: segmentItem.reorderable ? draggableContent : undefined
+                    drag.axis: Drag.XAxis
 
                     onEntered: {
                         root.hoveredEntryKey = segmentItem.entryKey;
@@ -1369,6 +1614,11 @@ Item {
                     }
 
                     onReleased: mouse => {
+                        if (segmentItem.reorderable && root.dragSessionActive && root.dragSourceEntryKey === segmentItem.entryKey) {
+                            Logger.d("Scrollbar2", "Drag release requesting drop: source=" + segmentItem.entryKey + " raw=" + root.dragInsertIndex);
+                            root.finalizeDragReorder(segmentItem.entryKey, "release");
+                            return;
+                        }
                         if (mouse.button === Qt.MiddleButton) {
                             root.mainInstance?.closeEntry(segmentItem.entryKey);
                         } else if (mouse.button === Qt.RightButton) {
@@ -1379,6 +1629,114 @@ Item {
                         }
                     }
                 }
+            }
+        }
+
+    }
+
+    DropArea {
+        x: segmentsRow.x
+        y: segmentsRow.y
+        width: segmentsRow.width
+        height: segmentsRow.height
+        keys: ["scrollbar2-window"]
+        enabled: root.dragReorderEnabled
+        z: 2
+
+        onEntered: drag => {
+            if (!drag.source || drag.source.objectName !== "scrollbar2WindowSegment")
+                return;
+            root.dragInsertIndex = root.dragSourceIndex;
+            Logger.d("Scrollbar2", "Drag overlay entered: source=" + (drag.source.entryKey ?? "") + " sourceIndex=" + root.dragSourceIndex);
+        }
+
+        onPositionChanged: drag => {
+            if (!drag.source || drag.source.objectName !== "scrollbar2WindowSegment")
+                return;
+        }
+
+        onExited: {
+            if (!root.dragSessionActive)
+                return;
+            Logger.d("Scrollbar2", "Drag preview cleared: source=" + root.dragSourceEntryKey + " raw=" + root.dragInsertIndex + " reason=overlay-exit");
+            root.clearDragState();
+        }
+
+        onDropped: drop => {
+            const sourceEntryKey = drop.source?.entryKey ?? "";
+            Logger.d("Scrollbar2", "Drag drop signal: source=" + sourceEntryKey + " raw=" + root.dragInsertIndex);
+            root.finalizeDragReorder(sourceEntryKey, "drop");
+        }
+    }
+
+    Item {
+        x: segmentsRow.x
+        y: segmentsRow.y
+        width: segmentsRow.width
+        height: segmentsRow.height
+        z: 3
+        visible: root.dragReorderEnabled && root.segmentCount > 1
+
+        Repeater {
+            model: root.segmentCount + 1
+
+            delegate: DropArea {
+                required property int index
+
+                x: root.insertionZoneStart(index)
+                y: 0
+                width: root.insertionZoneWidth(index)
+                height: parent ? parent.height : 0
+                keys: ["scrollbar2-window"]
+                enabled: root.dragReorderEnabled
+
+                onEntered: drag => {
+                    if (!drag.source || drag.source.objectName !== "scrollbar2WindowSegment")
+                        return;
+                    root.setDragInsertIndex(index, drag.source.entryKey ?? "", "slot-enter");
+                }
+
+                onPositionChanged: drag => {
+                    if (!drag.source || drag.source.objectName !== "scrollbar2WindowSegment")
+                        return;
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        id: dragInsertMarker
+        visible: root.dragPreviewActive
+        x: root.leftAccessoryWidth + root.insertionMarkerCenter(root.dragInsertIndex) - (width / 2)
+        y: Math.max(0, Math.round((root.availableContainerHeight - height) / 2))
+        width: Math.max(2, Math.round(Math.max(root.visibleFocusLineThickness, 3 * Style.uiScaleRatio)))
+        height: Math.max(root.visibleFocusLineThickness, Math.round(root.availableContainerHeight * 0.72))
+        radius: width / 2
+        color: root.colorWithOpacity(root.focusLineIndicatorColor, Math.max(root.focusLineOpacity, root.focusLineIndicatorOpacity))
+        z: 24
+        opacity: root.dragPreviewActive ? 1 : 0
+        scale: root.dragPreviewActive ? 1 : 0.85
+
+        Behavior on x {
+            enabled: root.animationEnabled
+            NumberAnimation {
+                duration: root.animationSpeed
+                easing.type: root.focusLineEasingType()
+                easing.overshoot: root.focusLineOvershoot()
+            }
+        }
+
+        Behavior on opacity {
+            enabled: root.animationEnabled
+            NumberAnimation {
+                duration: root.animationSpeed
+            }
+        }
+
+        Behavior on scale {
+            enabled: root.animationEnabled
+            NumberAnimation {
+                duration: root.animationSpeed
             }
         }
     }
@@ -1541,8 +1899,8 @@ Item {
 
     Item {
         id: focusIndicator
-        visible: focusedIndex >= 0 && availableContainerHeight > 0
-        x: root.leftAccessoryWidth + indicatorOffset(focusedIndex)
+        visible: effectiveFocusIndex >= 0 && availableContainerHeight > 0
+        x: root.leftAccessoryWidth + indicatorOffset(effectiveFocusIndex)
         y: 0
         width: segmentWidth
         height: availableContainerHeight
@@ -1574,7 +1932,16 @@ Item {
             width: computedWidth
             height: root.visibleFocusLineThickness
             radius: root.focusLineRadius
-            color: root.colorWithOpacity(root.focusLineIndicatorColor, root.focusLineOpacity * root.focusLineIndicatorOpacity)
+            color: root.dragPreviewActive
+                ? root.colorWithOpacity(root.focusLineHoverColor, root.focusLineOpacity * Math.max(root.focusLineHoverOpacity, root.focusLineIndicatorOpacity))
+                : root.colorWithOpacity(root.focusLineIndicatorColor, root.focusLineOpacity * root.focusLineIndicatorOpacity)
+
+            Behavior on color {
+                enabled: root.animationEnabled
+                ColorAnimation {
+                    duration: root.animationSpeed
+                }
+            }
         }
     }
 

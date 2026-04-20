@@ -3,7 +3,9 @@
 References:
   - Noctalia documentation: @docs/noctalia-docs/src/content/docs/
   - Noctalia source: @docs/noctalia-shell/
-  - Example plugins for Noctalia: @docs/examples/noctalia-plugins/
+  - Example plugins for Noctalia: @docs/noctalia-plugins/
+
+  For API research, use context7 tool. For icon usage, use iconify tool (Noctalia uses tabler icons)
 
 Guidelines for AI tools contributing to the Noctalia Plugins repository. **Study the official plugins before writing code** — especially `hello-world` (minimal reference) and `timer` (complex example with shared state). Official plugins have `"official": true` in their manifest.
 

@@ -346,6 +346,10 @@
         "label": "Focused Only",
         "desc": "Only show label content for the focused segment."
       },
+      "dragReorderEnabled": {
+        "label": "Enable Drag Reordering",
+        "desc": "Allow dragging tiled window segments to reorder them in the compositor."
+      },
       "focusedAlign": {
         "label": "Focused Label Alignment",
         "desc": "Where focused-only labels should appear."

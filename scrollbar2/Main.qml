@@ -30,6 +30,27 @@ Item {
     property string requestedStyleRuleMatchField: ""
     property string requestedStyleRulePattern: ""
     property int requestedStyleRuleRevision: 0
+    property bool reorderInFlight: false
+    property var hyprlandReorderState: null
+
+    Timer {
+        id: reorderReleaseTimer
+        interval: 260
+        repeat: false
+        onTriggered: {
+            root.refreshBackendState();
+            root.reorderInFlight = false;
+        }
+    }
+
+    Timer {
+        id: hyprlandReorderTimer
+        interval: 24
+        repeat: false
+        onTriggered: {
+            root.advanceHyprlandReorder();
+        }
+    }
 
     function refreshSettingsSnapshot() {
         currentSettings = pluginApi?.pluginSettings || ({});
@@ -251,6 +272,98 @@ Item {
         if (!appId || typeof appId !== "string")
             return "";
         return appId.toLowerCase().trim();
+    }
+
+    function normalizedWorkspaceToken(value) {
+        if (value === undefined || value === null)
+            return "";
+        return String(value).trim();
+    }
+
+    function sameWorkspace(a, b) {
+        return normalizedWorkspaceToken(a?.workspaceId) !== "" && normalizedWorkspaceToken(a?.workspaceId) === normalizedWorkspaceToken(b?.workspaceId);
+    }
+
+    function sameOutput(a, b) {
+        return normalizeAppId(a?.output || "") === normalizeAppId(b?.output || "");
+    }
+
+    function extractNiriLayoutValue(layoutValue, firstKey, secondKey) {
+        if (layoutValue === undefined || layoutValue === null)
+            return undefined;
+        if (Array.isArray(layoutValue)) {
+            const index = firstKey === "column" ? 0 : 1;
+            const numericArrayValue = Number(layoutValue[index]);
+            return isNaN(numericArrayValue) ? undefined : numericArrayValue;
+        }
+
+        if (typeof layoutValue === "object") {
+            const directValue = Number(layoutValue[firstKey]);
+            if (!isNaN(directValue))
+                return directValue;
+            const fallbackValue = Number(layoutValue[secondKey]);
+            if (!isNaN(fallbackValue))
+                return fallbackValue;
+        }
+
+        return undefined;
+    }
+
+    function extractNiriLayoutPosition(window) {
+        const rawLayout = window?.layout?.posInScrollingLayout
+            ?? window?.layout?.pos_in_scrolling_layout
+            ?? window?.posInScrollingLayout
+            ?? window?.pos_in_scrolling_layout
+            ?? null;
+        if (!rawLayout)
+            return null;
+
+        const column = extractNiriLayoutValue(rawLayout, "column", "x");
+        const tile = extractNiriLayoutValue(rawLayout, "tile", "y");
+        if (column === undefined && tile === undefined)
+            return null;
+
+        return {
+            "column": column,
+            "tile": tile
+        };
+    }
+
+    function backendMetadataByWindowId() {
+        const metadata = ({});
+
+        if (CompositorService.isHyprland) {
+            try {
+                const toplevels = Hyprland.toplevels?.values || [];
+                for (let i = 0; i < toplevels.length; i++) {
+                    const toplevel = toplevels[i];
+                    const address = String(toplevel?.address || "").trim();
+                    if (address === "")
+                        continue;
+                    metadata[address] = {
+                        "isFloating": toplevel?.lastIpcObject?.floating === true
+                    };
+                }
+            } catch (error) {}
+        } else if (CompositorService.isNiri) {
+            try {
+                const windows = Niri.windows?.values || [];
+                for (let i = 0; i < windows.length; i++) {
+                    const window = windows[i];
+                    const windowId = String(window?.id || "").trim();
+                    if (windowId === "")
+                        continue;
+                    const layoutPosition = extractNiriLayoutPosition(window);
+                    metadata[windowId] = {
+                        "isFloating": window?.isFloating === true,
+                        "niriColumnIndex": layoutPosition?.column,
+                        "niriTileIndex": layoutPosition?.tile
+                    };
+                }
+            } catch (error) {}
+        }
+
+        return metadata;
     }
 
     function getDesktopEntry(appId) {
@@ -552,12 +665,16 @@ Item {
 
     function collectWindows() {
         const windows = [];
+        const backendMetadata = backendMetadataByWindowId();
         try {
             const total = CompositorService.windows?.count || 0;
             for (let i = 0; i < total; i++) {
                 const window = CompositorService.windows.get(i);
-                if (window)
-                    windows.push(window);
+                if (!window)
+                    continue;
+                const id = String(window?.id || "").trim();
+                const extra = id !== "" ? (backendMetadata[id] || ({})) : ({});
+                windows.push(Object.assign({}, window, extra));
             }
         } catch (error) {}
         return windows;
@@ -722,7 +839,12 @@ Item {
                 "appId": window.appId || "",
                 "fallbackTitle": window.title || getAppNameFromDesktopEntry(window.appId),
                 "output": window.output || "",
-                "workspaceId": window.workspaceId
+                "workspaceId": window.workspaceId,
+                "x": window?.x,
+                "y": window?.y,
+                "isFloating": window?.isFloating === true,
+                "niriColumnIndex": window?.niriColumnIndex,
+                "niriTileIndex": window?.niriTileIndex
             };
         });
     }
@@ -800,6 +922,348 @@ Item {
         });
     }
 
+    function reorderableEntries(screenName, onlySameOutput, onlyActiveWorkspaces) {
+        return getFilteredEntries(screenName, onlySameOutput, onlyActiveWorkspaces).filter(function (entry) {
+            return entry?.isFloating !== true;
+        });
+    }
+
+    function indexOfEntry(entries, entryKey) {
+        for (let i = 0; i < entries.length; i++) {
+            if (entries[i]?.entryKey === entryKey)
+                return i;
+        }
+        return -1;
+    }
+
+    function canReorderEntry(entryKey, screenName, onlySameOutput, onlyActiveWorkspaces) {
+        if (reorderInFlight)
+            return false;
+
+        const visibleEntries = reorderableEntries(screenName, onlySameOutput, onlyActiveWorkspaces);
+        const sourceIndex = indexOfEntry(visibleEntries, entryKey);
+        if (sourceIndex < 0)
+            return false;
+
+        const sourceEntry = visibleEntries[sourceIndex];
+        return sourceEntry?.isFloating !== true;
+    }
+
+    function canReorderToIndex(sourceEntryKey, targetIndex, screenName, onlySameOutput, onlyActiveWorkspaces) {
+        if (reorderInFlight)
+            return false;
+
+        const visibleEntries = reorderableEntries(screenName, onlySameOutput, onlyActiveWorkspaces);
+        const sourceIndex = indexOfEntry(visibleEntries, sourceEntryKey);
+        if (sourceIndex < 0)
+            return false;
+
+        const sourceEntry = visibleEntries[sourceIndex];
+        if (!sourceEntry || sourceEntry.isFloating)
+            return false;
+
+        const clampedTargetIndex = Math.max(0, Math.min(visibleEntries.length - 1, Number(targetIndex)));
+        if (isNaN(clampedTargetIndex) || clampedTargetIndex === sourceIndex)
+            return false;
+
+        const remainingEntries = visibleEntries.filter(function (entry) {
+            return entry?.entryKey !== sourceEntryKey;
+        });
+        const insertIndex = Math.max(0, Math.min(remainingEntries.length, clampedTargetIndex));
+        const previousNeighbor = insertIndex > 0 ? remainingEntries[insertIndex - 1] : null;
+        const nextNeighbor = insertIndex < remainingEntries.length ? remainingEntries[insertIndex] : null;
+
+        if (!previousNeighbor && !nextNeighbor)
+            return false;
+        if (previousNeighbor && (!sameWorkspace(sourceEntry, previousNeighbor) || !sameOutput(sourceEntry, previousNeighbor)))
+            return false;
+        if (nextNeighbor && (!sameWorkspace(sourceEntry, nextNeighbor) || !sameOutput(sourceEntry, nextNeighbor)))
+            return false;
+
+        return true;
+    }
+
+    function refreshBackendState() {
+        try {
+            if (CompositorService.isHyprland) {
+                Hyprland.refreshToplevels();
+                Hyprland.refreshWorkspaces();
+            } else if (CompositorService.isNiri) {
+                Niri.refreshWindows();
+                Niri.refreshWorkspaces();
+            }
+        } catch (error) {}
+        updateSnapshots("refreshBackendState");
+    }
+
+    function dispatchHyprland(request) {
+        try {
+            Hyprland.dispatch(request);
+            return true;
+        } catch (error) {
+            Logger.e("Scrollbar2", "Hyprland reorder dispatch failed: " + error);
+            return false;
+        }
+    }
+
+    function focusHyprlandEntry(entryId) {
+        const normalizedId = String(entryId || "").trim();
+        if (normalizedId === "")
+            return false;
+        return dispatchHyprland("focuswindow address:0x" + normalizedId);
+    }
+
+    function dispatchNiri(args) {
+        try {
+            Niri.dispatch(args);
+            return true;
+        } catch (error) {
+            Logger.e("Scrollbar2", "Niri reorder dispatch failed: " + error);
+            return false;
+        }
+    }
+
+    function completeHyprlandReorder(state, reordered, reason) {
+        hyprlandReorderTimer.stop();
+        hyprlandReorderState = null;
+        refreshBackendState();
+        reorderReleaseTimer.restart();
+
+        const finalEntries = reorderableEntries(state.screenName, state.onlySameOutput, state.onlyActiveWorkspaces);
+        const finalIndex = indexOfEntry(finalEntries, state.sourceEntryKey);
+        Logger.d("Scrollbar2", "Reorder result: source=" + state.sourceEntryKey + " finalIndex=" + finalIndex + " requestedIndex=" + state.targetIndex + " reordered=" + reordered + " reason=" + String(reason || "") + " visible=[" + finalEntries.map(function (entry) {
+            return entry?.entryKey || "";
+        }).join(",") + "]");
+        if (!reordered)
+            Logger.w("Scrollbar2", "Drag reorder did not complete for " + state.sourceEntryKey + " -> index " + state.targetIndex + " (" + String(reason || "unknown") + ")");
+    }
+
+    function startHyprlandReorder(sourceEntryKey, targetIndex, screenName, onlySameOutput, onlyActiveWorkspaces) {
+        hyprlandReorderState = {
+            "sourceEntryKey": sourceEntryKey,
+            "targetIndex": targetIndex,
+            "screenName": screenName,
+            "onlySameOutput": onlySameOutput,
+            "onlyActiveWorkspaces": onlyActiveWorkspaces,
+            "phase": "focus",
+            "stepCount": 0,
+            "expectedIndex": -1,
+            "swapWithEntryKey": ""
+        };
+        refreshBackendState();
+        hyprlandReorderTimer.restart();
+        return true;
+    }
+
+    function advanceHyprlandReorder() {
+        const state = hyprlandReorderState;
+        if (!state) {
+            reorderInFlight = false;
+            return;
+        }
+
+        const maxSteps = 96;
+        if (state.stepCount >= maxSteps) {
+            completeHyprlandReorder(state, false, "step-limit");
+            return;
+        }
+
+        if (state.phase === "await-focus" || state.phase === "await-swap")
+            refreshBackendState();
+
+        const visibleEntries = reorderableEntries(state.screenName, state.onlySameOutput, state.onlyActiveWorkspaces);
+        const sourceCurrentIndex = indexOfEntry(visibleEntries, state.sourceEntryKey);
+        if (sourceCurrentIndex < 0) {
+            completeHyprlandReorder(state, false, "source-missing");
+            return;
+        }
+        if (sourceCurrentIndex === state.targetIndex) {
+            completeHyprlandReorder(state, true, "complete");
+            return;
+        }
+
+        const sourceEntry = visibleEntries[sourceCurrentIndex];
+        const comparisonEntry = visibleEntries[sourceCurrentIndex < state.targetIndex ? sourceCurrentIndex + 1 : sourceCurrentIndex - 1];
+        if (!comparisonEntry) {
+            completeHyprlandReorder(state, false, "comparison-missing");
+            return;
+        }
+        if (!sameWorkspace(sourceEntry, comparisonEntry) || !sameOutput(sourceEntry, comparisonEntry)) {
+            completeHyprlandReorder(state, false, "scope-mismatch");
+            return;
+        }
+        if (!sourceEntry?.id || !comparisonEntry?.id) {
+            completeHyprlandReorder(state, false, "backend-id-missing");
+            return;
+        }
+
+        if (state.phase === "focus") {
+            Logger.d("Scrollbar2", "Hyprland reorder focus request: source=" + state.sourceEntryKey + " currentIndex=" + sourceCurrentIndex + " targetIndex=" + state.targetIndex + " active=" + activeEntryKey);
+            if (!focusHyprlandEntry(sourceEntry.id)) {
+                completeHyprlandReorder(state, false, "focus-dispatch-failed");
+                return;
+            }
+            state.phase = "await-focus";
+            state.stepCount += 1;
+            hyprlandReorderTimer.restart();
+            return;
+        }
+
+        if (state.phase === "await-focus") {
+            Logger.d("Scrollbar2", "Hyprland focus check: requested=" + state.sourceEntryKey + " active=" + activeEntryKey);
+            if (activeEntryKey !== state.sourceEntryKey) {
+                state.phase = "focus";
+                hyprlandReorderTimer.restart();
+                return;
+            }
+            state.phase = "swap";
+            hyprlandReorderTimer.restart();
+            return;
+        }
+
+        if (state.phase === "swap") {
+            Logger.d("Scrollbar2", "Hyprland reorder step: source=" + state.sourceEntryKey + " currentIndex=" + sourceCurrentIndex + " targetIndex=" + state.targetIndex + " swapWith=" + comparisonEntry.entryKey);
+            if (!dispatchHyprland("swapwindow address:0x" + String(comparisonEntry.id))) {
+                completeHyprlandReorder(state, false, "swap-dispatch-failed");
+                return;
+            }
+            state.expectedIndex = sourceCurrentIndex < state.targetIndex ? sourceCurrentIndex + 1 : sourceCurrentIndex - 1;
+            state.swapWithEntryKey = comparisonEntry.entryKey;
+            state.phase = "await-swap";
+            state.stepCount += 1;
+            hyprlandReorderTimer.restart();
+            return;
+        }
+
+        if (state.phase === "await-swap") {
+            const refreshedEntries = reorderableEntries(state.screenName, state.onlySameOutput, state.onlyActiveWorkspaces);
+            const refreshedIndex = indexOfEntry(refreshedEntries, state.sourceEntryKey);
+            Logger.d("Scrollbar2", "Hyprland swap check: source=" + state.sourceEntryKey + " currentIndex=" + refreshedIndex + " expectedIndex=" + state.expectedIndex + " targetIndex=" + state.targetIndex + " swapWith=" + state.swapWithEntryKey);
+            if (refreshedIndex < 0) {
+                completeHyprlandReorder(state, false, "source-missing-after-swap");
+                return;
+            }
+            if (refreshedIndex === state.targetIndex) {
+                completeHyprlandReorder(state, true, "complete");
+                return;
+            }
+            if (refreshedIndex === state.expectedIndex) {
+                state.phase = "focus";
+                hyprlandReorderTimer.restart();
+                return;
+            }
+            state.phase = "focus";
+            hyprlandReorderTimer.restart();
+            return;
+        }
+
+        completeHyprlandReorder(state, false, "invalid-phase");
+    }
+
+    function niriMoveAction(sourceEntry, targetEntry) {
+        const sourceColumn = Number(sourceEntry?.niriColumnIndex);
+        const targetColumn = Number(targetEntry?.niriColumnIndex);
+        const sourceTile = Number(sourceEntry?.niriTileIndex);
+        const targetTile = Number(targetEntry?.niriTileIndex);
+        const sourceHasColumn = !isNaN(sourceColumn);
+        const targetHasColumn = !isNaN(targetColumn);
+        const sourceHasTile = !isNaN(sourceTile);
+        const targetHasTile = !isNaN(targetTile);
+
+        if (sourceHasColumn && targetHasColumn && sourceColumn !== targetColumn)
+            return sourceColumn < targetColumn ? "move-window-right" : "move-window-left";
+        if (sourceHasTile && targetHasTile && sourceTile !== targetTile)
+            return sourceTile < targetTile ? "move-window-down" : "move-window-up";
+        if (sourceEntry?.niriColumnIndex !== undefined || targetEntry?.niriColumnIndex !== undefined) {
+            if (sourceColumn < targetColumn)
+                return "move-window-right";
+            if (sourceColumn > targetColumn)
+                return "move-window-left";
+        }
+        return niriDirectionFallback(sourceEntry, targetEntry);
+    }
+
+    function niriDirectionFallback(sourceEntry, targetEntry) {
+        const sourceX = Number(sourceEntry?.x);
+        const targetX = Number(targetEntry?.x);
+        const sourceY = Number(sourceEntry?.y);
+        const targetY = Number(targetEntry?.y);
+
+        if (!isNaN(sourceX) && !isNaN(targetX) && sourceX !== targetX)
+            return sourceX < targetX ? "move-window-right" : "move-window-left";
+        if (!isNaN(sourceY) && !isNaN(targetY) && sourceY !== targetY)
+            return sourceY < targetY ? "move-window-down" : "move-window-up";
+        return "";
+    }
+
+    function performNiriReorder(sourceEntryKey, targetIndex, screenName, onlySameOutput, onlyActiveWorkspaces) {
+        const maxSteps = 48;
+        for (let step = 0; step < maxSteps; step++) {
+            const visibleEntries = reorderableEntries(screenName, onlySameOutput, onlyActiveWorkspaces);
+            const currentIndex = indexOfEntry(visibleEntries, sourceEntryKey);
+            if (currentIndex < 0)
+                return false;
+            if (currentIndex === targetIndex)
+                return true;
+
+            const sourceEntry = visibleEntries[currentIndex];
+            const comparisonEntry = visibleEntries[currentIndex < targetIndex ? currentIndex + 1 : currentIndex - 1];
+            if (!comparisonEntry)
+                return currentIndex === targetIndex;
+
+            focusEntry(sourceEntryKey);
+            const action = niriMoveAction(sourceEntry, comparisonEntry);
+            if (action === "" || !dispatchNiri([action]))
+                return false;
+            refreshBackendState();
+        }
+
+        return false;
+    }
+
+    function requestEntryReorderToIndex(sourceEntryKey, targetIndex, screenName, onlySameOutput, onlyActiveWorkspaces) {
+        if (!canReorderToIndex(sourceEntryKey, targetIndex, screenName, onlySameOutput, onlyActiveWorkspaces))
+            return false;
+
+        const visibleEntries = reorderableEntries(screenName, onlySameOutput, onlyActiveWorkspaces);
+        const sourceIndex = indexOfEntry(visibleEntries, sourceEntryKey);
+        const clampedTargetIndex = Math.max(0, Math.min(visibleEntries.length - 1, Number(targetIndex)));
+        const sourceEntry = visibleEntries[sourceIndex];
+        Logger.d("Scrollbar2", "Reorder request: source=" + sourceEntryKey + " sourceIndex=" + sourceIndex + " targetIndex=" + clampedTargetIndex + " visible=[" + visibleEntries.map(function (entry) {
+            return entry?.entryKey || "";
+        }).join(",") + "]");
+
+        reorderInFlight = true;
+        if (CompositorService.isHyprland) {
+            return startHyprlandReorder(sourceEntryKey, clampedTargetIndex, screenName, onlySameOutput, onlyActiveWorkspaces);
+        } else if (CompositorService.isNiri) {
+            const reordered = performNiriReorder(sourceEntryKey, clampedTargetIndex, screenName, onlySameOutput, onlyActiveWorkspaces);
+            refreshBackendState();
+            reorderReleaseTimer.restart();
+            const finalEntries = reorderableEntries(screenName, onlySameOutput, onlyActiveWorkspaces);
+            const finalIndex = indexOfEntry(finalEntries, sourceEntryKey);
+            Logger.d("Scrollbar2", "Reorder result: source=" + sourceEntryKey + " finalIndex=" + finalIndex + " requestedIndex=" + clampedTargetIndex + " reordered=" + reordered + " visible=[" + finalEntries.map(function (entry) {
+                return entry?.entryKey || "";
+            }).join(",") + "]");
+            if (!reordered)
+                Logger.w("Scrollbar2", "Drag reorder did not complete for " + sourceEntryKey + " -> index " + clampedTargetIndex);
+            return reordered;
+        } else {
+            Logger.w("Scrollbar2", "Drag reorder is not supported on this compositor backend");
+            reorderInFlight = false;
+            return false;
+        }
+    }
+
+    function requestEntryReorder(sourceEntryKey, targetEntryKey, screenName, onlySameOutput, onlyActiveWorkspaces) {
+        const visibleEntries = reorderableEntries(screenName, onlySameOutput, onlyActiveWorkspaces);
+        const sourceIndex = indexOfEntry(visibleEntries, sourceEntryKey);
+        const targetIndex = indexOfEntry(visibleEntries, targetEntryKey);
+        if (sourceIndex < 0 || targetIndex < 0)
+            return false;
+        return requestEntryReorderToIndex(sourceEntryKey, targetIndex, screenName, onlySameOutput, onlyActiveWorkspaces);
+    }
+
     function getVisibleEntriesForApp(screenName, appId, onlySameOutput, onlyActiveWorkspaces) {
         const canonicalId = resolveToDesktopEntryId(appId);
         if (!canonicalId)
@@ -832,12 +1296,9 @@ Item {
 
     function getWindowByEntry(entryKey) {
         const windows = collectWindows();
-        for (let i = 0; i < windows.length; i++) {
-            const window = windows[i];
-            if (getWindowKey(window) === entryKey)
-                return window;
-        }
-        return null;
+        return windows.find(function (candidate) {
+            return getWindowKey(candidate) === entryKey;
+        }) || null;
     }
 
     function focusEntry(entryKey) {

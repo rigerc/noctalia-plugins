@@ -58,6 +58,15 @@ ColumnLayout {
                 defaultValue: rootSettings?.defaultValue("window", "focusedOnly") ?? false
             }
 
+            NToggle {
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.window.dragReorderEnabled.label")
+                description: rootSettings?.pluginApi?.tr("settings.window.dragReorderEnabled.desc")
+                checked: rootSettings?.settingValue("window", "dragReorderEnabled") ?? true
+                onToggled: checked => rootSettings?.setSetting("window", "dragReorderEnabled", checked)
+                defaultValue: rootSettings?.defaultValue("window", "dragReorderEnabled") ?? true
+            }
+
             NComboBox {
                 visible: rootSettings?.isVisibleByConditions(["focusedOnly"]) ?? false
                 Layout.fillWidth: true
