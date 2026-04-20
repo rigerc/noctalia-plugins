@@ -9,7 +9,7 @@ A configurable window bar with equal-width segments, animated focus tracking, an
 </p>
 
 <p>
-<img src="https://img.shields.io/badge/version-1.3.0-blue" alt="Version">
+<img src="https://img.shields.io/badge/version-1.4.0-blue" alt="Version">
 <img src="https://img.shields.io/badge/noctalia-%E2%89%A54.6.6-purple" alt="Min Noctalia Version">
 <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
 </p>
@@ -28,7 +28,7 @@ A configurable window bar with equal-width segments, animated focus tracking, an
 - **Workspace indicator** — show the active workspace ID or name with an animated capsule and optional window-count badge
 - **Special workspace overlay** — centered overlay for Hyprland special workspaces with window icon previews
 - **Pinned apps** — pin applications to the bar with custom icons, focus-cycle or start-new behavior
-- **Custom style rules** — regex-based rules to override segment, icon, and title colors per app or title
+- **Custom style rules** — regex-based rules to override segment, icon, and title colors per app, title, tags, floating state, grouped state, urgency, or duplicate identity/title state
 - **Presets system** — save, load, import/export complete configurations with built-in starting points
 - **Theme-aware colors** — all colors resolve against the active Noctalia theme with custom hex fallback
 - **Settings migrations** — automatic schema migrations with validation and cleanup on import
@@ -90,7 +90,7 @@ Right-click any segment to:
 
 - Focus or close the window
 - Pin/unpin the application
-- Add or edit a style rule for the app or window title
+- Add or edit a style rule for the app or window title, then switch the matcher in settings to tags or derived state if needed
 
 ## Entry Points
 

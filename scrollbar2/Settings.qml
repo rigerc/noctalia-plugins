@@ -40,10 +40,40 @@ ColumnLayout {
             "icon": "template"
         }
     ]
-    readonly property var styleRuleSnapshot: {
-        styleRulesRevision;
-        return Array.isArray(editSettings?.customStyleRules) ? editSettings.customStyleRules.slice() : [];
-    }
+    readonly property var styleRuleMatchFieldModel: [
+        {
+            "key": "appId",
+            "name": pluginApi?.tr("settings.customStyleRules.matchField.appId")
+        },
+        {
+            "key": "title",
+            "name": pluginApi?.tr("settings.customStyleRules.matchField.title")
+        },
+        {
+            "key": "tag",
+            "name": pluginApi?.tr("settings.customStyleRules.matchField.tag")
+        },
+        {
+            "key": "floating",
+            "name": pluginApi?.tr("settings.customStyleRules.matchField.floating")
+        },
+        {
+            "key": "urgent",
+            "name": pluginApi?.tr("settings.customStyleRules.matchField.urgent")
+        },
+        {
+            "key": "grouped",
+            "name": pluginApi?.tr("settings.customStyleRules.matchField.grouped")
+        },
+        {
+            "key": "sharedAppId",
+            "name": pluginApi?.tr("settings.customStyleRules.matchField.sharedAppId")
+        },
+        {
+            "key": "sharedTitle",
+            "name": pluginApi?.tr("settings.customStyleRules.matchField.sharedTitle")
+        }
+    ]
 
     readonly property var displayModeModel: [
         {
@@ -307,7 +337,7 @@ ColumnLayout {
         const source = (rule && typeof rule === "object" && !Array.isArray(rule)) ? rule : ({});
         return {
             "enabled": source.enabled !== false,
-            "matchField": source.matchField === "title" ? "title" : "appId",
+            "matchField": normalizeStyleRuleMatchField(source.matchField),
             "pattern": String(source.pattern || ""),
             "customIcon": String(source.customIcon || ""),
             "colors": {
@@ -447,6 +477,56 @@ ColumnLayout {
         next.customStyleRules = Array.isArray(next.customStyleRules) ? next.customStyleRules.map(normalizeCustomStyleRule) : [];
 
         return next;
+    }
+
+    function normalizeStyleRuleMatchField(matchField) {
+        switch (String(matchField || "")) {
+        case "title":
+        case "tag":
+        case "floating":
+        case "urgent":
+        case "grouped":
+        case "sharedAppId":
+        case "sharedTitle":
+            return String(matchField);
+        default:
+            return "appId";
+        }
+    }
+
+    function suggestedPatternForMatchField(matchField) {
+        switch (normalizeStyleRuleMatchField(matchField)) {
+        case "title":
+            return "YouTube";
+        case "tag":
+            return "code";
+        case "floating":
+        case "urgent":
+        case "grouped":
+        case "sharedAppId":
+        case "sharedTitle":
+            return ".+";
+        default:
+            return "^firefox$";
+        }
+    }
+
+    function styleRulePatternPlaceholder(matchField) {
+        return suggestedPatternForMatchField(matchField);
+    }
+
+    function styleRuleAllowsEmptyPattern(matchField) {
+        switch (normalizeStyleRuleMatchField(matchField)) {
+        case "tag":
+        case "floating":
+        case "urgent":
+        case "grouped":
+        case "sharedAppId":
+        case "sharedTitle":
+            return true;
+        default:
+            return false;
+        }
     }
 
     function settingValue(groupKey, nestedKey) {
@@ -742,6 +822,14 @@ ColumnLayout {
         }
     }
 
+    Connections {
+        target: mainInstance
+
+        function onRequestedStyleRuleRevisionChanged() {
+            root.selectedTab = 3;
+        }
+    }
+
     Component.onCompleted: refreshEditSettings()
 
     NTabBar {
@@ -796,7 +884,7 @@ ColumnLayout {
 
         const normalized = normalizeSettingsSnapshot(editSettings);
         normalized.customStyleRules = normalized.customStyleRules.filter(function (rule) {
-            return String(rule?.pattern || "").trim() !== "";
+            return root.styleRuleAllowsEmptyPattern(rule?.matchField) || String(rule?.pattern || "").trim() !== "";
         });
         normalized._presets = deepCopy(pluginApi.pluginSettings._presets || []);
         normalized._activePresetId = _activePresetId;

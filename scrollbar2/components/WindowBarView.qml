@@ -192,7 +192,7 @@ Item {
         const source = (rule && typeof rule === "object" && !Array.isArray(rule)) ? rule : ({});
         return {
             "enabled": source.enabled !== false,
-            "matchField": source.matchField === "title" ? "title" : "appId",
+            "matchField": normalizeStyleRuleMatchField(source.matchField),
             "pattern": String(source.pattern || ""),
             "customIcon": String(source.customIcon || ""),
             "colors": {
@@ -215,6 +215,35 @@ Item {
         };
     }
 
+    function normalizeStyleRuleMatchField(matchField) {
+        switch (String(matchField || "")) {
+        case "title":
+        case "tag":
+        case "floating":
+        case "urgent":
+        case "grouped":
+        case "sharedAppId":
+        case "sharedTitle":
+            return String(matchField);
+        default:
+            return "appId";
+        }
+    }
+
+    function styleRuleAllowsEmptyPattern(matchField) {
+        switch (normalizeStyleRuleMatchField(matchField)) {
+        case "tag":
+        case "floating":
+        case "urgent":
+        case "grouped":
+        case "sharedAppId":
+        case "sharedTitle":
+            return true;
+        default:
+            return false;
+        }
+    }
+
     function styleRuleItems() {
         const configuredRules = currentSettings?.customStyleRules;
         const source = Array.isArray(configuredRules) ? configuredRules : (Array.isArray(defaults?.customStyleRules) ? defaults.customStyleRules : []);
@@ -224,22 +253,41 @@ Item {
     function ruleMatchSubject(entry, matchField) {
         if (!entry)
             return "";
-        if (matchField === "title")
+        const normalizedMatchField = normalizeStyleRuleMatchField(matchField);
+        if (normalizedMatchField === "title")
             return currentTitle(entry);
-        return String(mainInstance?.resolveToDesktopEntryId(entry?.appId || "") || entry?.appId || "");
+        if (normalizedMatchField === "tag")
+            return Array.isArray(entry?.tags) ? entry.tags.join(" ") : "";
+        if (normalizedMatchField === "floating")
+            return entry?.isFloating ? "floating" : "";
+        if (normalizedMatchField === "urgent")
+            return entry?.isUrgent ? "urgent" : "";
+        if (normalizedMatchField === "grouped")
+            return entry?.isGrouped ? "grouped" : "";
+        if (normalizedMatchField === "sharedAppId")
+            return entry?.sharesAppIdentity ? String(entry?.canonicalAppId || mainInstance?.resolveToDesktopEntryId(entry?.appId || "") || entry?.appId || "") : "";
+        if (normalizedMatchField === "sharedTitle")
+            return entry?.sharesTitleIdentity ? currentTitle(entry) : "";
+        return String(entry?.canonicalAppId || mainInstance?.resolveToDesktopEntryId(entry?.appId || "") || entry?.appId || "");
     }
 
     function matchingStyleRule(entry) {
         const rules = styleRuleItems();
         for (let index = 0; index < rules.length; index++) {
             const rule = rules[index];
+            const matchField = normalizeStyleRuleMatchField(rule?.matchField);
             const pattern = String(rule?.pattern || "").trim();
-            if (!rule?.enabled || pattern === "")
+            if (!rule?.enabled)
                 continue;
 
             const subject = ruleMatchSubject(entry, rule.matchField);
             if (subject === "")
                 continue;
+            if (pattern === "") {
+                if (styleRuleAllowsEmptyPattern(matchField))
+                    return rule;
+                continue;
+            }
 
             try {
                 if (new RegExp(pattern).test(subject))

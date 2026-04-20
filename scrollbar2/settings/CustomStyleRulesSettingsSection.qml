@@ -82,7 +82,7 @@ ColumnLayout {
             }
 
             NText {
-                visible: (rootSettings?.styleRuleSnapshot.length ?? 0) === 0
+                visible: (rootSettings?.styleRuleItems().length ?? 0) === 0
                 Layout.fillWidth: true
                 text: rootSettings?.pluginApi?.tr("settings.customStyleRules.empty")
                 color: Color.mOnSurfaceVariant
@@ -90,7 +90,7 @@ ColumnLayout {
             }
 
             Repeater {
-                model: rootSettings?.styleRuleSnapshot ?? []
+                model: rootSettings?.styleRuleItems() ?? []
 
                 delegate: NBox {
                     id: ruleCard
@@ -145,7 +145,7 @@ ColumnLayout {
                             NButton {
                                 text: rootSettings?.pluginApi?.tr("settings.customStyleRules.actions.moveDown")
                                 icon: "chevron-down"
-                                enabled: index < ((rootSettings?.styleRuleSnapshot.length ?? 0) - 1)
+                                enabled: index < ((rootSettings?.styleRuleItems()?.length ?? 0) - 1)
                                 onClicked: rootSettings?.moveStyleRule(index, 1)
                             }
 
@@ -171,20 +171,11 @@ ColumnLayout {
                             Layout.fillWidth: true
                             label: rootSettings?.pluginApi?.tr("settings.customStyleRules.matchField.label")
                             description: rootSettings?.pluginApi?.tr("settings.customStyleRules.matchField.desc")
-                            model: [
-                                {
-                                    "key": "appId",
-                                    "name": rootSettings?.pluginApi?.tr("settings.customStyleRules.matchField.appId")
-                                },
-                                {
-                                    "key": "title",
-                                    "name": rootSettings?.pluginApi?.tr("settings.customStyleRules.matchField.title")
-                                }
-                            ]
+                            model: rootSettings?.styleRuleMatchFieldModel ?? []
                             currentKey: modelData?.matchField ?? "appId"
                             defaultValue: "appId"
                             onSelected: key => rootSettings?.updateStyleRule(index, {
-                                    "matchField": key
+                                    "matchField": rootSettings?.normalizeStyleRuleMatchField(key) ?? "appId"
                                 })
                         }
 
@@ -192,7 +183,7 @@ ColumnLayout {
                             Layout.fillWidth: true
                             label: rootSettings?.pluginApi?.tr("settings.customStyleRules.pattern.label")
                             description: rootSettings?.pluginApi?.tr("settings.customStyleRules.pattern.desc")
-                            placeholderText: rootSettings?.pluginApi?.tr("settings.customStyleRules.pattern.placeholder")
+                            placeholderText: rootSettings?.styleRulePatternPlaceholder(modelData?.matchField ?? "appId") ?? ""
                             text: modelData?.pattern ?? ""
                             onTextChanged: rootSettings?.updateStyleRule(index, {
                                     "pattern": text

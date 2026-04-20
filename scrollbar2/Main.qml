@@ -274,6 +274,49 @@ Item {
         return appId.toLowerCase().trim();
     }
 
+    function normalizeStyleRuleMatchField(matchField) {
+        switch (String(matchField || "")) {
+        case "title":
+        case "tag":
+        case "floating":
+        case "urgent":
+        case "grouped":
+        case "sharedAppId":
+        case "sharedTitle":
+            return String(matchField);
+        default:
+            return "appId";
+        }
+    }
+
+    function cloneStringArray(values) {
+        if (!Array.isArray(values))
+            return [];
+
+        return values.map(function (value) {
+            return String(value || "").trim();
+        }).filter(function (value) {
+            return value !== "";
+        });
+    }
+
+    function normalizeWindowTags(rawTags) {
+        if (!Array.isArray(rawTags))
+            return [];
+
+        return rawTags.map(function (tag) {
+            if (tag === undefined || tag === null)
+                return "";
+            if (typeof tag === "string")
+                return tag.trim();
+            if (typeof tag === "object")
+                return String(tag.name || tag.tag || tag.id || "").trim();
+            return String(tag).trim();
+        }).filter(function (tag) {
+            return tag !== "";
+        });
+    }
+
     function normalizedWorkspaceToken(value) {
         if (value === undefined || value === null)
             return "";
@@ -340,8 +383,14 @@ Item {
                     const address = String(toplevel?.address || "").trim();
                     if (address === "")
                         continue;
+                    const ipcData = toplevel?.lastIpcObject || ({});
+                    const groupedWindows = cloneStringArray(ipcData.grouped);
                     metadata[address] = {
-                        "isFloating": toplevel?.lastIpcObject?.floating === true
+                        "isFloating": ipcData.floating === true,
+                        "isUrgent": toplevel?.urgent === true || ipcData.urgent === true,
+                        "tags": normalizeWindowTags(ipcData.tags),
+                        "groupedWindowAddresses": groupedWindows,
+                        "isGrouped": groupedWindows.length > 0 || ipcData.grouped === true || ipcData.group === true
                     };
                 }
             } catch (error) {}
@@ -356,6 +405,10 @@ Item {
                     const layoutPosition = extractNiriLayoutPosition(window);
                     metadata[windowId] = {
                         "isFloating": window?.isFloating === true,
+                        "isUrgent": window?.isUrgent === true || window?.urgent === true,
+                        "tags": normalizeWindowTags(window?.tags),
+                        "groupedWindowAddresses": cloneStringArray(window?.groupedWindowAddresses),
+                        "isGrouped": window?.isGrouped === true || Array.isArray(window?.groupedWindowAddresses) && window.groupedWindowAddresses.length > 0,
                         "niriColumnIndex": layoutPosition?.column,
                         "niriTileIndex": layoutPosition?.tile
                     };
@@ -449,7 +502,7 @@ Item {
         const source = (rule && typeof rule === "object" && !Array.isArray(rule)) ? rule : ({});
         return {
             "enabled": source.enabled !== false,
-            "matchField": source.matchField === "title" ? "title" : "appId",
+            "matchField": normalizeStyleRuleMatchField(source.matchField),
             "pattern": String(source.pattern || ""),
             "customIcon": String(source.customIcon || ""),
             "colors": {
@@ -542,7 +595,7 @@ Item {
     }
 
     function findStyleRuleIndex(matchField, pattern) {
-        const normalizedMatchField = matchField === "title" ? "title" : "appId";
+        const normalizedMatchField = normalizeStyleRuleMatchField(matchField);
         const normalizedPattern = String(pattern || "").trim();
         if (normalizedPattern === "")
             return -1;
@@ -561,10 +614,14 @@ Item {
 
     function buildPrefilledStyleRule(entryKey, matchField) {
         const window = getWindowByEntry(entryKey);
-        const resolvedMatchField = matchField === "title" ? "title" : "appId";
+        const resolvedMatchField = normalizeStyleRuleMatchField(matchField);
+        if (resolvedMatchField !== "title" && resolvedMatchField !== "appId" && resolvedMatchField !== "tag")
+            return null;
         const rawValue = resolvedMatchField === "title"
             ? String(titleEntriesByKey?.[entryKey] ?? window?.title ?? "")
-            : String(resolveToDesktopEntryId(window?.appId || "") || window?.appId || "");
+            : (resolvedMatchField === "tag"
+                ? String(((window?.tags || [])[0] || ""))
+                : String(resolveToDesktopEntryId(window?.appId || "") || window?.appId || ""));
         if (String(rawValue).trim() === "")
             return null;
 
@@ -583,7 +640,7 @@ Item {
     }
 
     function requestStyleRuleEdit(matchField, pattern) {
-        requestedStyleRuleMatchField = matchField === "title" ? "title" : "appId";
+        requestedStyleRuleMatchField = normalizeStyleRuleMatchField(matchField);
         requestedStyleRulePattern = String(pattern || "").trim();
         requestedStyleRuleRevision += 1;
     }
@@ -832,20 +889,46 @@ Item {
     }
 
     function buildEntries(windows) {
-        return (windows || []).map(function (window) {
+        const appCounts = ({});
+        const titleCounts = ({});
+        const entries = (windows || []).map(function (window) {
+            const canonicalAppId = String(resolveToDesktopEntryId(window?.appId || "") || window?.appId || "");
+            const title = String(window?.title || getAppNameFromDesktopEntry(window?.appId || "") || "");
+            const tags = normalizeWindowTags(window?.tags);
+            const groupedWindowAddresses = cloneStringArray(window?.groupedWindowAddresses);
+
+            appCounts[canonicalAppId] = (appCounts[canonicalAppId] || 0) + (canonicalAppId !== "" ? 1 : 0);
+            titleCounts[title] = (titleCounts[title] || 0) + (title !== "" ? 1 : 0);
+
             return {
                 "id": window.id,
                 "entryKey": getWindowKey(window),
                 "appId": window.appId || "",
-                "fallbackTitle": window.title || getAppNameFromDesktopEntry(window.appId),
+                "canonicalAppId": canonicalAppId,
+                "fallbackTitle": title,
+                "title": title,
                 "output": window.output || "",
                 "workspaceId": window.workspaceId,
                 "x": window?.x,
                 "y": window?.y,
                 "isFloating": window?.isFloating === true,
+                "isUrgent": window?.isUrgent === true,
+                "tags": tags,
+                "hasTags": tags.length > 0,
+                "groupedWindowAddresses": groupedWindowAddresses,
+                "isGrouped": window?.isGrouped === true || groupedWindowAddresses.length > 0,
                 "niriColumnIndex": window?.niriColumnIndex,
                 "niriTileIndex": window?.niriTileIndex
             };
+        });
+
+        return entries.map(function (entry) {
+            const canonicalAppId = String(entry?.canonicalAppId || "");
+            const title = String(entry?.title || "");
+            return Object.assign({}, entry, {
+                "sharesAppIdentity": canonicalAppId !== "" && (appCounts[canonicalAppId] || 0) > 1,
+                "sharesTitleIdentity": title !== "" && (titleCounts[title] || 0) > 1
+            });
         });
     }
 

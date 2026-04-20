@@ -67,7 +67,7 @@
       "layout": "Placement, floating panel sizing, track geometry, and motion settings for the bar itself.",
       "appearance": "Window labels, focus line styling, theme-aware colors, and workspace-related overlays.",
       "pinnedApps": "Manage launcher behavior, spacing, colors, and the pinned app list beside the track.",
-      "styleRules": "Match windows by app ID or title and override their icons, segment colors, and text styling.",
+      "styleRules": "Match windows by app ID, title, tags, or derived window state and override their icons, segment colors, and text styling.",
       "presets": "Save, load, and manage complete plugin configurations."
     },
     "pageGroups": {
@@ -653,7 +653,7 @@
     },
     "customStyleRules": {
       "empty": "No custom style rules yet. Add one here or create one from a segment context menu.",
-      "regexHelp": "Patterns use raw JavaScript regex. Examples: `^firefox$` for an exact app id match, `YouTube` for a title substring regex, or `.*Project.*` for broader title matching. Rules are checked top to bottom and the first match wins.",
+      "regexHelp": "Patterns use raw JavaScript regex when you need them. Examples: `^firefox$` for an exact app ID match, `YouTube` for a title substring regex, or `code` for a Hyprland tag match. Floating, urgent, grouped, tagged, and duplicate-state rules also work with an empty pattern. Rules are checked top to bottom and the first match wins.",
       "ruleTitle": "Rule {index}",
       "editing": "Editing target",
       "enabled": {
@@ -662,13 +662,19 @@
       },
       "matchField": {
         "label": "Match Field",
-        "desc": "Choose whether this regex should be tested against the canonical app id or the live window title.",
+        "desc": "Choose which derived window value this regex should test against: app identity, live title, Hyprland tags, or one of the computed state matchers.",
         "appId": "App ID",
-        "title": "Window Title"
+        "title": "Window Title",
+        "tag": "Window Tags",
+        "floating": "Floating Windows",
+        "urgent": "Urgent Windows",
+        "grouped": "Grouped Windows",
+        "sharedAppId": "Shared App ID",
+        "sharedTitle": "Shared Window Title"
       },
       "pattern": {
         "label": "Regex Pattern",
-        "desc": "Enter a JavaScript regex pattern. Matching is case-sensitive unless you encode it in the pattern itself.",
+        "desc": "Enter a JavaScript regex pattern. Matching is case-sensitive unless you encode it in the pattern itself. Leave this empty for floating, urgent, grouped, tagged, or duplicate-state rules when you want the matcher to act as a simple toggle.",
         "placeholder": "^firefox$",
         "invalid": "This regex pattern is invalid and will be ignored until it is fixed."
       },
