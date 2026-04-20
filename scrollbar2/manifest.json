@@ -215,6 +215,10 @@
         "activateRunningBehavior": "focusCycle",
         "items": []
       },
+      "mouseInteraction": {
+        "scrollWheelFocus": true,
+        "middleClickClose": true
+      },
       "customStyleRules": [],
       "_presets": [],
       "_activePresetId": ""

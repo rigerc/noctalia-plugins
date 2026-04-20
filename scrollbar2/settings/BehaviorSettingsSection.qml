@@ -9,6 +9,7 @@ ColumnLayout {
     property var rootSettings: null
     property alias filteringSectionTarget: filteringContent
     property alias animationSectionTarget: animationContent
+    property alias mouseInteractionSectionTarget: mouseInteractionContent
 
     Layout.fillWidth: true
     spacing: Style.marginL
@@ -95,6 +96,42 @@ ColumnLayout {
                 defaultValue: rootSettings?.defaultValue("animation", "speed") ?? 420
                 showReset: true
                 onMoved: sliderValue => rootSettings?.setSetting("animation", "speed", Math.round(sliderValue))
+            }
+        }
+    }
+
+    NBox {
+        Layout.fillWidth: true
+        Layout.preferredHeight: mouseInteractionContent.implicitHeight + Style.marginL * 2
+
+        ColumnLayout {
+            id: mouseInteractionContent
+            anchors.fill: parent
+            anchors.margins: Style.marginL
+            spacing: Style.marginM
+
+            NHeader {
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.section.mouseInteraction.label")
+                description: rootSettings?.pluginApi?.tr("settings.section.mouseInteraction.desc")
+            }
+
+            NToggle {
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.mouseInteraction.scrollWheelFocus.label")
+                description: rootSettings?.pluginApi?.tr("settings.mouseInteraction.scrollWheelFocus.desc")
+                checked: rootSettings?.settingValue("mouseInteraction", "scrollWheelFocus") ?? true
+                onToggled: checked => rootSettings?.setSetting("mouseInteraction", "scrollWheelFocus", checked)
+                defaultValue: rootSettings?.defaultValue("mouseInteraction", "scrollWheelFocus") ?? true
+            }
+
+            NToggle {
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.mouseInteraction.middleClickClose.label")
+                description: rootSettings?.pluginApi?.tr("settings.mouseInteraction.middleClickClose.desc")
+                checked: rootSettings?.settingValue("mouseInteraction", "middleClickClose") ?? true
+                onToggled: checked => rootSettings?.setSetting("mouseInteraction", "middleClickClose", checked)
+                defaultValue: rootSettings?.defaultValue("mouseInteraction", "middleClickClose") ?? true
             }
         }
     }

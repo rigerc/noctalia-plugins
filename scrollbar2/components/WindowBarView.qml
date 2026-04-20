@@ -546,6 +546,9 @@ Item {
     readonly property bool pinnedAppsHideWhenActive: settingValue("pinnedApps", "hideWhenActive", false)
     readonly property string pinnedAppsActivateRunningBehavior: settingValue("pinnedApps", "activateRunningBehavior", "focusCycle")
 
+    readonly property bool scrollWheelFocusEnabled: settingValue("mouseInteraction", "scrollWheelFocus", true)
+    readonly property bool middleClickCloseEnabled: settingValue("mouseInteraction", "middleClickClose", true)
+
     readonly property int revisionToken: (mainInstance?.structureRevision ?? 0) + (mainInstance?.liveRevision ?? 0) + (mainInstance?.titleRevision ?? 0) + (mainInstance?.workspaceRevision ?? 0) + (mainInstance?.activeSpecialRevision ?? 0)
     readonly property var entries: {
         revisionToken;
@@ -1922,7 +1925,7 @@ Item {
                             root.finalizeDragReorder(segmentItem.entryKey, "release");
                             return;
                         }
-                        if (mouse.button === Qt.MiddleButton) {
+                        if (mouse.button === Qt.MiddleButton && root.middleClickCloseEnabled) {
                             root.mainInstance?.closeEntry(segmentItem.entryKey);
                         } else if (mouse.button === Qt.RightButton) {
                             TooltipService.hide();
@@ -2003,6 +2006,35 @@ Item {
                     if (!drag.source || drag.source.objectName !== "scrollbar2WindowSegment")
                         return;
                 }
+            }
+        }
+    }
+
+    MouseArea {
+        x: segmentsRow.x
+        y: segmentsRow.y
+        width: segmentsRow.width
+        height: segmentsRow.height
+        z: 1
+        acceptedButtons: Qt.NoButton
+        onWheel: wheel => {
+            if (!root.scrollWheelFocusEnabled || root.segmentCount === 0)
+                return;
+
+            const currentIndex = root.focusedIndex;
+            let nextIndex;
+
+            if (wheel.angleDelta.y > 0) {
+                // Scroll up - focus previous
+                nextIndex = currentIndex <= 0 ? root.segmentCount - 1 : currentIndex - 1;
+            } else {
+                // Scroll down - focus next
+                nextIndex = (currentIndex + 1) % root.segmentCount;
+            }
+
+            if (nextIndex >= 0 && nextIndex < root.segmentCount) {
+                root.mainInstance?.focusEntry(root.entries[nextIndex].entryKey);
+                wheel.accepted = true;
             }
         }
     }

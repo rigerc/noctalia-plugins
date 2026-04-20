@@ -183,6 +183,16 @@
         "desc": "Hide windows from inactive workspaces."
       }
     },
+    "mouseInteraction": {
+      "scrollWheelFocus": {
+        "label": "Scroll to Focus",
+        "desc": "Use scroll wheel over the bar to cycle focus between windows."
+      },
+      "middleClickClose": {
+        "label": "Middle Click to Close",
+        "desc": "Close windows by middle-clicking their segments."
+      }
+    },
     "track": {
       "position": {
         "label": "Track Position",
@@ -229,6 +239,10 @@
       "display": {
         "label": "Display & Floating Panel",
         "desc": "Placement mode and reserve-space floating panel settings."
+      },
+      "mouseInteraction": {
+        "label": "Mouse Interaction",
+        "desc": "Configure mouse-based behaviors for window segments."
       },
       "track": {
         "label": "Track Geometry",
