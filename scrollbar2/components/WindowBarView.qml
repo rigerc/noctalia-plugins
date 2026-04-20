@@ -1153,6 +1153,8 @@ Item {
         if (entry) {
             selectedEntryKey = entry.entryKey ?? "";
             selectedAppId = entry.appId ?? "";
+
+            // Window actions section
             model.push({
                 "label": pluginApi?.tr("menu.focus"),
                 "action": "focus",
@@ -1163,42 +1165,74 @@ Item {
                 "action": "close",
                 "icon": "x"
             });
+
+            // Separator
+            model.push({ "isSeparator": true });
+
+            // Desktop actions (if any)
             const desktopActions = mainInstance?.desktopEntryActionsForApp(selectedAppId) || [];
             desktopActions.forEach(function (item) {
                 model.push(item);
             });
+
+            // Separator before app-specific actions
+            if (selectedAppId || desktopActions.length > 0) {
+                model.push({ "isSeparator": true });
+            }
+
+            // App-specific actions
             if (selectedAppId) {
                 const appPinned = mainInstance?.isAppPinned(selectedAppId) ?? false;
-                const hasExistingAppStyleRule = (mainInstance?.findPrefilledStyleRuleIndex(selectedEntryKey, "appId") ?? -1) >= 0;
                 model.push({
                     "label": pluginApi?.tr(appPinned ? "menu.unpinFromBar" : "menu.pinToBar"),
                     "action": appPinned ? "unpin" : "pin",
                     "icon": appPinned ? "unpin" : "pin"
                 });
-                model.push({
-                    "label": pluginApi?.tr(hasExistingAppStyleRule ? "menu.editStyleRuleForApp" : "menu.addStyleRuleForApp"),
-                    "action": "style-rule-app",
-                    "icon": "brush"
-                });
             }
+
+            // Style Rules submenu
+            const hasExistingAppStyleRule = (mainInstance?.findPrefilledStyleRuleIndex(selectedEntryKey, "appId") ?? -1) >= 0;
             const hasExistingTitleStyleRule = (mainInstance?.findPrefilledStyleRuleIndex(selectedEntryKey, "title") ?? -1) >= 0;
+
             model.push({
-                "label": pluginApi?.tr(hasExistingTitleStyleRule ? "menu.editStyleRuleForTitle" : "menu.addStyleRuleForTitle"),
-                "action": "style-rule-title",
-                "icon": "typography"
+                "label": "Style Rules",
+                "action": "style-rules",
+                "icon": "brush",
+                "hasChildren": true,
+                "children": [
+                    {
+                        "label": pluginApi?.tr(hasExistingAppStyleRule ? "menu.editStyleRuleForApp" : "menu.addStyleRuleForApp"),
+                        "action": "style-rule-app",
+                        "icon": "application"
+                    },
+                    {
+                        "label": pluginApi?.tr(hasExistingTitleStyleRule ? "menu.editStyleRuleForTitle" : "menu.addStyleRuleForTitle"),
+                        "action": "style-rule-title",
+                        "icon": "typography"
+                    }
+                ]
             });
+
+            // Separator before settings
+            model.push({ "isSeparator": true });
+
         } else if (pinnedApp) {
             clearContextSelection();
             selectedAppId = pinnedApp.appId ?? "";
+
             model.push({
                 "label": pluginApi?.tr("menu.unpinFromBar"),
                 "action": "unpin",
                 "icon": "unpin"
             });
+
+            model.push({ "isSeparator": true });
+
         } else {
             clearContextSelection();
         }
 
+        // Settings (always shown at bottom)
         model.push({
             "label": pluginApi?.tr("menu.settings"),
             "action": "settings",
@@ -2285,7 +2319,7 @@ Item {
         }
     }
 
-    NPopupContextMenu {
+    ScrollbarContextMenu {
         id: contextMenu
         model: root.contextMenuModel
 
