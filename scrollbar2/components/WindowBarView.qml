@@ -211,6 +211,24 @@ Item {
                     "hover": normalizeStyleRuleColorState(source.colors?.title?.hover, titleColorHoverKey, titleColorHoverOpacity),
                     "default": normalizeStyleRuleColorState(source.colors?.title?.default, titleColorDefaultKey, titleColorDefaultOpacity)
                 }
+            },
+            "blink": {
+                "enabled": source.blink?.enabled === true,
+                "color": normalizeStyleRuleColorState(source.blink?.color, "primary", 1),
+                "interval": Math.max(200, Math.min(5000, Number(source.blink?.interval ?? 800)))
+            },
+            "badge": {
+                "enabled": source.badge?.enabled === true,
+                "color": normalizeStyleRuleColorState(source.badge?.color, "error", 1),
+                "size": Math.max(2, Math.min(16, Number(source.badge?.size ?? 6))),
+                "target": normalizeBadgeTarget(source.badge?.target),
+                "position": normalizeBadgePosition(source.badge?.position)
+            },
+            "iconPrefix": {
+                "enabled": source.iconPrefix?.enabled === true,
+                "icon": String(source.iconPrefix?.icon || ""),
+                "target": normalizePrefixTarget(source.iconPrefix?.target),
+                "color": normalizeStyleRuleColorState(source.iconPrefix?.color, "on-surface-variant", 1)
             }
         };
     }
@@ -227,6 +245,34 @@ Item {
             return String(matchField);
         default:
             return "appId";
+        }
+    }
+
+    function normalizeBadgeTarget(target) {
+        switch (String(target || "")) {
+        case "title":
+        case "segment":
+            return String(target);
+        default:
+            return "icon";
+        }
+    }
+
+    function normalizeBadgePosition(position) {
+        switch (String(position || "")) {
+        case "top-left":
+            return "top-left";
+        default:
+            return "top-right";
+        }
+    }
+
+    function normalizePrefixTarget(target) {
+        switch (String(target || "")) {
+        case "title":
+            return "title";
+        default:
+            return "icon";
         }
     }
 
@@ -1422,6 +1468,7 @@ Item {
                 readonly property string title: root.currentTitle(modelData)
                 readonly property bool showLabel: root.labelVisible(entryKey)
                 readonly property bool reorderable: root.canDragEntry(entryKey)
+                readonly property var styleRule: root.customStyleRuleForEntry(entryKey)
 
                 width: root.segmentWidth
                 height: parent ? parent.height : root.availableContainerHeight
@@ -1515,6 +1562,72 @@ Item {
                         }
                     }
 
+                    Rectangle {
+                        id: blinkOverlay
+
+                        readonly property bool active: segmentItem.styleRule?.blink?.enabled ?? false
+                        readonly property int blinkDuration: Math.max(200, segmentItem.styleRule?.blink?.interval ?? 800)
+                        readonly property color blinkColor: {
+                            if (!active) return "transparent";
+                            return root.colorWithOpacity(
+                                root.resolveColor(segmentItem.styleRule.blink.color?.color ?? "primary", Color.mPrimary),
+                                root.normalizeOpacityValue(segmentItem.styleRule.blink.color?.opacity ?? 1, 1)
+                            );
+                        }
+
+                        anchors.fill: parent
+                        anchors.margins: root.windowMargin
+                        radius: Math.min(Math.max(0, root.windowBorderRadius), Math.max(0, Math.min(width, height) / 2))
+                        color: blinkColor
+                        visible: active
+                        opacity: 0
+                        z: 1
+
+                        SequentialAnimation on opacity {
+                            running: blinkOverlay.visible
+                            loops: Animation.Infinite
+                            alwaysRunToEnd: true
+                            NumberAnimation {
+                                from: 0
+                                to: 1
+                                duration: blinkOverlay.blinkDuration / 2
+                                easing.type: Easing.InOutQuad
+                            }
+                            NumberAnimation {
+                                from: 1
+                                to: 0
+                                duration: blinkOverlay.blinkDuration / 2
+                                easing.type: Easing.InOutQuad
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        readonly property bool active: (segmentItem.styleRule?.badge?.enabled ?? false) && (segmentItem.styleRule?.badge?.target ?? "icon") === "segment"
+                        readonly property string badgePos: segmentItem.styleRule?.badge?.position ?? "top-right"
+                        readonly property real badgeDotSize: Math.max(2, (segmentItem.styleRule?.badge?.size ?? 6)) * Style.uiScaleRatio
+                        readonly property color badgeDotColor: {
+                            if (!active) return "transparent";
+                            return root.colorWithOpacity(
+                                root.resolveColor(segmentItem.styleRule.badge.color?.color ?? "error", Color.mError),
+                                root.normalizeOpacityValue(segmentItem.styleRule.badge.color?.opacity ?? 1, 1)
+                            );
+                        }
+
+                        visible: active
+                        width: badgeDotSize
+                        height: badgeDotSize
+                        radius: width / 2
+                        color: badgeDotColor
+                        z: 5
+                        anchors.top: parent.top
+                        anchors.topMargin: root.windowMargin
+                        anchors.left: badgePos === "top-left" ? parent.left : undefined
+                        anchors.leftMargin: badgePos === "top-left" ? root.windowMargin : 0
+                        anchors.right: badgePos === "top-right" ? parent.right : undefined
+                        anchors.rightMargin: badgePos === "top-right" ? root.windowMargin : 0
+                    }
+
                     RowLayout {
                         anchors.fill: parent
                         anchors.margins: root.windowMargin
@@ -1524,7 +1637,42 @@ Item {
                         visible: root.showIcon || root.showTitle
                         layoutDirection: root.focusedOnly && root.focusedAlign === "right" && segmentItem.showLabel ? Qt.RightToLeft : Qt.LeftToRight
 
+                        NIcon {
+                            readonly property bool active: (segmentItem.styleRule?.iconPrefix?.enabled ?? false) && (segmentItem.styleRule?.iconPrefix?.target ?? "icon") === "icon"
+                            readonly property color prefixColor: {
+                                if (!active) return Color.mOnSurfaceVariant;
+                                return root.colorWithOpacity(
+                                    root.resolveColor(segmentItem.styleRule.iconPrefix.color?.color ?? "on-surface-variant", Color.mOnSurfaceVariant),
+                                    root.normalizeOpacityValue(segmentItem.styleRule.iconPrefix.color?.opacity ?? 1, 1)
+                                );
+                            }
+
+                            visible: active && root.showIcon
+                            icon: active ? String(segmentItem.styleRule.iconPrefix.icon || "") : ""
+                            pointSize: root.computedIconSize * 0.6
+                            color: prefixColor
+                            Layout.preferredWidth: root.computedIconSize * 0.6
+                            Layout.preferredHeight: root.computedIconSize * 0.6
+                            Layout.alignment: Qt.AlignVCenter
+                            opacity: segmentItem.showLabel ? 1 : 0
+
+                            Behavior on opacity {
+                                enabled: root.animationEnabled
+                                NumberAnimation {
+                                    duration: root.animationSpeed
+                                }
+                            }
+
+                            Behavior on color {
+                                enabled: root.animationEnabled
+                                ColorAnimation {
+                                    duration: root.animationSpeed
+                                }
+                            }
+                        }
+
                         Item {
+                            id: iconContainer
                             Layout.preferredWidth: root.showIcon ? (root.showTitle ? root.computedIconSize : Math.max(root.computedIconSize, segmentItem.width - (root.windowMargin * 2) - root.windowPaddingLeft - root.windowPaddingRight)) : 0
                             Layout.preferredHeight: root.showIcon ? root.computedIconSize : 0
                             Layout.alignment: Qt.AlignVCenter
@@ -1606,21 +1754,56 @@ Item {
                                     }
                                 }
                             }
+
+                            Rectangle {
+                                readonly property bool active: (segmentItem.styleRule?.badge?.enabled ?? false) && (segmentItem.styleRule?.badge?.target ?? "icon") === "icon"
+                                readonly property string badgePos: segmentItem.styleRule?.badge?.position ?? "top-right"
+                                readonly property real badgeDotSize: Math.max(2, (segmentItem.styleRule?.badge?.size ?? 6)) * Style.uiScaleRatio
+                                readonly property color badgeDotColor: {
+                                    if (!active) return "transparent";
+                                    return root.colorWithOpacity(
+                                        root.resolveColor(segmentItem.styleRule.badge.color?.color ?? "error", Color.mError),
+                                        root.normalizeOpacityValue(segmentItem.styleRule.badge.color?.opacity ?? 1, 1)
+                                    );
+                                }
+
+                                visible: active
+                                width: badgeDotSize
+                                height: badgeDotSize
+                                radius: width / 2
+                                color: badgeDotColor
+                                z: 5
+                                anchors.top: parent.top
+                                anchors.left: badgePos === "top-left" ? parent.left : undefined
+                                anchors.right: badgePos === "top-right" ? parent.right : undefined
+                            }
                         }
 
-                        NText {
-                            Layout.fillWidth: true
+                        NIcon {
+                            readonly property bool active: (segmentItem.styleRule?.iconPrefix?.enabled ?? false) && (segmentItem.styleRule?.iconPrefix?.target ?? "icon") === "title"
+                            readonly property color prefixColor: {
+                                if (!active) return Color.mOnSurfaceVariant;
+                                return root.colorWithOpacity(
+                                    root.resolveColor(segmentItem.styleRule.iconPrefix.color?.color ?? "on-surface-variant", Color.mOnSurfaceVariant),
+                                    root.normalizeOpacityValue(segmentItem.styleRule.iconPrefix.color?.opacity ?? 1, 1)
+                                );
+                            }
+
+                            visible: active && root.showTitle
+                            icon: active ? String(segmentItem.styleRule.iconPrefix.icon || "") : ""
+                            pointSize: root.titleFontSize * root.titleScale * 0.85
+                            color: prefixColor
+                            Layout.preferredWidth: root.titleFontSize * root.titleScale * 0.85
+                            Layout.preferredHeight: root.titleFontSize * root.titleScale * 0.85
                             Layout.alignment: Qt.AlignVCenter
-                            visible: root.showTitle
-                            text: segmentItem.title
-                            elide: Text.ElideRight
-                            maximumLineCount: 1
                             opacity: segmentItem.showLabel ? 1 : 0
-                            color: root.labelColor(segmentItem.entryKey, "title")
-                            horizontalAlignment: root.horizontalAlignment(root.titleAlign)
-                            font.family: root.titleFontFamily || Qt.application.font.family
-                            pointSize: root.titleFontSize * root.titleScale
-                            font.weight: root.titleWeight(segmentItem.entryKey)
+
+                            Behavior on opacity {
+                                enabled: root.animationEnabled
+                                NumberAnimation {
+                                    duration: root.animationSpeed
+                                }
+                            }
 
                             Behavior on color {
                                 enabled: root.animationEnabled
@@ -1628,12 +1811,63 @@ Item {
                                     duration: root.animationSpeed
                                 }
                             }
+                        }
 
-                            Behavior on opacity {
-                                enabled: root.animationEnabled
-                                NumberAnimation {
-                                    duration: root.animationSpeed
+                        Item {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: titleText.implicitHeight
+                            Layout.alignment: Qt.AlignVCenter
+                            visible: root.showTitle
+
+                            NText {
+                                id: titleText
+                                anchors.fill: parent
+                                text: segmentItem.title
+                                elide: Text.ElideRight
+                                maximumLineCount: 1
+                                opacity: segmentItem.showLabel ? 1 : 0
+                                color: root.labelColor(segmentItem.entryKey, "title")
+                                horizontalAlignment: root.horizontalAlignment(root.titleAlign)
+                                font.family: root.titleFontFamily || Qt.application.font.family
+                                pointSize: root.titleFontSize * root.titleScale
+                                font.weight: root.titleWeight(segmentItem.entryKey)
+
+                                Behavior on color {
+                                    enabled: root.animationEnabled
+                                    ColorAnimation {
+                                        duration: root.animationSpeed
+                                    }
                                 }
+
+                                Behavior on opacity {
+                                    enabled: root.animationEnabled
+                                    NumberAnimation {
+                                        duration: root.animationSpeed
+                                    }
+                                }
+                            }
+
+                            Rectangle {
+                                readonly property bool active: (segmentItem.styleRule?.badge?.enabled ?? false) && (segmentItem.styleRule?.badge?.target ?? "icon") === "title"
+                                readonly property string badgePos: segmentItem.styleRule?.badge?.position ?? "top-right"
+                                readonly property real badgeDotSize: Math.max(2, (segmentItem.styleRule?.badge?.size ?? 6)) * Style.uiScaleRatio
+                                readonly property color badgeDotColor: {
+                                    if (!active) return "transparent";
+                                    return root.colorWithOpacity(
+                                        root.resolveColor(segmentItem.styleRule.badge.color?.color ?? "error", Color.mError),
+                                        root.normalizeOpacityValue(segmentItem.styleRule.badge.color?.opacity ?? 1, 1)
+                                    );
+                                }
+
+                                visible: active
+                                width: badgeDotSize
+                                height: badgeDotSize
+                                radius: width / 2
+                                color: badgeDotColor
+                                z: 5
+                                anchors.top: parent.top
+                                anchors.left: badgePos === "top-left" ? parent.left : undefined
+                                anchors.right: badgePos === "top-right" ? parent.right : undefined
                             }
                         }
                     }

@@ -289,6 +289,34 @@ Item {
         }
     }
 
+    function normalizeBadgeTarget(target) {
+        switch (String(target || "")) {
+        case "title":
+        case "segment":
+            return String(target);
+        default:
+            return "icon";
+        }
+    }
+
+    function normalizeBadgePosition(position) {
+        switch (String(position || "")) {
+        case "top-left":
+            return "top-left";
+        default:
+            return "top-right";
+        }
+    }
+
+    function normalizePrefixTarget(target) {
+        switch (String(target || "")) {
+        case "title":
+            return "title";
+        default:
+            return "icon";
+        }
+    }
+
     function cloneStringArray(values) {
         if (!Array.isArray(values))
             return [];
@@ -521,6 +549,24 @@ Item {
                     "hover": normalizeStyleRuleColorState(source.colors?.title?.hover, objectWindowSettingValue("titleColors", "hover", "on-hover"), nestedWindowStateOpacityValue("titleColors", "hover", 1)),
                     "default": normalizeStyleRuleColorState(source.colors?.title?.default, objectWindowSettingValue("titleColors", "default", "on-surface-variant"), nestedWindowStateOpacityValue("titleColors", "default", 1))
                 }
+            },
+            "blink": {
+                "enabled": source.blink?.enabled === true,
+                "color": normalizeStyleRuleColorState(source.blink?.color, "primary", 1),
+                "interval": Math.max(200, Math.min(5000, Number(source.blink?.interval ?? 800)))
+            },
+            "badge": {
+                "enabled": source.badge?.enabled === true,
+                "color": normalizeStyleRuleColorState(source.badge?.color, "error", 1),
+                "size": Math.max(2, Math.min(16, Number(source.badge?.size ?? 6))),
+                "target": normalizeBadgeTarget(source.badge?.target),
+                "position": normalizeBadgePosition(source.badge?.position)
+            },
+            "iconPrefix": {
+                "enabled": source.iconPrefix?.enabled === true,
+                "icon": String(source.iconPrefix?.icon || ""),
+                "target": normalizePrefixTarget(source.iconPrefix?.target),
+                "color": normalizeStyleRuleColorState(source.iconPrefix?.color, "on-surface-variant", 1)
             }
         };
     }

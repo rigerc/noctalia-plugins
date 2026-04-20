@@ -376,6 +376,202 @@ ColumnLayout {
                             onColorSelected: value => rootSettings?.updateStyleRuleColorState(index, "title", "default", "color", value)
                             onOpacitySelected: value => rootSettings?.updateStyleRuleColorState(index, "title", "default", "opacity", value)
                         }
+
+                        NHeader {
+                            Layout.fillWidth: true
+                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.blink.label")
+                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.blink.desc")
+                        }
+
+                        NToggle {
+                            Layout.fillWidth: true
+                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.blink.enabled.label")
+                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.blink.enabled.desc")
+                            checked: modelData?.blink?.enabled ?? false
+                            onToggled: checked => rootSettings?.updateStyleRuleBlink(index, {
+                                    "enabled": checked
+                                })
+                            defaultValue: false
+                        }
+
+                        HybridColorChoice {
+                            pluginApi: rootSettings?.pluginApi
+                            Layout.fillWidth: true
+                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.blink.color.label")
+                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.blink.color.desc")
+                            currentColor: modelData?.blink?.color?.color ?? "primary"
+                            defaultColor: "primary"
+                            currentOpacity: modelData?.blink?.color?.opacity ?? 1
+                            defaultOpacity: 1
+                            showOpacityControl: true
+                            onColorSelected: value => rootSettings?.updateStyleRuleBlinkColor(index, "color", value)
+                            onOpacitySelected: value => rootSettings?.updateStyleRuleBlinkColor(index, "opacity", value)
+                        }
+
+                        NValueSlider {
+                            Layout.fillWidth: true
+                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.blink.interval.label")
+                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.blink.interval.desc")
+                            from: 200
+                            to: 5000
+                            stepSize: 50
+                            value: Math.max(200, Math.min(5000, modelData?.blink?.interval ?? 800))
+                            text: value + " ms"
+                            defaultValue: 800
+                            showReset: true
+                            onMoved: sliderValue => rootSettings?.updateStyleRuleBlink(index, {
+                                    "interval": Math.round(sliderValue)
+                                })
+                        }
+
+                        NHeader {
+                            Layout.fillWidth: true
+                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.label")
+                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.desc")
+                        }
+
+                        NToggle {
+                            Layout.fillWidth: true
+                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.enabled.label")
+                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.enabled.desc")
+                            checked: modelData?.badge?.enabled ?? false
+                            onToggled: checked => rootSettings?.updateStyleRuleBadge(index, {
+                                    "enabled": checked
+                                })
+                            defaultValue: false
+                        }
+
+                        HybridColorChoice {
+                            pluginApi: rootSettings?.pluginApi
+                            Layout.fillWidth: true
+                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.color.label")
+                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.color.desc")
+                            currentColor: modelData?.badge?.color?.color ?? "error"
+                            defaultColor: "error"
+                            currentOpacity: modelData?.badge?.color?.opacity ?? 1
+                            defaultOpacity: 1
+                            showOpacityControl: true
+                            onColorSelected: value => rootSettings?.updateStyleRuleBadgeColor(index, "color", value)
+                            onOpacitySelected: value => rootSettings?.updateStyleRuleBadgeColor(index, "opacity", value)
+                        }
+
+                        NComboBox {
+                            Layout.fillWidth: true
+                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.target.label")
+                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.target.desc")
+                            model: rootSettings?.styleRuleBadgeTargetModel ?? []
+                            currentKey: modelData?.badge?.target ?? "icon"
+                            defaultValue: "icon"
+                            onSelected: key => rootSettings?.updateStyleRuleBadge(index, {
+                                    "target": rootSettings?.normalizeBadgeTarget(key) ?? "icon"
+                                })
+                        }
+
+                        NComboBox {
+                            Layout.fillWidth: true
+                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.position.label")
+                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.position.desc")
+                            model: rootSettings?.styleRuleBadgePositionModel ?? []
+                            currentKey: modelData?.badge?.position ?? "top-right"
+                            defaultValue: "top-right"
+                            onSelected: key => rootSettings?.updateStyleRuleBadge(index, {
+                                    "position": rootSettings?.normalizeBadgePosition(key) ?? "top-right"
+                                })
+                        }
+
+                        NValueSlider {
+                            Layout.fillWidth: true
+                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.size.label")
+                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.size.desc")
+                            from: 2
+                            to: 16
+                            stepSize: 1
+                            value: Math.max(2, Math.min(16, modelData?.badge?.size ?? 6))
+                            text: value + " px"
+                            defaultValue: 6
+                            showReset: true
+                            onMoved: sliderValue => rootSettings?.updateStyleRuleBadge(index, {
+                                    "size": Math.round(sliderValue)
+                                })
+                        }
+
+                        NHeader {
+                            Layout.fillWidth: true
+                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.label")
+                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.desc")
+                        }
+
+                        NToggle {
+                            Layout.fillWidth: true
+                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.enabled.label")
+                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.enabled.desc")
+                            checked: modelData?.iconPrefix?.enabled ?? false
+                            onToggled: checked => rootSettings?.updateStyleRuleIconPrefix(index, {
+                                    "enabled": checked
+                                })
+                            defaultValue: false
+                        }
+
+                        NComboBox {
+                            Layout.fillWidth: true
+                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.target.label")
+                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.target.desc")
+                            model: rootSettings?.styleRulePrefixTargetModel ?? []
+                            currentKey: modelData?.iconPrefix?.target ?? "icon"
+                            defaultValue: "icon"
+                            onSelected: key => rootSettings?.updateStyleRuleIconPrefix(index, {
+                                    "target": rootSettings?.normalizePrefixTarget(key) ?? "icon"
+                                })
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: Style.marginM
+
+                            NLabel {
+                                Layout.fillWidth: true
+                                label: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.icon.label")
+                                description: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.icon.desc")
+                            }
+
+                            NIcon {
+                                icon: String(modelData?.iconPrefix?.icon || "")
+                                pointSize: Style.fontSizeXL
+                                visible: icon !== ""
+                                color: root.previewIconColor(String(modelData?.iconPrefix?.color?.color ?? "on-surface-variant"))
+                            }
+
+                            NButton {
+                                text: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.icon.pick")
+                                onClicked: {
+                                    prefixIconPicker.activeIndex = index;
+                                    prefixIconPicker.initialIcon = String(modelData?.iconPrefix?.icon || "");
+                                    prefixIconPicker.open();
+                                }
+                            }
+
+                            NButton {
+                                text: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.icon.clear")
+                                enabled: String(modelData?.iconPrefix?.icon || "") !== ""
+                                onClicked: rootSettings?.updateStyleRuleIconPrefix(index, {
+                                        "icon": ""
+                                    })
+                            }
+                        }
+
+                        HybridColorChoice {
+                            pluginApi: rootSettings?.pluginApi
+                            Layout.fillWidth: true
+                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.color.label")
+                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.color.desc")
+                            currentColor: modelData?.iconPrefix?.color?.color ?? "on-surface-variant"
+                            defaultColor: "on-surface-variant"
+                            currentOpacity: modelData?.iconPrefix?.color?.opacity ?? 1
+                            defaultOpacity: 1
+                            showOpacityControl: true
+                            onColorSelected: value => rootSettings?.updateStyleRuleIconPrefixColor(index, "color", value)
+                            onOpacitySelected: value => rootSettings?.updateStyleRuleIconPrefixColor(index, "opacity", value)
+                        }
                     }
                 }
             }
@@ -392,6 +588,20 @@ ColumnLayout {
             if (activeIndex >= 0)
                 rootSettings?.updateStyleRule(activeIndex, {
                         "customIcon": iconName
+                    });
+        }
+    }
+
+    NIconPicker {
+        id: prefixIconPicker
+
+        property int activeIndex: -1
+
+        initialIcon: ""
+        onIconSelected: iconName => {
+            if (activeIndex >= 0)
+                rootSettings?.updateStyleRuleIconPrefix(activeIndex, {
+                        "icon": iconName
                     });
         }
     }

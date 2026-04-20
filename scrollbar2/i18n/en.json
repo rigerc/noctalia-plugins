@@ -696,6 +696,75 @@
         "label": "Title Colors",
         "desc": "Title text colors applied to matched segments by state."
       },
+      "blink": {
+        "label": "Blink Animation",
+        "desc": "Pulse a color overlay on the segment with a fade-in/fade-out effect.",
+        "enabled": {
+          "label": "Enable Blink",
+          "desc": "Animate a pulsing color overlay on matched segments."
+        },
+        "color": {
+          "label": "Blink Color",
+          "desc": "Theme key or hex color for the blink overlay."
+        },
+        "interval": {
+          "label": "Blink Interval",
+          "desc": "Duration of one full blink cycle in milliseconds."
+        }
+      },
+      "badge": {
+        "label": "Badge",
+        "desc": "Show a small colored dot on the icon, title, or segment.",
+        "enabled": {
+          "label": "Show Badge",
+          "desc": "Display a small indicator dot on matched segments."
+        },
+        "color": {
+          "label": "Badge Color",
+          "desc": "Theme key or hex color for the badge dot."
+        },
+        "target": {
+          "label": "Badge Target",
+          "desc": "Which element the badge should appear on.",
+          "icon": "Icon",
+          "title": "Title",
+          "segment": "Segment"
+        },
+        "position": {
+          "label": "Badge Position",
+          "desc": "Which corner of the target the badge appears in.",
+          "topLeft": "Top Left",
+          "topRight": "Top Right"
+        },
+        "size": {
+          "label": "Badge Size",
+          "desc": "Diameter of the badge dot in pixels."
+        }
+      },
+      "iconPrefix": {
+        "label": "Icon Prefix",
+        "desc": "Prepend a small icon before the window icon or title.",
+        "enabled": {
+          "label": "Enable Icon Prefix",
+          "desc": "Show a prefix icon before the selected target."
+        },
+        "target": {
+          "label": "Prefix Target",
+          "desc": "Whether the prefix appears before the icon or the title.",
+          "icon": "Before Icon",
+          "title": "Before Title"
+        },
+        "icon": {
+          "label": "Prefix Icon",
+          "desc": "Choose a tabler icon to display as prefix.",
+          "pick": "Choose Icon",
+          "clear": "Clear Icon"
+        },
+        "color": {
+          "label": "Prefix Color",
+          "desc": "Theme key or hex color for the prefix icon."
+        }
+      },
       "actions": {
         "add": "Add Rule",
         "remove": "Remove Rule",

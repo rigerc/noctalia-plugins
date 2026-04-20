@@ -74,7 +74,40 @@ ColumnLayout {
             "name": pluginApi?.tr("settings.customStyleRules.matchField.sharedTitle")
         }
     ]
-
+    readonly property var styleRuleBadgeTargetModel: [
+        {
+            "key": "icon",
+            "name": pluginApi?.tr("settings.customStyleRules.badge.target.icon")
+        },
+        {
+            "key": "title",
+            "name": pluginApi?.tr("settings.customStyleRules.badge.target.title")
+        },
+        {
+            "key": "segment",
+            "name": pluginApi?.tr("settings.customStyleRules.badge.target.segment")
+        }
+    ]
+    readonly property var styleRuleBadgePositionModel: [
+        {
+            "key": "top-left",
+            "name": pluginApi?.tr("settings.customStyleRules.badge.position.topLeft")
+        },
+        {
+            "key": "top-right",
+            "name": pluginApi?.tr("settings.customStyleRules.badge.position.topRight")
+        }
+    ]
+    readonly property var styleRulePrefixTargetModel: [
+        {
+            "key": "icon",
+            "name": pluginApi?.tr("settings.customStyleRules.iconPrefix.target.icon")
+        },
+        {
+            "key": "title",
+            "name": pluginApi?.tr("settings.customStyleRules.iconPrefix.target.title")
+        }
+    ]
     readonly property var displayModeModel: [
         {
             "key": "floatingPanel",
@@ -365,6 +398,24 @@ ColumnLayout {
                         "default": "on-surface-variant"
                     }
                 )
+            },
+            "blink": {
+                "enabled": source.blink?.enabled === true,
+                "color": normalizeColorSetting(source.blink?.color, "primary", 1),
+                "interval": Math.max(200, Math.min(5000, Number(source.blink?.interval ?? 800)))
+            },
+            "badge": {
+                "enabled": source.badge?.enabled === true,
+                "color": normalizeColorSetting(source.badge?.color, "error", 1),
+                "size": Math.max(2, Math.min(16, Number(source.badge?.size ?? 6))),
+                "target": normalizeBadgeTarget(source.badge?.target),
+                "position": normalizeBadgePosition(source.badge?.position)
+            },
+            "iconPrefix": {
+                "enabled": source.iconPrefix?.enabled === true,
+                "icon": String(source.iconPrefix?.icon || ""),
+                "target": normalizePrefixTarget(source.iconPrefix?.target),
+                "color": normalizeColorSetting(source.iconPrefix?.color, "on-surface-variant", 1)
             }
         };
     }
@@ -491,6 +542,34 @@ ColumnLayout {
             return String(matchField);
         default:
             return "appId";
+        }
+    }
+
+    function normalizeBadgeTarget(target) {
+        switch (String(target || "")) {
+        case "title":
+        case "segment":
+            return String(target);
+        default:
+            return "icon";
+        }
+    }
+
+    function normalizeBadgePosition(position) {
+        switch (String(position || "")) {
+        case "top-left":
+            return "top-left";
+        default:
+            return "top-right";
+        }
+    }
+
+    function normalizePrefixTarget(target) {
+        switch (String(target || "")) {
+        case "title":
+            return "title";
+        default:
+            return "icon";
         }
     }
 
@@ -780,6 +859,75 @@ ColumnLayout {
         if (!nextItems[index].colors[colorGroup][stateKey])
             nextItems[index].colors[colorGroup][stateKey] = ({});
         nextItems[index].colors[colorGroup][stateKey][nestedKey] = value;
+        setStyleRuleItems(nextItems);
+    }
+
+    function updateStyleRuleBlink(index, patch) {
+        if (index < 0 || index >= styleRuleItems().length)
+            return;
+
+        const nextItems = deepCopy(styleRuleItems());
+        const currentBlink = nextItems[index]?.blink || ({});
+        nextItems[index].blink = Object.assign({}, currentBlink, patch || ({}));
+        setStyleRuleItems(nextItems);
+    }
+
+    function updateStyleRuleBlinkColor(index, nestedKey, value) {
+        if (index < 0 || index >= styleRuleItems().length)
+            return;
+
+        const nextItems = deepCopy(styleRuleItems());
+        if (!nextItems[index].blink)
+            nextItems[index].blink = ({});
+        if (!nextItems[index].blink.color)
+            nextItems[index].blink.color = ({});
+        nextItems[index].blink.color[nestedKey] = value;
+        setStyleRuleItems(nextItems);
+    }
+
+    function updateStyleRuleBadge(index, patch) {
+        if (index < 0 || index >= styleRuleItems().length)
+            return;
+
+        const nextItems = deepCopy(styleRuleItems());
+        const currentBadge = nextItems[index]?.badge || ({});
+        nextItems[index].badge = Object.assign({}, currentBadge, patch || ({}));
+        setStyleRuleItems(nextItems);
+    }
+
+    function updateStyleRuleBadgeColor(index, nestedKey, value) {
+        if (index < 0 || index >= styleRuleItems().length)
+            return;
+
+        const nextItems = deepCopy(styleRuleItems());
+        if (!nextItems[index].badge)
+            nextItems[index].badge = ({});
+        if (!nextItems[index].badge.color)
+            nextItems[index].badge.color = ({});
+        nextItems[index].badge.color[nestedKey] = value;
+        setStyleRuleItems(nextItems);
+    }
+
+    function updateStyleRuleIconPrefix(index, patch) {
+        if (index < 0 || index >= styleRuleItems().length)
+            return;
+
+        const nextItems = deepCopy(styleRuleItems());
+        const currentPrefix = nextItems[index]?.iconPrefix || ({});
+        nextItems[index].iconPrefix = Object.assign({}, currentPrefix, patch || ({}));
+        setStyleRuleItems(nextItems);
+    }
+
+    function updateStyleRuleIconPrefixColor(index, nestedKey, value) {
+        if (index < 0 || index >= styleRuleItems().length)
+            return;
+
+        const nextItems = deepCopy(styleRuleItems());
+        if (!nextItems[index].iconPrefix)
+            nextItems[index].iconPrefix = ({});
+        if (!nextItems[index].iconPrefix.color)
+            nextItems[index].iconPrefix.color = ({});
+        nextItems[index].iconPrefix.color[nestedKey] = value;
         setStyleRuleItems(nextItems);
     }
 
