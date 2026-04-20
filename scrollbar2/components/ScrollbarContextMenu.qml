@@ -1,335 +1,469 @@
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import qs.Commons
-import qs.Services.UI
 import qs.Widgets
 
+// Context menu with submenu and separator support for scrollbar2
+// Based on NPopupContextMenu with enhancements from TrayMenu.qml
 PopupWindow {
-    id: root
+  id: root
 
-    property var model: []
-    signal triggered(string action, var item)
+  property alias model: repeater.model
+  property real itemHeight: 28
+  property real itemPadding: Style.marginM
+  property int verticalPolicy: ScrollBar.AsNeeded
+  property int horizontalPolicy: ScrollBar.AsNeeded
 
-    property ShellScreen screen: null
-    property var anchorItem: null
-    property bool isSubMenu: false
+  property var anchorItem: null
+  property ShellScreen screen: null
+  property real minWidth: 120
+  property real calculatedWidth: 180
 
-    // Stable base position, set once in showAt() before making visible.
-    // Live bindings below clamp these against the screen edges.
-    property real anchorX: 0
-    property real anchorY: 0
+  // For submenu support
+  property bool isSubMenu: false
+  property var parentMenu: null
 
-    // Convenience: set these before calling openAtItem() (PanelService compat)
-    property real targetOffsetX: 0
-    property real targetOffsetY: 0
+  // Explicit offset for centering on target item (used by main menu via openAtItem)
+  property real targetOffsetX: 0
+  property real targetOffsetY: 0
+  property real targetWidth: 0
+  property real targetHeight: 0
 
-    readonly property int menuWidth: 220
+  // Direct anchor offset for submenus (simpler positioning)
+  property real anchorX: 0
+  property real anchorY: 0
 
-    implicitWidth: menuWidth
-    implicitHeight: Math.min(screen?.height * 0.9 ?? 600, flickable.contentHeight + Style.margin2S)
+  readonly property string barPosition: Settings.getBarPositionForScreen(screen?.name)
+  readonly property real barHeight: Style.getBarHeightForScreen(screen?.name)
 
-    // Re-anchor when content height resolves (mirrors TrayMenu pattern)
-    onImplicitHeightChanged: {
-        if (visible && anchorItem)
-            Qt.callLater(() => anchor.updateAnchor());
-    }
+  signal triggered(string action, var item)
 
+  implicitWidth: calculatedWidth
+  implicitHeight: Math.min(600, flickable.contentHeight + Style.margin2S)
+  visible: false
+  color: "transparent"
+
+  NText {
+    id: textMeasure
     visible: false
-    color: "transparent"
-    anchor.item: anchorItem
+    pointSize: Style.fontSizeS
+    wrapMode: Text.NoWrap
+    elide: Text.ElideNone
+    width: undefined
+  }
 
-    // Live bindings clamp anchorX/Y against screen edges.
-    // Using live bindings (not pre-calculated) so they recompute when
-    // implicitHeight changes after layout resolves.
-    anchor.rect.x: {
-        if (!anchorItem || !screen)
-            return anchorX;
+  NIcon {
+    id: iconMeasure
+    visible: false
+    icon: "bell"
+    pointSize: Style.fontSizeS
+    applyUiScale: false
+  }
 
-        if (isSubMenu)
-            return anchorItem.width;
+  onModelChanged: Qt.callLater(calculateWidth)
 
-        const g = anchorItem.mapToItem(null, 0, 0);
-        let x = anchorX;
-        const menuRight = g.x + x + implicitWidth;
-        const menuLeft = g.x + x;
-        if (menuRight > screen.width - Style.marginM)
-            x -= menuRight - (screen.width - Style.marginM);
-        else if (menuLeft < Style.marginM)
-            x += Style.marginM - menuLeft;
-        return x;
-    }
+  function calculateWidth() {
+    let maxWidth = 0;
+    if (model && model.length) {
+      for (let i = 0; i < model.length; i++) {
+        const item = model[i];
+        if (item && item.visible !== false && !item.isSeparator) {
+          const label = item.label || item.text || "";
+          textMeasure.text = label;
+          textMeasure.forceLayout();
 
-    anchor.rect.y: {
-        if (!anchorItem || !screen)
-            return anchorY;
+          let itemWidth = textMeasure.contentWidth + 8;
 
-        if (isSubMenu)
-            return 0;
+          if (item.icon !== undefined) {
+            itemWidth += iconMeasure.width + Style.marginS;
+          }
 
-        const g = anchorItem.mapToItem(null, 0, 0);
-        let y = anchorY;
-        const menuBottom = g.y + y + implicitHeight;
-        if (menuBottom > screen.height - Style.marginM)
-            y -= menuBottom - (screen.height - Style.marginM);
-        return y;
-    }
+          // Add space for submenu arrow if hasChildren
+          if (item.hasChildren) {
+            itemWidth += 16;
+          }
 
-    // ── Public API ────────────────────────────────────────────────────────────
+          itemWidth += Style.margin2M;
 
-    function showAt(item, x, y) {
-        if (!item)
-            return;
-        anchorItem = item;
-        anchorX = x;
-        anchorY = y;
-        visible = true;
-        forceActiveFocus();
-        Qt.callLater(() => anchor.updateAnchor());
-    }
-
-    // Compatibility shim for PanelService.showContextMenu()
-    function openAtItem(item, itemScreen, centerOnItem) {
-        if (itemScreen)
-            screen = itemScreen;
-        showAt(centerOnItem ?? item, targetOffsetX, targetOffsetY);
-    }
-
-    function hideMenu() {
-        visible = false;
-        hoverTimer.stop();
-        pendingSubMenuTarget = null;
-        for (var i = 0; i < columnLayout.children.length; i++) {
-            const child = columnLayout.children[i];
-            if (child?.subMenu) {
-                child.subMenu.hideMenu();
-                child.subMenu.destroy();
-                child.subMenu = null;
-            }
+          if (itemWidth > maxWidth) {
+            maxWidth = itemWidth;
+          }
         }
+      }
     }
+    calculatedWidth = Math.max(maxWidth + Style.margin2S, minWidth);
+  }
 
-    // ── Submenu hover timer ───────────────────────────────────────────────────
+  anchor.item: anchorItem
 
-    property var pendingSubMenuTarget: null
+  // Positioning logic (same as NPopupContextMenu, with submenu support)
+  anchor.rect.x: {
+    if (anchorItem && screen) {
+      // For submenus, use direct anchorX offset
+      if (isSubMenu) {
+        return anchorX;
+      }
 
-    Timer {
-        id: hoverTimer
-        interval: 150
-        onTriggered: pendingSubMenuTarget?.openSubMenu()
+      const anchorGlobalPos = anchorItem.mapToItem(null, 0, 0);
+      const effectiveWidth = targetWidth > 0 ? targetWidth : anchorItem.width;
+      const targetGlobalX = anchorGlobalPos.x + targetOffsetX;
+
+      if (root.barPosition === "right") {
+        let baseX = targetOffsetX - implicitWidth - Style.marginM;
+        return baseX;
+      }
+
+      if (root.barPosition === "left") {
+        let baseX = targetOffsetX + effectiveWidth + Style.marginM;
+        return baseX;
+      }
+
+      const targetCenterScreenX = targetGlobalX + (effectiveWidth / 2);
+      const menuScreenX = targetCenterScreenX - (implicitWidth / 2);
+      let baseX = menuScreenX - anchorGlobalPos.x;
+
+      const menuRight = menuScreenX + implicitWidth;
+
+      if (menuRight > screen.width - Style.marginM) {
+        const overflow = menuRight - (screen.width - Style.marginM);
+        return baseX - overflow;
+      }
+      if (menuScreenX < Style.marginM) {
+        return baseX + (Style.marginM - menuScreenX);
+      }
+      return baseX;
     }
+    return 0;
+  }
 
-    // ── Keyboard ──────────────────────────────────────────────────────────────
+  anchor.rect.y: {
+    if (anchorItem && screen) {
+      // For submenus, use direct anchorY offset (align top with parent)
+      if (isSubMenu) {
+        return anchorY;
+      }
 
-    Item {
-        anchors.fill: parent
-        Keys.onEscapePressed: root.hideMenu()
-    }
+      const isAbsolutePosition = anchorItem.width <= 1 && anchorItem.height <= 1;
 
-    // ── Background ────────────────────────────────────────────────────────────
+      if (isAbsolutePosition) {
+        const anchorGlobalPos = anchorItem.mapToItem(null, 0, 0);
+        const menuBottom = anchorGlobalPos.y + implicitHeight;
 
-    Rectangle {
-        anchors.fill: parent
-        color: Color.mSurface
-        border.color: Color.mOutline
-        border.width: Math.max(1, Style.borderS)
-        radius: Style.radiusM
-        opacity: root.visible ? 1.0 : 0.0
-        Behavior on opacity {
-            NumberAnimation {
-                duration: Style.animationNormal
-                easing.type: Easing.OutQuad
-            }
+        if (menuBottom > screen.height - Style.marginM) {
+          return -implicitHeight;
         }
+        return 0;
+      }
+
+      const anchorGlobalPos = anchorItem.mapToItem(null, 0, 0);
+      const effectiveHeight = targetHeight > 0 ? targetHeight : anchorItem.height;
+      const effectiveOffsetY = targetOffsetY;
+
+      let baseY;
+      if (root.barPosition === "bottom") {
+        baseY = -(implicitHeight + Style.marginS);
+      } else if (root.barPosition === "top") {
+        baseY = barHeight + Style.marginS - anchorGlobalPos.y;
+      } else {
+        const targetCenterY = effectiveOffsetY + (effectiveHeight / 2);
+        baseY = targetCenterY - (implicitHeight / 2);
+      }
+
+      const menuScreenY = anchorGlobalPos.y + baseY;
+      const menuBottom = menuScreenY + implicitHeight;
+
+      const topLimit = Style.marginM;
+      const bottomLimit = root.barPosition === "bottom" ? screen.height - barHeight - Style.marginS : screen.height - Style.marginM;
+
+      if (menuScreenY < topLimit && root.barPosition !== "bottom") {
+        const adjustment = topLimit - menuScreenY;
+        return baseY + adjustment;
+      }
+
+      if (menuBottom > bottomLimit) {
+        const overflow = menuBottom - bottomLimit;
+        return baseY - overflow;
+      }
+
+      return baseY;
     }
 
-    // ── Menu content ──────────────────────────────────────────────────────────
+    if (root.barPosition === "bottom") {
+      return -implicitHeight - Style.marginS;
+    }
+    return barHeight;
+  }
 
-    Flickable {
-        id: flickable
-        anchors.fill: parent
-        anchors.margins: Style.marginS
-        contentHeight: columnLayout.implicitHeight
-        interactive: true
-        opacity: root.visible ? 1.0 : 0.0
-        Behavior on opacity {
-            NumberAnimation {
-                duration: Style.animationNormal
-                easing.type: Easing.OutQuad
+  Component.onCompleted: Qt.callLater(calculateWidth)
+
+  Item {
+    anchors.fill: parent
+    focus: true
+    Keys.onEscapePressed: root.closeMenu()
+  }
+
+  Rectangle {
+    id: menuBackground
+    anchors.fill: parent
+    color: Color.mSurface
+    border.color: Color.mOutline
+    border.width: Style.borderS
+    radius: Style.radiusM
+    opacity: root.visible ? 1.0 : 0.0
+
+    Behavior on opacity {
+      NumberAnimation {
+        duration: Style.animationNormal
+        easing.type: Easing.OutQuad
+      }
+    }
+  }
+
+  Flickable {
+    id: flickable
+    anchors.fill: parent
+    anchors.margins: Style.marginS
+    contentHeight: columnLayout.implicitHeight
+    interactive: true
+    opacity: root.visible ? 1.0 : 0.0
+
+    Behavior on opacity {
+      NumberAnimation {
+        duration: Style.animationNormal
+        easing.type: Easing.OutQuad
+      }
+    }
+
+    ColumnLayout {
+      id: columnLayout
+      width: flickable.width
+      spacing: 0
+
+      Repeater {
+        id: repeater
+
+        delegate: Rectangle {
+          id: menuItem
+          required property var modelData
+          required property int index
+
+          Layout.preferredWidth: parent.width
+          Layout.preferredHeight: {
+            if (modelData?.isSeparator) {
+              return 8;
             }
-        }
+            const textHeight = textMeasure.contentHeight || (Style.fontSizeS * 1.2);
+            return Math.max(root.itemHeight, textHeight + Style.margin2S);
+          }
+          visible: modelData?.visible !== false
+          color: "transparent"
 
-        ColumnLayout {
-            id: columnLayout
-            width: flickable.width
-            spacing: 0
+          property var subMenu: null
 
-            Repeater {
-                model: root.model
+          // Separator rendering
+          NDivider {
+            anchors.centerIn: parent
+            width: parent.width - Style.margin2M
+            visible: modelData?.isSeparator ?? false
+          }
 
-                delegate: Rectangle {
-                    id: entry
-                    required property var modelData
+          Rectangle {
+            id: innerRect
+            anchors.fill: parent
+            color: mouseArea.containsMouse ? Color.mHover : "transparent"
+            radius: Style.radiusS
+            visible: !(modelData?.isSeparator ?? false)
+            opacity: modelData?.enabled !== false ? 1.0 : 0.5
 
-                    Layout.preferredWidth: parent.width
-                    Layout.preferredHeight: {
-                        if (modelData?.visible === false)
-                            return 0;
-                        if (modelData?.isSeparator === true)
-                            return 8;
-                        return 28;
-                    }
+            Behavior on color {
+              ColorAnimation {
+                duration: Style.animationFast
+              }
+            }
 
-                    visible: modelData?.visible !== false
-                    color: "transparent"
-                    property var subMenu: null
+            RowLayout {
+              anchors.fill: parent
+              anchors.leftMargin: Style.marginM
+              anchors.rightMargin: Style.marginM
+              spacing: Style.marginS
 
-                    NDivider {
-                        anchors.centerIn: parent
-                        width: parent.width - Style.margin2M
-                        visible: modelData?.isSeparator === true
-                    }
+              NIcon {
+                visible: modelData?.icon !== undefined && !modelData?.isSeparator
+                icon: modelData?.icon || ""
+                pointSize: Style.fontSizeS
+                applyUiScale: false
+                color: mouseArea.containsMouse ? Color.mOnHover : Color.mOnSurface
+                verticalAlignment: Text.AlignVCenter
 
-                    Rectangle {
-                        anchors.fill: parent
-                        color: mouseArea.containsMouse ? Color.mHover : "transparent"
-                        radius: Style.radiusS
-                        visible: modelData?.isSeparator !== true && modelData?.visible !== false
-                        opacity: modelData?.enabled !== false ? 1.0 : 0.5
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: Style.animationFast
-                            }
-                        }
-
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.leftMargin: Style.marginM
-                            anchors.rightMargin: Style.marginM
-                            spacing: Style.marginS
-
-                            NIcon {
-                                visible: !!modelData?.icon
-                                icon: modelData?.icon ?? ""
-                                pointSize: Style.fontSizeS
-                                applyUiScale: false
-                                color: mouseArea.containsMouse ? Color.mOnHover : Color.mOnSurface
-                                verticalAlignment: Text.AlignVCenter
-                                Behavior on color {
-                                    ColorAnimation {
-                                        duration: Style.animationFast
-                                    }
-                                }
-                            }
-
-                            NText {
-                                Layout.fillWidth: true
-                                text: modelData?.label ?? modelData?.text ?? ""
-                                pointSize: Style.fontSizeS
-                                color: mouseArea.containsMouse ? Color.mOnHover : Color.mOnSurface
-                                verticalAlignment: Text.AlignVCenter
-                                elide: Text.ElideRight
-                                Behavior on color {
-                                    ColorAnimation {
-                                        duration: Style.animationFast
-                                    }
-                                }
-                            }
-
-                            NIcon {
-                                visible: modelData?.hasChildren ?? false
-                                icon: "menu"
-                                pointSize: Style.fontSizeS
-                                applyUiScale: false
-                                verticalAlignment: Text.AlignVCenter
-                                color: mouseArea.containsMouse ? Color.mOnTertiary : Color.mOnSurface
-                            }
-                        }
-
-                        MouseArea {
-                            id: mouseArea
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            enabled: modelData?.isSeparator !== true && modelData?.enabled !== false && root.visible
-                            cursorShape: Qt.PointingHandCursor
-                            acceptedButtons: Qt.LeftButton | Qt.RightButton
-
-                            function openSubMenu() {
-                                if (!modelData?.hasChildren)
-                                    return;
-
-                                // Close sibling submenus
-                                for (var i = 0; i < columnLayout.children.length; i++) {
-                                    const sib = columnLayout.children[i];
-                                    if (sib !== entry && sib.subMenu) {
-                                        sib.subMenu.hideMenu();
-                                        sib.subMenu.destroy();
-                                        sib.subMenu = null;
-                                    }
-                                }
-
-                                entry.subMenu = Qt.createComponent("ScrollbarContextMenu.qml").createObject(root, {
-                                    model: modelData.children ?? [],
-                                    screen: root.screen,
-                                    isSubMenu: true,
-                                    anchorItem: entry,
-                                    anchorX: entry.width,
-                                    anchorY: 0
-                                });
-
-                                if (entry.subMenu) {
-                                    entry.subMenu.triggered.connect(root.triggered);
-                                    entry.subMenu.visible = true;
-                                    Qt.callLater(() => entry.subMenu?.anchor.updateAnchor());
-                                }
-                            }
-
-                            onEntered: {
-                                for (var i = 0; i < columnLayout.children.length; i++) {
-                                    const sib = columnLayout.children[i];
-                                    if (sib !== entry && sib.subMenu) {
-                                        sib.subMenu.hideMenu();
-                                        sib.subMenu.destroy();
-                                        sib.subMenu = null;
-                                    }
-                                }
-                                if (modelData?.hasChildren && !entry.subMenu) {
-                                    root.pendingSubMenuTarget = mouseArea;
-                                    hoverTimer.restart();
-                                }
-                            }
-
-                            onExited: {
-                                if (root.pendingSubMenuTarget === mouseArea) {
-                                    hoverTimer.stop();
-                                    root.pendingSubMenuTarget = null;
-                                }
-                            }
-
-                            onClicked: {
-                                if (!modelData || modelData.isSeparator || modelData.enabled === false)
-                                    return;
-                                if (modelData.hasChildren) {
-                                    hoverTimer.stop();
-                                    root.pendingSubMenuTarget = null;
-                                    if (!entry.subMenu)
-                                        openSubMenu();
-                                } else {
-                                    root.triggered(modelData.action ?? modelData.key ?? "", modelData);
-                                    root.hideMenu();
-                                }
-                            }
-                        }
-                    }
-
-                    Component.onDestruction: {
-                        if (subMenu) {
-                            subMenu.destroy();
-                            subMenu = null;
-                        }
-                    }
+                Behavior on color {
+                  ColorAnimation {
+                    duration: Style.animationFast
+                  }
                 }
+              }
+
+              NText {
+                id: itemText
+                text: modelData?.label || modelData?.text || ""
+                pointSize: Style.fontSizeS
+                color: mouseArea.containsMouse ? Color.mOnHover : Color.mOnSurface
+                verticalAlignment: Text.AlignVCenter
+                Layout.fillWidth: true
+                visible: !modelData?.isSeparator
+
+                Behavior on color {
+                  ColorAnimation {
+                    duration: Style.animationFast
+                  }
+                }
+              }
+
+              // Submenu arrow indicator
+              NIcon {
+                visible: modelData?.hasChildren ?? false
+                icon: "chevron-right"
+                pointSize: Style.fontSizeXXS
+                applyUiScale: false
+                color: mouseArea.containsMouse ? Color.mOnHover : Color.mOnSurfaceVariant
+                verticalAlignment: Text.AlignVCenter
+              }
             }
+
+            MouseArea {
+              id: mouseArea
+              anchors.fill: parent
+              hoverEnabled: true
+              enabled: (modelData?.enabled !== false) && !(modelData?.isSeparator ?? false) && root.visible
+              cursorShape: Qt.PointingHandCursor
+              acceptedButtons: Qt.LeftButton | Qt.RightButton
+
+              onClicked: mouse => {
+                if (modelData && !modelData.isSeparator) {
+                  if (modelData.hasChildren) {
+                    // Toggle submenu
+                    if (menuItem.subMenu) {
+                      // Close existing submenu
+                      menuItem.subMenu.closeMenu();
+                      menuItem.subMenu.destroy();
+                      menuItem.subMenu = null;
+                    } else {
+                      // Close any other open submenus first
+                      for (var i = 0; i < columnLayout.children.length; i++) {
+                        const sibling = columnLayout.children[i];
+                        if (sibling !== menuItem && sibling.subMenu) {
+                          sibling.subMenu.closeMenu();
+                          sibling.subMenu.destroy();
+                          sibling.subMenu = null;
+                        }
+                      }
+
+                      // Determine submenu opening direction
+                      let openLeft = false;
+                      const barPosition = Settings.getBarPositionForScreen(root.screen?.name);
+
+                      if (barPosition === "right") {
+                        openLeft = true;
+                      } else if (barPosition === "left") {
+                        openLeft = false;
+                      } else {
+                        // For top/bottom bars, open left if menu is on right side of screen
+                        const globalPos = menuItem.mapToItem(null, 0, 0);
+                        openLeft = (globalPos.x > root.screen.width / 2);
+                      }
+
+                      // Create and show submenu
+                      menuItem.subMenu = Qt.createComponent("ScrollbarContextMenu.qml").createObject(root, {
+                        "model": modelData.children || [],
+                        "isSubMenu": true,
+                        "screen": root.screen,
+                        "anchorItem": menuItem
+                      });
+
+                      if (menuItem.subMenu) {
+                        // Position submenu relative to parent item
+                        // Positive anchorX = open to right, Negative = open to left
+                        menuItem.subMenu.anchorX = openLeft ? -4 : menuItem.width - 4;
+                        menuItem.subMenu.anchorY = 0;  // Align top with parent item
+                        menuItem.subMenu.visible = true;
+                        // Connect submenu triggered to parent
+                        menuItem.subMenu.triggered.connect(root.triggered);
+                      }
+                    }
+                  } else {
+                    // Regular menu item - trigger action
+                    const action = modelData.action || modelData.key || menuItem.index.toString();
+                    if (isSubMenu) {
+                      // For submenus, delay closing to let parent triggered signal complete
+                      root.triggered(action, modelData);
+                      Qt.callLater(function() { root.closeMenu(); });
+                    } else {
+                      // For main menu, close immediately
+                      root.triggered(action, modelData);
+                      root.closeMenu();
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          Component.onDestruction: {
+            if (subMenu) {
+              subMenu.destroy();
+              subMenu = null;
+            }
+          }
         }
+      }
     }
+  }
+
+  function openAtItem(item, itemScreen, centerOnItem) {
+    if (!item) {
+      Logger.w("ScrollbarContextMenu", "anchorItem is undefined, won't show menu.");
+      return;
+    }
+
+    anchorItem = item;
+    screen = itemScreen || null;
+
+    if (centerOnItem && centerOnItem !== item) {
+      const relPos = centerOnItem.mapToItem(item, 0, 0);
+      targetOffsetX = relPos.x;
+      targetOffsetY = relPos.y;
+      targetWidth = centerOnItem.width;
+      targetHeight = centerOnItem.height;
+    } else {
+      targetOffsetX = 0;
+      targetOffsetY = 0;
+      targetWidth = 0;
+      targetHeight = 0;
+    }
+
+    calculateWidth();
+    visible = true;
+
+    Qt.callLater(() => {
+      anchor.updateAnchor();
+    });
+  }
+
+  function close() {
+    visible = false;
+  }
+
+  function closeMenu() {
+    // Close all submenus first
+    for (var i = 0; i < columnLayout.children.length; i++) {
+      const child = columnLayout.children[i];
+      if (child && child.subMenu) {
+        child.subMenu.closeMenu();
+        child.subMenu.destroy();
+        child.subMenu = null;
+      }
+    }
+    close();
+  }
 }
