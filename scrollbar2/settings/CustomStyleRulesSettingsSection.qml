@@ -12,11 +12,21 @@ ColumnLayout {
     readonly property var mainInstance: rootSettings?.mainInstance ?? null
 
     property var _cachedRules: []
+    property int _targetRevision: 0
+
+    Timer {
+        id: updateTimer
+        interval: 0
+        repeat: false
+        onTriggered: {
+            root._cachedRules = rootSettings?.styleRuleItems() ?? [];
+        }
+    }
 
     Connections {
         target: rootSettings
         function onStyleRulesRevisionChanged() {
-            root._cachedRules = rootSettings?.styleRuleItems() ?? [];
+            updateTimer.restart();
         }
     }
 
