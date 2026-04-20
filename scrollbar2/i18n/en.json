@@ -8,10 +8,8 @@
     "closeWindow": "Close window",
     "pinToBar": "Pin to bar",
     "unpinFromBar": "Unpin from bar",
-    "addStyleRuleForApp": "Add style rule for app",
-    "addStyleRuleForTitle": "Add style rule for title",
-    "editStyleRuleForApp": "Edit style rule for app",
-    "editStyleRuleForTitle": "Edit style rule for title",
+    "addCustomStyleRule": "Add Custom Style Rule",
+    "editCustomStyleRule": "Edit Custom Style Rule",
     "settings": "Widget settings"
   },
   "options": {

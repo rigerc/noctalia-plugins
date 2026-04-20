@@ -30,6 +30,7 @@ Item {
     property string requestedStyleRuleMatchField: ""
     property string requestedStyleRulePattern: ""
     property int requestedStyleRuleRevision: 0
+    property bool requestedStyleRuleNavigationPending: false
     property bool reorderInFlight: false
     property var hyprlandReorderState: null
 
@@ -689,6 +690,7 @@ Item {
         requestedStyleRuleMatchField = normalizeStyleRuleMatchField(matchField);
         requestedStyleRulePattern = String(pattern || "").trim();
         requestedStyleRuleRevision += 1;
+        requestedStyleRuleNavigationPending = true;
     }
 
     function requestPrefilledStyleRuleEdit(entryKey, matchField) {

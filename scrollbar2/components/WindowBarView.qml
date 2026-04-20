@@ -1190,27 +1190,14 @@ Item {
                 });
             }
 
-            // Style Rules submenu
-            const hasExistingAppStyleRule = (mainInstance?.findPrefilledStyleRuleIndex(selectedEntryKey, "appId") ?? -1) >= 0;
-            const hasExistingTitleStyleRule = (mainInstance?.findPrefilledStyleRuleIndex(selectedEntryKey, "title") ?? -1) >= 0;
+            // Style Rules - single option that handles both app and title
+            const hasExistingStyleRule = (mainInstance?.findPrefilledStyleRuleIndex(selectedEntryKey, "appId") ?? -1) >= 0
+                || (mainInstance?.findPrefilledStyleRuleIndex(selectedEntryKey, "title") ?? -1) >= 0;
 
             model.push({
-                "label": "Style Rules",
-                "action": "style-rules",
-                "icon": "brush",
-                "hasChildren": true,
-                "children": [
-                    {
-                        "label": pluginApi?.tr(hasExistingAppStyleRule ? "menu.editStyleRuleForApp" : "menu.addStyleRuleForApp"),
-                        "action": "style-rule-app",
-                        "icon": "apps"
-                    },
-                    {
-                        "label": pluginApi?.tr(hasExistingTitleStyleRule ? "menu.editStyleRuleForTitle" : "menu.addStyleRuleForTitle"),
-                        "action": "style-rule-title",
-                        "icon": "typography"
-                    }
-                ]
+                "label": pluginApi?.tr(hasExistingStyleRule ? "menu.editCustomStyleRule" : "menu.addCustomStyleRule"),
+                "action": "custom-style-rule",
+                "icon": "brush"
             });
 
             // Separator before settings
@@ -2335,24 +2322,30 @@ Item {
                 root.mainInstance?.toggleAppPin(root.selectedAppId);
             } else if (action === "unpin") {
                 root.mainInstance?.removePinnedApp(root.selectedAppId);
-            } else if (action === "style-rule-app") {
+            } else if (action === "custom-style-rule") {
+                // First, open settings to ensure Settings.qml is loaded
+                BarService.openPluginSettings(root.screen, pluginApi.manifest);
+
+                // Then trigger navigation (this will be caught by Settings.qml)
+                // Prefer appId over title for the default rule
                 const existingAppRuleIndex = root.mainInstance?.findPrefilledStyleRuleIndex(root.selectedEntryKey, "appId") ?? -1;
-                if (existingAppRuleIndex < 0) {
-                    const appRule = root.mainInstance?.buildPrefilledStyleRule(root.selectedEntryKey, "appId");
-                    if (appRule)
-                        root.mainInstance?.appendStyleRule(appRule, true);
-                }
-                root.mainInstance?.requestPrefilledStyleRuleEdit(root.selectedEntryKey, "appId");
-                BarService.openPluginSettings(root.screen, pluginApi.manifest);
-            } else if (action === "style-rule-title") {
                 const existingTitleRuleIndex = root.mainInstance?.findPrefilledStyleRuleIndex(root.selectedEntryKey, "title") ?? -1;
-                if (existingTitleRuleIndex < 0) {
-                    const titleRule = root.mainInstance?.buildPrefilledStyleRule(root.selectedEntryKey, "title");
-                    if (titleRule)
-                        root.mainInstance?.appendStyleRule(titleRule, true);
+
+                // Use appId rule if it exists or if neither exists, otherwise use title rule
+                const useAppId = existingAppRuleIndex >= 0 || (existingTitleRuleIndex < 0 && existingAppRuleIndex < 0);
+                const matchField = useAppId ? "appId" : "title";
+
+                const existingRuleIndex = useAppId ? existingAppRuleIndex : existingTitleRuleIndex;
+
+                if (existingRuleIndex < 0) {
+                    // No existing rule, create one
+                    const rule = root.mainInstance?.buildPrefilledStyleRule(root.selectedEntryKey, matchField);
+                    if (rule)
+                        root.mainInstance?.appendStyleRule(rule, true);
                 }
-                root.mainInstance?.requestPrefilledStyleRuleEdit(root.selectedEntryKey, "title");
-                BarService.openPluginSettings(root.screen, pluginApi.manifest);
+
+                // Request navigation to the rule
+                root.mainInstance?.requestPrefilledStyleRuleEdit(root.selectedEntryKey, matchField);
             } else if (action === "settings") {
                 BarService.openPluginSettings(root.screen, pluginApi.manifest);
             } else if (action.startsWith("desktop-action-") && item?.desktopAction) {

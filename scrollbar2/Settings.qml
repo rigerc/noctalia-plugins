@@ -978,7 +978,14 @@ ColumnLayout {
         }
     }
 
-    Component.onCompleted: refreshEditSettings()
+    Component.onCompleted: {
+        refreshEditSettings();
+        // Handle navigation that was triggered before this instance was loaded
+        if (mainInstance?.requestedStyleRuleNavigationPending ?? false) {
+            root.selectedTab = 3;
+            mainInstance.requestedStyleRuleNavigationPending = false;
+        }
+    }
 
     NTabBar {
         currentIndex: selectedTab
