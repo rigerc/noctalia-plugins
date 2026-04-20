@@ -1203,7 +1203,7 @@ Item {
                     {
                         "label": pluginApi?.tr(hasExistingAppStyleRule ? "menu.editStyleRuleForApp" : "menu.addStyleRuleForApp"),
                         "action": "style-rule-app",
-                        "icon": "application"
+                        "icon": "apps"
                     },
                     {
                         "label": pluginApi?.tr(hasExistingTitleStyleRule ? "menu.editStyleRuleForTitle" : "menu.addStyleRuleForTitle"),

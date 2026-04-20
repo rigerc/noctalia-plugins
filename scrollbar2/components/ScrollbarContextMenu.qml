@@ -35,6 +35,9 @@ PopupWindow {
   property real anchorX: 0
   property real anchorY: 0
 
+  // Hover timer for submenu delay
+  property var pendingSubMenuTarget: null
+
   readonly property string barPosition: Settings.getBarPositionForScreen(screen?.name)
   readonly property real barHeight: Style.getBarHeightForScreen(screen?.name)
 
@@ -198,6 +201,15 @@ PopupWindow {
 
   Component.onCompleted: Qt.callLater(calculateWidth)
 
+  Timer {
+    id: hoverTimer
+    interval: 150
+    onTriggered: {
+      if (pendingSubMenuTarget)
+        pendingSubMenuTarget.openSubMenu();
+    }
+  }
+
   Item {
     anchors.fill: parent
     focus: true
@@ -261,6 +273,50 @@ PopupWindow {
           color: "transparent"
 
           property var subMenu: null
+
+          function openSubMenu() {
+            // Close any other open submenus first
+            for (var i = 0; i < columnLayout.children.length; i++) {
+              const sibling = columnLayout.children[i];
+              if (sibling !== menuItem && sibling.subMenu) {
+                sibling.subMenu.closeMenu();
+                sibling.subMenu.destroy();
+                sibling.subMenu = null;
+              }
+            }
+
+            // Determine submenu opening direction
+            let openLeft = false;
+            const barPosition = Settings.getBarPositionForScreen(root.screen?.name);
+
+            if (barPosition === "right") {
+              openLeft = true;
+            } else if (barPosition === "left") {
+              openLeft = false;
+            } else {
+              // For top/bottom bars, open left if menu is on right side of screen
+              const globalPos = menuItem.mapToItem(null, 0, 0);
+              openLeft = (globalPos.x > root.screen.width / 2);
+            }
+
+            // Create and show submenu
+            menuItem.subMenu = Qt.createComponent("ScrollbarContextMenu.qml").createObject(root, {
+              "model": modelData.children || [],
+              "isSubMenu": true,
+              "screen": root.screen,
+              "anchorItem": menuItem
+            });
+
+            if (menuItem.subMenu) {
+              // Position submenu relative to parent item
+              // Positive anchorX = open to right, Negative = open to left
+              menuItem.subMenu.anchorX = openLeft ? -4 : menuItem.width - 4;
+              menuItem.subMenu.anchorY = 0;  // Align top with parent item
+              menuItem.subMenu.visible = true;
+              // Connect submenu triggered to parent
+              menuItem.subMenu.triggered.connect(root.triggered);
+            }
+          }
 
           // Separator rendering
           NDivider {
@@ -339,6 +395,18 @@ PopupWindow {
               cursorShape: Qt.PointingHandCursor
               acceptedButtons: Qt.LeftButton | Qt.RightButton
 
+              onEntered: {
+                if (modelData && modelData.hasChildren && !menuItem.subMenu) {
+                  root.pendingSubMenuTarget = menuItem;
+                  hoverTimer.restart();
+                }
+              }
+
+              onExited: {
+                hoverTimer.stop();
+                root.pendingSubMenuTarget = null;
+              }
+
               onClicked: mouse => {
                 if (modelData && !modelData.isSeparator) {
                   if (modelData.hasChildren) {
@@ -349,47 +417,8 @@ PopupWindow {
                       menuItem.subMenu.destroy();
                       menuItem.subMenu = null;
                     } else {
-                      // Close any other open submenus first
-                      for (var i = 0; i < columnLayout.children.length; i++) {
-                        const sibling = columnLayout.children[i];
-                        if (sibling !== menuItem && sibling.subMenu) {
-                          sibling.subMenu.closeMenu();
-                          sibling.subMenu.destroy();
-                          sibling.subMenu = null;
-                        }
-                      }
-
-                      // Determine submenu opening direction
-                      let openLeft = false;
-                      const barPosition = Settings.getBarPositionForScreen(root.screen?.name);
-
-                      if (barPosition === "right") {
-                        openLeft = true;
-                      } else if (barPosition === "left") {
-                        openLeft = false;
-                      } else {
-                        // For top/bottom bars, open left if menu is on right side of screen
-                        const globalPos = menuItem.mapToItem(null, 0, 0);
-                        openLeft = (globalPos.x > root.screen.width / 2);
-                      }
-
-                      // Create and show submenu
-                      menuItem.subMenu = Qt.createComponent("ScrollbarContextMenu.qml").createObject(root, {
-                        "model": modelData.children || [],
-                        "isSubMenu": true,
-                        "screen": root.screen,
-                        "anchorItem": menuItem
-                      });
-
-                      if (menuItem.subMenu) {
-                        // Position submenu relative to parent item
-                        // Positive anchorX = open to right, Negative = open to left
-                        menuItem.subMenu.anchorX = openLeft ? -4 : menuItem.width - 4;
-                        menuItem.subMenu.anchorY = 0;  // Align top with parent item
-                        menuItem.subMenu.visible = true;
-                        // Connect submenu triggered to parent
-                        menuItem.subMenu.triggered.connect(root.triggered);
-                      }
+                      // Open submenu
+                      menuItem.openSubMenu();
                     }
                   } else {
                     // Regular menu item - trigger action
