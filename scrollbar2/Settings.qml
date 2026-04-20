@@ -779,7 +779,8 @@ ColumnLayout {
     }
 
     function styleRuleItems() {
-        return Array.isArray(editSettings?.customStyleRules) ? editSettings.customStyleRules : [];
+        const rules = editSettings?.customStyleRules;
+        return Array.isArray(rules) ? rules.slice() : [];
     }
 
     function defaultStyleRuleItems() {

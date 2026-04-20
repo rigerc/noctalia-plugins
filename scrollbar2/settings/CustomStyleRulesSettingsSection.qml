@@ -11,10 +11,17 @@ ColumnLayout {
     property alias rulesSectionTarget: sectionContent
     readonly property var mainInstance: rootSettings?.mainInstance ?? null
 
-    readonly property int styleRulesRevisionToken: rootSettings?.styleRulesRevision ?? 0
-    readonly property var cachedStyleRuleItems: {
-        styleRulesRevisionToken;
-        return rootSettings?.styleRuleItems() ?? [];
+    property var _cachedRules: []
+
+    Connections {
+        target: rootSettings
+        function onStyleRulesRevisionChanged() {
+            root._cachedRules = rootSettings?.styleRuleItems() ?? [];
+        }
+    }
+
+    Component.onCompleted: {
+        root._cachedRules = rootSettings?.styleRuleItems() ?? [];
     }
 
     Layout.fillWidth: true
@@ -88,7 +95,7 @@ ColumnLayout {
             }
 
             NText {
-                visible: cachedStyleRuleItems.length === 0
+                visible: _cachedRules.length === 0
                 Layout.fillWidth: true
                 text: rootSettings?.pluginApi?.tr("settings.customStyleRules.empty")
                 color: Color.mOnSurfaceVariant
@@ -96,7 +103,7 @@ ColumnLayout {
             }
 
             Repeater {
-                model: cachedStyleRuleItems
+                model: _cachedRules
 
                 delegate: NBox {
                     id: ruleCard
@@ -151,7 +158,7 @@ ColumnLayout {
                             NButton {
                                 text: rootSettings?.pluginApi?.tr("settings.customStyleRules.actions.moveDown")
                                 icon: "chevron-down"
-                                enabled: index < (root.cachedStyleRuleItems.length - 1)
+                                enabled: index < (root._cachedRules.length - 1)
                                 onClicked: rootSettings?.moveStyleRule(index, 1)
                             }
 
