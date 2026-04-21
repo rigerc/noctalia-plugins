@@ -191,6 +191,10 @@
       "middleClickClose": {
         "label": "Middle Click to Close",
         "desc": "Close windows by middle-clicking their segments."
+      },
+      "workspaceScrollSwitch": {
+        "label": "Scroll Workspace on Indicator",
+        "desc": "Scroll the mouse wheel over the workspace indicator to switch between workspaces."
       }
     },
     "track": {

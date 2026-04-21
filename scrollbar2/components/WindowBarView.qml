@@ -603,6 +603,7 @@ Item {
 
     readonly property bool scrollWheelFocusEnabled: settingValue("mouseInteraction", "scrollWheelFocus", true)
     readonly property bool middleClickCloseEnabled: settingValue("mouseInteraction", "middleClickClose", true)
+    readonly property bool workspaceScrollSwitchEnabled: settingValue("mouseInteraction", "workspaceScrollSwitch", false)
     readonly property bool windowAnimationEnabled: {
         const configured = currentSettings?.window?.animation?.enabled;
         if (configured !== undefined && configured !== null)
@@ -1642,6 +1643,17 @@ Item {
                         }
                     }
                 }
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.NoButton
+            visible: root.workspaceScrollSwitchEnabled
+            onWheel: wheel => {
+                const offset = wheel.angleDelta.y > 0 ? -1 : 1;
+                root.mainInstance?.switchWorkspaceByOffset(root.screenName, offset);
+                wheel.accepted = true;
             }
         }
     }

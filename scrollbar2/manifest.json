@@ -236,7 +236,8 @@
       },
       "mouseInteraction": {
         "scrollWheelFocus": true,
-        "middleClickClose": true
+        "middleClickClose": true,
+        "workspaceScrollSwitch": false
       },
       "customStyleRules": [],
       "_presets": [],

@@ -877,6 +877,38 @@ Item {
         return null;
     }
 
+    function switchWorkspaceByOffset(screenName, offset) {
+        if (!CompositorService.workspaces || CompositorService.workspaces.count === 0)
+            return;
+
+        const normalizedScreenName = String(screenName || "").toLowerCase();
+        const candidates = [];
+        const total = CompositorService.workspaces.count;
+        for (let i = 0; i < total; i++) {
+            const ws = CompositorService.workspaces.get(i);
+            if (workspaceOutputMatches(ws, normalizedScreenName))
+                candidates.push(ws);
+        }
+
+        if (candidates.length <= 1)
+            return;
+
+        let current = 0;
+        for (let j = 0; j < candidates.length; j++) {
+            if (candidates[j].isFocused) {
+                current = j;
+                break;
+            }
+        }
+
+        let next = current + offset;
+        next = ((next % candidates.length) + candidates.length) % candidates.length;
+        if (next === current)
+            return;
+
+        CompositorService.switchToWorkspace(candidates[next]);
+    }
+
     function resolveSpecialWorkspaceForScreen(screenName) {
         const normalizedScreenName = String(screenName || "").trim().toLowerCase();
         for (const monitorName in activeSpecialByMonitor) {

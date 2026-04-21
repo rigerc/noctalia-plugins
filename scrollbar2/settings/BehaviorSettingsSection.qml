@@ -211,6 +211,15 @@ ColumnLayout {
                 onToggled: checked => rootSettings?.setSetting("mouseInteraction", "middleClickClose", checked)
                 defaultValue: rootSettings?.defaultValue("mouseInteraction", "middleClickClose") ?? true
             }
+
+            NToggle {
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.mouseInteraction.workspaceScrollSwitch.label")
+                description: rootSettings?.pluginApi?.tr("settings.mouseInteraction.workspaceScrollSwitch.desc")
+                checked: rootSettings?.settingValue("mouseInteraction", "workspaceScrollSwitch") ?? false
+                onToggled: checked => rootSettings?.setSetting("mouseInteraction", "workspaceScrollSwitch", checked)
+                defaultValue: rootSettings?.defaultValue("mouseInteraction", "workspaceScrollSwitch") ?? false
+            }
         }
     }
 }
