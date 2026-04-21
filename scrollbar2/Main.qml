@@ -14,16 +14,32 @@ Item {
     property var currentSettings: pluginApi?.pluginSettings || ({})
     property var defaults: pluginApi?.manifest?.metadata?.defaultSettings || ({})
 
-    property var allEntries: []
+    property var entryOrder: []
+    property var entryRecordsByKey: ({})
     property var liveEntriesByKey: ({})
     property var titleEntriesByKey: ({})
+    property var sharedTitleByKey: ({})
     property var compositorWorkspaces: []
     property string activeEntryKey: ""
-    property int structureRevision: 0
+    property int entryModelRevision: 0
+    property int entryStateRevision: 0
     property int liveRevision: 0
     property int titleRevision: 0
     property int workspaceRevision: 0
     property int activeSpecialRevision: 0
+    readonly property int structureRevision: entryModelRevision
+    readonly property var allEntries: entryOrder.map(function (entryKey) {
+        return entryRecordsByKey?.[entryKey];
+    }).filter(function (entry) {
+        return !!entry;
+    })
+    property string lastEntryModelSignature: ""
+    property string lastEntryStateSignature: ""
+    property string lastLiveSignature: ""
+    property string lastTitleSignature: ""
+    property string lastWorkspaceSignature: ""
+    property bool snapshotsInitialized: false
+    property bool workspaceSnapshotInitialized: false
     property var cycleStateByApp: ({})
     property var _desktopEntryIdCache: ({})
     property var activeSpecialByMonitor: ({})
@@ -831,9 +847,32 @@ Item {
         }
     }
 
-    function refreshWorkspaceSnapshot() {
-        compositorWorkspaces = collectWorkspaces().map(cloneWorkspaceData);
-        workspaceRevision += 1;
+    function getWorkspaceSignature(workspaces) {
+        return (workspaces || []).map(function (workspace) {
+            return String(workspace?.id ?? "")
+                + "|" + String(workspace?.idx ?? "")
+                + "|" + String(workspace?.name ?? "")
+                + "|" + String(workspace?.output ?? "")
+                + "|" + String(workspace?.isFocused === true)
+                + "|" + String(workspace?.isActive === true)
+                + "|" + String(workspace?.isUrgent === true)
+                + "|" + String(workspace?.isOccupied === true);
+        }).join("||");
+    }
+
+    function refreshWorkspaceSnapshot(nextWorkspaces) {
+        const workspaceData = Array.isArray(nextWorkspaces) ? nextWorkspaces : collectWorkspaces().map(cloneWorkspaceData);
+        const nextWorkspaceSignature = getWorkspaceSignature(workspaceData);
+        const workspaceChanged = !workspaceSnapshotInitialized || nextWorkspaceSignature !== lastWorkspaceSignature;
+
+        if (workspaceChanged) {
+            compositorWorkspaces = workspaceData;
+            lastWorkspaceSignature = nextWorkspaceSignature;
+            workspaceRevision += 1;
+        }
+
+        workspaceSnapshotInitialized = true;
+        return nextWorkspaceSignature;
     }
 
     function workspaceToken(workspace) {
@@ -968,25 +1007,32 @@ Item {
         return appIds;
     }
 
-    function buildEntries(windows) {
+    function buildEntrySnapshot(windows) {
         const appCounts = ({});
         const titleCounts = ({});
-        const entries = (windows || []).map(function (window) {
+        const entryOrder = [];
+        const entryRecordsByKey = ({});
+        const titleEntriesByKey = ({});
+
+        (windows || []).forEach(function (window) {
+            const entryKey = getWindowKey(window);
+            if (!entryKey)
+                return;
+
             const canonicalAppId = String(resolveToDesktopEntryId(window?.appId || "") || window?.appId || "");
             const title = String(window?.title || getAppNameFromDesktopEntry(window?.appId || "") || "");
             const tags = normalizeWindowTags(window?.tags);
             const groupedWindowAddresses = cloneStringArray(window?.groupedWindowAddresses);
 
+            entryOrder.push(entryKey);
             appCounts[canonicalAppId] = (appCounts[canonicalAppId] || 0) + (canonicalAppId !== "" ? 1 : 0);
             titleCounts[title] = (titleCounts[title] || 0) + (title !== "" ? 1 : 0);
-
-            return {
+            titleEntriesByKey[entryKey] = title;
+            entryRecordsByKey[entryKey] = {
                 "id": window.id,
-                "entryKey": getWindowKey(window),
+                "entryKey": entryKey,
                 "appId": window.appId || "",
                 "canonicalAppId": canonicalAppId,
-                "fallbackTitle": title,
-                "title": title,
                 "output": window.output || "",
                 "workspaceId": window.workspaceId,
                 "x": window?.x,
@@ -998,21 +1044,31 @@ Item {
                 "groupedWindowAddresses": groupedWindowAddresses,
                 "isGrouped": window?.isGrouped === true || groupedWindowAddresses.length > 0,
                 "niriColumnIndex": window?.niriColumnIndex,
-                "niriTileIndex": window?.niriTileIndex
+                "niriTileIndex": window?.niriTileIndex,
+                "sharesAppIdentity": canonicalAppId !== "" && (appCounts[canonicalAppId] || 0) > 1
             };
         });
 
-        return entries.map(function (entry) {
-            const canonicalAppId = String(entry?.canonicalAppId || "");
-            const title = String(entry?.title || "");
-            return Object.assign({}, entry, {
-                "sharesAppIdentity": canonicalAppId !== "" && (appCounts[canonicalAppId] || 0) > 1,
-                "sharesTitleIdentity": title !== "" && (titleCounts[title] || 0) > 1
+        const sharedTitleByKey = ({});
+
+        entryOrder.forEach(function (entryKey) {
+            const entry = entryRecordsByKey[entryKey] || ({});
+            const title = String(titleEntriesByKey?.[entryKey] || "");
+            entryRecordsByKey[entryKey] = Object.assign({}, entry, {
+                "sharesAppIdentity": String(entry?.canonicalAppId || "") !== "" && (appCounts[entry.canonicalAppId] || 0) > 1
             });
+            sharedTitleByKey[entryKey] = title !== "" && (titleCounts[title] || 0) > 1;
         });
+
+        return {
+            "entryOrder": entryOrder,
+            "entryRecordsByKey": entryRecordsByKey,
+            "titleEntriesByKey": titleEntriesByKey,
+            "sharedTitleByKey": sharedTitleByKey
+        };
     }
 
-    function buildLiveEntries(entries, windows) {
+    function buildLiveEntries(entryOrder, entryRecords, windows) {
         const windowsByKey = ({});
         const stateEntries = ({});
 
@@ -1022,10 +1078,11 @@ Item {
                 windowsByKey[key] = window;
         });
 
-        (entries || []).forEach(function (entry) {
-            const window = windowsByKey[entry.entryKey] || null;
-            stateEntries[entry.entryKey] = {
-                "id": window?.id ?? entry.id ?? "",
+        (entryOrder || []).forEach(function (entryKey) {
+            const entry = entryRecords?.[entryKey] || null;
+            const window = windowsByKey[entryKey] || null;
+            stateEntries[entryKey] = {
+                "id": window?.id ?? entry?.id ?? "",
                 "isFocused": !!window?.isFocused
             };
         });
@@ -1033,22 +1090,50 @@ Item {
         return stateEntries;
     }
 
-    function buildTitleEntries(entries, windows) {
-        const windowsByKey = ({});
-        const titles = ({});
+    function getEntryModelSignature(entryOrderSource, entryRecords, workspaceSignature) {
+        return (entryOrderSource || []).map(function (entryKey) {
+            const entry = entryRecords?.[entryKey] || ({});
+            return entryKey + "|"
+                + String(entry?.output || "") + "|"
+                + String(entry?.workspaceId ?? "");
+        }).join("||") + "::" + String(workspaceSignature || "");
+    }
 
-        (windows || []).forEach(function (window) {
-            const key = getWindowKey(window);
-            if (key)
-                windowsByKey[key] = window;
-        });
+    function getEntryStateSignature(entryOrderSource, entryRecords) {
+        return (entryOrderSource || []).map(function (entryKey) {
+            const entry = entryRecords?.[entryKey] || ({});
+            return entryKey + "|"
+                + String(entry?.id ?? "") + "|"
+                + String(entry?.appId || "") + "|"
+                + String(entry?.canonicalAppId || "") + "|"
+                + String(entry?.x ?? "") + "|"
+                + String(entry?.y ?? "") + "|"
+                + String(entry?.isFloating === true) + "|"
+                + String(entry?.isUrgent === true) + "|"
+                + JSON.stringify(entry?.tags || []) + "|"
+                + JSON.stringify(entry?.groupedWindowAddresses || []) + "|"
+                + String(entry?.isGrouped === true) + "|"
+                + String(entry?.niriColumnIndex ?? "") + "|"
+                + String(entry?.niriTileIndex ?? "") + "|"
+                + String(entry?.sharesAppIdentity === true);
+        }).join("||");
+    }
 
-        (entries || []).forEach(function (entry) {
-            const window = windowsByKey[entry.entryKey] || null;
-            titles[entry.entryKey] = window?.title || entry.fallbackTitle || "";
-        });
+    function getLiveSignature(entryOrderSource, stateEntries) {
+        return (entryOrderSource || []).map(function (entryKey) {
+            const stateEntry = stateEntries?.[entryKey] || ({});
+            return entryKey + "|"
+                + String(stateEntry?.id ?? "") + "|"
+                + String(stateEntry?.isFocused === true);
+        }).join("||");
+    }
 
-        return titles;
+    function getTitleSignature(entryOrderSource, titlesByKey, sharedTitlesByKey) {
+        return (entryOrderSource || []).map(function (entryKey) {
+            return entryKey + "|"
+                + String(titlesByKey?.[entryKey] || "") + "|"
+                + String(sharedTitlesByKey?.[entryKey] === true);
+        }).join("||");
     }
 
     function getFocusedEntryKey(entries) {
@@ -1061,27 +1146,80 @@ Item {
     }
 
     function updateSnapshots(reason) {
-        refreshWorkspaceSnapshot();
+        const nextWorkspaces = collectWorkspaces().map(cloneWorkspaceData);
+        const nextWorkspaceSignature = refreshWorkspaceSnapshot(nextWorkspaces);
         const windows = collectWindows();
-        const nextEntries = buildEntries(windows);
-        const nextLiveEntries = buildLiveEntries(nextEntries, windows);
-        const nextTitles = buildTitleEntries(nextEntries, windows);
+        const nextSnapshot = buildEntrySnapshot(windows);
+        const nextLiveEntries = buildLiveEntries(nextSnapshot.entryOrder, nextSnapshot.entryRecordsByKey, windows);
+        const nextEntryModelSignature = getEntryModelSignature(nextSnapshot.entryOrder, nextSnapshot.entryRecordsByKey, nextWorkspaceSignature);
+        const nextEntryStateSignature = getEntryStateSignature(nextSnapshot.entryOrder, nextSnapshot.entryRecordsByKey);
+        const nextLiveSignature = getLiveSignature(nextSnapshot.entryOrder, nextLiveEntries);
+        const nextTitleSignature = getTitleSignature(nextSnapshot.entryOrder, nextSnapshot.titleEntriesByKey, nextSnapshot.sharedTitleByKey);
+        const modelChanged = !snapshotsInitialized || nextEntryModelSignature !== lastEntryModelSignature;
+        const stateChanged = !snapshotsInitialized || nextEntryStateSignature !== lastEntryStateSignature;
+        const liveChanged = !snapshotsInitialized || nextLiveSignature !== lastLiveSignature;
+        const titleChanged = !snapshotsInitialized || nextTitleSignature !== lastTitleSignature;
 
-        allEntries = nextEntries;
-        liveEntriesByKey = nextLiveEntries;
-        titleEntriesByKey = nextTitles;
-        activeEntryKey = getFocusedEntryKey(nextLiveEntries);
-        structureRevision += 1;
-        liveRevision += 1;
-        titleRevision += 1;
+        if (modelChanged) {
+            entryModelRevision += 1;
+            lastEntryModelSignature = nextEntryModelSignature;
+        }
+
+        if (modelChanged || stateChanged) {
+            entryOrder = nextSnapshot.entryOrder;
+            entryRecordsByKey = nextSnapshot.entryRecordsByKey;
+            entryStateRevision += 1;
+            lastEntryStateSignature = nextEntryStateSignature;
+        }
+
+        if (modelChanged || titleChanged) {
+            titleEntriesByKey = nextSnapshot.titleEntriesByKey;
+            sharedTitleByKey = nextSnapshot.sharedTitleByKey;
+            titleRevision += 1;
+            lastTitleSignature = nextTitleSignature;
+        }
+
+        if (modelChanged || liveChanged) {
+            liveEntriesByKey = nextLiveEntries;
+            activeEntryKey = getFocusedEntryKey(nextLiveEntries);
+            liveRevision += 1;
+            lastLiveSignature = nextLiveSignature;
+        }
+
+        snapshotsInitialized = true;
+    }
+
+    function entryMatchesFilters(entry, screenName, onlySameOutput, onlyActiveWorkspaces, activeWorkspaceIds) {
+        if (!entry)
+            return false;
+        const outputMatch = (!onlySameOutput) || !screenName || entry.output === screenName;
+        const workspaceMatch = (!onlyActiveWorkspaces) || activeWorkspaceIds.includes(entry.workspaceId);
+        return outputMatch && workspaceMatch;
+    }
+
+    function getFilteredEntryKeys(screenName, onlySameOutput, onlyActiveWorkspaces) {
+        const activeWorkspaceIds = onlyActiveWorkspaces ? getActiveWorkspaceIds() : [];
+        return entryOrder.filter(function (entryKey) {
+            return entryMatchesFilters(entryRecordsByKey?.[entryKey], screenName, onlySameOutput, onlyActiveWorkspaces, activeWorkspaceIds);
+        });
+    }
+
+    function getEntryRecord(entryKey) {
+        return entryRecordsByKey?.[entryKey] || null;
+    }
+
+    function getEntryTitle(entryKey) {
+        return String(titleEntriesByKey?.[entryKey] || "");
+    }
+
+    function entryHasSharedTitle(entryKey) {
+        return sharedTitleByKey?.[entryKey] === true;
     }
 
     function getFilteredEntries(screenName, onlySameOutput, onlyActiveWorkspaces) {
         const activeWorkspaceIds = onlyActiveWorkspaces ? getActiveWorkspaceIds() : [];
         return allEntries.filter(function (entry) {
-            const outputMatch = (!onlySameOutput) || !screenName || entry.output === screenName;
-            const workspaceMatch = (!onlyActiveWorkspaces) || activeWorkspaceIds.includes(entry.workspaceId);
-            return outputMatch && workspaceMatch;
+            return entryMatchesFilters(entry, screenName, onlySameOutput, onlyActiveWorkspaces, activeWorkspaceIds);
         });
     }
 
@@ -1578,7 +1716,7 @@ Item {
         target: CompositorService
 
         function onWorkspacesChanged() {
-            root.refreshWorkspaceSnapshot();
+            root.updateSnapshots("workspacesChanged");
         }
 
         function onWindowListChanged() {
