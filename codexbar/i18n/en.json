@@ -1,0 +1,75 @@
+{
+  "widget": {
+    "tooltip": "AI Usage",
+    "noData": "No data",
+    "refreshing": "..."
+  },
+  "menu": {
+    "refresh": "Refresh",
+    "settings": "Widget settings"
+  },
+  "panel": {
+    "title": "AI Provider Usage",
+    "lastUpdated": "Updated",
+    "refresh": "Refresh",
+    "noProviders": "No providers detected",
+    "credits": "Credits",
+    "resetsAt": "Resets",
+    "resetsNow": "Now",
+    "status": "Status",
+    "usage": "Usage",
+    "left": "left"
+  },
+  "settings": {
+    "tabs": {
+      "general": "General",
+      "notifications": "Notifications",
+      "config": "Config"
+    },
+    "general": {
+      "description": "Configure bar widget appearance and refresh behavior",
+      "barIcon": {
+        "label": "Bar Icon",
+        "desc": "Icon name for the bar widget (e.g. mdi:sparkles)"
+      },
+      "barIconColor": {
+        "label": "Icon Color"
+      },
+      "refreshInterval": {
+        "label": "Refresh Interval",
+        "desc": "Seconds between data updates"
+      },
+      "defaultProvider": {
+        "label": "Default Provider",
+        "desc": "Provider shown in the bar widget"
+      }
+    },
+    "notifications": {
+      "description": "Configure when to show notifications",
+      "notifyOnReset": {
+        "label": "Notify on Reset",
+        "desc": "Show a notification when usage resets"
+      },
+      "notifyOnLowUsage": {
+        "label": "Notify on Low Usage",
+        "desc": "Alert when remaining usage is critically low"
+      },
+      "lowUsageThreshold": {
+        "label": "Low Usage Threshold (%)",
+        "desc": "Percentage remaining to trigger the low-usage alert"
+      }
+    },
+    "config": {
+      "title": "CodexBar Configuration",
+      "description": "Edit ~/.codexbar/config.json directly",
+      "save": "Save Config",
+      "openEditor": "Open in Editor"
+    }
+  },
+  "notifications": {
+    "resetTitle": "Usage Reset",
+    "resetBody": "Your {provider} usage has been reset",
+    "lowTitle": "Low Usage Warning",
+    "lowBody": "{provider}: only {percent}% remaining"
+  }
+}

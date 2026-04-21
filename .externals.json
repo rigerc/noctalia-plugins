@@ -12,6 +12,30 @@
       "url": "https://github.com/noctalia-dev/noctalia-shell.git",
       "branch": "main",
       "sparse": []
+    },
+    {
+      "name": "quickshell",
+      "url": "https://github.com/quickshell-mirror/quickshell.git",
+      "branch": "master",
+      "sparse": []
+    },
+    {
+      "name": "noctalia-plugins",
+      "url": "https://github.com/noctalia-dev/noctalia-plugins.git",
+      "branch": "main",
+      "sparse": []
+    },
+    {
+      "name": "codexbar",
+      "url": "https://github.com/steipete/codexbar",
+      "branch": "main",
+      "sparse": []
+    },
+    {
+      "name": "coding_agent_usage_tracker",
+      "url": "https://github.com/Dicklesworthstone/coding_agent_usage_tracker",
+      "branch": "main",
+      "sparse": []
     }
   ]
 }

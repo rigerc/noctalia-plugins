@@ -1,0 +1,1022 @@
+{
+  "common": {
+    "auto": "Auto",
+    "cancel": "Cancel"
+  },
+  "menu": {
+    "focus": "Focus window",
+    "closeWindow": "Close window",
+    "pinToBar": "Pin to bar",
+    "unpinFromBar": "Unpin from bar",
+    "addCustomStyleRule": "Add Custom Style Rule",
+    "editCustomStyleRule": "Edit Custom Style Rule",
+    "settings": "Widget settings"
+  },
+  "options": {
+    "displayModeFloatingPanel": "Floating Panel",
+    "displayModeBar": "Bar",
+    "trackPositionTop": "Top",
+    "trackPositionBottom": "Bottom",
+    "focusAlignSegment": "Focused Segment",
+    "focusAlignCenter": "Centered Overlay",
+    "focusAlignLeft": "Left",
+    "focusAlignRight": "Right",
+    "verticalAlignTop": "Top",
+    "verticalAlignCenter": "Center",
+    "verticalAlignBottom": "Bottom",
+    "animationSpring": "Spring",
+    "animationEase": "Ease",
+    "animationLinear": "Linear",
+    "animationSmooth": "Smooth",
+    "gradientVertical": "Vertical",
+    "gradientHorizontal": "Horizontal",
+    "horizontalAlignLeft": "Left",
+    "horizontalAlignCenter": "Center",
+    "horizontalAlignRight": "Right",
+    "workspaceIndicatorId": "Workspace ID",
+    "workspaceIndicatorName": "Workspace Name",
+    "workspaceIndicatorLeft": "Left of Track",
+    "workspaceIndicatorRight": "Right of Track",
+    "specialWorkspaceOverlayStripped": "Name Without Prefix",
+    "specialWorkspaceOverlayRaw": "Raw Workspace Name",
+    "specialWorkspaceOverlayCustom": "Custom Label",
+    "pinnedAppsLeft": "Left of Track",
+    "pinnedAppsRight": "Right of Track",
+    "pinnedAppsFocusCycle": "Focus and Cycle",
+    "pinnedAppsStartNew": "Start New Instance",
+    "axisHorizontal": "Horizontal",
+    "axisVertical": "Vertical",
+    "fontWeightLight": "Light",
+    "fontWeightNormal": "Normal",
+    "fontWeightMedium": "Medium",
+    "fontWeightSemibold": "Semibold",
+    "fontWeightBold": "Bold"
+  },
+  "settings": {
+    "summary": "Configure `scrollbar2` as a compact bar widget or a reserve-space floating panel. Theme-aware colors use Noctalia color pickers and also allow custom hex values.",
+    "navTabs": {
+      "layout": "Layout",
+      "appearance": "Appearance",
+      "pinnedApps": "Pinned Apps",
+      "styleRules": "Style Rules",
+      "presets": "Save & Load"
+    },
+    "pages": {
+      "layout": "Placement, floating panel sizing, track geometry, and motion settings for the bar itself.",
+      "appearance": "Window labels, focus line styling, theme-aware colors, and workspace-related overlays.",
+      "pinnedApps": "Manage launcher behavior, spacing, colors, and the pinned app list beside the track.",
+      "styleRules": "Match windows by app ID, title, tags, or derived window state and override their icons, segment colors, and text styling.",
+      "presets": "Save and load presets, full backups, and separate custom style-rule exports."
+    },
+    "pageGroups": {
+      "layoutCore": {
+        "label": "Placement & Track",
+        "desc": "Mirror the structure from the design reference with panel controls first and core track geometry immediately after."
+      },
+      "motion": {
+        "label": "Filtering & Motion",
+        "desc": "Control which windows appear in the track and how transitions animate."
+      },
+      "labels": {
+        "label": "Window Labels & Focus Line",
+        "desc": "Adjust segment content, typography, spacing, and the active focus indicator."
+      },
+      "colors": {
+        "label": "Colors",
+        "desc": "Theme-aware track, segment, icon, and title colors, with support for custom hex values."
+      },
+      "workspaces": {
+        "label": "Workspace Extras",
+        "desc": "Optional workspace indicator and special workspace overlay controls grouped under appearance."
+      }
+    },
+    "colorPicker": {
+      "label": "Select color",
+      "desc": "Choose a theme color or pick a custom color.",
+      "defaultColor": "Default color: {value}",
+      "defaultOpacity": "Default opacity: {value}",
+      "legacyCurrent": "{value} (current legacy value)",
+      "legacyDefault": "{value} (default legacy value)",
+      "opacity": {
+        "label": "Transparency",
+        "desc": "Expand to fine-tune opacity for this color.",
+        "valueLabel": "Opacity",
+        "valueDesc": "Adjust how transparent this color should be."
+      }
+    },
+    "colorOptions": {
+      "none": "None",
+      "primary": "Primary",
+      "onPrimary": "On Primary",
+      "secondary": "Secondary",
+      "onSecondary": "On Secondary",
+      "tertiary": "Tertiary",
+      "onTertiary": "On Tertiary",
+      "error": "Error",
+      "onError": "On Error",
+      "surface": "Surface",
+      "onSurface": "On Surface",
+      "surfaceVariant": "Surface Variant",
+      "onSurfaceVariant": "On Surface Variant",
+      "outline": "Outline",
+      "hover": "Hover",
+      "onHover": "On Hover",
+      "custom": "Custom color"
+    },
+    "display": {
+      "mode": {
+        "label": "Placement",
+        "desc": "Choose whether the bar lives in the Noctalia bar or as a reserve-space floating panel."
+      },
+      "scale": {
+        "label": "Floating Panel Scale",
+        "desc": "Scale the floating panel renderer without changing the saved base dimensions."
+      },
+      "margin": {
+        "label": "Floating Panel Margin",
+        "desc": "Padding between the floating panel background and the bar itself."
+      },
+      "offsetH": {
+        "label": "Horizontal Offset",
+        "desc": "Move the floating panel left or right from its centered position."
+      },
+      "offsetV": {
+        "label": "Vertical Offset",
+        "desc": "Move the floating panel away from or toward the screen edge."
+      },
+      "radiusScale": {
+        "label": "Background Radius Scale",
+        "desc": "Scale the floating panel background corner radius."
+      },
+      "backgroundColor": {
+        "label": "Background Color",
+        "desc": "Theme key or hex color for the floating panel background, or `none`."
+      },
+      "backgroundOpacity": {
+        "label": "Background Opacity",
+        "desc": "Opacity of the floating panel background."
+      },
+      "gradientEnabled": {
+        "label": "Enable Background Gradient",
+        "desc": "Overlay a transparent-to-color gradient over the floating panel background."
+      },
+      "gradientColor": {
+        "label": "Gradient Color",
+        "desc": "Theme key or hex color for the floating panel gradient."
+      },
+      "gradientOpacity": {
+        "label": "Gradient Opacity",
+        "desc": "Opacity of the floating panel gradient."
+      },
+      "gradientDirection": {
+        "label": "Gradient Direction",
+        "desc": "Choose whether the gradient runs vertically or horizontally."
+      }
+    },
+    "filtering": {
+      "sameOutput": {
+        "label": "Only Same Output",
+        "desc": "Show only windows from the current screen."
+      },
+      "activeWorkspaces": {
+        "label": "Only Active Workspaces",
+        "desc": "Hide windows from inactive workspaces."
+      }
+    },
+    "mouseInteraction": {
+      "scrollWheelFocus": {
+        "label": "Scroll to Focus",
+        "desc": "Use scroll wheel over the bar to cycle focus between windows."
+      },
+      "middleClickClose": {
+        "label": "Middle Click to Close",
+        "desc": "Close windows by middle-clicking their segments."
+      },
+      "workspaceScrollSwitch": {
+        "label": "Scroll Workspace on Indicator",
+        "desc": "Scroll the mouse wheel over the workspace indicator to switch between workspaces."
+      }
+    },
+    "track": {
+      "position": {
+        "label": "Track Position",
+        "desc": "For Floating Panel mode, pin the track to the top or bottom edge."
+      },
+      "width": {
+        "label": "Track Width",
+        "desc": "Width of the track as a percentage of the screen width."
+      },
+      "thickness": {
+        "label": "Track Thickness",
+        "desc": "Thickness of the track line."
+      },
+      "verticalAlign": {
+        "label": "Track Alignment",
+        "desc": "Where the track line sits inside the transparent container."
+      },
+      "segmentSpacing": {
+        "label": "Segment Spacing",
+        "desc": "Gap between equal-width window segments."
+      },
+      "borderRadius": {
+        "label": "Track Radius",
+        "desc": "Corner radius of the track line."
+      },
+      "edgeFade": {
+        "leftEnabled": {
+          "label": "Fade Left Edge",
+          "desc": "Fade the left edge of the main track into transparency."
+        },
+        "rightEnabled": {
+          "label": "Fade Right Edge",
+          "desc": "Fade the right edge of the main track into transparency."
+        },
+        "width": {
+          "label": "Fade Width",
+          "desc": "Horizontal size of each enabled edge fade."
+        }
+      },
+      "opacity": {
+        "label": "Track Opacity",
+        "desc": "Overall opacity of the track line."
+      },
+      "color": {
+        "label": "Track Color",
+        "desc": "Theme key or hex color for the track line."
+      },
+      "separatorColor": {
+        "label": "Separator Color",
+        "desc": "Theme key or hex color applied to the track line between segments."
+      },
+      "shadowEnabled": {
+        "label": "Enable Track Shadow",
+        "desc": "Render a drop shadow under the track line."
+      }
+    },
+    "section": {
+      "display": {
+        "label": "Display & Floating Panel",
+        "desc": "Placement mode and reserve-space floating panel settings."
+      },
+      "mouseInteraction": {
+        "label": "Mouse Interaction",
+        "desc": "Configure mouse-based behaviors for window segments."
+      },
+      "track": {
+        "label": "Track Geometry",
+        "desc": "Width, spacing, sizing, and alignment controls for the track line."
+      },
+      "window": {
+        "label": "Window Labels",
+        "desc": "Toggle labels, choose alignment, and configure typography and scaling."
+      },
+      "focusLine": {
+        "label": "Focus Line",
+        "desc": "Animation strip geometry and behavior."
+      },
+      "trackColors": {
+        "label": "Track Color",
+        "desc": "Theme-aware color for the track line."
+      },
+      "focusColors": {
+        "label": "Focus Colors",
+        "desc": "Focused, hover, and default colors used by the focus system."
+      },
+      "windowColors": {
+        "label": "Window Colors",
+        "desc": "Icon and title colors for focused, hover, and default states."
+      },
+      "filtering": {
+        "label": "Filtering",
+        "desc": "Control which windows appear in the bar."
+      },
+      "animation": {
+        "label": "Animation",
+        "desc": "Focus movement and transition timing."
+      },
+      "workspaceIndicator": {
+        "label": "Workspace Indicator",
+        "desc": "Show the active workspace beside the track with optional count badge styling."
+      },
+      "specialWorkspaceOverlay": {
+        "label": "Special Workspace Overlay",
+        "desc": "Show the active Hyprland special workspace centered across the track."
+      },
+      "pinnedApps": {
+        "label": "Pinned Apps",
+        "desc": "Render pinned launchers beside the track and manage per-app custom icons."
+      },
+      "customStyleRules": {
+        "label": "Custom Style Rules",
+        "desc": "Override segment colors for matching windows using ordered regex rules."
+      }
+    },
+    "focusLine": {
+      "thickness": {
+        "label": "Focus Thickness",
+        "desc": "Height of the moving focus indicator or the fade-state fill."
+      },
+      "width": {
+        "label": "Focus Width",
+        "desc": "Width of the moving focus indicator as a percentage of the segment."
+      },
+      "borderRadius": {
+        "label": "Focus Radius",
+        "desc": "Corner radius of the focus indicator."
+      },
+      "verticalAlign": {
+        "label": "Focus Alignment",
+        "desc": "Where the focus strip sits inside the transparent container."
+      },
+      "opacity": {
+        "label": "Focus Opacity",
+        "desc": "Opacity of the focus indicator."
+      },
+      "lineColor": {
+        "label": "Focus Line Color",
+        "desc": "Color of the moving focus indicator line."
+      },
+      "colors": {
+        "focused": {
+          "enabled": {
+            "label": "Enable Focused Color",
+            "desc": "Show a background fill for the active segment."
+          },
+          "label": "Focused Color",
+          "desc": "Theme key or hex color for the active segment."
+        },
+        "hover": {
+          "enabled": {
+            "label": "Enable Hover Color",
+            "desc": "Show a background fill when hovering a segment."
+          },
+          "label": "Hover Color",
+          "desc": "Theme key or hex color for hovered segments."
+        },
+        "default": {
+          "enabled": {
+            "label": "Enable Default Color",
+            "desc": "Show a background fill for resting segments."
+          },
+          "label": "Default Color",
+          "desc": "Theme key or hex color for resting segments."
+        }
+      }
+    },
+    "window": {
+      "showIcon": {
+        "label": "Show Icons",
+        "desc": "Render application icons inside each segment."
+      },
+      "showTitle": {
+        "label": "Show Titles",
+        "desc": "Render window titles inside each segment."
+      },
+      "focusedOnly": {
+        "label": "Focused Only",
+        "desc": "Only show label content for the focused segment."
+      },
+      "dragReorderEnabled": {
+        "label": "Enable Drag Reordering",
+        "desc": "Allow dragging tiled window segments to reorder them in the compositor."
+      },
+      "focusedAlign": {
+        "label": "Focused Label Alignment",
+        "desc": "Where focused-only labels should appear."
+      },
+      "borderRadius": {
+        "label": "Window Radius",
+        "desc": "Corner radius of each window segment background."
+      },
+      "margin": {
+        "label": "Window Margin",
+        "desc": "Inset around each window segment background and its content."
+      },
+      "paddingLeft": {
+        "label": "Left Padding",
+        "desc": "Left inner padding for window content inside each segment."
+      },
+      "paddingRight": {
+        "label": "Right Padding",
+        "desc": "Right inner padding for window content inside each segment."
+      },
+      "font": {
+        "label": "Font Family",
+        "desc": "Font family used for window titles."
+      },
+      "fontSize": {
+        "label": "Font Size",
+        "desc": "Base size of the window title text."
+      },
+      "fontWeights": {
+        "focused": {
+          "label": "Focused Font Weight",
+          "desc": "Font weight used for focused window titles."
+        },
+        "hover": {
+          "label": "Hover Font Weight",
+          "desc": "Font weight used for hovered window titles."
+        },
+        "default": {
+          "label": "Inactive Font Weight",
+          "desc": "Font weight used for inactive window titles."
+        }
+      },
+      "iconScale": {
+        "label": "Icon Scale",
+        "desc": "Scale multiplier applied to application icons."
+      },
+      "iconAlign": {
+        "label": "Icon Alignment",
+        "desc": "Horizontal alignment of icons inside each segment."
+      },
+      "titleScale": {
+        "label": "Title Scale",
+        "desc": "Scale multiplier applied to title text."
+      },
+      "titleAlign": {
+        "label": "Title Alignment",
+        "desc": "Horizontal alignment of window titles inside each segment."
+      },
+      "animation": {
+        "sectionLabel": "Window Open / Close Animation",
+        "sectionDesc": "Animate window segments when entries appear, disappear, and reflow across the track.",
+        "enabled": {
+          "label": "Enable Window Animation",
+          "desc": "Use dedicated motion settings for window open and close transitions."
+        },
+        "openEnabled": {
+          "label": "Animate Open",
+          "desc": "Scale and fade new window segments in when they appear."
+        },
+        "closeEnabled": {
+          "label": "Animate Close",
+          "desc": "Keep removed windows visible briefly so they can animate out before disappearing."
+        },
+        "type": {
+          "label": "Animation Type",
+          "desc": "Choose the motion style used for window lifecycle changes."
+        },
+        "speed": {
+          "label": "Animation Speed",
+          "desc": "Transition duration in milliseconds for window open and close motion."
+        }
+      },
+      "iconColors": {
+        "focused": {
+          "label": "Focused Icon Color",
+          "desc": "Theme key or hex color for focused icons."
+        },
+        "hover": {
+          "label": "Hover Icon Color",
+          "desc": "Theme key or hex color for hovered icons."
+        },
+        "default": {
+          "label": "Default Icon Color",
+          "desc": "Theme key or hex color for idle icons."
+        }
+      },
+      "titleColors": {
+        "focused": {
+          "label": "Focused Title Color",
+          "desc": "Theme key or hex color for focused titles."
+        },
+        "hover": {
+          "label": "Hover Title Color",
+          "desc": "Theme key or hex color for hovered titles."
+        },
+        "default": {
+          "label": "Default Title Color",
+          "desc": "Theme key or hex color for idle titles."
+        }
+      }
+    },
+    "animation": {
+      "enabled": {
+        "label": "Enable Animation",
+        "desc": "Animate focus movement and color changes."
+      },
+      "type": {
+        "label": "Animation Type",
+        "desc": "Choose how the focus indicator transitions between windows."
+      },
+      "speed": {
+        "label": "Animation Speed",
+        "desc": "Transition duration in milliseconds."
+      }
+    },
+    "workspaceIndicator": {
+      "enabled": {
+        "label": "Show Workspace Indicator",
+        "desc": "Render the active workspace beside the window track."
+      },
+      "labelMode": {
+        "label": "Workspace Text",
+        "desc": "Choose whether to show the active workspace id or name."
+      },
+      "presetText": {
+        "label": "Preset Text",
+        "desc": "Optional prefix text shown before the active workspace value."
+      },
+      "position": {
+        "label": "Position",
+        "desc": "Place the workspace indicator on the left or right side of the track."
+      },
+      "verticalAlign": {
+        "label": "Vertical Position",
+        "desc": "Align the workspace indicator to the top, center, or bottom."
+      },
+      "paddingX": {
+        "label": "Horizontal Padding",
+        "desc": "Inner horizontal padding for the workspace capsule."
+      },
+      "paddingY": {
+        "label": "Vertical Padding",
+        "desc": "Inner vertical padding for the workspace capsule."
+      },
+      "marginLeft": {
+        "label": "Left Margin",
+        "desc": "Spacing on the left side of the workspace indicator."
+      },
+      "marginRight": {
+        "label": "Right Margin",
+        "desc": "Spacing on the right side of the workspace indicator."
+      },
+      "borderRadius": {
+        "label": "Border Radius",
+        "desc": "Corner radius of the workspace indicator background."
+      },
+      "background": {
+        "label": "Background",
+        "desc": "Background color and opacity for the workspace indicator."
+      },
+      "font": {
+        "family": {
+          "label": "Font Family",
+          "desc": "Font family used for the workspace text."
+        },
+        "size": {
+          "label": "Font Size",
+          "desc": "Base size of the workspace text."
+        },
+        "weight": {
+          "label": "Font Weight",
+          "desc": "Font weight used for the workspace text."
+        },
+        "color": {
+          "label": "Text Color",
+          "desc": "Text color and opacity for the workspace label."
+        }
+      },
+      "badge": {
+        "sectionLabel": "Window Count Badge",
+        "sectionDesc": "Optional badge showing how many windows are on the active workspace for this screen.",
+        "enabled": {
+          "label": "Show Window Count Badge",
+          "desc": "Render a badge with the active workspace window count."
+        },
+        "background": {
+          "label": "Badge Background",
+          "desc": "Background color and opacity for the count badge."
+        },
+        "font": {
+          "family": {
+            "label": "Badge Font Family",
+            "desc": "Font family used for the count badge text."
+          },
+          "size": {
+            "label": "Badge Font Size",
+            "desc": "Base size of the count badge text."
+          },
+          "weight": {
+            "label": "Badge Font Weight",
+            "desc": "Font weight used for the count badge text."
+          },
+          "color": {
+            "label": "Badge Text Color",
+            "desc": "Text color and opacity for the count badge."
+          }
+        }
+      },
+      "animation": {
+        "sectionLabel": "Workspace Animation",
+        "sectionDesc": "Animate the workspace indicator when the active workspace changes.",
+        "enabled": {
+          "label": "Animate On Change",
+          "desc": "Animate the workspace label and badge when the active workspace changes."
+        },
+        "type": {
+          "label": "Animation Type",
+          "desc": "Choose the motion style for workspace indicator changes."
+        },
+        "axis": {
+          "label": "Animation Axis",
+          "desc": "Slide the workspace indicator horizontally or vertically during changes."
+        },
+        "speed": {
+          "label": "Animation Speed",
+          "desc": "Transition duration in milliseconds for workspace changes."
+        }
+      }
+    },
+    "specialWorkspaceOverlay": {
+      "enabled": {
+        "label": "Show Special Workspace Overlay",
+        "desc": "Render a centered overlay across the track when this screen has an active Hyprland special workspace."
+      },
+      "textMode": {
+        "label": "Label Mode",
+        "desc": "Choose whether to show the stripped special workspace name, the raw Hyprland name, or a fixed custom label."
+      },
+      "customLabel": {
+        "label": "Custom Label",
+        "desc": "Fixed text shown when the label mode is set to custom."
+      },
+      "showWindowIcons": {
+        "label": "Show Window Icons",
+        "desc": "Render icons for windows currently open on the active special workspace to the right of the overlay label."
+      },
+      "widthPercent": {
+        "label": "Overlay Width",
+        "desc": "Width of the overlay as a percentage of the track width."
+      },
+      "heightPercent": {
+        "label": "Overlay Height",
+        "desc": "Height of the overlay as a percentage of the available track container height."
+      },
+      "borderRadius": {
+        "label": "Border Radius",
+        "desc": "Corner radius of the special workspace overlay background."
+      },
+      "background": {
+        "label": "Background",
+        "desc": "Background color and opacity for the special workspace overlay."
+      },
+      "font": {
+        "family": {
+          "label": "Font Family",
+          "desc": "Font family used for the overlay label."
+        },
+        "size": {
+          "label": "Font Size",
+          "desc": "Base size of the overlay label text."
+        },
+        "weight": {
+          "label": "Font Weight",
+          "desc": "Font weight used for the overlay label."
+        },
+        "color": {
+          "label": "Text Color",
+          "desc": "Text color and opacity for the overlay label."
+        }
+      },
+      "animation": {
+        "sectionLabel": "Overlay Animation",
+        "sectionDesc": "Override the general motion settings for special workspace overlay swaps and show/hide transitions.",
+        "enabled": {
+          "label": "Animate Overlay Changes",
+          "desc": "Animate the overlay when the special workspace label or icons change."
+        },
+        "type": {
+          "label": "Animation Type",
+          "desc": "Choose the motion style for special workspace overlay changes."
+        },
+        "axis": {
+          "label": "Animation Axis",
+          "desc": "Slide the overlay content horizontally or vertically during label changes."
+        },
+        "speed": {
+          "label": "Animation Speed",
+          "desc": "Transition duration in milliseconds for overlay changes."
+        }
+      }
+    },
+    "pinnedApps": {
+      "position": {
+        "label": "Position",
+        "desc": "Place the pinned apps strip on the left or right side of the track."
+      },
+      "iconColor": {
+        "label": "Icon Color",
+        "desc": "Theme key or hex color applied to pinned app icons."
+      },
+      "marginLeft": {
+        "label": "Left Margin",
+        "desc": "Spacing on the left side of the pinned apps strip."
+      },
+      "marginRight": {
+        "label": "Right Margin",
+        "desc": "Spacing on the right side of the pinned apps strip."
+      },
+      "hideWhenActive": {
+        "label": "Hide When Active",
+        "desc": "Hide a pinned app whenever this widget already shows a visible window for that app."
+      },
+      "activateRunningBehavior": {
+        "label": "When Already Running",
+        "desc": "Choose whether clicking a visible pinned app focuses and cycles its visible windows or starts a new instance."
+      },
+      "items": {
+        "label": "Pinned App Overrides",
+        "desc": "Manage pinned apps added from the context menu and set custom icons for each one.",
+        "empty": "No pinned apps yet. Right-click a window segment and choose Pin to bar.",
+        "remove": "Remove"
+      },
+      "customIcon": {
+        "title": "Select Custom Icon",
+        "browse": "Browse File",
+        "clear": "Clear Icon",
+        "none": "No custom icon selected"
+      }
+    },
+    "customStyleRules": {
+      "empty": "No custom style rules yet. Add one here or create one from a segment context menu.",
+      "regexHelp": "Patterns use raw JavaScript regex when you need them. Examples: `^firefox$` for an exact app ID match, `YouTube` for a title substring regex, or `code` for a Hyprland tag match. Floating, urgent, grouped, tagged, and duplicate-state rules also work with an empty pattern. Rules are checked top to bottom and the first match wins.",
+      "ruleTitle": "Rule {index}",
+      "editing": "Editing target",
+      "enabled": {
+        "label": "Enabled",
+        "desc": "Disable this rule without removing it."
+      },
+      "matchField": {
+        "label": "Match Field",
+        "desc": "Choose which derived window value this regex should test against: app identity, live title, Hyprland tags, or one of the computed state matchers.",
+        "appId": "App ID",
+        "title": "Window Title",
+        "tag": "Window Tags",
+        "floating": "Floating Windows",
+        "urgent": "Urgent Windows",
+        "grouped": "Grouped Windows",
+        "sharedAppId": "Shared App ID",
+        "sharedTitle": "Shared Window Title"
+      },
+      "pattern": {
+        "label": "Regex Pattern",
+        "desc": "Enter a JavaScript regex pattern. Matching is case-sensitive unless you encode it in the pattern itself. Leave this empty for floating, urgent, grouped, tagged, or duplicate-state rules when you want the matcher to act as a simple toggle.",
+        "placeholder": "^firefox$",
+        "invalid": "This regex pattern is invalid and will be ignored until it is fixed."
+      },
+      "customIcon": {
+        "label": "Custom Icon",
+        "desc": "Optionally replace the matched app icon with a Noctalia icon from the icon picker.",
+        "pick": "Choose Icon",
+        "clear": "Clear Icon"
+      },
+      "segmentColors": {
+        "label": "Segment Colors",
+        "desc": "Background colors applied to matched segments by state."
+      },
+      "iconColors": {
+        "label": "Icon Colors",
+        "desc": "Icon tint colors applied to matched segments by state."
+      },
+      "titleColors": {
+        "label": "Title Colors",
+        "desc": "Title text colors applied to matched segments by state."
+      },
+      "blink": {
+        "label": "Blink Animation",
+        "desc": "Pulse a color overlay on the segment with a fade-in/fade-out effect.",
+        "enabled": {
+          "label": "Enable Blink",
+          "desc": "Animate a pulsing color overlay on matched segments."
+        },
+        "color": {
+          "label": "Blink Color",
+          "desc": "Theme key or hex color for the blink overlay."
+        },
+        "interval": {
+          "label": "Blink Interval",
+          "desc": "Duration of one full blink cycle in milliseconds."
+        }
+      },
+      "badge": {
+        "label": "Badge",
+        "desc": "Show a small colored dot on the icon, title, or segment.",
+        "enabled": {
+          "label": "Show Badge",
+          "desc": "Display a small indicator dot on matched segments."
+        },
+        "color": {
+          "label": "Badge Color",
+          "desc": "Theme key or hex color for the badge dot."
+        },
+        "target": {
+          "label": "Badge Target",
+          "desc": "Which element the badge should appear on.",
+          "icon": "Icon",
+          "title": "Title",
+          "segment": "Segment"
+        },
+        "position": {
+          "label": "Badge Position",
+          "desc": "Which corner of the target the badge appears in.",
+          "topLeft": "Top Left",
+          "topRight": "Top Right"
+        },
+        "size": {
+          "label": "Badge Size",
+          "desc": "Diameter of the badge dot in pixels."
+        }
+      },
+      "iconPrefix": {
+        "label": "Icon Prefix",
+        "desc": "Prepend a small icon before the window icon or title.",
+        "enabled": {
+          "label": "Enable Icon Prefix",
+          "desc": "Show a prefix icon before the selected target."
+        },
+        "target": {
+          "label": "Prefix Target",
+          "desc": "Whether the prefix appears before the icon or the title.",
+          "icon": "Before Icon",
+          "title": "Before Title"
+        },
+        "icon": {
+          "label": "Prefix Icon",
+          "desc": "Choose a tabler icon to display as prefix.",
+          "pick": "Choose Icon",
+          "clear": "Clear Icon"
+        },
+        "color": {
+          "label": "Prefix Color",
+          "desc": "Theme key or hex color for the prefix icon."
+        }
+      },
+      "actions": {
+        "add": "Add Rule",
+        "remove": "Remove Rule",
+        "moveUp": "Move Up",
+        "moveDown": "Move Down"
+      }
+    },
+    "tabs": {
+      "settings": "Settings",
+      "presets": "Save & Load"
+    },
+    "presets": {
+      "section": {
+        "label": "Save & Load",
+        "desc": "Manage presets, full backups, and separate custom style-rule transfer files."
+      },
+      "builtin": {
+        "label": "Built-in Presets",
+        "desc": "Curated starting points that apply settings without replacing your custom style rules."
+      },
+      "custom": {
+        "label": "Custom Presets",
+        "desc": "Your saved preset snapshots. Custom style rules are kept separate."
+      },
+      "customRules": {
+        "label": "Custom Rules",
+        "desc": "Export your current custom style rules or import additional rules without replacing the ones you already have.",
+        "export": "Export Custom Rules",
+        "import": "Import Custom Rules"
+      },
+      "empty": {
+        "label": "No custom presets yet",
+        "desc": "Save your current settings as a preset snapshot. Custom style rules stay separate."
+      },
+      "badge": "Built-in",
+      "active": "Active",
+      "actions": {
+        "apply": "Apply",
+        "details": "Details",
+        "export": "Export",
+        "save": "Save Current as Preset",
+        "rename": "Rename",
+        "update": "Update with Current",
+        "duplicate": "Duplicate",
+        "delete": "Delete",
+        "deleteAll": "Delete All Custom Presets",
+        "exportAll": "Export All Presets",
+        "importPreset": "Import Preset"
+      },
+      "backup": {
+        "label": "Settings Backup",
+        "desc": "Export or import a complete backup of settings, custom style rules, and presets.",
+        "export": "Export Backup",
+        "import": "Import Backup"
+      },
+      "import": {
+        "importedPreset": "Imported Preset",
+        "errors": {
+          "empty": "File is empty.",
+          "invalidJson": "Invalid JSON file.",
+          "invalidFormat": "Unrecognized file format.",
+          "unrecognized": "Not a scrollbar2 export file.",
+          "readFailed": "Failed to read file."
+        },
+        "report": {
+          "label": "Migration Report",
+          "migrated": "{count} deprecated setting(s) migrated to new format.",
+          "unknown": "{count} unrecognized setting(s) removed (file may be from a newer version).",
+          "customRulesIgnored": "{count} custom style rule(s) ignored for preset safety.",
+          "addedRules": "{count} custom style rule(s) ready to add.",
+          "skippedDuplicateRules": "{count} duplicate custom style rule(s) skipped."
+        }
+      },
+      "dialog": {
+        "save": {
+          "title": "Save Preset",
+          "desc": "Save your current settings as a new preset. Custom style rules are not included.",
+          "nameLabel": "Preset Name",
+          "nameDesc": "A short name for this preset.",
+          "namePlaceholder": "My Preset",
+          "descLabel": "Description",
+          "descDesc": "Optional description of this preset.",
+          "descPlaceholder": "A brief description...",
+          "save": "Save",
+          "nameRequired": "Name is required.",
+          "nameTooLong": "Name must be 32 characters or less.",
+          "descTooLong": "Description must be 120 characters or less.",
+          "nameExists": "A preset with this name already exists."
+        },
+        "delete": {
+          "title": "Delete Preset",
+          "desc": "Are you sure you want to delete \"{name}\"? This cannot be undone.",
+          "confirm": "Delete"
+        },
+        "deleteAll": {
+          "title": "Delete All Custom Presets",
+          "desc": "Are you sure you want to delete all {count} custom presets? This cannot be undone.",
+          "confirm": "Delete All"
+        },
+        "rename": {
+          "title": "Rename Preset",
+          "desc": "Enter a new name for this preset.",
+          "confirm": "Rename"
+        },
+        "duplicate": {
+          "title": "Duplicate Preset",
+          "desc": "Create a copy of \"{name}\".",
+          "confirm": "Duplicate"
+        },
+        "update": {
+          "title": "Update Preset",
+          "desc": "Overwrite \"{name}\" with your current settings? Custom style rules will stay separate.",
+          "confirm": "Update"
+        },
+        "details": {
+          "title": "Preset Details",
+          "desc": "Review the exact settings stored in this preset.",
+          "rowCount": "{count} values",
+          "empty": {
+            "label": "No stored settings",
+            "desc": "This preset does not contain any serialized settings."
+          }
+        },
+        "importConfirm": {
+          "title": "Confirm Import",
+          "backupDesc": "This will restore your saved settings and custom style rules, then merge presets.",
+          "presetDesc": "Add this preset to your custom presets? Embedded custom style rules will be ignored.",
+          "presetsDesc": "Import {count} presets?",
+          "customRulesDesc": "Append {count} imported custom style rule(s) to your current list. Exact duplicates will be skipped.",
+          "confirm": "Import"
+        },
+        "importError": {
+          "title": "Import Error"
+        }
+      },
+      "builtinPresets": {
+        "default": {
+          "name": "Default",
+          "desc": "Factory default configuration."
+        },
+        "minimal": {
+          "name": "Minimal",
+          "desc": "Ultra-thin track with no labels."
+        },
+        "bordered": {
+          "name": "Bordered",
+          "desc": "Thick track with sharp corners and visible separators."
+        },
+        "floating": {
+          "name": "Floating",
+          "desc": "Floating panel with background and gradient."
+        },
+        "compact": {
+          "name": "Compact",
+          "desc": "Tiny track with focused-only labels."
+        },
+        "indicator": {
+          "name": "Indicator",
+          "desc": "Track and focus line only, no window content."
+        },
+        "pill": {
+          "name": "Pill",
+          "desc": "Fully rounded track with smooth focus indicator."
+        }
+      },
+      "notifications": {
+        "saved": "Preset \"{name}\" saved.",
+        "renamed": "Preset renamed to \"{name}\".",
+        "duplicated": "Preset duplicated as \"{name}\".",
+        "deleted": "Preset \"{name}\" deleted.",
+        "deletedAll": "All custom presets deleted.",
+        "updated": "Preset \"{name}\" updated.",
+        "applied": "Preset \"{name}\" applied."
+      }
+    }
+  }
+}

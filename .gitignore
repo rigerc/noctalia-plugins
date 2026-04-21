@@ -6,3 +6,7 @@ CLAUDE.md
 */settings.json
 .notes/
 .fuse*
+scrollbar/test.sh
+.vsync.json
+opencode.json
+.mcp.json

@@ -1,0 +1,31 @@
+{
+  "id": "codexbar",
+  "name": "CodexBar",
+  "version": "1.0.0",
+  "minNoctaliaVersion": "4.6.6",
+  "author": "rigerc",
+  "license": "MIT",
+  "repository": "https://github.com/noctalia-dev/noctalia-plugins",
+  "description": "AI provider usage stats from the codexbar CLI in your bar.",
+  "tags": ["Bar", "Panel"],
+  "entryPoints": {
+    "main": "Main.qml",
+    "barWidget": "BarWidget.qml",
+    "panel": "Panel.qml",
+    "settings": "Settings.qml"
+  },
+  "dependencies": {
+    "plugins": []
+  },
+  "metadata": {
+    "defaultSettings": {
+      "barIcon": "mdi:sparkles",
+      "barIconColor": "on-surface",
+      "refreshInterval": 120,
+      "defaultProvider": "",
+      "notifyOnReset": true,
+      "notifyOnLowUsage": true,
+      "lowUsageThreshold": 20
+    }
+  }
+}

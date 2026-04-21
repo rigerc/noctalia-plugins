@@ -1,0 +1,247 @@
+{
+  "id": "scrollbar2",
+  "name": "Scrollbar2",
+  "version": "1.7.0",
+  "minNoctaliaVersion": "4.6.6",
+  "author": "rigerc",
+  "license": "MIT",
+  "repository": "https://github.com/noctalia-dev/noctalia-plugins",
+  "description": "A configurable window bar with equal-width segments, animated focus tracking, and optional floating panel placement.",
+  "tags": [
+    "Bar",
+    "Utility"
+  ],
+  "entryPoints": {
+    "main": "Main.qml",
+    "barWidget": "BarWidget.qml",
+    "settings": "Settings.qml"
+  },
+  "dependencies": {
+    "plugins": []
+  },
+  "metadata": {
+    "defaultSettings": {
+      "display": {
+        "mode": "bar",
+        "spaceMode": "reserve",
+        "offsetH": 0,
+        "offsetV": 0,
+        "scale": 1.0,
+        "margin": 0,
+        "radiusScale": 1.0,
+        "background": {
+          "color": "none",
+          "opacity": 0
+        },
+        "gradientEnabled": false,
+        "gradient": {
+          "color": "none",
+          "opacity": 0
+        },
+        "gradientDirection": "vertical"
+      },
+      "filtering": {
+        "onlySameOutput": true,
+        "onlyActiveWorkspaces": true
+      },
+      "track": {
+        "position": "bottom",
+        "verticalAlign": "bottom",
+        "thickness": 6,
+        "borderRadius": 3,
+        "shadowEnabled": true,
+        "fill": {
+          "color": "surface",
+          "opacity": 1
+        },
+        "separatorColor": "outline",
+        "width": 40,
+        "segmentSpacing": 4,
+        "edgeFade": {
+          "leftEnabled": false,
+          "rightEnabled": false,
+          "width": 24
+        }
+      },
+      "focusLine": {
+        "thickness": 6,
+        "width": 100,
+        "borderRadius": 3,
+        "verticalAlign": "bottom",
+        "opacity": 1,
+        "lineColor": {
+          "color": "primary",
+          "opacity": 1
+        },
+        "colors": {
+          "focused": {
+            "color": "primary",
+            "opacity": 1
+          },
+          "hover": {
+            "color": "hover",
+            "opacity": 1
+          },
+          "default": {
+            "color": "surface-variant",
+            "opacity": 1
+          }
+        }
+      },
+      "window": {
+        "showIcon": true,
+        "showTitle": true,
+        "dragReorderEnabled": true,
+        "focusedOnly": false,
+        "focusedAlign": "segment",
+        "borderRadius": 6,
+        "margin": 2,
+        "font": "JetBrains Mono",
+        "fontSize": 11,
+        "iconScale": 1,
+        "titleScale": 1,
+        "iconAlign": "center",
+        "titleAlign": "left",
+        "paddingLeft": 7,
+        "paddingRight": 7,
+        "fontWeights": {
+          "focused": "semibold",
+          "hover": "medium",
+          "default": "medium"
+        },
+        "iconColors": {
+          "focused": {
+            "color": "on-surface",
+            "opacity": 1
+          },
+          "hover": {
+            "color": "on-hover",
+            "opacity": 1
+          },
+          "default": {
+            "color": "on-surface-variant",
+            "opacity": 1
+          }
+        },
+        "titleColors": {
+          "focused": {
+            "color": "on-surface",
+            "opacity": 1
+          },
+          "hover": {
+            "color": "on-hover",
+            "opacity": 1
+          },
+          "default": {
+            "color": "on-surface-variant",
+            "opacity": 1
+          }
+        },
+        "animation": {
+          "enabled": null,
+          "openEnabled": true,
+          "closeEnabled": true,
+          "type": null,
+          "speed": null
+        }
+      },
+      "animation": {
+        "enabled": true,
+        "type": "spring",
+        "speed": 420
+      },
+      "workspaceIndicator": {
+        "enabled": false,
+        "labelMode": "id",
+        "presetText": "",
+        "position": "left",
+        "verticalAlign": "center",
+        "paddingX": 10,
+        "paddingY": 4,
+        "marginLeft": 8,
+        "marginRight": 8,
+        "borderRadius": 999,
+        "background": {
+          "color": "surface",
+          "opacity": 0.72
+        },
+        "font": {
+          "family": "JetBrains Mono",
+          "size": 11,
+          "weight": "medium",
+          "color": {
+            "color": "on-surface",
+            "opacity": 1
+          }
+        },
+        "badge": {
+          "enabled": false,
+          "background": {
+            "color": "primary",
+            "opacity": 1
+          },
+          "font": {
+            "family": "JetBrains Mono",
+            "size": 10,
+            "weight": "semibold",
+            "color": {
+              "color": "on-primary",
+              "opacity": 1
+            }
+          }
+        },
+        "animation": {
+          "enabled": true,
+          "axis": "horizontal",
+          "type": "smooth",
+          "speed": 220
+        }
+      },
+      "specialWorkspaceOverlay": {
+        "enabled": false,
+        "textMode": "stripped",
+        "customLabel": "",
+        "showWindowIcons": false,
+        "widthPercent": 100,
+        "heightPercent": 70,
+        "borderRadius": null,
+        "background": {
+          "color": "surface",
+          "opacity": 0.82
+        },
+        "font": {
+          "family": "JetBrains Mono",
+          "size": 11,
+          "weight": "medium",
+          "color": {
+            "color": "on-surface",
+            "opacity": 1
+          }
+        },
+        "animation": {
+          "enabled": null,
+          "axis": null,
+          "type": null,
+          "speed": null
+        }
+      },
+      "pinnedApps": {
+        "position": "left",
+        "iconColor": "on-surface",
+        "marginLeft": 8,
+        "marginRight": 8,
+        "hideWhenActive": false,
+        "activateRunningBehavior": "focusCycle",
+        "items": []
+      },
+      "mouseInteraction": {
+        "scrollWheelFocus": true,
+        "middleClickClose": true,
+        "workspaceScrollSwitch": false
+      },
+      "customStyleRules": [],
+      "_presets": [],
+      "_activePresetId": ""
+    }
+  }
+}

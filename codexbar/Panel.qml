@@ -1,0 +1,319 @@
+import QtQuick
+import QtQuick.Layouts
+import qs.Commons
+import qs.Services.UI
+import qs.Widgets
+
+Item {
+    id: root
+
+    property var pluginApi: null
+
+    readonly property var geometryPlaceholder: panelContainer
+    property real contentPreferredWidth: 420 * Style.uiScaleRatio
+    property real contentPreferredHeight: 520 * Style.uiScaleRatio
+    readonly property bool allowAttach: true
+
+    readonly property var mainInstance: pluginApi?.mainInstance
+
+    anchors.fill: parent
+
+    Rectangle {
+        id: panelContainer
+        anchors.fill: parent
+        color: "transparent"
+
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: Style.marginL
+            spacing: Style.marginL
+
+            RowLayout {
+                Layout.fillWidth: true
+
+                NLabel {
+                    label: pluginApi?.tr("panel.title")
+                    labelSize: Style.fontSizeL
+                }
+
+                Item {
+                    Layout.fillWidth: true
+                }
+
+                NButton {
+                    icon: "mdi:refresh"
+                    fontSize: Style.fontSizeS
+                    outlined: true
+                    onClicked: {
+                        if (mainInstance) mainInstance.refresh();
+                    }
+                }
+            }
+
+            NDivider {
+                Layout.fillWidth: true
+            }
+
+            NScrollView {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                horizontalPolicy: ScrollBar.AlwaysOff
+
+                ColumnLayout {
+                    width: parent?.width ?? 0
+                    spacing: Style.marginM
+
+                    Repeater {
+                        model: mainInstance?.providerData || []
+
+                        delegate: NBox {
+                            required property var modelData
+                            Layout.fillWidth: true
+
+                            ColumnLayout {
+                                width: parent.width
+                                spacing: Style.marginS
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+
+                                    NIcon {
+                                        Layout.preferredWidth: Style.fontSizeM
+                                        Layout.preferredHeight: Style.fontSizeM
+                                        icon: mainInstance?.providerIcon(modelData.provider) || "mdi:robot"
+                                        color: Color.mPrimary
+                                    }
+
+                                    NText {
+                                        text: mainInstance?.providerDisplayName(modelData.provider) || modelData.provider
+                                        font.pixelSize: Style.fontSizeM
+                                        font.weight: Font.Bold
+                                        color: Color.mOnSurface
+                                    }
+
+                                    Item {
+                                        Layout.fillWidth: true
+                                    }
+
+                                    NText {
+                                        text: String(modelData.source || "")
+                                        font.pixelSize: Style.fontSizeXS
+                                        color: Color.mOnSurfaceVariant
+                                    }
+                                }
+
+                                Loader {
+                                    Layout.fillWidth: true
+                                    active: modelData.usage?.primary != null
+                                    visible: active
+
+                                    sourceComponent: Component {
+                                        ColumnLayout {
+                                            width: parent.width
+                                            spacing: Style.marginXS
+
+                                            RowLayout {
+                                                Layout.fillWidth: true
+
+                                                NText {
+                                                    text: pluginApi?.tr("panel.usage") + " (session)"
+                                                    font.pixelSize: Style.fontSizeS
+                                                    color: Color.mOnSurfaceVariant
+                                                }
+
+                                                Item {
+                                                    Layout.fillWidth: true
+                                                }
+
+                                                NText {
+                                                    text: (100 - modelData.usage.primary.usedPercent) + "% " + pluginApi?.tr("panel.left")
+                                                    font.pixelSize: Style.fontSizeS
+                                                    color: Color.mOnSurface
+                                                    font.weight: Font.Medium
+                                                }
+                                            }
+
+                                            Rectangle {
+                                                Layout.fillWidth: true
+                                                Layout.preferredHeight: 6 * Style.uiScaleRatio
+                                                radius: 3 * Style.uiScaleRatio
+                                                color: Color.mSurfaceVariant
+
+                                                Rectangle {
+                                                    anchors.left: parent.left
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                    width: parent.width * (modelData.usage.primary.usedPercent / 100)
+                                                    height: parent.height
+                                                    radius: parent.radius
+                                                    color: {
+                                                        var left = 100 - modelData.usage.primary.usedPercent;
+                                                        if (left <= 10) return Color.mError;
+                                                        if (left <= 25) return "#f59e0b";
+                                                        return Color.mPrimary;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Loader {
+                                    Layout.fillWidth: true
+                                    active: modelData.usage?.secondary != null
+                                    visible: active
+
+                                    sourceComponent: Component {
+                                        ColumnLayout {
+                                            width: parent.width
+                                            spacing: Style.marginXS
+
+                                            RowLayout {
+                                                Layout.fillWidth: true
+
+                                                NText {
+                                                    text: pluginApi?.tr("panel.usage") + " (weekly)"
+                                                    font.pixelSize: Style.fontSizeXS
+                                                    color: Color.mOnSurfaceVariant
+                                                }
+
+                                                Item {
+                                                    Layout.fillWidth: true
+                                                }
+
+                                                NText {
+                                                    text: (100 - modelData.usage.secondary.usedPercent) + "% " + pluginApi?.tr("panel.left")
+                                                    font.pixelSize: Style.fontSizeXS
+                                                    color: Color.mOnSurfaceVariant
+                                                }
+                                            }
+
+                                            Rectangle {
+                                                Layout.fillWidth: true
+                                                Layout.preferredHeight: 4 * Style.uiScaleRatio
+                                                radius: 2 * Style.uiScaleRatio
+                                                color: Color.mSurfaceVariant
+
+                                                Rectangle {
+                                                    anchors.left: parent.left
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                    width: parent.width * (modelData.usage.secondary.usedPercent / 100)
+                                                    height: parent.height
+                                                    radius: parent.radius
+                                                    color: Color.mPrimary
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    visible: modelData.usage?.primary?.resetsAt
+
+                                    NText {
+                                        text: pluginApi?.tr("panel.resetsAt") + ":"
+                                        font.pixelSize: Style.fontSizeXS
+                                        color: Color.mOnSurfaceVariant
+                                    }
+
+                                    NText {
+                                        text: {
+                                            var resetsAt = modelData.usage?.primary?.resetsAt;
+                                            if (!resetsAt) return "";
+                                            var d = new Date(resetsAt);
+                                            var diff = (d.getTime() - Date.now()) / 1000;
+                                            if (diff <= 0) return pluginApi?.tr("panel.resetsNow") || "Now";
+                                            var h = Math.floor(diff / 3600);
+                                            var m = Math.floor((diff % 3600) / 60);
+                                            if (h > 0) return h + "h " + m + "m";
+                                            return m + "m";
+                                        }
+                                        font.pixelSize: Style.fontSizeXS
+                                        color: Color.mOnSurface
+                                    }
+                                }
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    visible: modelData.credits?.remaining != null
+
+                                    NText {
+                                        text: pluginApi?.tr("panel.credits") + ":"
+                                        font.pixelSize: Style.fontSizeXS
+                                        color: Color.mOnSurfaceVariant
+                                    }
+
+                                    NText {
+                                        text: String(modelData.credits.remaining)
+                                        font.pixelSize: Style.fontSizeXS
+                                        color: Color.mOnSurface
+                                    }
+                                }
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    visible: modelData.status?.indicator && modelData.status.indicator !== "none"
+
+                                    NText {
+                                        text: pluginApi?.tr("panel.status") + ":"
+                                        font.pixelSize: Style.fontSizeXS
+                                        color: Color.mOnSurfaceVariant
+                                    }
+
+                                    Rectangle {
+                                        Layout.preferredWidth: 8 * Style.uiScaleRatio
+                                        Layout.preferredHeight: 8 * Style.uiScaleRatio
+                                        radius: 4 * Style.uiScaleRatio
+                                        color: modelData.status?.indicator === "major" ? Color.mError : "#f59e0b"
+                                    }
+
+                                    NText {
+                                        text: String(modelData.status?.description || modelData.status?.indicator || "")
+                                        font.pixelSize: Style.fontSizeXS
+                                        color: Color.mOnSurface
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    NLabel {
+                        Layout.fillWidth: true
+                        visible: !mainInstance || !Array.isArray(mainInstance.providerData) || mainInstance.providerData.length === 0
+                        label: pluginApi?.tr("panel.noProviders")
+                        labelSize: Style.fontSizeM
+                    }
+                }
+            }
+
+            NDivider {
+                Layout.fillWidth: true
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+
+                NText {
+                    text: {
+                        if (!mainInstance?.lastUpdated) return "";
+                        var d = new Date(mainInstance.lastUpdated);
+                        return pluginApi?.tr("panel.lastUpdated") + ": " + Qt.formatTime(d, "hh:mm");
+                    }
+                    font.pixelSize: Style.fontSizeXS
+                    color: Color.mOnSurfaceVariant
+                }
+
+                Item {
+                    Layout.fillWidth: true
+                }
+
+                NText {
+                    visible: mainInstance?.lastError
+                    text: mainInstance?.lastError || ""
+                    font.pixelSize: Style.fontSizeXS
+                    color: Color.mError
+                }
+            }
+        }
+    }
+}
