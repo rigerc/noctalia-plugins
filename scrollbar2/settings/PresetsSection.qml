@@ -42,9 +42,7 @@ ColumnLayout {
     }
 
     function _presetSettingsSnapshot(settings) {
-        return rootSettings?.presetSettingsSnapshot
-            ? rootSettings.presetSettingsSnapshot(settings)
-            : rootSettings.normalizeSettingsSnapshot(rootSettings.deepCopy(settings || ({})));
+        return rootSettings?.presetSettingsSnapshot ? rootSettings.presetSettingsSnapshot(settings) : rootSettings.normalizeSettingsSnapshot(rootSettings.deepCopy(settings || ({})));
     }
 
     function _customRuleSignature(rule) {
@@ -64,9 +62,7 @@ ColumnLayout {
 
     function _makePresetSafeImport(validatedResult) {
         var report = _cloneImportReport(validatedResult?.report);
-        report.customRulesIgnored += Array.isArray(validatedResult?.settings?.customStyleRules)
-            ? validatedResult.settings.customStyleRules.length
-            : 0;
+        report.customRulesIgnored += Array.isArray(validatedResult?.settings?.customStyleRules) ? validatedResult.settings.customStyleRules.length : 0;
         return {
             settings: _presetSettingsSnapshot(validatedResult?.settings || ({})),
             report: report
@@ -84,9 +80,7 @@ ColumnLayout {
             if (!preset || typeof preset !== "object")
                 continue;
 
-            var presetResult = _makePresetSafeImport(
-                Migrations.validateImport(preset.settings || ({}), rootSettings.defaultSettings)
-            );
+            var presetResult = _makePresetSafeImport(Migrations.validateImport(preset.settings || ({}), rootSettings.defaultSettings));
             var createdAt = Number(preset.createdAt);
             if (isNaN(createdAt))
                 createdAt = Date.now();
@@ -105,9 +99,7 @@ ColumnLayout {
             });
 
             totalIgnoredRules += presetResult.report.customRulesIgnored;
-            if (presetResult.report.appliedMigrations.length > 0
-                || presetResult.report.unknownKeys.length > 0
-                || presetResult.report.customRulesIgnored > 0) {
+            if (presetResult.report.appliedMigrations.length > 0 || presetResult.report.unknownKeys.length > 0 || presetResult.report.customRulesIgnored > 0) {
                 allReports.push({
                     name: preset.name || "",
                     report: presetResult.report
@@ -626,17 +618,23 @@ ColumnLayout {
 
     function _parseImportFile(jsonText) {
         if (!jsonText || jsonText.trim() === "")
-            return { error: pluginApi?.tr("settings.presets.import.errors.empty") };
+            return {
+                error: pluginApi?.tr("settings.presets.import.errors.empty")
+            };
 
         var data;
         try {
             data = JSON.parse(jsonText);
         } catch (e) {
-            return { error: pluginApi?.tr("settings.presets.import.errors.invalidJson") };
+            return {
+                error: pluginApi?.tr("settings.presets.import.errors.invalidJson")
+            };
         }
 
         if (!data || typeof data !== "object" || Array.isArray(data))
-            return { error: pluginApi?.tr("settings.presets.import.errors.invalidFormat") };
+            return {
+                error: pluginApi?.tr("settings.presets.import.errors.invalidFormat")
+            };
 
         if (data.scrollbar2Backup) {
             var backupResult = Migrations.validateImport(data.settings || ({}), rootSettings.defaultSettings);
@@ -655,9 +653,7 @@ ColumnLayout {
 
         if (data.scrollbar2Preset) {
             var presetObj = data.preset || ({});
-            var presetResult = _makePresetSafeImport(
-                Migrations.validateImport(presetObj.settings || ({}), rootSettings.defaultSettings)
-            );
+            var presetResult = _makePresetSafeImport(Migrations.validateImport(presetObj.settings || ({}), rootSettings.defaultSettings));
             return {
                 type: "preset",
                 preset: {
@@ -693,7 +689,9 @@ ColumnLayout {
             };
         }
 
-        return { error: pluginApi?.tr("settings.presets.import.errors.unrecognized") };
+        return {
+            error: pluginApi?.tr("settings.presets.import.errors.unrecognized")
+        };
     }
 
     function _applyImportResult(result) {
@@ -854,7 +852,10 @@ ColumnLayout {
     function _flattenDetails(value, prefix, rows) {
         if (Array.isArray(value)) {
             if (value.length === 0 && prefix)
-                rows.push({ "path": prefix, "value": "[]" });
+                rows.push({
+                    "path": prefix,
+                    "value": "[]"
+                });
             for (var i = 0; i < value.length; i++)
                 _flattenDetails(value[i], prefix + "[" + i + "]", rows);
             return rows;
@@ -863,7 +864,10 @@ ColumnLayout {
         if (value && typeof value === "object") {
             var keys = Object.keys(value);
             if (keys.length === 0 && prefix) {
-                rows.push({ "path": prefix, "value": "{}" });
+                rows.push({
+                    "path": prefix,
+                    "value": "{}"
+                });
                 return rows;
             }
 
@@ -875,7 +879,10 @@ ColumnLayout {
         }
 
         if (prefix)
-            rows.push({ "path": prefix, "value": _detailsValueToString(value) });
+            rows.push({
+                "path": prefix,
+                "value": _detailsValueToString(value)
+            });
         return rows;
     }
 
@@ -883,18 +890,7 @@ ColumnLayout {
         var settings = preset?.settings || ({});
         var groups = [];
         var seen = ({});
-        var orderedKeys = [
-            "display",
-            "track",
-            "filtering",
-            "animation",
-            "focusLine",
-            "window",
-            "workspaceIndicator",
-            "specialWorkspaceOverlay",
-            "pinnedApps",
-            "customStyleRules"
-        ];
+        var orderedKeys = ["display", "track", "filtering", "animation", "focusLine", "window", "workspaceIndicator", "specialWorkspaceOverlay", "pinnedApps", "customStyleRules"];
 
         function addGroup(sectionKey) {
             if (seen[sectionKey] || sectionKey.indexOf("_") === 0)
@@ -927,12 +923,6 @@ ColumnLayout {
         detailsDialog._preset = preset || null;
         detailsDialog._groups = root._detailsGroupsForPreset(preset);
         detailsDialog.open();
-    }
-
-    NHeader {
-        label: pluginApi?.tr("settings.presets.section.label")
-        description: pluginApi?.tr("settings.presets.section.desc")
-        Layout.fillWidth: true
     }
 
     NLabel {
@@ -1237,8 +1227,7 @@ ColumnLayout {
                                 NLabel {
                                     Layout.fillWidth: true
                                     label: modelData.label || ""
-                                    description: (root.pluginApi?.tr("settings.presets.dialog.details.rowCount"))
-                                        .replace("{count}", modelData.rows?.length ?? 0)
+                                    description: (root.pluginApi?.tr("settings.presets.dialog.details.rowCount")).replace("{count}", modelData.rows?.length ?? 0)
                                     icon: "list-details"
                                 }
 
@@ -1795,8 +1784,7 @@ ColumnLayout {
                     case "presets":
                         return (root.pluginApi?.tr("settings.presets.dialog.importConfirm.presetsDesc")).replace("{count}", r.presets ? r.presets.length : 0);
                     case "customRules":
-                        return (root.pluginApi?.tr("settings.presets.dialog.importConfirm.customRulesDesc"))
-                            .replace("{count}", r.rules ? r.rules.length : 0);
+                        return (root.pluginApi?.tr("settings.presets.dialog.importConfirm.customRulesDesc")).replace("{count}", r.rules ? r.rules.length : 0);
                     default:
                         return "";
                     }
