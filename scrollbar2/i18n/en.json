@@ -218,6 +218,20 @@
         "label": "Track Radius",
         "desc": "Corner radius of the track line."
       },
+      "edgeFade": {
+        "leftEnabled": {
+          "label": "Fade Left Edge",
+          "desc": "Fade the left edge of the main track into transparency."
+        },
+        "rightEnabled": {
+          "label": "Fade Right Edge",
+          "desc": "Fade the right edge of the main track into transparency."
+        },
+        "width": {
+          "label": "Fade Width",
+          "desc": "Horizontal size of each enabled edge fade."
+        }
+      },
       "opacity": {
         "label": "Track Opacity",
         "desc": "Overall opacity of the track line."
@@ -601,6 +615,10 @@
       "heightPercent": {
         "label": "Overlay Height",
         "desc": "Height of the overlay as a percentage of the available track container height."
+      },
+      "borderRadius": {
+        "label": "Border Radius",
+        "desc": "Corner radius of the special workspace overlay background."
       },
       "background": {
         "label": "Background",

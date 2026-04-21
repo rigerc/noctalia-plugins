@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Effects
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Hyprland
@@ -538,6 +539,23 @@ Item {
     readonly property string specialWorkspaceOverlayTextColorKey: currentSettings?.specialWorkspaceOverlay?.font?.color?.color ?? defaults?.specialWorkspaceOverlay?.font?.color?.color ?? "on-surface"
     readonly property real specialWorkspaceOverlayTextOpacity: normalizeOpacityValue(currentSettings?.specialWorkspaceOverlay?.font?.color?.opacity ?? defaults?.specialWorkspaceOverlay?.font?.color?.opacity ?? 1, 1)
     readonly property color specialWorkspaceOverlayTextColor: resolveColor(specialWorkspaceOverlayTextColorKey, Color.mOnSurface)
+    readonly property real specialWorkspaceOverlayBorderRadius: {
+        const configuredRadius = currentSettings?.specialWorkspaceOverlay?.borderRadius;
+        if (configuredRadius !== undefined && configuredRadius !== null && configuredRadius !== "" && !isNaN(Number(configuredRadius)))
+            return Math.max(0, Number(configuredRadius)) * Style.uiScaleRatio;
+
+        const defaultRadius = defaults?.specialWorkspaceOverlay?.borderRadius;
+        if (defaultRadius !== undefined && defaultRadius !== null && defaultRadius !== "" && !isNaN(Number(defaultRadius)))
+            return Math.max(0, Number(defaultRadius)) * Style.uiScaleRatio;
+
+        return trackBorderRadius;
+    }
+    readonly property bool trackEdgeFadeLeftEnabled: currentSettings?.track?.edgeFade?.leftEnabled ?? defaults?.track?.edgeFade?.leftEnabled ?? false
+    readonly property bool trackEdgeFadeRightEnabled: currentSettings?.track?.edgeFade?.rightEnabled ?? defaults?.track?.edgeFade?.rightEnabled ?? false
+    readonly property real trackEdgeFadeWidth: {
+        const configuredWidth = Number(currentSettings?.track?.edgeFade?.width ?? defaults?.track?.edgeFade?.width ?? 24);
+        return Math.max(0, (isNaN(configuredWidth) ? 24 : configuredWidth) * Style.uiScaleRatio);
+    }
     readonly property string pinnedAppsPosition: settingValue("pinnedApps", "position", "left")
     readonly property string pinnedAppsIconColorKey: settingValue("pinnedApps", "iconColor", "on-surface")
     readonly property color pinnedAppsIconColor: resolveColor(pinnedAppsIconColorKey, Color.mOnSurface)
@@ -648,6 +666,8 @@ Item {
     }
     readonly property real actualTrackWidth: segmentCount > 0 ? (segmentWidth * segmentCount) + (Math.max(0, segmentCount - 1) * segmentSpacing) + horizontalPadding * 2 : 0
     readonly property real effectiveTrackWidth: (segmentCount > 0 || showSpecialWorkspaceOverlay) ? Math.max(actualTrackWidth, availableWidth) : actualTrackWidth
+    readonly property real effectiveTrackEdgeFadeWidth: Math.min(Math.max(0, trackEdgeFadeWidth), Math.max(0, effectiveTrackWidth / 2))
+    readonly property bool trackEdgeFadeActive: (trackEdgeFadeLeftEnabled || trackEdgeFadeRightEnabled) && effectiveTrackEdgeFadeWidth > 0 && effectiveTrackWidth > 0
     readonly property real specialWorkspaceOverlayWidth: Math.max(1, Math.round(effectiveTrackWidth * specialWorkspaceOverlayWidthPercent / 100))
     readonly property real specialWorkspaceOverlayHeight: Math.max(1, Math.round(availableContainerHeight * specialWorkspaceOverlayHeightPercent / 100))
     readonly property real specialWorkspaceOverlayContentPadding: Math.max(8, Math.round(10 * Style.uiScaleRatio))
@@ -1486,7 +1506,8 @@ Item {
 
     Row {
         id: segmentsRow
-        x: root.leftAccessoryWidth + horizontalPadding
+        parent: trackContentLayer
+        x: horizontalPadding
         y: 0
         width: Math.max(0, root.actualTrackWidth - horizontalPadding * 2)
         height: root.availableContainerHeight
@@ -1955,6 +1976,7 @@ Item {
     }
 
     DropArea {
+        parent: trackContentLayer
         x: segmentsRow.x
         y: segmentsRow.y
         width: segmentsRow.width
@@ -1990,6 +2012,7 @@ Item {
     }
 
     Item {
+        parent: trackContentLayer
         x: segmentsRow.x
         y: segmentsRow.y
         width: segmentsRow.width
@@ -2025,6 +2048,7 @@ Item {
     }
 
     MouseArea {
+        parent: trackContentLayer
         x: segmentsRow.x
         y: segmentsRow.y
         width: segmentsRow.width
@@ -2055,8 +2079,9 @@ Item {
 
     Rectangle {
         id: dragInsertMarker
+        parent: trackContentLayer
         visible: root.dragPreviewActive
-        x: root.leftAccessoryWidth + root.insertionMarkerCenter(root.dragInsertIndex) - (width / 2)
+        x: root.insertionMarkerCenter(root.dragInsertIndex) - (width / 2)
         y: Math.max(0, Math.round((root.availableContainerHeight - height) / 2))
         width: Math.max(2, Math.round(Math.max(root.visibleFocusLineThickness, 3 * Style.uiScaleRatio)))
         height: Math.max(root.visibleFocusLineThickness, Math.round(root.availableContainerHeight * 0.72))
@@ -2102,14 +2127,37 @@ Item {
         z: 10
     }
 
+    Item {
+        id: trackContentLayer
+        x: root.leftAccessoryWidth
+        y: 0
+        width: root.effectiveTrackWidth
+        height: root.availableContainerHeight
+        z: 11
+        visible: root.segmentCount > 0 || root.showSpecialWorkspaceOverlay
+
+        readonly property real fadeStop: root.trackEdgeFadeActive
+            ? Math.max(0, Math.min(0.5, root.effectiveTrackEdgeFadeWidth / Math.max(1, width)))
+            : 0
+
+        layer.enabled: root.trackEdgeFadeActive && width > 0 && height > 0
+        layer.effect: MultiEffect {
+            maskEnabled: true
+            maskThresholdMin: 0.5
+            maskSpreadAtMin: 1.0
+            maskSource: trackEdgeFadeMask
+        }
+    }
+
     Rectangle {
         id: specialWorkspaceOverlay
+        parent: trackContentLayer
         visible: root.showSpecialWorkspaceOverlay
-        x: root.leftAccessoryWidth + Math.round((root.effectiveTrackWidth - width) / 2)
+        x: Math.round((trackContentLayer.width - width) / 2)
         y: root.specialWorkspaceOverlayY()
         width: root.specialWorkspaceOverlayWidth
         height: root.specialWorkspaceOverlayHeight
-        radius: Math.min(root.trackBorderRadius, Math.min(width, height) / 2)
+        radius: Math.min(root.specialWorkspaceOverlayBorderRadius, Math.min(width, height) / 2)
         color: Qt.alpha(root.specialWorkspaceOverlayBackgroundColor, root.specialWorkspaceOverlayBackgroundOpacity)
         z: 22
         opacity: root.showSpecialWorkspaceOverlay ? 1 : 0
@@ -2216,7 +2264,8 @@ Item {
 
     Item {
         id: trackSeparators
-        x: root.leftAccessoryWidth
+        parent: trackContentLayer
+        x: 0
         y: trackLine.y
         width: root.effectiveTrackWidth
         height: trackLine.height
@@ -2248,8 +2297,9 @@ Item {
 
     Item {
         id: focusIndicator
+        parent: trackContentLayer
         visible: effectiveFocusIndex >= 0 && availableContainerHeight > 0
-        x: root.leftAccessoryWidth + indicatorOffset(effectiveFocusIndex)
+        x: indicatorOffset(effectiveFocusIndex)
         y: 0
         width: segmentWidth
         height: availableContainerHeight
@@ -2295,7 +2345,8 @@ Item {
     }
 
     Item {
-        x: root.leftAccessoryWidth
+        parent: trackContentLayer
+        x: 0
         y: 0
         width: root.actualTrackWidth
         height: root.availableContainerHeight
@@ -2350,6 +2401,35 @@ Item {
                 font.weight: root.fontWeightValue(root.titleWeightFocused, Style.fontWeightSemiBold)
             }
         }
+    }
+
+    Rectangle {
+        id: trackEdgeFadeMask
+        parent: trackContentLayer
+        anchors.fill: parent
+        gradient: Gradient {
+            orientation: Gradient.Horizontal
+
+            GradientStop {
+                position: 0.0
+                color: root.trackEdgeFadeLeftEnabled ? "transparent" : "white"
+            }
+            GradientStop {
+                position: trackContentLayer.fadeStop
+                color: "white"
+            }
+            GradientStop {
+                position: 1 - trackContentLayer.fadeStop
+                color: "white"
+            }
+            GradientStop {
+                position: 1.0
+                color: root.trackEdgeFadeRightEnabled ? "transparent" : "white"
+            }
+        }
+        layer.enabled: true
+        layer.smooth: true
+        opacity: 0
     }
 
     ScrollbarContextMenu {

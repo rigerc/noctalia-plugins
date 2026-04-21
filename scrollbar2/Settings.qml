@@ -446,6 +446,10 @@ ColumnLayout {
             "surface",
             1
         );
+        next.track.edgeFade = next.track.edgeFade && typeof next.track.edgeFade === "object" && !Array.isArray(next.track.edgeFade) ? next.track.edgeFade : ({});
+        next.track.edgeFade.leftEnabled = next.track.edgeFade.leftEnabled === true;
+        next.track.edgeFade.rightEnabled = next.track.edgeFade.rightEnabled === true;
+        next.track.edgeFade.width = isNaN(Number(next.track.edgeFade.width)) ? 24 : Math.max(0, Math.min(120, Math.round(Number(next.track.edgeFade.width))));
         next.focusLine.colors = normalizeColorStateMap(
             next.focusLine.colors,
             {
@@ -507,6 +511,10 @@ ColumnLayout {
         next.specialWorkspaceOverlay.showWindowIcons = next.specialWorkspaceOverlay.showWindowIcons === true;
         next.specialWorkspaceOverlay.widthPercent = Math.max(50, Math.min(100, Number(next.specialWorkspaceOverlay.widthPercent ?? 100)));
         next.specialWorkspaceOverlay.heightPercent = Math.max(50, Math.min(100, Number(next.specialWorkspaceOverlay.heightPercent ?? 70)));
+        if (next.specialWorkspaceOverlay.borderRadius !== undefined && next.specialWorkspaceOverlay.borderRadius !== null && next.specialWorkspaceOverlay.borderRadius !== "" && !isNaN(Number(next.specialWorkspaceOverlay.borderRadius)))
+            next.specialWorkspaceOverlay.borderRadius = Math.max(0, Math.min(24, Math.round(Number(next.specialWorkspaceOverlay.borderRadius))));
+        else
+            next.specialWorkspaceOverlay.borderRadius = null;
         next.specialWorkspaceOverlay.background = normalizeColorSetting(next.specialWorkspaceOverlay.background, "surface", 0.82);
         next.specialWorkspaceOverlay.font = next.specialWorkspaceOverlay.font && typeof next.specialWorkspaceOverlay.font === "object" && !Array.isArray(next.specialWorkspaceOverlay.font) ? next.specialWorkspaceOverlay.font : ({});
         next.specialWorkspaceOverlay.font.color = normalizeColorSetting(next.specialWorkspaceOverlay.font.color, "on-surface", 1);

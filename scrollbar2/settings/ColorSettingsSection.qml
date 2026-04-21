@@ -54,6 +54,39 @@ ColumnLayout {
                 defaultColor: rootSettings?.defaultValue("track", "separatorColor") ?? "outline"
                 onColorSelected: value => rootSettings?.setSetting("track", "separatorColor", value)
             }
+
+            NToggle {
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.track.edgeFade.leftEnabled.label")
+                description: rootSettings?.pluginApi?.tr("settings.track.edgeFade.leftEnabled.desc")
+                checked: rootSettings?.nestedSettingValue("track", "edgeFade", "leftEnabled") ?? false
+                defaultValue: rootSettings?.defaultNestedValue("track", "edgeFade", "leftEnabled") ?? false
+                onToggled: checked => rootSettings?.setNestedSetting("track", "edgeFade", "leftEnabled", checked)
+            }
+
+            NToggle {
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.track.edgeFade.rightEnabled.label")
+                description: rootSettings?.pluginApi?.tr("settings.track.edgeFade.rightEnabled.desc")
+                checked: rootSettings?.nestedSettingValue("track", "edgeFade", "rightEnabled") ?? false
+                defaultValue: rootSettings?.defaultNestedValue("track", "edgeFade", "rightEnabled") ?? false
+                onToggled: checked => rootSettings?.setNestedSetting("track", "edgeFade", "rightEnabled", checked)
+            }
+
+            NValueSlider {
+                visible: (rootSettings?.nestedSettingValue("track", "edgeFade", "leftEnabled") ?? false)
+                    || (rootSettings?.nestedSettingValue("track", "edgeFade", "rightEnabled") ?? false)
+                label: rootSettings?.pluginApi?.tr("settings.track.edgeFade.width.label")
+                description: rootSettings?.pluginApi?.tr("settings.track.edgeFade.width.desc")
+                from: 0
+                to: 120
+                stepSize: 1
+                value: rootSettings?.nestedSettingValue("track", "edgeFade", "width") ?? 24
+                text: Math.round(value) + " px"
+                defaultValue: rootSettings?.defaultNestedValue("track", "edgeFade", "width") ?? 24
+                showReset: true
+                onMoved: sliderValue => rootSettings?.setNestedSetting("track", "edgeFade", "width", Math.round(sliderValue))
+            }
         }
     }
 

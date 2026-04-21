@@ -97,6 +97,20 @@ ColumnLayout {
                 onMoved: sliderValue => rootSettings?.setSetting("specialWorkspaceOverlay", "heightPercent", Math.round(sliderValue))
             }
 
+            NValueSlider {
+                visible: rootSettings?.isVisibleByConditions(["specialWorkspaceOverlayEnabled"]) ?? false
+                label: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.borderRadius.label")
+                description: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.borderRadius.desc")
+                from: 0
+                to: 24
+                stepSize: 1
+                value: rootSettings?.settingValue("specialWorkspaceOverlay", "borderRadius") ?? 3
+                text: Math.round(value) + " px"
+                defaultValue: rootSettings?.defaultValue("specialWorkspaceOverlay", "borderRadius") ?? 3
+                showReset: true
+                onMoved: sliderValue => rootSettings?.setSetting("specialWorkspaceOverlay", "borderRadius", Math.round(sliderValue))
+            }
+
             HybridColorChoice {
                 pluginApi: rootSettings?.pluginApi
                 visible: rootSettings?.isVisibleByConditions(["specialWorkspaceOverlayEnabled"]) ?? false

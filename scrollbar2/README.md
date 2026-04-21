@@ -9,7 +9,7 @@ A configurable window bar with equal-width segments, animated focus tracking, an
 </p>
 
 <p>
-<img src="https://img.shields.io/badge/version-1.5.0-blue" alt="Version">
+<img src="https://img.shields.io/badge/version-1.6.0-blue" alt="Version">
 <img src="https://img.shields.io/badge/noctalia-%E2%89%A54.6.6-purple" alt="Min Noctalia Version">
 <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
 </p>

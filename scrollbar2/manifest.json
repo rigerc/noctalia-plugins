@@ -1,7 +1,7 @@
 {
   "id": "scrollbar2",
   "name": "Scrollbar2",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "minNoctaliaVersion": "4.6.6",
   "author": "rigerc",
   "license": "MIT",
@@ -56,7 +56,12 @@
         },
         "separatorColor": "outline",
         "width": 40,
-        "segmentSpacing": 4
+        "segmentSpacing": 4,
+        "edgeFade": {
+          "leftEnabled": false,
+          "rightEnabled": false,
+          "width": 24
+        }
       },
       "focusLine": {
         "thickness": 6,
@@ -192,6 +197,7 @@
         "showWindowIcons": false,
         "widthPercent": 100,
         "heightPercent": 70,
+        "borderRadius": null,
         "background": {
           "color": "surface",
           "opacity": 0.82
