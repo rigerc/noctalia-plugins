@@ -40,6 +40,13 @@ Item {
     property int dragInsertIndex: -1
     property string dragSourceEntryKey: ""
     property bool dragDropHandled: false
+    property var previousEntryKeys: []
+    property bool entryLifecycleInitialized: false
+    property var enteringEntryKeys: ({})
+    property var closingEntries: []
+    property var liveSegmentSnapshots: ({})
+    property int closingEntryUidSeed: 0
+    property var previousGlobalEntryKeys: []
 
     Timer {
         id: dragCleanupTimer
@@ -387,15 +394,9 @@ Item {
 
     function resolvedLabelState(entryKey, kind) {
         const state = segmentState(entryKey);
-        const fallbackKey = kind === "icon"
-            ? (state === "focused" ? iconColorFocusedKey : (state === "hover" ? iconColorHoverKey : iconColorDefaultKey))
-            : (state === "focused" ? titleColorFocusedKey : (state === "hover" ? titleColorHoverKey : titleColorDefaultKey));
-        const fallbackOpacity = kind === "icon"
-            ? (state === "focused" ? iconColorFocusedOpacity : (state === "hover" ? iconColorHoverOpacity : iconColorDefaultOpacity))
-            : (state === "focused" ? titleColorFocusedOpacity : (state === "hover" ? titleColorHoverOpacity : titleColorDefaultOpacity));
-        const fallbackColor = kind === "icon"
-            ? (state === "focused" ? iconColorFocused : (state === "hover" ? iconColorHover : iconColorDefault))
-            : (state === "focused" ? titleColorFocused : (state === "hover" ? titleColorHover : titleColorDefault));
+        const fallbackKey = kind === "icon" ? (state === "focused" ? iconColorFocusedKey : (state === "hover" ? iconColorHoverKey : iconColorDefaultKey)) : (state === "focused" ? titleColorFocusedKey : (state === "hover" ? titleColorHoverKey : titleColorDefaultKey));
+        const fallbackOpacity = kind === "icon" ? (state === "focused" ? iconColorFocusedOpacity : (state === "hover" ? iconColorHoverOpacity : iconColorDefaultOpacity)) : (state === "focused" ? titleColorFocusedOpacity : (state === "hover" ? titleColorHoverOpacity : titleColorDefaultOpacity));
+        const fallbackColor = kind === "icon" ? (state === "focused" ? iconColorFocused : (state === "hover" ? iconColorHover : iconColorDefault)) : (state === "focused" ? titleColorFocused : (state === "hover" ? titleColorHover : titleColorDefault));
         const overrideState = styleRuleStateValue(entryKey, kind, state);
         const effectiveKey = String(overrideState?.color ?? fallbackKey);
         const effectiveOpacity = overrideState ? overrideState.opacity : fallbackOpacity;
@@ -539,6 +540,42 @@ Item {
     readonly property string specialWorkspaceOverlayTextColorKey: currentSettings?.specialWorkspaceOverlay?.font?.color?.color ?? defaults?.specialWorkspaceOverlay?.font?.color?.color ?? "on-surface"
     readonly property real specialWorkspaceOverlayTextOpacity: normalizeOpacityValue(currentSettings?.specialWorkspaceOverlay?.font?.color?.opacity ?? defaults?.specialWorkspaceOverlay?.font?.color?.opacity ?? 1, 1)
     readonly property color specialWorkspaceOverlayTextColor: resolveColor(specialWorkspaceOverlayTextColorKey, Color.mOnSurface)
+    readonly property bool specialWorkspaceOverlayAnimationEnabled: {
+        const configured = currentSettings?.specialWorkspaceOverlay?.animation?.enabled;
+        if (configured !== undefined && configured !== null)
+            return configured !== false;
+        const defaultValue = defaults?.specialWorkspaceOverlay?.animation?.enabled;
+        if (defaultValue !== undefined && defaultValue !== null)
+            return defaultValue !== false;
+        return animationEnabled;
+    }
+    readonly property string specialWorkspaceOverlayAnimationAxis: {
+        const configured = currentSettings?.specialWorkspaceOverlay?.animation?.axis;
+        if (configured !== undefined && configured !== null && configured !== "")
+            return String(configured);
+        const defaultValue = defaults?.specialWorkspaceOverlay?.animation?.axis;
+        if (defaultValue !== undefined && defaultValue !== null && defaultValue !== "")
+            return String(defaultValue);
+        return "vertical";
+    }
+    readonly property string specialWorkspaceOverlayAnimationType: {
+        const configured = currentSettings?.specialWorkspaceOverlay?.animation?.type;
+        if (configured !== undefined && configured !== null && configured !== "")
+            return String(configured);
+        const defaultValue = defaults?.specialWorkspaceOverlay?.animation?.type;
+        if (defaultValue !== undefined && defaultValue !== null && defaultValue !== "")
+            return String(defaultValue);
+        return animationType;
+    }
+    readonly property int specialWorkspaceOverlayAnimationSpeed: {
+        const configured = currentSettings?.specialWorkspaceOverlay?.animation?.speed;
+        if (configured !== undefined && configured !== null && configured !== "" && !isNaN(Number(configured)))
+            return Math.max(0, Math.round(Number(configured)));
+        const defaultValue = defaults?.specialWorkspaceOverlay?.animation?.speed;
+        if (defaultValue !== undefined && defaultValue !== null && defaultValue !== "" && !isNaN(Number(defaultValue)))
+            return Math.max(0, Math.round(Number(defaultValue)));
+        return animationSpeed;
+    }
     readonly property real specialWorkspaceOverlayBorderRadius: {
         const configuredRadius = currentSettings?.specialWorkspaceOverlay?.borderRadius;
         if (configuredRadius !== undefined && configuredRadius !== null && configuredRadius !== "" && !isNaN(Number(configuredRadius)))
@@ -566,6 +603,37 @@ Item {
 
     readonly property bool scrollWheelFocusEnabled: settingValue("mouseInteraction", "scrollWheelFocus", true)
     readonly property bool middleClickCloseEnabled: settingValue("mouseInteraction", "middleClickClose", true)
+    readonly property bool windowAnimationEnabled: {
+        const configured = currentSettings?.window?.animation?.enabled;
+        if (configured !== undefined && configured !== null)
+            return configured !== false;
+        const defaultValue = defaults?.window?.animation?.enabled;
+        if (defaultValue !== undefined && defaultValue !== null)
+            return defaultValue !== false;
+        return animationEnabled;
+    }
+    readonly property bool windowOpenAnimationEnabled: currentSettings?.window?.animation?.openEnabled ?? defaults?.window?.animation?.openEnabled ?? true
+    readonly property bool windowCloseAnimationEnabled: currentSettings?.window?.animation?.closeEnabled ?? defaults?.window?.animation?.closeEnabled ?? true
+    readonly property string windowAnimationType: {
+        const configured = currentSettings?.window?.animation?.type;
+        if (configured !== undefined && configured !== null && configured !== "")
+            return String(configured);
+        const defaultValue = defaults?.window?.animation?.type;
+        if (defaultValue !== undefined && defaultValue !== null && defaultValue !== "")
+            return String(defaultValue);
+        return animationType;
+    }
+    readonly property int windowAnimationSpeed: {
+        const configured = currentSettings?.window?.animation?.speed;
+        if (configured !== undefined && configured !== null && configured !== "" && !isNaN(Number(configured)))
+            return Math.max(0, Math.round(Number(configured)));
+        const defaultValue = defaults?.window?.animation?.speed;
+        if (defaultValue !== undefined && defaultValue !== null && defaultValue !== "" && !isNaN(Number(defaultValue)))
+            return Math.max(0, Math.round(Number(defaultValue)));
+        return animationSpeed;
+    }
+    readonly property bool windowOpenAnimationActive: windowAnimationEnabled && windowOpenAnimationEnabled && windowAnimationSpeed > 0
+    readonly property bool windowCloseAnimationActive: windowAnimationEnabled && windowCloseAnimationEnabled && windowAnimationSpeed > 0
 
     readonly property int revisionToken: (mainInstance?.structureRevision ?? 0) + (mainInstance?.liveRevision ?? 0) + (mainInstance?.titleRevision ?? 0) + (mainInstance?.workspaceRevision ?? 0) + (mainInstance?.activeSpecialRevision ?? 0)
     readonly property var entries: {
@@ -715,8 +783,8 @@ Item {
         return workspaceIndicatorAnimationType === "spring" ? 1.12 : 0;
     }
 
-    function specialWorkspaceOverlayEasingType() {
-        switch (animationType) {
+    function lifecycleEasingType(type) {
+        switch (String(type || "")) {
         case "linear":
             return Easing.Linear;
         case "ease":
@@ -728,8 +796,24 @@ Item {
         }
     }
 
+    function lifecycleOvershoot(type, springOvershoot) {
+        return String(type || "") === "spring" ? springOvershoot : 0;
+    }
+
+    function specialWorkspaceOverlayEasingType() {
+        return lifecycleEasingType(specialWorkspaceOverlayAnimationType);
+    }
+
     function specialWorkspaceOverlayOvershoot() {
-        return animationType === "spring" ? 1.08 : 0;
+        return lifecycleOvershoot(specialWorkspaceOverlayAnimationType, 1.08);
+    }
+
+    function windowAnimationEasingType() {
+        return lifecycleEasingType(windowAnimationType);
+    }
+
+    function windowAnimationOvershoot() {
+        return lifecycleOvershoot(windowAnimationType, 1.1);
     }
 
     function workspaceIndicatorAlignedY() {
@@ -804,7 +888,7 @@ Item {
         if (displayedSpecialWorkspaceText === nextText && root._sameStringList(displayedSpecialWorkspaceIcons, nextIcons))
             return;
 
-        if (!animationEnabled || animationSpeed <= 0) {
+        if (!specialWorkspaceOverlayAnimationEnabled || specialWorkspaceOverlayAnimationSpeed <= 0) {
             displayedSpecialWorkspaceText = nextText;
             outgoingSpecialWorkspaceText = "";
             displayedSpecialWorkspaceIcons = nextIcons;
@@ -842,11 +926,172 @@ Item {
         return Array.isArray(icons) ? icons.slice() : [];
     }
 
+    function currentGlobalEntryKeys() {
+        const source = mainInstance?.allEntries || [];
+        return source.map(function (entry) {
+            return String(entry?.entryKey || "");
+        }).filter(function (entryKey) {
+            return entryKey !== "";
+        });
+    }
+
+    function specialWorkspaceOverlayTransitionOffset() {
+        return Math.max(4, root.specialWorkspaceOverlayHeight * 0.14);
+    }
+
+    function updateLiveSegmentSnapshot(entryKey, snapshot) {
+        if (!entryKey)
+            return;
+        const next = ({});
+        for (const key in liveSegmentSnapshots)
+            next[key] = liveSegmentSnapshots[key];
+        next[entryKey] = snapshot;
+        liveSegmentSnapshots = next;
+    }
+
+    function consumeEnteringEntry(entryKey) {
+        if (!enteringEntryKeys?.[entryKey])
+            return false;
+        const next = ({});
+        for (const key in enteringEntryKeys) {
+            if (key !== entryKey)
+                next[key] = enteringEntryKeys[key];
+        }
+        enteringEntryKeys = next;
+        return true;
+    }
+
+    function pruneLiveSegmentSnapshots(activeKeys) {
+        const keepKeys = ({});
+        (activeKeys || []).forEach(function (entryKey) {
+            keepKeys[entryKey] = true;
+        });
+        (closingEntries || []).forEach(function (entry) {
+            if (entry?.entryKey)
+                keepKeys[entry.entryKey] = true;
+        });
+
+        const next = ({});
+        for (const key in liveSegmentSnapshots) {
+            if (keepKeys[key])
+                next[key] = liveSegmentSnapshots[key];
+        }
+        liveSegmentSnapshots = next;
+    }
+
+    function queueClosingEntry(entryKey) {
+        if (!entryKey || !windowCloseAnimationActive)
+            return;
+        if ((closingEntries || []).some(function (entry) {
+            return entry?.entryKey === entryKey;
+        }))
+            return;
+
+        const snapshot = liveSegmentSnapshots?.[entryKey];
+        if (!snapshot)
+            return;
+
+        const nextEntry = {
+            "uid": ++closingEntryUidSeed,
+            "entryKey": entryKey,
+            "x": snapshot.x ?? 0,
+            "y": snapshot.y ?? 0,
+            "width": snapshot.width ?? 0,
+            "height": snapshot.height ?? 0,
+            "appId": snapshot.appId ?? "",
+            "title": snapshot.title ?? "",
+            "showLabel": snapshot.showLabel !== false,
+            "backgroundColor": snapshot.backgroundColor ?? "transparent",
+            "iconColor": snapshot.iconColor ?? Color.mOnSurface,
+            "titleColor": snapshot.titleColor ?? Color.mOnSurface,
+            "titleWeight": snapshot.titleWeight ?? Style.fontWeightMedium,
+            "customIcon": snapshot.customIcon ?? ""
+        };
+        closingEntries = (closingEntries || []).concat([nextEntry]);
+    }
+
+    function removeClosingEntry(uid) {
+        closingEntries = (closingEntries || []).filter(function (entry) {
+            return entry?.uid !== uid;
+        });
+        pruneLiveSegmentSnapshots(previousEntryKeys);
+    }
+
+    function syncEntryLifecycle() {
+        const activeKeys = (entries || []).map(function (entry) {
+            return String(entry?.entryKey || "");
+        }).filter(function (entryKey) {
+            return entryKey !== "";
+        });
+        const globalKeys = currentGlobalEntryKeys();
+
+        if (!entryLifecycleInitialized) {
+            previousEntryKeys = activeKeys.slice();
+            previousGlobalEntryKeys = globalKeys.slice();
+            entryLifecycleInitialized = true;
+            pruneLiveSegmentSnapshots(activeKeys);
+            return;
+        }
+
+        const activeVisibleLookup = ({});
+        activeKeys.forEach(function (entryKey) {
+            activeVisibleLookup[entryKey] = true;
+        });
+        const previousGlobalLookup = ({});
+        previousGlobalEntryKeys.forEach(function (entryKey) {
+            previousGlobalLookup[entryKey] = true;
+        });
+        const activeGlobalLookup = ({});
+        globalKeys.forEach(function (entryKey) {
+            activeGlobalLookup[entryKey] = true;
+        });
+
+        const addedGlobalKeys = ({});
+        globalKeys.forEach(function (entryKey) {
+            if (!previousGlobalLookup[entryKey])
+                addedGlobalKeys[entryKey] = true;
+        });
+        const removedGlobalKeys = ({});
+        previousGlobalEntryKeys.forEach(function (entryKey) {
+            if (!activeGlobalLookup[entryKey])
+                removedGlobalKeys[entryKey] = true;
+        });
+
+        const nextEntering = ({});
+        for (const key in enteringEntryKeys) {
+            if (activeVisibleLookup[key])
+                nextEntering[key] = enteringEntryKeys[key];
+        }
+
+        activeKeys.forEach(function (entryKey) {
+            if (addedGlobalKeys[entryKey] && windowOpenAnimationActive)
+                nextEntering[entryKey] = true;
+        });
+        enteringEntryKeys = nextEntering;
+
+        previousEntryKeys.forEach(function (entryKey) {
+            if (removedGlobalKeys[entryKey])
+                queueClosingEntry(entryKey);
+        });
+
+        previousEntryKeys = activeKeys.slice();
+        previousGlobalEntryKeys = globalKeys.slice();
+        pruneLiveSegmentSnapshots(activeKeys);
+    }
+
+    onEntriesChanged: syncEntryLifecycle()
     onWorkspaceIndicatorTextChanged: updateWorkspaceIndicatorPresentation()
     onWorkspaceIndicatorBadgeCountChanged: updateWorkspaceIndicatorPresentation()
     onSpecialWorkspaceOverlayLabelTextChanged: updateSpecialWorkspaceOverlayPresentation()
     onRevisionTokenChanged: updateSpecialWorkspaceOverlayPresentation()
+    onWindowCloseAnimationActiveChanged: {
+        if (!windowCloseAnimationActive) {
+            closingEntries = [];
+            pruneLiveSegmentSnapshots(previousEntryKeys);
+        }
+    }
     Component.onCompleted: {
+        syncEntryLifecycle();
         updateWorkspaceIndicatorPresentation();
         updateSpecialWorkspaceOverlayPresentation();
     }
@@ -1131,10 +1376,7 @@ Item {
 
     function finalizeDragReorder(sourceEntryKey, reason) {
         const normalizedIndex = normalizedInsertIndex(dragInsertIndex);
-        const canDrop = dragSessionActive
-            && sourceEntryKey !== ""
-            && normalizedIndex >= 0
-            && canPreviewInsertIndex(sourceEntryKey, dragInsertIndex);
+        const canDrop = dragSessionActive && sourceEntryKey !== "" && normalizedIndex >= 0 && canPreviewInsertIndex(sourceEntryKey, dragInsertIndex);
 
         dragDropHandled = true;
         dragCleanupTimer.stop();
@@ -1204,7 +1446,9 @@ Item {
             });
 
             // Separator
-            model.push({ "isSeparator": true });
+            model.push({
+                "isSeparator": true
+            });
 
             // Desktop actions (if any)
             const desktopActions = mainInstance?.desktopEntryActionsForApp(selectedAppId) || [];
@@ -1214,7 +1458,9 @@ Item {
 
             // Separator before app-specific actions
             if (selectedAppId || desktopActions.length > 0) {
-                model.push({ "isSeparator": true });
+                model.push({
+                    "isSeparator": true
+                });
             }
 
             // App-specific actions
@@ -1228,8 +1474,7 @@ Item {
             }
 
             // Style Rules - single option that handles both app and title
-            const hasExistingStyleRule = (mainInstance?.findPrefilledStyleRuleIndex(selectedEntryKey, "appId") ?? -1) >= 0
-                || (mainInstance?.findPrefilledStyleRuleIndex(selectedEntryKey, "title") ?? -1) >= 0;
+            const hasExistingStyleRule = (mainInstance?.findPrefilledStyleRuleIndex(selectedEntryKey, "appId") ?? -1) >= 0 || (mainInstance?.findPrefilledStyleRuleIndex(selectedEntryKey, "title") ?? -1) >= 0;
 
             model.push({
                 "label": pluginApi?.tr(hasExistingStyleRule ? "menu.editCustomStyleRule" : "menu.addCustomStyleRule"),
@@ -1238,8 +1483,9 @@ Item {
             });
 
             // Separator before settings
-            model.push({ "isSeparator": true });
-
+            model.push({
+                "isSeparator": true
+            });
         } else if (pinnedApp) {
             clearContextSelection();
             selectedAppId = pinnedApp.appId ?? "";
@@ -1250,8 +1496,9 @@ Item {
                 "icon": "unpin"
             });
 
-            model.push({ "isSeparator": true });
-
+            model.push({
+                "isSeparator": true
+            });
         } else {
             clearContextSelection();
         }
@@ -1290,7 +1537,7 @@ Item {
         property: "specialWorkspaceOverlayTransitionProgress"
         from: 0
         to: 1
-        duration: root.animationSpeed
+        duration: root.specialWorkspaceOverlayAnimationSpeed
         easing.type: root.specialWorkspaceOverlayEasingType()
         easing.overshoot: root.specialWorkspaceOverlayOvershoot()
         onStopped: {
@@ -1542,6 +1789,33 @@ Item {
                     readonly property bool isDragged: root.dragSourceIndex === index
                     property real shiftOffset: 0
                     property bool dragging: segmentMouseArea.drag.active
+                    property real lifecycleOpacity: 1
+                    property real lifecycleScale: 1
+
+                    function syncSnapshot() {
+                        root.updateLiveSegmentSnapshot(segmentItem.entryKey, {
+                            "x": segmentItem.x + segmentsRow.x,
+                            "y": segmentItem.y + segmentsRow.y,
+                            "width": segmentItem.width,
+                            "height": segmentItem.height,
+                            "appId": String(segmentItem.modelData?.appId ?? ""),
+                            "title": segmentItem.title,
+                            "showLabel": segmentItem.showLabel,
+                            "backgroundColor": root.segmentBackgroundColor(segmentItem.entryKey),
+                            "iconColor": root.labelColor(segmentItem.entryKey, "icon"),
+                            "titleColor": root.labelColor(segmentItem.entryKey, "title"),
+                            "titleWeight": root.titleWeight(segmentItem.entryKey),
+                            "customIcon": root.customRuleIconName(segmentItem.entryKey)
+                        });
+                    }
+
+                    function startEnterAnimation() {
+                        if (!root.consumeEnteringEntry(segmentItem.entryKey) || !root.windowOpenAnimationActive)
+                            return;
+                        lifecycleOpacity = 0;
+                        lifecycleScale = 0.88;
+                        enterAnimation.restart();
+                    }
 
                     Binding on x {
                         when: !draggableContent.dragging
@@ -1607,7 +1881,51 @@ Item {
                         }
                     }
 
+                    Item {
+                        id: lifecycleWrapper
+                        anchors.fill: parent
+                        clip: true
+                        opacity: draggableContent.lifecycleOpacity
+                        scale: draggableContent.lifecycleScale
+                        transformOrigin: Item.Center
+                    }
+
+                    ParallelAnimation {
+                        id: enterAnimation
+
+                        NumberAnimation {
+                            target: draggableContent
+                            property: "lifecycleOpacity"
+                            from: 0
+                            to: 1
+                            duration: root.windowAnimationSpeed
+                            easing.type: root.windowAnimationEasingType()
+                            easing.overshoot: root.windowAnimationOvershoot()
+                        }
+
+                        NumberAnimation {
+                            target: draggableContent
+                            property: "lifecycleScale"
+                            from: 0.88
+                            to: 1
+                            duration: root.windowAnimationSpeed
+                            easing.type: root.windowAnimationEasingType()
+                            easing.overshoot: root.windowAnimationOvershoot()
+                        }
+                    }
+
+                    Timer {
+                        id: enterAnimationDelay
+                        interval: 0
+                        repeat: false
+                        onTriggered: {
+                            draggableContent.syncSnapshot();
+                            draggableContent.startEnterAnimation();
+                        }
+                    }
+
                     Rectangle {
+                        parent: lifecycleWrapper
                         anchors.fill: parent
                         anchors.margins: root.windowMargin
                         radius: Math.min(Math.max(0, root.windowBorderRadius), Math.max(0, Math.min(width, height) / 2))
@@ -1623,15 +1941,14 @@ Item {
 
                     Rectangle {
                         id: blinkOverlay
+                        parent: lifecycleWrapper
 
                         readonly property bool active: segmentItem.styleRule?.blink?.enabled ?? false
                         readonly property int blinkDuration: Math.max(200, segmentItem.styleRule?.blink?.interval ?? 800)
                         readonly property color blinkColor: {
-                            if (!active) return "transparent";
-                            return root.colorWithOpacity(
-                                root.resolveColor(segmentItem.styleRule.blink.color?.color ?? "primary", Color.mPrimary),
-                                root.normalizeOpacityValue(segmentItem.styleRule.blink.color?.opacity ?? 1, 1)
-                            );
+                            if (!active)
+                                return "transparent";
+                            return root.colorWithOpacity(root.resolveColor(segmentItem.styleRule.blink.color?.color ?? "primary", Color.mPrimary), root.normalizeOpacityValue(segmentItem.styleRule.blink.color?.opacity ?? 1, 1));
                         }
 
                         anchors.fill: parent
@@ -1662,15 +1979,14 @@ Item {
                     }
 
                     Rectangle {
+                        parent: lifecycleWrapper
                         readonly property bool active: (segmentItem.styleRule?.badge?.enabled ?? false) && (segmentItem.styleRule?.badge?.target ?? "icon") === "segment"
                         readonly property string badgePos: segmentItem.styleRule?.badge?.position ?? "top-right"
                         readonly property real badgeDotSize: Math.max(2, (segmentItem.styleRule?.badge?.size ?? 6)) * Style.uiScaleRatio
                         readonly property color badgeDotColor: {
-                            if (!active) return "transparent";
-                            return root.colorWithOpacity(
-                                root.resolveColor(segmentItem.styleRule.badge.color?.color ?? "error", Color.mError),
-                                root.normalizeOpacityValue(segmentItem.styleRule.badge.color?.opacity ?? 1, 1)
-                            );
+                            if (!active)
+                                return "transparent";
+                            return root.colorWithOpacity(root.resolveColor(segmentItem.styleRule.badge.color?.color ?? "error", Color.mError), root.normalizeOpacityValue(segmentItem.styleRule.badge.color?.opacity ?? 1, 1));
                         }
 
                         visible: active
@@ -1688,6 +2004,7 @@ Item {
                     }
 
                     RowLayout {
+                        parent: lifecycleWrapper
                         anchors.fill: parent
                         anchors.margins: root.windowMargin
                         anchors.leftMargin: root.windowMargin + root.windowPaddingLeft
@@ -1699,11 +2016,9 @@ Item {
                         NIcon {
                             readonly property bool active: (segmentItem.styleRule?.iconPrefix?.enabled ?? false) && (segmentItem.styleRule?.iconPrefix?.target ?? "icon") === "icon"
                             readonly property color prefixColor: {
-                                if (!active) return Color.mOnSurfaceVariant;
-                                return root.colorWithOpacity(
-                                    root.resolveColor(segmentItem.styleRule.iconPrefix.color?.color ?? "on-surface-variant", Color.mOnSurfaceVariant),
-                                    root.normalizeOpacityValue(segmentItem.styleRule.iconPrefix.color?.opacity ?? 1, 1)
-                                );
+                                if (!active)
+                                    return Color.mOnSurfaceVariant;
+                                return root.colorWithOpacity(root.resolveColor(segmentItem.styleRule.iconPrefix.color?.color ?? "on-surface-variant", Color.mOnSurfaceVariant), root.normalizeOpacityValue(segmentItem.styleRule.iconPrefix.color?.opacity ?? 1, 1));
                             }
 
                             visible: active && root.showIcon
@@ -1819,11 +2134,9 @@ Item {
                                 readonly property string badgePos: segmentItem.styleRule?.badge?.position ?? "top-right"
                                 readonly property real badgeDotSize: Math.max(2, (segmentItem.styleRule?.badge?.size ?? 6)) * Style.uiScaleRatio
                                 readonly property color badgeDotColor: {
-                                    if (!active) return "transparent";
-                                    return root.colorWithOpacity(
-                                        root.resolveColor(segmentItem.styleRule.badge.color?.color ?? "error", Color.mError),
-                                        root.normalizeOpacityValue(segmentItem.styleRule.badge.color?.opacity ?? 1, 1)
-                                    );
+                                    if (!active)
+                                        return "transparent";
+                                    return root.colorWithOpacity(root.resolveColor(segmentItem.styleRule.badge.color?.color ?? "error", Color.mError), root.normalizeOpacityValue(segmentItem.styleRule.badge.color?.opacity ?? 1, 1));
                                 }
 
                                 visible: active
@@ -1841,11 +2154,9 @@ Item {
                         NIcon {
                             readonly property bool active: (segmentItem.styleRule?.iconPrefix?.enabled ?? false) && (segmentItem.styleRule?.iconPrefix?.target ?? "icon") === "title"
                             readonly property color prefixColor: {
-                                if (!active) return Color.mOnSurfaceVariant;
-                                return root.colorWithOpacity(
-                                    root.resolveColor(segmentItem.styleRule.iconPrefix.color?.color ?? "on-surface-variant", Color.mOnSurfaceVariant),
-                                    root.normalizeOpacityValue(segmentItem.styleRule.iconPrefix.color?.opacity ?? 1, 1)
-                                );
+                                if (!active)
+                                    return Color.mOnSurfaceVariant;
+                                return root.colorWithOpacity(root.resolveColor(segmentItem.styleRule.iconPrefix.color?.color ?? "on-surface-variant", Color.mOnSurfaceVariant), root.normalizeOpacityValue(segmentItem.styleRule.iconPrefix.color?.opacity ?? 1, 1));
                             }
 
                             visible: active && root.showTitle
@@ -1911,11 +2222,9 @@ Item {
                                 readonly property string badgePos: segmentItem.styleRule?.badge?.position ?? "top-right"
                                 readonly property real badgeDotSize: Math.max(2, (segmentItem.styleRule?.badge?.size ?? 6)) * Style.uiScaleRatio
                                 readonly property color badgeDotColor: {
-                                    if (!active) return "transparent";
-                                    return root.colorWithOpacity(
-                                        root.resolveColor(segmentItem.styleRule.badge.color?.color ?? "error", Color.mError),
-                                        root.normalizeOpacityValue(segmentItem.styleRule.badge.color?.opacity ?? 1, 1)
-                                    );
+                                    if (!active)
+                                        return "transparent";
+                                    return root.colorWithOpacity(root.resolveColor(segmentItem.styleRule.badge.color?.color ?? "error", Color.mError), root.normalizeOpacityValue(segmentItem.styleRule.badge.color?.opacity ?? 1, 1));
                                 }
 
                                 visible: active
@@ -1930,14 +2239,30 @@ Item {
                             }
                         }
                     }
+
+                    onXChanged: syncSnapshot()
+                    onYChanged: syncSnapshot()
+                    onLifecycleOpacityChanged: syncSnapshot()
+                    onLifecycleScaleChanged: syncSnapshot()
+                    Component.onCompleted: {
+                        syncSnapshot();
+                        enterAnimationDelay.start();
+                    }
                 }
+
+                onXChanged: draggableContent.syncSnapshot()
+                onYChanged: draggableContent.syncSnapshot()
+                onWidthChanged: draggableContent.syncSnapshot()
+                onHeightChanged: draggableContent.syncSnapshot()
+                onTitleChanged: draggableContent.syncSnapshot()
+                onShowLabelChanged: draggableContent.syncSnapshot()
 
                 MouseArea {
                     id: segmentMouseArea
                     anchors.fill: parent
                     acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
                     hoverEnabled: true
-                    cursorShape: segmentItem.reorderable ? (drag.active ? Qt.ClosedHandCursor : Qt.OpenHandCursor) : Qt.PointingHandCursor
+                    cursorShape: segmentItem.reorderable ? (drag.active ? Qt.ClosedHandCursor : Qt.PointingHandCursor) : Qt.PointingHandCursor
                     preventStealing: true
                     drag.target: segmentItem.reorderable ? draggableContent : undefined
                     drag.axis: Drag.XAxis
@@ -1972,7 +2297,6 @@ Item {
                 }
             }
         }
-
     }
 
     DropArea {
@@ -2136,9 +2460,7 @@ Item {
         z: 11
         visible: root.segmentCount > 0 || root.showSpecialWorkspaceOverlay
 
-        readonly property real fadeStop: root.trackEdgeFadeActive
-            ? Math.max(0, Math.min(0.5, root.effectiveTrackEdgeFadeWidth / Math.max(1, width)))
-            : 0
+        readonly property real fadeStop: root.trackEdgeFadeActive ? Math.max(0, Math.min(0.5, root.effectiveTrackEdgeFadeWidth / Math.max(1, width))) : 0
 
         layer.enabled: root.trackEdgeFadeActive && width > 0 && height > 0
         layer.effect: MultiEffect {
@@ -2164,18 +2486,18 @@ Item {
         scale: root.showSpecialWorkspaceOverlay ? 1 : 0.92
 
         Behavior on opacity {
-            enabled: root.animationEnabled
+            enabled: root.specialWorkspaceOverlayAnimationEnabled
             NumberAnimation {
-                duration: root.animationSpeed
+                duration: root.specialWorkspaceOverlayAnimationSpeed
                 easing.type: root.specialWorkspaceOverlayEasingType()
                 easing.overshoot: root.specialWorkspaceOverlayOvershoot()
             }
         }
 
         Behavior on scale {
-            enabled: root.animationEnabled
+            enabled: root.specialWorkspaceOverlayAnimationEnabled
             NumberAnimation {
-                duration: root.animationSpeed
+                duration: root.specialWorkspaceOverlayAnimationSpeed
                 easing.type: root.specialWorkspaceOverlayEasingType()
                 easing.overshoot: root.specialWorkspaceOverlayOvershoot()
             }
@@ -2190,12 +2512,11 @@ Item {
                 spacing: (root.outgoingSpecialWorkspaceText !== "" && root.outgoingSpecialWorkspaceIcons.length > 0) ? root.specialWorkspaceOverlayIconGap : 0
                 visible: root.outgoingSpecialWorkspaceText !== "" && root.specialWorkspaceOverlayTransitionProgress < 1
                 opacity: 1 - root.specialWorkspaceOverlayTransitionProgress
-                y: Math.round(-Math.max(4, root.specialWorkspaceOverlayHeight * 0.14) * root.specialWorkspaceOverlayTransitionProgress)
+                x: root.specialWorkspaceOverlayAnimationAxis === "horizontal" ? Math.round(-root.specialWorkspaceOverlayTransitionOffset() * root.specialWorkspaceOverlayTransitionProgress) : 0
+                y: root.specialWorkspaceOverlayAnimationAxis === "vertical" ? Math.round(-root.specialWorkspaceOverlayTransitionOffset() * root.specialWorkspaceOverlayTransitionProgress) : 0
 
                 NText {
-                    readonly property real iconsWidth: root.outgoingSpecialWorkspaceIcons.length > 0
-                        ? (root.outgoingSpecialWorkspaceIcons.length * root.specialWorkspaceOverlayIconSize) + ((root.outgoingSpecialWorkspaceIcons.length - 1) * root.specialWorkspaceOverlayIconGap)
-                        : 0
+                    readonly property real iconsWidth: root.outgoingSpecialWorkspaceIcons.length > 0 ? (root.outgoingSpecialWorkspaceIcons.length * root.specialWorkspaceOverlayIconSize) + ((root.outgoingSpecialWorkspaceIcons.length - 1) * root.specialWorkspaceOverlayIconGap) : 0
                     readonly property real maxTextWidth: Math.max(0, specialWorkspaceOverlay.width - (root.specialWorkspaceOverlayContentPadding * 2) - iconsWidth - (root.outgoingSpecialWorkspaceIcons.length > 0 ? root.specialWorkspaceOverlayIconGap : 0))
                     width: Math.min(implicitWidth, maxTextWidth)
                     text: root.outgoingSpecialWorkspaceText
@@ -2226,13 +2547,12 @@ Item {
             Row {
                 anchors.centerIn: parent
                 spacing: (root.displayedSpecialWorkspaceText !== "" && root.displayedSpecialWorkspaceIcons.length > 0) ? root.specialWorkspaceOverlayIconGap : 0
-                opacity: root.animationEnabled ? root.specialWorkspaceOverlayTransitionProgress : 1
-                y: root.animationEnabled ? Math.round((1 - root.specialWorkspaceOverlayTransitionProgress) * Math.max(4, root.specialWorkspaceOverlayHeight * 0.14)) : 0
+                opacity: root.specialWorkspaceOverlayAnimationEnabled ? root.specialWorkspaceOverlayTransitionProgress : 1
+                x: root.specialWorkspaceOverlayAnimationEnabled && root.specialWorkspaceOverlayAnimationAxis === "horizontal" ? Math.round((1 - root.specialWorkspaceOverlayTransitionProgress) * root.specialWorkspaceOverlayTransitionOffset()) : 0
+                y: root.specialWorkspaceOverlayAnimationEnabled && root.specialWorkspaceOverlayAnimationAxis === "vertical" ? Math.round((1 - root.specialWorkspaceOverlayTransitionProgress) * root.specialWorkspaceOverlayTransitionOffset()) : 0
 
                 NText {
-                    readonly property real iconsWidth: root.displayedSpecialWorkspaceIcons.length > 0
-                        ? (root.displayedSpecialWorkspaceIcons.length * root.specialWorkspaceOverlayIconSize) + ((root.displayedSpecialWorkspaceIcons.length - 1) * root.specialWorkspaceOverlayIconGap)
-                        : 0
+                    readonly property real iconsWidth: root.displayedSpecialWorkspaceIcons.length > 0 ? (root.displayedSpecialWorkspaceIcons.length * root.specialWorkspaceOverlayIconSize) + ((root.displayedSpecialWorkspaceIcons.length - 1) * root.specialWorkspaceOverlayIconGap) : 0
                     readonly property real maxTextWidth: Math.max(0, specialWorkspaceOverlay.width - (root.specialWorkspaceOverlayContentPadding * 2) - iconsWidth - (root.displayedSpecialWorkspaceIcons.length > 0 ? root.specialWorkspaceOverlayIconGap : 0))
                     width: Math.min(implicitWidth, maxTextWidth)
                     text: root.displayedSpecialWorkspaceText
@@ -2257,6 +2577,151 @@ Item {
                         smooth: true
                         asynchronous: true
                     }
+                }
+            }
+        }
+    }
+
+    Item {
+        id: closingSegmentsLayer
+        parent: trackContentLayer
+        x: 0
+        y: 0
+        width: root.effectiveTrackWidth
+        height: root.availableContainerHeight
+        z: 19
+        visible: (root.closingEntries || []).length > 0
+
+        Repeater {
+            model: root.closingEntries
+
+            delegate: Item {
+                id: closingSegment
+
+                required property var modelData
+
+                readonly property int closeUid: modelData?.uid ?? -1
+                readonly property string appId: String(modelData?.appId ?? "")
+                readonly property string title: String(modelData?.title ?? "")
+                readonly property bool showLabel: modelData?.showLabel !== false
+
+                x: modelData?.x ?? 0
+                y: modelData?.y ?? 0
+                width: modelData?.width ?? 0
+                height: modelData?.height ?? 0
+                clip: true
+                opacity: 1
+                scale: 1
+                transformOrigin: Item.Center
+
+                Rectangle {
+                    anchors.fill: parent
+                    anchors.margins: root.windowMargin
+                    radius: Math.min(Math.max(0, root.windowBorderRadius), Math.max(0, Math.min(width, height) / 2))
+                    color: modelData?.backgroundColor ?? "transparent"
+                }
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.margins: root.windowMargin
+                    anchors.leftMargin: root.windowMargin + root.windowPaddingLeft
+                    anchors.rightMargin: root.windowMargin + root.windowPaddingRight
+                    spacing: root.labelGap
+                    visible: root.showIcon || root.showTitle
+
+                    Item {
+                        Layout.preferredWidth: root.showIcon ? (root.showTitle ? root.computedIconSize : Math.max(root.computedIconSize, closingSegment.width - (root.windowMargin * 2) - root.windowPaddingLeft - root.windowPaddingRight)) : 0
+                        Layout.preferredHeight: root.showIcon ? root.computedIconSize : 0
+                        Layout.alignment: Qt.AlignVCenter
+                        visible: root.showIcon
+                        opacity: closingSegment.showLabel ? 1 : 0
+
+                        IconImage {
+                            id: closingAppIcon
+                            width: root.computedIconSize
+                            height: root.computedIconSize
+                            anchors.centerIn: parent
+                            source: ThemeIcons.iconForAppId(closingSegment.appId)
+                            smooth: true
+                            asynchronous: true
+                            visible: status === Image.Ready && closingCustomIcon.visible === false
+                        }
+
+                        NIcon {
+                            id: closingCustomIcon
+                            width: root.computedIconSize
+                            height: root.computedIconSize
+                            anchors.centerIn: parent
+                            icon: String(modelData?.customIcon ?? "")
+                            pointSize: root.computedIconSize
+                            visible: icon !== ""
+                            color: modelData?.iconColor ?? root.titleColorDefault
+                        }
+
+                        NText {
+                            width: root.computedIconSize
+                            anchors.centerIn: parent
+                            horizontalAlignment: root.horizontalAlignment(root.iconAlign)
+                            visible: !closingAppIcon.visible && !closingCustomIcon.visible
+                            text: closingSegment.title.length > 0 ? closingSegment.title.charAt(0).toUpperCase() : "?"
+                            pointSize: Math.max(Style.fontSizeXS, root.titleFontSize * root.titleScale * 0.95)
+                            font.weight: Style.fontWeightBold
+                            color: modelData?.iconColor ?? root.titleColorDefault
+                        }
+                    }
+
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: closingTitle.implicitHeight
+                        Layout.alignment: Qt.AlignVCenter
+                        visible: root.showTitle
+
+                        NText {
+                            id: closingTitle
+                            anchors.fill: parent
+                            text: closingSegment.title
+                            elide: Text.ElideRight
+                            maximumLineCount: 1
+                            opacity: closingSegment.showLabel ? 1 : 0
+                            color: modelData?.titleColor ?? root.titleColorDefault
+                            horizontalAlignment: root.horizontalAlignment(root.titleAlign)
+                            font.family: root.titleFontFamily || Qt.application.font.family
+                            pointSize: root.titleFontSize * root.titleScale
+                            font.weight: modelData?.titleWeight ?? Style.fontWeightMedium
+                        }
+                    }
+                }
+
+                ParallelAnimation {
+                    id: closeAnimation
+                    running: root.windowCloseAnimationActive
+
+                    NumberAnimation {
+                        target: closingSegment
+                        property: "opacity"
+                        from: 1
+                        to: 0
+                        duration: root.windowAnimationSpeed
+                        easing.type: root.windowAnimationEasingType()
+                        easing.overshoot: root.windowAnimationOvershoot()
+                    }
+
+                    NumberAnimation {
+                        target: closingSegment
+                        property: "scale"
+                        from: 1
+                        to: 0.86
+                        duration: root.windowAnimationSpeed
+                        easing.type: root.windowAnimationEasingType()
+                        easing.overshoot: root.windowAnimationOvershoot()
+                    }
+
+                    onFinished: root.removeClosingEntry(closingSegment.closeUid)
+                }
+
+                Component.onCompleted: {
+                    if (!root.windowCloseAnimationActive)
+                        root.removeClosingEntry(closeUid);
                 }
             }
         }
@@ -2331,9 +2796,7 @@ Item {
             width: computedWidth
             height: root.visibleFocusLineThickness
             radius: root.focusLineRadius
-            color: root.dragPreviewActive
-                ? root.colorWithOpacity(root.focusLineHoverColor, root.focusLineOpacity * Math.max(root.focusLineHoverOpacity, root.focusLineIndicatorOpacity))
-                : root.colorWithOpacity(root.focusLineIndicatorColor, root.focusLineOpacity * root.focusLineIndicatorOpacity)
+            color: root.dragPreviewActive ? root.colorWithOpacity(root.focusLineHoverColor, root.focusLineOpacity * Math.max(root.focusLineHoverOpacity, root.focusLineIndicatorOpacity)) : root.colorWithOpacity(root.focusLineIndicatorColor, root.focusLineOpacity * root.focusLineIndicatorOpacity)
 
             Behavior on color {
                 enabled: root.animationEnabled

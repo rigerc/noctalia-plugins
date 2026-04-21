@@ -10,6 +10,7 @@ ColumnLayout {
 
     property var rootSettings: null
     property alias specialWorkspaceSectionTarget: content
+    property alias animationSectionTarget: animationContent
 
     Layout.fillWidth: true
     spacing: Style.marginL
@@ -175,6 +176,76 @@ ColumnLayout {
                 showOpacityControl: true
                 onColorSelected: value => rootSettings?.setStateSetting("specialWorkspaceOverlay", "font", "color", "color", value)
                 onOpacitySelected: value => rootSettings?.setStateSetting("specialWorkspaceOverlay", "font", "color", "opacity", value)
+            }
+        }
+    }
+
+    NBox {
+        Layout.fillWidth: true
+        Layout.preferredHeight: animationContent.implicitHeight + Style.marginL * 2
+        visible: rootSettings?.isVisibleByConditions(["specialWorkspaceOverlayEnabled"]) ?? false
+
+        ColumnLayout {
+            id: animationContent
+            anchors.fill: parent
+            anchors.margins: Style.marginL
+            spacing: Style.marginM
+
+            NHeader {
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.animation.sectionLabel")
+                description: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.animation.sectionDesc")
+            }
+
+            NToggle {
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.animation.enabled.label")
+                description: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.animation.enabled.desc")
+                checked: rootSettings?.nestedSettingValue("specialWorkspaceOverlay", "animation", "enabled")
+                    ?? rootSettings?.settingValue("animation", "enabled")
+                    ?? true
+                defaultValue: rootSettings?.defaultNestedValue("specialWorkspaceOverlay", "animation", "enabled")
+                onToggled: checked => rootSettings?.setNestedSetting("specialWorkspaceOverlay", "animation", "enabled", checked)
+            }
+
+            NComboBox {
+                visible: rootSettings?.isVisibleByConditions(["specialWorkspaceOverlayAnimationEnabled"]) ?? true
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.animation.type.label")
+                description: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.animation.type.desc")
+                model: rootSettings?.animationTypeModel
+                currentKey: rootSettings?.nestedSettingValue("specialWorkspaceOverlay", "animation", "type")
+                    ?? rootSettings?.settingValue("animation", "type")
+                    ?? "spring"
+                defaultValue: rootSettings?.defaultNestedValue("specialWorkspaceOverlay", "animation", "type")
+                onSelected: key => rootSettings?.setNestedSetting("specialWorkspaceOverlay", "animation", "type", key)
+            }
+
+            NComboBox {
+                visible: rootSettings?.isVisibleByConditions(["specialWorkspaceOverlayAnimationEnabled"]) ?? true
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.animation.axis.label")
+                description: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.animation.axis.desc")
+                model: rootSettings?.axisModel
+                currentKey: rootSettings?.nestedSettingValue("specialWorkspaceOverlay", "animation", "axis") ?? "vertical"
+                defaultValue: rootSettings?.defaultNestedValue("specialWorkspaceOverlay", "animation", "axis")
+                onSelected: key => rootSettings?.setNestedSetting("specialWorkspaceOverlay", "animation", "axis", key)
+            }
+
+            NValueSlider {
+                visible: rootSettings?.isVisibleByConditions(["specialWorkspaceOverlayAnimationEnabled"]) ?? true
+                label: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.animation.speed.label")
+                description: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.animation.speed.desc")
+                from: 50
+                to: 1500
+                stepSize: 25
+                value: rootSettings?.nestedSettingValue("specialWorkspaceOverlay", "animation", "speed")
+                    ?? rootSettings?.settingValue("animation", "speed")
+                    ?? 420
+                text: Math.round(value) + " ms"
+                defaultValue: rootSettings?.defaultNestedValue("specialWorkspaceOverlay", "animation", "speed")
+                showReset: true
+                onMoved: sliderValue => rootSettings?.setNestedSetting("specialWorkspaceOverlay", "animation", "speed", Math.round(sliderValue))
             }
         }
     }

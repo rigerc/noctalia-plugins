@@ -102,6 +102,84 @@ ColumnLayout {
 
     NBox {
         Layout.fillWidth: true
+        Layout.preferredHeight: windowAnimationContent.implicitHeight + Style.marginL * 2
+
+        ColumnLayout {
+            id: windowAnimationContent
+            anchors.fill: parent
+            anchors.margins: Style.marginL
+            spacing: Style.marginM
+
+            NHeader {
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.window.animation.sectionLabel")
+                description: rootSettings?.pluginApi?.tr("settings.window.animation.sectionDesc")
+            }
+
+            NToggle {
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.window.animation.enabled.label")
+                description: rootSettings?.pluginApi?.tr("settings.window.animation.enabled.desc")
+                checked: rootSettings?.nestedSettingValue("window", "animation", "enabled")
+                    ?? rootSettings?.settingValue("animation", "enabled")
+                    ?? true
+                defaultValue: rootSettings?.defaultNestedValue("window", "animation", "enabled")
+                onToggled: checked => rootSettings?.setNestedSetting("window", "animation", "enabled", checked)
+            }
+
+            NToggle {
+                visible: rootSettings?.isVisibleByConditions(["windowAnimationEnabled"]) ?? true
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.window.animation.openEnabled.label")
+                description: rootSettings?.pluginApi?.tr("settings.window.animation.openEnabled.desc")
+                checked: rootSettings?.nestedSettingValue("window", "animation", "openEnabled") ?? true
+                defaultValue: rootSettings?.defaultNestedValue("window", "animation", "openEnabled") ?? true
+                onToggled: checked => rootSettings?.setNestedSetting("window", "animation", "openEnabled", checked)
+            }
+
+            NToggle {
+                visible: rootSettings?.isVisibleByConditions(["windowAnimationEnabled"]) ?? true
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.window.animation.closeEnabled.label")
+                description: rootSettings?.pluginApi?.tr("settings.window.animation.closeEnabled.desc")
+                checked: rootSettings?.nestedSettingValue("window", "animation", "closeEnabled") ?? true
+                defaultValue: rootSettings?.defaultNestedValue("window", "animation", "closeEnabled") ?? true
+                onToggled: checked => rootSettings?.setNestedSetting("window", "animation", "closeEnabled", checked)
+            }
+
+            NComboBox {
+                visible: rootSettings?.isVisibleByConditions(["windowAnimationEnabled"]) ?? true
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.window.animation.type.label")
+                description: rootSettings?.pluginApi?.tr("settings.window.animation.type.desc")
+                model: rootSettings?.animationTypeModel
+                currentKey: rootSettings?.nestedSettingValue("window", "animation", "type")
+                    ?? rootSettings?.settingValue("animation", "type")
+                    ?? "spring"
+                defaultValue: rootSettings?.defaultNestedValue("window", "animation", "type")
+                onSelected: key => rootSettings?.setNestedSetting("window", "animation", "type", key)
+            }
+
+            NValueSlider {
+                visible: rootSettings?.isVisibleByConditions(["windowAnimationEnabled"]) ?? true
+                label: rootSettings?.pluginApi?.tr("settings.window.animation.speed.label")
+                description: rootSettings?.pluginApi?.tr("settings.window.animation.speed.desc")
+                from: 50
+                to: 1500
+                stepSize: 25
+                value: rootSettings?.nestedSettingValue("window", "animation", "speed")
+                    ?? rootSettings?.settingValue("animation", "speed")
+                    ?? 420
+                text: Math.round(value) + " ms"
+                defaultValue: rootSettings?.defaultNestedValue("window", "animation", "speed")
+                showReset: true
+                onMoved: sliderValue => rootSettings?.setNestedSetting("window", "animation", "speed", Math.round(sliderValue))
+            }
+        }
+    }
+
+    NBox {
+        Layout.fillWidth: true
         Layout.preferredHeight: mouseInteractionContent.implicitHeight + Style.marginL * 2
 
         ColumnLayout {

@@ -1,7 +1,7 @@
 {
   "id": "scrollbar2",
   "name": "Scrollbar2",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "minNoctaliaVersion": "4.6.6",
   "author": "rigerc",
   "license": "MIT",
@@ -136,6 +136,13 @@
             "color": "on-surface-variant",
             "opacity": 1
           }
+        },
+        "animation": {
+          "enabled": null,
+          "openEnabled": true,
+          "closeEnabled": true,
+          "type": null,
+          "speed": null
         }
       },
       "animation": {
@@ -210,6 +217,12 @@
             "color": "on-surface",
             "opacity": 1
           }
+        },
+        "animation": {
+          "enabled": null,
+          "axis": null,
+          "type": null,
+          "speed": null
         }
       },
       "pinnedApps": {

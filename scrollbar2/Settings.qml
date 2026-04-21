@@ -420,6 +420,12 @@ ColumnLayout {
         };
     }
 
+    function normalizeOptionalAnimationOverrideValue(value, normalizer) {
+        if (value === undefined || value === null || value === "")
+            return null;
+        return normalizer(value);
+    }
+
     function normalizeSettingsSnapshot(settings) {
         const migrated = Migrations.migrateSettings(settings || ({}));
         const next = deepCopy(migrated.settings);
@@ -486,6 +492,7 @@ ColumnLayout {
         next.animation = next.animation && typeof next.animation === "object" && !Array.isArray(next.animation) ? next.animation : ({});
         if (["spring", "ease", "linear", "smooth"].indexOf(next.animation.type) < 0)
             next.animation.type = "spring";
+        next.animation.speed = Math.max(50, Math.min(1500, Math.round(Number(next.animation.speed ?? 420))));
         next.workspaceIndicator = next.workspaceIndicator && typeof next.workspaceIndicator === "object" && !Array.isArray(next.workspaceIndicator) ? next.workspaceIndicator : ({});
         if (["id", "name"].indexOf(next.workspaceIndicator.labelMode) < 0)
             next.workspaceIndicator.labelMode = "id";
@@ -505,6 +512,7 @@ ColumnLayout {
             next.workspaceIndicator.animation.axis = "horizontal";
         if (["spring", "ease", "linear", "smooth"].indexOf(next.workspaceIndicator.animation.type) < 0)
             next.workspaceIndicator.animation.type = "smooth";
+        next.workspaceIndicator.animation.speed = Math.max(50, Math.min(1500, Math.round(Number(next.workspaceIndicator.animation.speed ?? 220))));
         next.specialWorkspaceOverlay = next.specialWorkspaceOverlay && typeof next.specialWorkspaceOverlay === "object" && !Array.isArray(next.specialWorkspaceOverlay) ? next.specialWorkspaceOverlay : ({});
         if (["stripped", "raw", "custom"].indexOf(next.specialWorkspaceOverlay.textMode) < 0)
             next.specialWorkspaceOverlay.textMode = "stripped";
@@ -518,6 +526,33 @@ ColumnLayout {
         next.specialWorkspaceOverlay.background = normalizeColorSetting(next.specialWorkspaceOverlay.background, "surface", 0.82);
         next.specialWorkspaceOverlay.font = next.specialWorkspaceOverlay.font && typeof next.specialWorkspaceOverlay.font === "object" && !Array.isArray(next.specialWorkspaceOverlay.font) ? next.specialWorkspaceOverlay.font : ({});
         next.specialWorkspaceOverlay.font.color = normalizeColorSetting(next.specialWorkspaceOverlay.font.color, "on-surface", 1);
+        next.specialWorkspaceOverlay.animation = next.specialWorkspaceOverlay.animation && typeof next.specialWorkspaceOverlay.animation === "object" && !Array.isArray(next.specialWorkspaceOverlay.animation) ? next.specialWorkspaceOverlay.animation : ({});
+        next.specialWorkspaceOverlay.animation.enabled = normalizeOptionalAnimationOverrideValue(next.specialWorkspaceOverlay.animation.enabled, function (value) {
+            return value !== false;
+        });
+        next.specialWorkspaceOverlay.animation.axis = normalizeOptionalAnimationOverrideValue(next.specialWorkspaceOverlay.animation.axis, function (value) {
+            return ["horizontal", "vertical"].indexOf(String(value)) >= 0 ? String(value) : "vertical";
+        });
+        next.specialWorkspaceOverlay.animation.type = normalizeOptionalAnimationOverrideValue(next.specialWorkspaceOverlay.animation.type, function (value) {
+            return ["spring", "ease", "linear", "smooth"].indexOf(String(value)) >= 0 ? String(value) : "spring";
+        });
+        next.specialWorkspaceOverlay.animation.speed = normalizeOptionalAnimationOverrideValue(next.specialWorkspaceOverlay.animation.speed, function (value) {
+            const numericValue = Number(value);
+            return Math.max(50, Math.min(1500, Math.round(isNaN(numericValue) ? 420 : numericValue)));
+        });
+        next.window.animation = next.window.animation && typeof next.window.animation === "object" && !Array.isArray(next.window.animation) ? next.window.animation : ({});
+        next.window.animation.enabled = normalizeOptionalAnimationOverrideValue(next.window.animation.enabled, function (value) {
+            return value !== false;
+        });
+        next.window.animation.openEnabled = next.window.animation.openEnabled !== false;
+        next.window.animation.closeEnabled = next.window.animation.closeEnabled !== false;
+        next.window.animation.type = normalizeOptionalAnimationOverrideValue(next.window.animation.type, function (value) {
+            return ["spring", "ease", "linear", "smooth"].indexOf(String(value)) >= 0 ? String(value) : "spring";
+        });
+        next.window.animation.speed = normalizeOptionalAnimationOverrideValue(next.window.animation.speed, function (value) {
+            const numericValue = Number(value);
+            return Math.max(50, Math.min(1500, Math.round(isNaN(numericValue) ? 420 : numericValue)));
+        });
         next.pinnedApps = next.pinnedApps && typeof next.pinnedApps === "object" && !Array.isArray(next.pinnedApps) ? next.pinnedApps : ({});
         if (["left", "right"].indexOf(next.pinnedApps.position) < 0)
             next.pinnedApps.position = "left";
@@ -713,6 +748,18 @@ ColumnLayout {
             return settingValue("specialWorkspaceOverlay", "enabled") ?? false;
         case "specialWorkspaceOverlayCustomMode":
             return (settingValue("specialWorkspaceOverlay", "textMode") ?? "stripped") === "custom";
+        case "specialWorkspaceOverlayAnimationEnabled": {
+            const override = nestedSettingValue("specialWorkspaceOverlay", "animation", "enabled");
+            if (override !== undefined && override !== null)
+                return override !== false;
+            return settingValue("animation", "enabled") ?? true;
+        }
+        case "windowAnimationEnabled": {
+            const override = nestedSettingValue("window", "animation", "enabled");
+            if (override !== undefined && override !== null)
+                return override !== false;
+            return settingValue("animation", "enabled") ?? true;
+        }
         case "pinnedAppsEnabled":
             return pinnedAppItems().length > 0;
         case "showIcons":

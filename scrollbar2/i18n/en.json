@@ -434,6 +434,30 @@
         "label": "Title Alignment",
         "desc": "Horizontal alignment of window titles inside each segment."
       },
+      "animation": {
+        "sectionLabel": "Window Open / Close Animation",
+        "sectionDesc": "Animate window segments when entries appear, disappear, and reflow across the track.",
+        "enabled": {
+          "label": "Enable Window Animation",
+          "desc": "Use dedicated motion settings for window open and close transitions."
+        },
+        "openEnabled": {
+          "label": "Animate Open",
+          "desc": "Scale and fade new window segments in when they appear."
+        },
+        "closeEnabled": {
+          "label": "Animate Close",
+          "desc": "Keep removed windows visible briefly so they can animate out before disappearing."
+        },
+        "type": {
+          "label": "Animation Type",
+          "desc": "Choose the motion style used for window lifecycle changes."
+        },
+        "speed": {
+          "label": "Animation Speed",
+          "desc": "Transition duration in milliseconds for window open and close motion."
+        }
+      },
       "iconColors": {
         "focused": {
           "label": "Focused Icon Color",
@@ -640,6 +664,26 @@
         "color": {
           "label": "Text Color",
           "desc": "Text color and opacity for the overlay label."
+        }
+      },
+      "animation": {
+        "sectionLabel": "Overlay Animation",
+        "sectionDesc": "Override the general motion settings for special workspace overlay swaps and show/hide transitions.",
+        "enabled": {
+          "label": "Animate Overlay Changes",
+          "desc": "Animate the overlay when the special workspace label or icons change."
+        },
+        "type": {
+          "label": "Animation Type",
+          "desc": "Choose the motion style for special workspace overlay changes."
+        },
+        "axis": {
+          "label": "Animation Axis",
+          "desc": "Slide the overlay content horizontally or vertically during label changes."
+        },
+        "speed": {
+          "label": "Animation Speed",
+          "desc": "Transition duration in milliseconds for overlay changes."
         }
       }
     },
