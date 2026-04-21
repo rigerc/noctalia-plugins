@@ -29,6 +29,14 @@
     },
     "general": {
       "description": "Configure bar widget appearance and refresh behavior",
+      "appearance": {
+        "title": "Appearance",
+        "description": "Adjust the icon and spacing used by the bar widget."
+      },
+      "behavior": {
+        "title": "Behavior",
+        "description": "Choose which provider is shown and how often CodexBar refreshes."
+      },
       "barIcon": {
         "label": "Bar Icon",
         "desc": "Choose the icon shown in the bar widget",
@@ -41,42 +49,85 @@
         "label": "Icon/Text Spacing",
         "desc": "Space between the icon and the percentage text in the bar widget"
       },
+      "textFields": {
+        "title": "Text Content",
+        "description": "Choose which values appear in the bar text, set their order, and control separator formatting. Status requires `codexbar --status`.",
+        "add": "Add Text Field",
+        "addButton": "Add",
+        "options": {
+          "primary": "5h Window",
+          "secondary": "Weekly Window",
+          "status": "Status"
+        },
+        "separator": {
+          "label": "Separator",
+          "desc": "Text inserted between each selected field"
+        },
+        "separatorSpacing": {
+          "label": "Separator Spacing",
+          "desc": "Spaces added on each side of the separator"
+        }
+      },
       "text": {
         "title": "Text",
         "description": "Customize the bar widget text style",
+        "useIconColor": {
+          "label": "Use Icon Color",
+          "desc": "When enabled, the text color follows the icon color."
+        },
+        "color": {
+          "label": "Text Color"
+        },
+        "opacity": {
+          "label": "Text Opacity",
+          "desc": "Opacity applied to the widget text."
+        },
         "pointSize": {
           "label": "Text Size",
           "desc": "Point size for the bar widget text (0 = theme default)"
         },
         "fontFamily": {
           "label": "Font Family",
-          "desc": "Optional font family (leave empty for theme default)"
+          "desc": "Optional font family (leave empty for theme default)",
+          "placeholder": "Theme default",
+          "searchPlaceholder": "Search fonts"
         },
         "fontWeight": {
           "label": "Font Weight",
           "desc": "Weight of the bar widget text"
         },
         "weight": {
-          "normal": "Normal",
+          "regular": "Regular",
           "medium": "Medium",
+          "semibold": "Semi-bold",
           "bold": "Bold"
-        },
-        "italic": {
-          "label": "Italic",
-          "desc": "Italicize the bar widget text"
-        },
-        "underline": {
-          "label": "Underline",
-          "desc": "Underline the bar widget text"
         }
+      },
+      "textStyle": {
+        "title": "Text Style",
+        "description": "Set text color, opacity, and font styling."
       },
       "refreshInterval": {
         "label": "Refresh Interval",
-        "desc": "Seconds between data updates"
+        "desc": "Choose how often CodexBar refreshes data.",
+        "options": {
+          "oneMinute": "1 minute",
+          "twoMinutes": "2 minutes",
+          "fiveMinutes": "5 minutes",
+          "tenMinutes": "10 minutes",
+          "fifteenMinutes": "15 minutes",
+          "thirtyMinutes": "30 minutes",
+          "oneHour": "1 hour",
+          "twoHours": "2 hours",
+          "sixHours": "6 hours",
+          "twelveHours": "12 hours",
+          "twentyFourHours": "24 hours"
+        }
       },
       "defaultProvider": {
         "label": "Default Provider",
-        "desc": "Provider shown in the bar widget"
+        "desc": "Provider shown in the bar widget",
+        "auto": "Auto (first available)"
       }
     },
     "notifications": {

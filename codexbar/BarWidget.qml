@@ -47,17 +47,116 @@ Item {
         }
     }
 
+    function normalizeBarTextFields(fields) {
+        var allowed = ["primary", "secondary", "status"];
+        var normalized = [];
+        var source = Array.isArray(fields) ? fields : [fields];
+
+        for (var index = 0; index < source.length; index++) {
+            var fieldKey = String(source[index] || "").trim();
+            if (allowed.indexOf(fieldKey) < 0 || normalized.indexOf(fieldKey) >= 0)
+                continue;
+            normalized.push(fieldKey);
+        }
+
+        if (normalized.length === 0)
+            normalized.push("primary");
+        return normalized;
+    }
+
+    function usageWindowLabel(windowMinutes, fallbackLabel) {
+        var minutes = Number(windowMinutes || 0);
+        if (!isFinite(minutes) || minutes <= 0)
+            return fallbackLabel;
+        if (minutes % 1440 === 0)
+            return (minutes / 1440) + "d";
+        if (minutes % 60 === 0)
+            return (minutes / 60) + "h";
+        return minutes + "m";
+    }
+
+    function formatStatusText(status) {
+        var indicator = String(status?.indicator || "").trim();
+        var description = String(status?.description || "").trim();
+
+        if (indicator === "none")
+            return "OK";
+        if (indicator === "minor")
+            return "Warn";
+        if (indicator === "major")
+            return "Down";
+        if (indicator === "maintenance")
+            return "Maint";
+        if (description !== "")
+            return description;
+        if (indicator === "")
+            return "";
+        return indicator.charAt(0).toUpperCase() + indicator.slice(1);
+    }
+
+    function barTextJoiner() {
+        var padding = "";
+        for (var index = 0; index < root.barTextSeparatorSpacing; index++)
+            padding += " ";
+
+        if (root.barTextSeparator === "")
+            return padding === "" ? " " : padding;
+        return padding + root.barTextSeparator + padding;
+    }
+
+    function fieldText(fieldKey) {
+        var provider = root.displayProvider;
+        if (!provider)
+            return "";
+
+        if (fieldKey === "status") {
+            var statusText = root.formatStatusText(provider.status);
+            return statusText === "" ? "" : "Status: " + statusText;
+        }
+
+        var usage = fieldKey === "secondary" ? provider?.usage?.secondary : provider?.usage?.primary;
+        if (!usage)
+            return "";
+
+        var usedPercent = Number(usage.usedPercent);
+        if (!isFinite(usedPercent) || usedPercent < 0)
+            return "";
+
+        var leftPercent = Math.max(0, Math.min(100, Math.round(100 - usedPercent)));
+        if (root.barTextFields.length === 1)
+            return leftPercent + "%";
+
+        var label = root.usageWindowLabel(
+            usage.windowMinutes,
+            fieldKey === "secondary" ? "7d" : "5h"
+        );
+        return label + " " + leftPercent + "%";
+    }
+
     readonly property string barIcon: normalizeIconName(cfg.barIcon ?? defaults.barIcon ?? "sparkles")
     readonly property string barIconColor: cfg.barIconColor ?? defaults.barIconColor ?? "on-surface"
     readonly property real barIconTextSpacing: Math.max(0, Math.min(24, Number(cfg.barIconTextSpacing ?? defaults.barIconTextSpacing ?? 6))) * Style.uiScaleRatio
+    readonly property var barTextFields: normalizeBarTextFields(cfg.barTextFields ?? defaults.barTextFields ?? ["primary"])
+    readonly property string barTextSeparator: String(cfg.barTextSeparator ?? defaults.barTextSeparator ?? "·")
+    readonly property int barTextSeparatorSpacing: Math.max(0, Math.min(4, Number(cfg.barTextSeparatorSpacing ?? defaults.barTextSeparatorSpacing ?? 1)))
+    readonly property string barTextColorKey: String(cfg.barTextColor ?? defaults.barTextColor ?? "on-surface")
+    readonly property real barTextOpacity: Math.max(0, Math.min(1, Number(cfg.barTextOpacity ?? defaults.barTextOpacity ?? 1)))
     readonly property int barTextPointSizeSetting: Math.max(0, Math.min(24, Number(cfg.barTextPointSize ?? defaults.barTextPointSize ?? 0)))
     readonly property string barTextFontFamily: String(cfg.barTextFontFamily ?? defaults.barTextFontFamily ?? "")
-    readonly property string barTextFontWeightKey: String(cfg.barTextFontWeight ?? defaults.barTextFontWeight ?? "normal")
-    readonly property int barTextFontWeight: barTextFontWeightKey === "bold" ? Font.Bold : barTextFontWeightKey === "medium" ? Font.Medium : Font.Normal
-    readonly property bool barTextItalic: cfg.barTextItalic ?? defaults.barTextItalic ?? false
-    readonly property bool barTextUnderline: cfg.barTextUnderline ?? defaults.barTextUnderline ?? false
+    readonly property string barTextFontWeightKey: String(cfg.barTextFontWeight ?? defaults.barTextFontWeight ?? "regular")
+    readonly property int barTextFontWeight: {
+        if (barTextFontWeightKey === "medium")
+            return Style.fontWeightMedium;
+        if (barTextFontWeightKey === "semibold")
+            return Style.fontWeightSemiBold;
+        if (barTextFontWeightKey === "bold")
+            return Style.fontWeightBold;
+        return Style.fontWeightRegular;
+    }
     readonly property string defaultProvider: cfg.defaultProvider ?? defaults.defaultProvider ?? ""
     readonly property color resolvedBarIconColor: Color.resolveColorKey(root.barIconColor)
+    readonly property color resolvedBarTextBaseColor: Color.resolveColorKey(root.barTextColorKey)
+    readonly property color resolvedBarTextColor: Qt.alpha(root.resolvedBarTextBaseColor, root.barTextOpacity)
 
     readonly property var displayProvider: {
         if (!mainInstance || !Array.isArray(mainInstance.providerData) || mainInstance.providerData.length === 0)
@@ -72,15 +171,32 @@ Item {
         return mainInstance.providerData[0] || null;
     }
 
-    readonly property int usedPercent: displayProvider?.usage?.primary?.usedPercent ?? -1
-    readonly property bool hasData: displayProvider !== null && usedPercent >= 0
+    readonly property bool hasData: {
+        if (!displayProvider)
+            return false;
+        for (var index = 0; index < root.barTextFields.length; index++) {
+            if (root.fieldText(root.barTextFields[index]) !== "")
+                return true;
+        }
+        return false;
+    }
 
     readonly property string contentText: {
         if (!mainInstance || mainInstance.isRefreshing)
             return "...";
-        if (!hasData)
+        if (!displayProvider)
             return "—";
-        return (100 - usedPercent) + "%";
+
+        var parts = [];
+        for (var index = 0; index < root.barTextFields.length; index++) {
+            var part = root.fieldText(root.barTextFields[index]);
+            if (part !== "")
+                parts.push(part);
+        }
+
+        if (parts.length === 0)
+            return "—";
+        return parts.join(root.barTextJoiner());
     }
 
     implicitWidth: isVertical ? capsuleHeight : row.width + Style.marginM * 2
@@ -150,11 +266,9 @@ Item {
                 Layout.alignment: Qt.AlignVCenter
                 text: root.contentText
                 pointSize: root.barTextPointSizeSetting > 0 ? root.barTextPointSizeSetting : Style.fontSizeXS
-                color: root.resolvedBarIconColor
+                color: root.resolvedBarTextColor
                 font.family: root.barTextFontFamily
                 font.weight: root.barTextFontWeight
-                font.italic: root.barTextItalic
-                font.underline: root.barTextUnderline
             }
         }
     }
@@ -182,9 +296,11 @@ Item {
                     var name = mainInstance?.providerDisplayName(displayProvider.provider) || displayProvider.provider;
                     var primary = displayProvider?.usage?.primary;
                     var secondary = displayProvider?.usage?.secondary;
+                    var status = displayProvider?.status;
                     var lines = [name];
                     if (primary) lines.push("Session: " + (100 - primary.usedPercent) + "% left");
                     if (secondary) lines.push("Weekly: " + (100 - secondary.usedPercent) + "% left");
+                    if (status && root.formatStatusText(status) !== "") lines.push("Status: " + root.formatStatusText(status));
                     tip = lines.join("\n");
                 }
                 TooltipService.show(root, tip, BarService.getTooltipDirection(root.screen?.name));

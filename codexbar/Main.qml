@@ -17,10 +17,48 @@ Item {
 
     readonly property var cfg: pluginApi?.pluginSettings || ({})
     readonly property var defaults: pluginApi?.manifest?.metadata?.defaultSettings || ({})
-    readonly property int refreshInterval: Math.max(30, Math.min(600, Number(cfg.refreshInterval ?? defaults.refreshInterval ?? 120)))
+    readonly property int refreshInterval: root.normalizeRefreshInterval(cfg.refreshInterval ?? defaults.refreshInterval ?? 120)
+    readonly property var barTextFields: root.normalizeBarTextFields(cfg.barTextFields ?? defaults.barTextFields ?? ["primary"])
+    readonly property bool shouldFetchStatus: barTextFields.indexOf("status") >= 0
     readonly property bool notifyOnReset: cfg.notifyOnReset ?? defaults.notifyOnReset ?? true
     readonly property bool notifyOnLowUsage: cfg.notifyOnLowUsage ?? defaults.notifyOnLowUsage ?? true
     readonly property int lowUsageThreshold: Math.max(5, Math.min(50, Number(cfg.lowUsageThreshold ?? defaults.lowUsageThreshold ?? 20)))
+
+    function normalizeBarTextFields(fields) {
+        var allowed = ["primary", "secondary", "status"];
+        var normalized = [];
+        var source = Array.isArray(fields) ? fields : [fields];
+
+        for (var index = 0; index < source.length; index++) {
+            var fieldKey = String(source[index] || "").trim();
+            if (allowed.indexOf(fieldKey) < 0 || normalized.indexOf(fieldKey) >= 0)
+                continue;
+            normalized.push(fieldKey);
+        }
+
+        if (normalized.length === 0)
+            normalized.push("primary");
+        return normalized;
+    }
+
+    function normalizeRefreshInterval(intervalValue) {
+        var allowed = [60, 120, 300, 600, 900, 1800, 3600, 7200, 21600, 43200, 86400];
+        var numeric = Number(intervalValue);
+        if (!isFinite(numeric))
+            numeric = 120;
+
+        var best = allowed[0];
+        var smallestDiff = Math.abs(best - numeric);
+        for (var index = 1; index < allowed.length; index++) {
+            var candidate = allowed[index];
+            var diff = Math.abs(candidate - numeric);
+            if (diff < smallestDiff) {
+                best = candidate;
+                smallestDiff = diff;
+            }
+        }
+        return best;
+    }
 
     function providerIcon(providerId) {
         switch (String(providerId || "")) {
@@ -76,7 +114,12 @@ Item {
     Process {
         id: fetchProcess
 
-        property var _command: ["sh", "-c", "codexbar_path=$(command -v codexbar 2>/dev/null) || exit 127; exec \"$codexbar_path\" --format json"]
+        property var _command: {
+            var script = "codexbar_path=$(command -v codexbar 2>/dev/null) || exit 127; exec \"$codexbar_path\" --format json";
+            if (root.shouldFetchStatus)
+                script += " --status";
+            return ["sh", "-c", script];
+        }
         command: _command
 
         stdout: StdioCollector {
@@ -214,6 +257,11 @@ Item {
                 running = true;
             }
         }
+    }
+
+    onShouldFetchStatusChanged: {
+        if (!root.isRefreshing && Array.isArray(root.providerData) && root.providerData.length > 0)
+            root.refresh();
     }
 
     IpcHandler {

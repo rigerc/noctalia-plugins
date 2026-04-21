@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import qs.Commons
+import qs.Services.System
 import qs.Widgets
 
 SettingsTabPage {
@@ -8,214 +9,377 @@ SettingsTabPage {
 
     property var rootSettings: null
     readonly property var mainInstance: rootSettings?.pluginApi?.mainInstance
+    readonly property var availableBarTextFieldOptions: {
+        var items = [];
+        var selected = rootSettings?.editBarTextFields || [];
+        var options = rootSettings?.barTextFieldOptions || [];
 
-    title: rootSettings?.pluginApi?.tr("settings.tabs.general") || "General"
-    description: rootSettings?.pluginApi?.tr("settings.general.description") || "Configure bar widget appearance and refresh behavior"
-    icon: "sparkles"
-
-    NLabel {
-        Layout.fillWidth: true
-        label: rootSettings?.pluginApi?.tr("settings.general.barIcon.label")
-        description: rootSettings?.pluginApi?.tr("settings.general.barIcon.desc")
+        for (var index = 0; index < options.length; index++) {
+            var option = options[index];
+            if (selected.indexOf(option.key) >= 0)
+                continue;
+            items.push(option);
+        }
+        return items;
     }
 
-    RowLayout {
-        Layout.fillWidth: true
-        spacing: Style.marginL
+    component SettingsCard: NBox {
+        id: card
 
-        NIcon {
-            Layout.preferredWidth: Style.fontSizeXL * 2
-            Layout.preferredHeight: Style.fontSizeXL * 2
-            Layout.alignment: Qt.AlignVCenter
-            icon: rootSettings?.editBarIcon ?? "sparkles"
-            pointSize: Style.fontSizeXL * 1.6
-            color: Color.resolveColorKey(rootSettings?.editBarIconColor ?? "on-surface")
+        property string title: ""
+        property string description: ""
+        default property alias content: body.data
+
+        Layout.fillWidth: true
+        implicitHeight: body.implicitHeight + Style.marginL * 2
+
+        ColumnLayout {
+            id: body
+            anchors.fill: parent
+            anchors.margins: Style.marginL
+            spacing: Style.marginM
+
+            NLabel {
+                visible: card.title !== "" || card.description !== ""
+                Layout.fillWidth: true
+                label: card.title
+                description: card.description
+                labelSize: Style.fontSizeL
+            }
+        }
+    }
+
+    title: rootSettings?.pluginApi?.tr("settings.tabs.general")
+    description: rootSettings?.pluginApi?.tr("settings.general.description")
+    icon: "sparkles"
+
+    SettingsCard {
+        title: rootSettings?.pluginApi?.tr("settings.general.appearance.title")
+        description: rootSettings?.pluginApi?.tr("settings.general.appearance.description")
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Style.marginL
+
+            NIcon {
+                Layout.preferredWidth: Style.fontSizeXL * 2
+                Layout.preferredHeight: Style.fontSizeXL * 2
+                Layout.alignment: Qt.AlignVCenter
+                icon: rootSettings?.editBarIcon ?? "sparkles"
+                pointSize: Style.fontSizeXL * 1.6
+                color: Color.resolveColorKey(rootSettings?.editBarIconColor ?? "on-surface")
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: Style.marginM
+
+                NButton {
+                    text: rootSettings?.pluginApi?.tr("settings.general.barIcon.browse")
+                    onClicked: barIconPicker.open()
+                }
+
+                NText {
+                    Layout.fillWidth: true
+                    text: rootSettings?.editBarIcon ?? "sparkles"
+                    color: Color.mOnSurfaceVariant
+                    elide: Text.ElideRight
+                }
+            }
+        }
+
+        NIconPicker {
+            id: barIconPicker
+            initialIcon: rootSettings?.editBarIcon ?? "sparkles"
+            onIconSelected: iconName => {
+                if (rootSettings)
+                    rootSettings.editBarIcon = rootSettings.normalizeIconName(iconName);
+            }
+        }
+
+        NColorChoice {
+            Layout.fillWidth: true
+            label: rootSettings?.pluginApi?.tr("settings.general.barIconColor.label")
+            currentKey: rootSettings?.editBarIconColor ?? "on-surface"
+            onSelected: key => {
+                if (rootSettings)
+                    rootSettings.editBarIconColor = key;
+            }
+        }
+
+        NSpinBox {
+            Layout.fillWidth: true
+            label: rootSettings?.pluginApi?.tr("settings.general.iconTextSpacing.label")
+            description: rootSettings?.pluginApi?.tr("settings.general.iconTextSpacing.desc")
+            from: 0
+            to: 24
+            stepSize: 1
+            value: rootSettings?.editBarIconTextSpacing ?? 6
+            suffix: "px"
+            onValueChanged: {
+                if (rootSettings)
+                    rootSettings.editBarIconTextSpacing = value;
+            }
+        }
+    }
+
+    SettingsCard {
+        title: rootSettings?.pluginApi?.tr("settings.general.textFields.title")
+        description: rootSettings?.pluginApi?.tr("settings.general.textFields.description")
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: Style.marginL
+
+            NComboBox {
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.general.textFields.add")
+                model: tab.availableBarTextFieldOptions
+                currentKey: rootSettings?.editBarTextFieldToAdd ?? "primary"
+                enabled: tab.availableBarTextFieldOptions.length > 0
+                onSelected: key => {
+                    if (rootSettings)
+                        rootSettings.editBarTextFieldToAdd = key;
+                }
+            }
+
+            NButton {
+                text: rootSettings?.pluginApi?.tr("settings.general.textFields.addButton")
+                icon: "plus"
+                enabled: tab.availableBarTextFieldOptions.length > 0
+                onClicked: {
+                    if (rootSettings)
+                        rootSettings.addBarTextField(rootSettings.editBarTextFieldToAdd);
+                }
+            }
         }
 
         ColumnLayout {
             Layout.fillWidth: true
             spacing: Style.marginM
 
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: Style.marginL
+            Repeater {
+                model: rootSettings?.editBarTextFields || []
 
-                NButton {
-                    text: rootSettings?.pluginApi?.tr("settings.general.barIcon.browse")
-                    onClicked: barIconPicker.open()
+                delegate: NBox {
+                    required property int index
+                    required property var modelData
+
+                    Layout.fillWidth: true
+                    implicitHeight: fieldRow.implicitHeight + Style.marginM * 2
+
+                    RowLayout {
+                        id: fieldRow
+                        anchors.fill: parent
+                        anchors.margins: Style.marginM
+                        spacing: Style.marginM
+
+                        NText {
+                            Layout.fillWidth: true
+                            text: {
+                                var options = rootSettings?.barTextFieldOptions || [];
+                                for (var optionIndex = 0; optionIndex < options.length; optionIndex++) {
+                                    if (options[optionIndex].key === modelData)
+                                        return options[optionIndex].name;
+                                }
+                                return String(modelData || "");
+                            }
+                            pointSize: Style.fontSizeM
+                            color: Color.mOnSurface
+                        }
+
+                        NButton {
+                            icon: "arrow-up"
+                            outlined: true
+                            enabled: index > 0
+                            onClicked: {
+                                if (rootSettings)
+                                    rootSettings.moveBarTextField(index, -1);
+                            }
+                        }
+
+                        NButton {
+                            icon: "arrow-down"
+                            outlined: true
+                            enabled: index < (rootSettings?.editBarTextFields?.length ?? 0) - 1
+                            onClicked: {
+                                if (rootSettings)
+                                    rootSettings.moveBarTextField(index, 1);
+                            }
+                        }
+
+                        NButton {
+                            icon: "trash"
+                            outlined: true
+                            enabled: (rootSettings?.editBarTextFields?.length ?? 0) > 1
+                            onClicked: {
+                                if (rootSettings)
+                                    rootSettings.removeBarTextField(index);
+                            }
+                        }
+                    }
                 }
+            }
+        }
+
+        NTextInput {
+            Layout.fillWidth: true
+            label: rootSettings?.pluginApi?.tr("settings.general.textFields.separator.label")
+            description: rootSettings?.pluginApi?.tr("settings.general.textFields.separator.desc")
+            text: rootSettings?.editBarTextSeparator ?? ""
+            onTextChanged: {
+                if (rootSettings)
+                    rootSettings.editBarTextSeparator = text;
+            }
+        }
+
+        NSpinBox {
+            Layout.fillWidth: true
+            label: rootSettings?.pluginApi?.tr("settings.general.textFields.separatorSpacing.label")
+            description: rootSettings?.pluginApi?.tr("settings.general.textFields.separatorSpacing.desc")
+            from: 0
+            to: 4
+            stepSize: 1
+            value: rootSettings?.editBarTextSeparatorSpacing ?? 1
+            suffix: "sp"
+            onValueChanged: {
+                if (rootSettings)
+                    rootSettings.editBarTextSeparatorSpacing = value;
+            }
+        }
+    }
+
+    SettingsCard {
+        title: rootSettings?.pluginApi?.tr("settings.general.textStyle.title")
+        description: rootSettings?.pluginApi?.tr("settings.general.textStyle.description")
+
+        NColorChoice {
+            Layout.fillWidth: true
+            label: rootSettings?.pluginApi?.tr("settings.general.text.color.label")
+            currentKey: rootSettings?.editBarTextColor ?? "on-surface"
+            onSelected: key => {
+                if (rootSettings)
+                    rootSettings.editBarTextColor = key;
+            }
+        }
+
+        NSpinBox {
+            Layout.fillWidth: true
+            label: rootSettings?.pluginApi?.tr("settings.general.text.opacity.label")
+            description: rootSettings?.pluginApi?.tr("settings.general.text.opacity.desc")
+            from: 0
+            to: 100
+            stepSize: 5
+            value: rootSettings?.editBarTextOpacityPercent ?? 100
+            suffix: "%"
+            onValueChanged: {
+                if (rootSettings)
+                    rootSettings.editBarTextOpacityPercent = value;
+            }
+        }
+
+        NSpinBox {
+            Layout.fillWidth: true
+            label: rootSettings?.pluginApi?.tr("settings.general.text.pointSize.label")
+            description: rootSettings?.pluginApi?.tr("settings.general.text.pointSize.desc")
+            from: 0
+            to: 24
+            stepSize: 1
+            value: rootSettings?.editBarTextPointSize ?? 0
+            suffix: "pt"
+            onValueChanged: {
+                if (rootSettings)
+                    rootSettings.editBarTextPointSize = value;
+            }
+        }
+
+        NSearchableComboBox {
+            Layout.fillWidth: true
+            label: rootSettings?.pluginApi?.tr("settings.general.text.fontFamily.label")
+            description: rootSettings?.pluginApi?.tr("settings.general.text.fontFamily.desc")
+            model: FontService.availableFonts
+            currentKey: rootSettings?.editBarTextFontFamily ?? ""
+            placeholder: rootSettings?.pluginApi?.tr("settings.general.text.fontFamily.placeholder")
+            searchPlaceholder: rootSettings?.pluginApi?.tr("settings.general.text.fontFamily.searchPlaceholder")
+            popupHeight: 360
+            onSelected: key => {
+                if (rootSettings)
+                    rootSettings.editBarTextFontFamily = key;
+            }
+        }
+
+        NComboBox {
+            Layout.fillWidth: true
+            label: rootSettings?.pluginApi?.tr("settings.general.text.fontWeight.label")
+            description: rootSettings?.pluginApi?.tr("settings.general.text.fontWeight.desc")
+            model: [
+                {"key": "regular", "name": rootSettings?.pluginApi?.tr("settings.general.text.weight.regular")},
+                {"key": "medium", "name": rootSettings?.pluginApi?.tr("settings.general.text.weight.medium")},
+                {"key": "semibold", "name": rootSettings?.pluginApi?.tr("settings.general.text.weight.semibold")},
+                {"key": "bold", "name": rootSettings?.pluginApi?.tr("settings.general.text.weight.bold")}
+            ]
+            currentKey: rootSettings?.editBarTextFontWeight ?? "regular"
+            onSelected: key => {
+                if (rootSettings)
+                    rootSettings.editBarTextFontWeight = key;
+            }
+        }
+    }
+
+    SettingsCard {
+        title: rootSettings?.pluginApi?.tr("settings.general.behavior.title")
+        description: rootSettings?.pluginApi?.tr("settings.general.behavior.description")
+
+        NComboBox {
+            Layout.fillWidth: true
+            label: rootSettings?.pluginApi?.tr("settings.general.refreshInterval.label")
+            model: rootSettings?.refreshIntervalOptions || []
+            currentKey: String(rootSettings?.editRefreshInterval ?? 120)
+            onSelected: key => {
+                if (rootSettings)
+                    rootSettings.editRefreshInterval = Number(key);
+            }
+        }
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: Style.marginXS
+
+            NText {
+                text: rootSettings?.pluginApi?.tr("settings.general.defaultProvider.label")
+                pointSize: Style.fontSizeS
+                color: Color.mOnSurface
             }
 
             NText {
-                Layout.fillWidth: true
-                text: rootSettings?.editBarIcon ?? "sparkles"
+                text: rootSettings?.pluginApi?.tr("settings.general.defaultProvider.desc")
+                pointSize: Style.fontSizeXS
                 color: Color.mOnSurfaceVariant
-                elide: Text.ElideRight
             }
-        }
-    }
 
-    NIconPicker {
-        id: barIconPicker
-        initialIcon: rootSettings?.editBarIcon ?? "sparkles"
-        onIconSelected: iconName => {
-            if (rootSettings)
-                rootSettings.editBarIcon = rootSettings.normalizeIconName(iconName);
-        }
-    }
-
-    NColorChoice {
-        Layout.fillWidth: true
-        label: rootSettings?.pluginApi?.tr("settings.general.barIconColor.label")
-        currentKey: rootSettings?.editBarIconColor ?? "on-surface"
-        onSelected: key => {
-            if (rootSettings) rootSettings.editBarIconColor = key;
-        }
-    }
-
-    NSpinBox {
-        Layout.fillWidth: true
-        label: rootSettings?.pluginApi?.tr("settings.general.iconTextSpacing.label")
-        description: rootSettings?.pluginApi?.tr("settings.general.iconTextSpacing.desc")
-        from: 0
-        to: 24
-        stepSize: 1
-        value: rootSettings?.editBarIconTextSpacing ?? 6
-        suffix: "px"
-        onValueChanged: {
-            if (rootSettings) rootSettings.editBarIconTextSpacing = value;
-        }
-    }
-
-    NLabel {
-        Layout.fillWidth: true
-        label: rootSettings?.pluginApi?.tr("settings.general.text.title")
-        description: rootSettings?.pluginApi?.tr("settings.general.text.description")
-    }
-
-    NSpinBox {
-        Layout.fillWidth: true
-        label: rootSettings?.pluginApi?.tr("settings.general.text.pointSize.label")
-        description: rootSettings?.pluginApi?.tr("settings.general.text.pointSize.desc")
-        from: 0
-        to: 24
-        stepSize: 1
-        value: rootSettings?.editBarTextPointSize ?? 0
-        suffix: "pt"
-        onValueChanged: {
-            if (rootSettings) rootSettings.editBarTextPointSize = value;
-        }
-    }
-
-    NTextInput {
-        Layout.fillWidth: true
-        label: rootSettings?.pluginApi?.tr("settings.general.text.fontFamily.label")
-        description: rootSettings?.pluginApi?.tr("settings.general.text.fontFamily.desc")
-        text: rootSettings?.editBarTextFontFamily ?? ""
-        onTextChanged: {
-            if (rootSettings) rootSettings.editBarTextFontFamily = text;
-        }
-    }
-
-    ColumnLayout {
-        Layout.fillWidth: true
-        spacing: Style.marginXS
-
-        NText {
-            text: rootSettings?.pluginApi?.tr("settings.general.text.fontWeight.label")
-            pointSize: Style.fontSizeS
-            color: Color.mOnSurface
-        }
-
-        NText {
-            text: rootSettings?.pluginApi?.tr("settings.general.text.fontWeight.desc")
-            pointSize: Style.fontSizeXS
-            color: Color.mOnSurfaceVariant
-        }
-
-        NComboBox {
-            Layout.fillWidth: true
-            model: [
-                {"key": "normal", "name": rootSettings?.pluginApi?.tr("settings.general.text.weight.normal")},
-                {"key": "medium", "name": rootSettings?.pluginApi?.tr("settings.general.text.weight.medium")},
-                {"key": "bold", "name": rootSettings?.pluginApi?.tr("settings.general.text.weight.bold")}
-            ]
-            currentKey: rootSettings?.editBarTextFontWeight ?? "normal"
-            onSelected: key => {
-                if (rootSettings) rootSettings.editBarTextFontWeight = key;
-            }
-        }
-    }
-
-    NToggle {
-        Layout.fillWidth: true
-        label: rootSettings?.pluginApi?.tr("settings.general.text.italic.label")
-        description: rootSettings?.pluginApi?.tr("settings.general.text.italic.desc")
-        checked: rootSettings?.editBarTextItalic ?? false
-        onCheckedChanged: {
-            if (rootSettings) rootSettings.editBarTextItalic = checked;
-        }
-    }
-
-    NToggle {
-        Layout.fillWidth: true
-        label: rootSettings?.pluginApi?.tr("settings.general.text.underline.label")
-        description: rootSettings?.pluginApi?.tr("settings.general.text.underline.desc")
-        checked: rootSettings?.editBarTextUnderline ?? false
-        onCheckedChanged: {
-            if (rootSettings) rootSettings.editBarTextUnderline = checked;
-        }
-    }
-
-    NLabel {
-        Layout.fillWidth: true
-        label: rootSettings?.pluginApi?.tr("settings.general.refreshInterval.label")
-        description: rootSettings?.pluginApi?.tr("settings.general.refreshInterval.desc") + " (" + (rootSettings?.editRefreshInterval ?? 120) + "s)"
-    }
-
-    NSlider {
-        Layout.fillWidth: true
-        from: 30
-        to: 600
-        stepSize: 30
-        value: rootSettings?.editRefreshInterval ?? 120
-        onValueChanged: {
-            if (rootSettings) rootSettings.editRefreshInterval = value;
-        }
-    }
-
-    ColumnLayout {
-        Layout.fillWidth: true
-        spacing: Style.marginXS
-
-        NText {
-            text: rootSettings?.pluginApi?.tr("settings.general.defaultProvider.label") || "Default Provider"
-            pointSize: Style.fontSizeS
-            color: Color.mOnSurface
-        }
-
-        NText {
-            text: rootSettings?.pluginApi?.tr("settings.general.defaultProvider.desc") || "Provider shown in the bar widget"
-            pointSize: Style.fontSizeXS
-            color: Color.mOnSurfaceVariant
-        }
-
-        NComboBox {
-            Layout.fillWidth: true
-            model: {
-                var items = [{"key": "", "name": "Auto (first available)"}];
-                var providers = mainInstance?.providerData || [];
-                for (var i = 0; i < providers.length; i++) {
-                    var pid = String(providers[i].provider || "");
-                    var displayName = mainInstance?.providerDisplayName(pid) || pid;
-                    items.push({"key": pid, "name": displayName});
+            NComboBox {
+                Layout.fillWidth: true
+                model: {
+                    var items = [{
+                        "key": "",
+                        "name": rootSettings?.pluginApi?.tr("settings.general.defaultProvider.auto")
+                    }];
+                    var providers = mainInstance?.providerData || [];
+                    for (var index = 0; index < providers.length; index++) {
+                        var providerId = String(providers[index].provider || "");
+                        var displayName = mainInstance?.providerDisplayName(providerId) || providerId;
+                        items.push({
+                            "key": providerId,
+                            "name": displayName
+                        });
+                    }
+                    return items;
                 }
-                return items;
-            }
-            currentKey: rootSettings?.editDefaultProvider ?? ""
-            onSelected: key => {
-                if (rootSettings)
-                    rootSettings.editDefaultProvider = key;
+                currentKey: rootSettings?.editDefaultProvider ?? ""
+                onSelected: key => {
+                    if (rootSettings)
+                        rootSettings.editDefaultProvider = key;
+                }
             }
         }
     }
