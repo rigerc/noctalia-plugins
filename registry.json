@@ -2,6 +2,22 @@
   "version": 1,
   "plugins": [
     {
+      "id": "codexbar",
+      "name": "CodexBar",
+      "version": "1.0.0",
+      "official": false,
+      "author": "rigerc",
+      "description": "AI provider usage stats from the codexbar CLI in your bar.",
+      "repository": "https://github.com/noctalia-dev/noctalia-plugins",
+      "minNoctaliaVersion": "4.6.6",
+      "license": "MIT",
+      "tags": [
+        "Bar",
+        "Panel"
+      ],
+      "lastUpdated": "2026-04-21T19:21:39+02:00"
+    },
+    {
       "id": "scrollbar",
       "name": "Scrollbar",
       "version": "1.8.0",
@@ -16,6 +32,22 @@
         "Utility"
       ],
       "lastUpdated": "2026-04-17T22:34:58+02:00"
+    },
+    {
+      "id": "scrollbar2",
+      "name": "Scrollbar2",
+      "version": "1.7.0",
+      "official": false,
+      "author": "rigerc",
+      "description": "A configurable window bar with equal-width segments, animated focus tracking, and optional floating panel placement.",
+      "repository": "https://github.com/noctalia-dev/noctalia-plugins",
+      "minNoctaliaVersion": "4.6.6",
+      "license": "MIT",
+      "tags": [
+        "Bar",
+        "Utility"
+      ],
+      "lastUpdated": "2026-04-21T17:47:44+02:00"
     }
   ]
 }
