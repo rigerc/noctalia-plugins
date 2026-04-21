@@ -37,10 +37,22 @@ SettingsTabPage {
             "target": workspaceIndicatorSection.indicatorSectionTarget
         },
         {
+            "id": "workspace-indicator-animation",
+            "label": rootSettings?.pluginApi?.tr("settings.workspaceIndicator.animation.sectionLabel"),
+            "icon": "line",
+            "target": workspaceIndicatorSection.animationSectionTarget
+        },
+        {
             "id": "special-workspace",
             "label": rootSettings?.pluginApi?.tr("settings.section.specialWorkspaceOverlay.label"),
             "icon": "stack-2",
             "target": specialWorkspaceSection.specialWorkspaceSectionTarget
+        },
+        {
+            "id": "special-workspace-animation",
+            "label": rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.animation.sectionLabel"),
+            "icon": "line",
+            "target": specialWorkspaceSection.animationSectionTarget
         }
     ]
 

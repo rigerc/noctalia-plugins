@@ -17,6 +17,7 @@ ColumnLayout {
     property alias builtInSectionTarget: builtInHeader
     property alias customSectionTarget: customSectionRow
     property alias backupSectionTarget: backupHeader
+    property alias customRulesSectionTarget: customRulesHeader
 
     spacing: Style.marginL
 
@@ -40,6 +41,130 @@ ColumnLayout {
         customPresets = rootSettings.deepCopy(presets);
     }
 
+    function _presetSettingsSnapshot(settings) {
+        return rootSettings?.presetSettingsSnapshot
+            ? rootSettings.presetSettingsSnapshot(settings)
+            : rootSettings.normalizeSettingsSnapshot(rootSettings.deepCopy(settings || ({})));
+    }
+
+    function _customRuleSignature(rule) {
+        return JSON.stringify(rootSettings.normalizeCustomStyleRule(rule));
+    }
+
+    function _cloneImportReport(report) {
+        return {
+            appliedMigrations: Array.isArray(report?.appliedMigrations) ? report.appliedMigrations.slice() : [],
+            unknownKeys: Array.isArray(report?.unknownKeys) ? report.unknownKeys.slice() : [],
+            details: Array.isArray(report?.details) ? rootSettings.deepCopy(report.details) : [],
+            customRulesIgnored: Math.max(0, Number(report?.customRulesIgnored ?? 0)),
+            addedRules: Math.max(0, Number(report?.addedRules ?? 0)),
+            skippedDuplicateRules: Math.max(0, Number(report?.skippedDuplicateRules ?? 0))
+        };
+    }
+
+    function _makePresetSafeImport(validatedResult) {
+        var report = _cloneImportReport(validatedResult?.report);
+        report.customRulesIgnored += Array.isArray(validatedResult?.settings?.customStyleRules)
+            ? validatedResult.settings.customStyleRules.length
+            : 0;
+        return {
+            settings: _presetSettingsSnapshot(validatedResult?.settings || ({})),
+            report: report
+        };
+    }
+
+    function _validatedImportedPresets(rawPresets) {
+        var validatedPresets = [];
+        var allReports = [];
+        var totalIgnoredRules = 0;
+        var sourcePresets = Array.isArray(rawPresets) ? rawPresets : [];
+
+        for (var i = 0; i < sourcePresets.length; i++) {
+            var preset = sourcePresets[i];
+            if (!preset || typeof preset !== "object")
+                continue;
+
+            var presetResult = _makePresetSafeImport(
+                Migrations.validateImport(preset.settings || ({}), rootSettings.defaultSettings)
+            );
+            var createdAt = Number(preset.createdAt);
+            if (isNaN(createdAt))
+                createdAt = Date.now();
+            var updatedAt = Number(preset.updatedAt);
+            if (isNaN(updatedAt))
+                updatedAt = createdAt;
+
+            validatedPresets.push({
+                id: String(preset.id || _generateId()),
+                name: String(preset.name || "").trim().substring(0, 32),
+                description: String(preset.description || "").trim().substring(0, 120),
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                settings: presetResult.settings,
+                version: Number(preset.version || 1)
+            });
+
+            totalIgnoredRules += presetResult.report.customRulesIgnored;
+            if (presetResult.report.appliedMigrations.length > 0
+                || presetResult.report.unknownKeys.length > 0
+                || presetResult.report.customRulesIgnored > 0) {
+                allReports.push({
+                    name: preset.name || "",
+                    report: presetResult.report
+                });
+            }
+        }
+
+        return {
+            presets: validatedPresets,
+            report: {
+                appliedMigrations: [],
+                unknownKeys: [],
+                details: allReports,
+                customRulesIgnored: totalIgnoredRules
+            }
+        };
+    }
+
+    function _prepareCustomRulesImport(rawRules) {
+        var existingRules = rootSettings.styleRuleItems();
+        var existingSignatures = ({});
+        var nextRules = [];
+        var skippedDuplicateRules = 0;
+        var i;
+
+        for (i = 0; i < existingRules.length; i++)
+            existingSignatures[_customRuleSignature(existingRules[i])] = true;
+
+        for (i = 0; i < rawRules.length; i++) {
+            var rawRule = rawRules[i];
+            if (!rawRule || typeof rawRule !== "object")
+                continue;
+
+            var normalizedRule = rootSettings.normalizeCustomStyleRule(rawRule);
+            var signature = _customRuleSignature(normalizedRule);
+            if (existingSignatures[signature]) {
+                skippedDuplicateRules++;
+                continue;
+            }
+
+            existingSignatures[signature] = true;
+            nextRules.push(normalizedRule);
+        }
+
+        return {
+            rules: nextRules,
+            report: {
+                appliedMigrations: [],
+                unknownKeys: [],
+                details: [],
+                customRulesIgnored: 0,
+                addedRules: nextRules.length,
+                skippedDuplicateRules: skippedDuplicateRules
+            }
+        };
+    }
+
     function _deepMerge(base, overrides) {
         var result = rootSettings.deepCopy(base);
         function merge(target, source) {
@@ -58,7 +183,7 @@ ColumnLayout {
     }
 
     function _buildBuiltinPresets() {
-        var d = rootSettings ? rootSettings.deepCopy(rootSettings.defaultSettings) : ({});
+        var d = rootSettings ? _presetSettingsSnapshot(rootSettings.defaultSettings) : ({});
         return [
             {
                 id: "builtin:default",
@@ -277,7 +402,7 @@ ColumnLayout {
             description: description,
             createdAt: now,
             updatedAt: now,
-            settings: rootSettings.normalizeSettingsSnapshot(rootSettings.deepCopy(rootSettings.editSettings)),
+            settings: _presetSettingsSnapshot(rootSettings.editSettings),
             version: 1
         };
         var presets = rootSettings.deepCopy(customPresets);
@@ -349,7 +474,7 @@ ColumnLayout {
             description: preset.description || "",
             createdAt: now,
             updatedAt: now,
-            settings: rootSettings.deepCopy(preset.settings),
+            settings: _presetSettingsSnapshot(preset.settings),
             version: 1
         };
         var presets = rootSettings.deepCopy(customPresets);
@@ -365,7 +490,7 @@ ColumnLayout {
         var presets = rootSettings.deepCopy(customPresets);
         for (var i = 0; i < presets.length; i++) {
             if (presets[i].id === id) {
-                presets[i].settings = rootSettings.normalizeSettingsSnapshot(rootSettings.deepCopy(rootSettings.editSettings));
+                presets[i].settings = _presetSettingsSnapshot(rootSettings.editSettings);
                 presets[i].updatedAt = Date.now();
                 break;
             }
@@ -407,6 +532,15 @@ ColumnLayout {
             version: 1,
             exportedAt: Date.now(),
             presets: rootSettings.deepCopy(customPresets)
+        };
+    }
+
+    function _customRulesPayload() {
+        return {
+            scrollbar2CustomStyleRules: true,
+            version: 1,
+            exportedAt: Date.now(),
+            rules: rootSettings.deepCopy(rootSettings.styleRuleItems())
         };
     }
 
@@ -456,6 +590,13 @@ ColumnLayout {
         _writeJsonToFile(path, _presetsBulkPayload());
     }
 
+    function _exportCustomRules(path) {
+        if (!path || path.trim() === "")
+            return;
+        path = _ensureFilePath(path, "scrollbar2-custom-style-rules-" + _timestampString() + ".json");
+        _writeJsonToFile(path, _customRulesPayload());
+    }
+
     function _ensureFilePath(path, defaultName) {
         if (!path || path.trim() === "")
             return path;
@@ -499,18 +640,24 @@ ColumnLayout {
 
         if (data.scrollbar2Backup) {
             var backupResult = Migrations.validateImport(data.settings || ({}), rootSettings.defaultSettings);
+            var importedPresets = _validatedImportedPresets(data.presets || []);
+            var backupReport = _cloneImportReport(backupResult.report);
+            backupReport.details = importedPresets.report.details;
+            backupReport.customRulesIgnored += importedPresets.report.customRulesIgnored;
             return {
                 type: "backup",
                 settings: backupResult.settings,
-                presets: Array.isArray(data.presets) ? data.presets : [],
+                presets: importedPresets.presets,
                 activePresetId: String(data.activePresetId || ""),
-                report: backupResult.report
+                report: backupReport
             };
         }
 
         if (data.scrollbar2Preset) {
             var presetObj = data.preset || ({});
-            var presetResult = Migrations.validateImport(presetObj.settings || ({}), rootSettings.defaultSettings);
+            var presetResult = _makePresetSafeImport(
+                Migrations.validateImport(presetObj.settings || ({}), rootSettings.defaultSettings)
+            );
             return {
                 type: "preset",
                 preset: {
@@ -523,26 +670,26 @@ ColumnLayout {
         }
 
         if (data.scrollbar2Presets) {
-            var rawPresets = Array.isArray(data.presets) ? data.presets : [];
-            var validatedPresets = [];
-            var allReports = [];
-            for (var i = 0; i < rawPresets.length; i++) {
-                var rp = rawPresets[i];
-                if (!rp || typeof rp !== "object")
-                    continue;
-                var rResult = Migrations.validateImport(rp.settings || ({}), rootSettings.defaultSettings);
-                validatedPresets.push({
-                    name: String(rp.name || "").trim().substring(0, 32),
-                    description: String(rp.description || "").trim().substring(0, 120),
-                    settings: rResult.settings
-                });
-                if (rResult.report.appliedMigrations.length > 0 || rResult.report.unknownKeys.length > 0)
-                    allReports.push({ name: rp.name || "", report: rResult.report });
-            }
+            var validatedPresets = _validatedImportedPresets(data.presets || []);
             return {
                 type: "presets",
-                presets: validatedPresets,
-                report: { appliedMigrations: [], unknownKeys: [], details: allReports }
+                presets: validatedPresets.presets.map(function (preset) {
+                    return {
+                        name: preset.name,
+                        description: preset.description,
+                        settings: preset.settings
+                    };
+                }),
+                report: validatedPresets.report
+            };
+        }
+
+        if (data.scrollbar2CustomStyleRules) {
+            var preparedRules = _prepareCustomRulesImport(Array.isArray(data.rules) ? data.rules : []);
+            return {
+                type: "customRules",
+                rules: preparedRules.rules,
+                report: preparedRules.report
             };
         }
 
@@ -554,7 +701,8 @@ ColumnLayout {
             return;
 
         if (result.type === "backup") {
-            rootSettings.applyPreset(result.settings, "");
+            rootSettings.editSettings = rootSettings.createSettingsSnapshot(result.settings, rootSettings.defaults);
+            rootSettings.styleRulesRevision += 1;
             var api = pluginApi;
             if (api) {
                 var existingPresets = rootSettings.deepCopy(api.pluginSettings._presets || []);
@@ -618,6 +766,11 @@ ColumnLayout {
             api3.pluginSettings._presets = existing;
             api3.saveSettings();
         }
+
+        if (result.type === "customRules") {
+            var mergedRules = rootSettings.styleRuleItems().concat(result.rules || []);
+            rootSettings.setStyleRuleItems(mergedRules);
+        }
     }
 
     function _formatReport(report) {
@@ -632,6 +785,18 @@ ColumnLayout {
             var unkLabel = pluginApi?.tr("settings.presets.import.report.unknown");
             lines.push(unkLabel.replace("{count}", report.unknownKeys.length));
         }
+        if ((report.customRulesIgnored || 0) > 0) {
+            var ignoredLabel = pluginApi?.tr("settings.presets.import.report.customRulesIgnored");
+            lines.push(ignoredLabel.replace("{count}", report.customRulesIgnored));
+        }
+        if ((report.addedRules || 0) > 0) {
+            var addedLabel = pluginApi?.tr("settings.presets.import.report.addedRules");
+            lines.push(addedLabel.replace("{count}", report.addedRules));
+        }
+        if ((report.skippedDuplicateRules || 0) > 0) {
+            var skippedLabel = pluginApi?.tr("settings.presets.import.report.skippedDuplicateRules");
+            lines.push(skippedLabel.replace("{count}", report.skippedDuplicateRules));
+        }
         if (report.details && report.details.length > 0) {
             for (var i = 0; i < report.details.length; i++) {
                 var d = report.details[i];
@@ -640,6 +805,8 @@ ColumnLayout {
                     lines.push("  " + (pluginApi?.tr("settings.presets.import.report.migrated")).replace("{count}", d.report.appliedMigrations.length));
                 if (d.report.unknownKeys.length > 0)
                     lines.push("  " + (pluginApi?.tr("settings.presets.import.report.unknown")).replace("{count}", d.report.unknownKeys.length));
+                if ((d.report.customRulesIgnored || 0) > 0)
+                    lines.push("  " + (pluginApi?.tr("settings.presets.import.report.customRulesIgnored")).replace("{count}", d.report.customRulesIgnored));
             }
         }
         return lines.join("\n");
@@ -791,6 +958,36 @@ ColumnLayout {
             icon: "upload"
             fontSize: Style.fontSizeS
             onClicked: backupImportPicker.openFilePicker()
+        }
+    }
+
+    NDivider {
+        Layout.fillWidth: true
+    }
+
+    NLabel {
+        id: customRulesHeader
+        label: pluginApi?.tr("settings.presets.customRules.label")
+        description: pluginApi?.tr("settings.presets.customRules.desc")
+        Layout.fillWidth: true
+    }
+
+    RowLayout {
+        Layout.fillWidth: true
+        spacing: Style.marginM
+
+        NButton {
+            text: pluginApi?.tr("settings.presets.customRules.export")
+            icon: "download"
+            fontSize: Style.fontSizeS
+            onClicked: customRulesExportPicker.openFilePicker()
+        }
+
+        NButton {
+            text: pluginApi?.tr("settings.presets.customRules.import")
+            icon: "upload"
+            fontSize: Style.fontSizeS
+            onClicked: customRulesImportPicker.openFilePicker()
         }
     }
 
@@ -1535,6 +1732,31 @@ ColumnLayout {
         }
     }
 
+    NFilePicker {
+        id: customRulesExportPicker
+        selectionMode: "folders"
+        title: pluginApi?.tr("settings.presets.customRules.export")
+        initialPath: Quickshell.env("HOME") + "/Downloads"
+
+        onAccepted: paths => {
+            if (paths.length > 0)
+                _exportCustomRules(String(paths[0]));
+        }
+    }
+
+    NFilePicker {
+        id: customRulesImportPicker
+        selectionMode: "files"
+        title: pluginApi?.tr("settings.presets.customRules.import")
+        initialPath: Quickshell.env("HOME")
+        nameFilters: ["*.json"]
+
+        onAccepted: paths => {
+            if (paths.length > 0)
+                importFileReader.path = String(paths[0]);
+        }
+    }
+
     Popup {
         id: importConfirmDialog
         parent: Overlay.overlay
@@ -1572,6 +1794,9 @@ ColumnLayout {
                         return root.pluginApi?.tr("settings.presets.dialog.importConfirm.presetDesc");
                     case "presets":
                         return (root.pluginApi?.tr("settings.presets.dialog.importConfirm.presetsDesc")).replace("{count}", r.presets ? r.presets.length : 0);
+                    case "customRules":
+                        return (root.pluginApi?.tr("settings.presets.dialog.importConfirm.customRulesDesc"))
+                            .replace("{count}", r.rules ? r.rules.length : 0);
                     default:
                         return "";
                     }

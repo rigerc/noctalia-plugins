@@ -19,6 +19,12 @@ SettingsTabPage {
             "target": presetsSection.backupSectionTarget
         },
         {
+            "id": "custom-rules",
+            "label": rootSettings?.pluginApi?.tr("settings.presets.customRules.label"),
+            "icon": "filter-code",
+            "target": presetsSection.customRulesSectionTarget
+        },
+        {
             "id": "built-in",
             "label": rootSettings?.pluginApi?.tr("settings.presets.builtin.label"),
             "icon": "template",

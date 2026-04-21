@@ -324,6 +324,12 @@ ColumnLayout {
         return normalizeSettingsSnapshot(merge(base, overrides));
     }
 
+    function presetSettingsSnapshot(settings) {
+        const next = normalizeSettingsSnapshot(deepCopy(settings || ({})));
+        delete next.customStyleRules;
+        return next;
+    }
+
     function clampOpacity(value, fallbackValue) {
         const numericValue = Number(value);
         if (isNaN(numericValue))
@@ -786,7 +792,9 @@ ColumnLayout {
     }
 
     function applyPreset(settingsObj, presetId) {
-        editSettings = createSettingsSnapshot(settingsObj, defaults);
+        const nextSettings = createSettingsSnapshot(settingsObj, defaults);
+        nextSettings.customStyleRules = styleRuleItems().map(normalizeCustomStyleRule);
+        editSettings = nextSettings;
         styleRulesRevision += 1;
         _activePresetId = presetId || "";
     }

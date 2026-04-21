@@ -59,14 +59,14 @@
       "appearance": "Appearance",
       "pinnedApps": "Pinned Apps",
       "styleRules": "Style Rules",
-      "presets": "Presets"
+      "presets": "Save & Load"
     },
     "pages": {
       "layout": "Placement, floating panel sizing, track geometry, and motion settings for the bar itself.",
       "appearance": "Window labels, focus line styling, theme-aware colors, and workspace-related overlays.",
       "pinnedApps": "Manage launcher behavior, spacing, colors, and the pinned app list beside the track.",
       "styleRules": "Match windows by app ID, title, tags, or derived window state and override their icons, segment colors, and text styling.",
-      "presets": "Save, load, and manage complete plugin configurations."
+      "presets": "Save and load presets, full backups, and separate custom style-rule exports."
     },
     "pageGroups": {
       "layoutCore": {
@@ -848,24 +848,30 @@
     },
     "tabs": {
       "settings": "Settings",
-      "presets": "Presets"
+      "presets": "Save & Load"
     },
     "presets": {
       "section": {
-        "label": "Presets",
-        "desc": "Save, load, and manage configuration presets."
+        "label": "Save & Load",
+        "desc": "Manage presets, full backups, and separate custom style-rule transfer files."
       },
       "builtin": {
         "label": "Built-in Presets",
-        "desc": "Curated starting points that cannot be modified."
+        "desc": "Curated starting points that apply settings without replacing your custom style rules."
       },
       "custom": {
         "label": "Custom Presets",
-        "desc": "Your saved presets."
+        "desc": "Your saved preset snapshots. Custom style rules are kept separate."
+      },
+      "customRules": {
+        "label": "Custom Rules",
+        "desc": "Export your current custom style rules or import additional rules without replacing the ones you already have.",
+        "export": "Export Custom Rules",
+        "import": "Import Custom Rules"
       },
       "empty": {
         "label": "No custom presets yet",
-        "desc": "Save your current settings to create a preset."
+        "desc": "Save your current settings as a preset snapshot. Custom style rules stay separate."
       },
       "badge": "Built-in",
       "active": "Active",
@@ -879,12 +885,12 @@
         "duplicate": "Duplicate",
         "delete": "Delete",
         "deleteAll": "Delete All Custom Presets",
-        "exportAll": "Export All",
-        "importPreset": "Import"
+        "exportAll": "Export All Presets",
+        "importPreset": "Import Preset"
       },
       "backup": {
         "label": "Settings Backup",
-        "desc": "Export or import a complete backup of all settings and presets.",
+        "desc": "Export or import a complete backup of settings, custom style rules, and presets.",
         "export": "Export Backup",
         "import": "Import Backup"
       },
@@ -900,13 +906,16 @@
         "report": {
           "label": "Migration Report",
           "migrated": "{count} deprecated setting(s) migrated to new format.",
-          "unknown": "{count} unrecognized setting(s) removed (file may be from a newer version)."
+          "unknown": "{count} unrecognized setting(s) removed (file may be from a newer version).",
+          "customRulesIgnored": "{count} custom style rule(s) ignored for preset safety.",
+          "addedRules": "{count} custom style rule(s) ready to add.",
+          "skippedDuplicateRules": "{count} duplicate custom style rule(s) skipped."
         }
       },
       "dialog": {
         "save": {
           "title": "Save Preset",
-          "desc": "Save your current settings as a new preset.",
+          "desc": "Save your current settings as a new preset. Custom style rules are not included.",
           "nameLabel": "Preset Name",
           "nameDesc": "A short name for this preset.",
           "namePlaceholder": "My Preset",
@@ -941,7 +950,7 @@
         },
         "update": {
           "title": "Update Preset",
-          "desc": "Overwrite \"{name}\" with your current settings?",
+          "desc": "Overwrite \"{name}\" with your current settings? Custom style rules will stay separate.",
           "confirm": "Update"
         },
         "details": {
@@ -955,9 +964,10 @@
         },
         "importConfirm": {
           "title": "Confirm Import",
-          "backupDesc": "This will replace your current settings and merge presets.",
-          "presetDesc": "Add this preset to your custom presets?",
+          "backupDesc": "This will restore your saved settings and custom style rules, then merge presets.",
+          "presetDesc": "Add this preset to your custom presets? Embedded custom style rules will be ignored.",
           "presetsDesc": "Import {count} presets?",
+          "customRulesDesc": "Append {count} imported custom style rule(s) to your current list. Exact duplicates will be skipped.",
           "confirm": "Import"
         },
         "importError": {

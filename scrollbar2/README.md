@@ -29,7 +29,7 @@ A configurable window bar with equal-width segments, animated focus tracking, an
 - **Special workspace overlay** — centered overlay for Hyprland special workspaces with window icon previews
 - **Pinned apps** — pin applications to the bar with custom icons, focus-cycle or start-new behavior
 - **Custom style rules** — regex-based rules to override segment, icon, and title colors per app, title, tags, floating state, grouped state, urgency, or duplicate identity/title state, with blink animation, badges, and icon prefixes
-- **Presets system** — save, load, import/export complete configurations with built-in starting points
+- **Save & Load system** — save preset snapshots without custom rules, restore full backups, and import/export custom style rules separately
 - **Theme-aware colors** — all colors resolve against the active Noctalia theme with custom hex fallback
 - **Settings migrations** — automatic schema migrations with validation and cleanup on import
 
@@ -61,7 +61,7 @@ Settings are organized into five tabs:
 | **Appearance** | Window labels, focus line colors, workspace indicator, special workspace overlay |
 | **Pinned Apps** | Manage pinned launchers, custom icons, and click behavior |
 | **Style Rules** | Regex-based per-window color, blink, badge, and icon prefix overrides |
-| **Presets** | Save, load, import, and export complete configurations |
+| **Save & Load** | Manage preset snapshots, full backups, and separate custom style-rule import/export |
 
 Drag reordering is enabled by default in the **Appearance** tab. It only applies to tiled live windows; pinned launchers and floating windows remain non-draggable so the bar always mirrors compositor state exactly.
 
@@ -124,7 +124,7 @@ Right-click any segment to:
 |---|---|
 | `Main.qml` | Shared state, window tracking, compositor integration |
 | `BarWidget.qml` | Bar-mode widget host |
-| `Settings.qml` | Five-tab settings UI with presets management |
+| `Settings.qml` | Five-tab settings UI with save/load, backup, and custom-rules management |
 | `components/WindowBarView.qml` | Core rendering — segments, focus line, indicators |
 | `components/HybridColorChoice.qml` | Theme-aware color picker component |
 | `Migrations.js` | Settings schema migration engine |
