@@ -57,7 +57,7 @@ ColumnLayout {
                 label: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.customLabel.label")
                 description: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.customLabel.desc")
                 text: rootSettings?.settingValue("specialWorkspaceOverlay", "customLabel") ?? ""
-                onTextChanged: rootSettings?.setSetting("specialWorkspaceOverlay", "customLabel", text)
+                onEditingFinished: rootSettings?.setSetting("specialWorkspaceOverlay", "customLabel", text)
             }
 
             NToggle {
