@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Commons
 import qs.Services.UI
@@ -33,7 +34,7 @@ Item {
 
                 NLabel {
                     label: pluginApi?.tr("panel.title")
-                    labelSize: Style.fontSizeL
+                    labelSize: Style.fontSizeXL
                 }
 
                 Item {
@@ -41,7 +42,7 @@ Item {
                 }
 
                 NButton {
-                    icon: "mdi:refresh"
+                    icon: "refresh"
                     fontSize: Style.fontSizeS
                     outlined: true
                     onClicked: {
@@ -78,15 +79,15 @@ Item {
                                     Layout.fillWidth: true
 
                                     NIcon {
-                                        Layout.preferredWidth: Style.fontSizeM
-                                        Layout.preferredHeight: Style.fontSizeM
-                                        icon: mainInstance?.providerIcon(modelData.provider) || "mdi:robot"
+                                        Layout.preferredWidth: Style.fontSizeL
+                                        Layout.preferredHeight: Style.fontSizeL
+                                        icon: mainInstance?.providerIcon(modelData.provider) || "cpu"
                                         color: Color.mPrimary
                                     }
 
                                     NText {
                                         text: mainInstance?.providerDisplayName(modelData.provider) || modelData.provider
-                                        font.pixelSize: Style.fontSizeM
+                                        pointSize: Style.fontSizeL
                                         font.weight: Font.Bold
                                         color: Color.mOnSurface
                                     }
@@ -97,7 +98,7 @@ Item {
 
                                     NText {
                                         text: String(modelData.source || "")
-                                        font.pixelSize: Style.fontSizeXS
+                                        pointSize: Style.fontSizeS
                                         color: Color.mOnSurfaceVariant
                                     }
                                 }
@@ -117,7 +118,7 @@ Item {
 
                                                 NText {
                                                     text: pluginApi?.tr("panel.usage") + " (session)"
-                                                    font.pixelSize: Style.fontSizeS
+                                                    pointSize: Style.fontSizeM
                                                     color: Color.mOnSurfaceVariant
                                                 }
 
@@ -127,7 +128,7 @@ Item {
 
                                                 NText {
                                                     text: (100 - modelData.usage.primary.usedPercent) + "% " + pluginApi?.tr("panel.left")
-                                                    font.pixelSize: Style.fontSizeS
+                                                    pointSize: Style.fontSizeM
                                                     color: Color.mOnSurface
                                                     font.weight: Font.Medium
                                                 }
@@ -172,7 +173,7 @@ Item {
 
                                                 NText {
                                                     text: pluginApi?.tr("panel.usage") + " (weekly)"
-                                                    font.pixelSize: Style.fontSizeXS
+                                                    pointSize: Style.fontSizeS
                                                     color: Color.mOnSurfaceVariant
                                                 }
 
@@ -182,7 +183,7 @@ Item {
 
                                                 NText {
                                                     text: (100 - modelData.usage.secondary.usedPercent) + "% " + pluginApi?.tr("panel.left")
-                                                    font.pixelSize: Style.fontSizeXS
+                                                    pointSize: Style.fontSizeS
                                                     color: Color.mOnSurfaceVariant
                                                 }
                                             }
@@ -208,11 +209,11 @@ Item {
 
                                 RowLayout {
                                     Layout.fillWidth: true
-                                    visible: modelData.usage?.primary?.resetsAt
+                                    visible: !!modelData.usage?.primary?.resetsAt
 
                                     NText {
                                         text: pluginApi?.tr("panel.resetsAt") + ":"
-                                        font.pixelSize: Style.fontSizeXS
+                                        pointSize: Style.fontSizeS
                                         color: Color.mOnSurfaceVariant
                                     }
 
@@ -228,7 +229,7 @@ Item {
                                             if (h > 0) return h + "h " + m + "m";
                                             return m + "m";
                                         }
-                                        font.pixelSize: Style.fontSizeXS
+                                        pointSize: Style.fontSizeS
                                         color: Color.mOnSurface
                                     }
                                 }
@@ -239,24 +240,24 @@ Item {
 
                                     NText {
                                         text: pluginApi?.tr("panel.credits") + ":"
-                                        font.pixelSize: Style.fontSizeXS
+                                        pointSize: Style.fontSizeS
                                         color: Color.mOnSurfaceVariant
                                     }
 
                                     NText {
                                         text: String(modelData.credits.remaining)
-                                        font.pixelSize: Style.fontSizeXS
+                                        pointSize: Style.fontSizeS
                                         color: Color.mOnSurface
                                     }
                                 }
 
                                 RowLayout {
                                     Layout.fillWidth: true
-                                    visible: modelData.status?.indicator && modelData.status.indicator !== "none"
+                                    visible: !!(modelData.status && modelData.status.indicator && modelData.status.indicator !== "none")
 
                                     NText {
                                         text: pluginApi?.tr("panel.status") + ":"
-                                        font.pixelSize: Style.fontSizeXS
+                                        pointSize: Style.fontSizeS
                                         color: Color.mOnSurfaceVariant
                                     }
 
@@ -269,7 +270,7 @@ Item {
 
                                     NText {
                                         text: String(modelData.status?.description || modelData.status?.indicator || "")
-                                        font.pixelSize: Style.fontSizeXS
+                                        pointSize: Style.fontSizeXS
                                         color: Color.mOnSurface
                                     }
                                 }
@@ -299,7 +300,7 @@ Item {
                         var d = new Date(mainInstance.lastUpdated);
                         return pluginApi?.tr("panel.lastUpdated") + ": " + Qt.formatTime(d, "hh:mm");
                     }
-                    font.pixelSize: Style.fontSizeXS
+                    pointSize: Style.fontSizeXS
                     color: Color.mOnSurfaceVariant
                 }
 
@@ -310,7 +311,7 @@ Item {
                 NText {
                     visible: mainInstance?.lastError
                     text: mainInstance?.lastError || ""
-                    font.pixelSize: Style.fontSizeXS
+                    pointSize: Style.fontSizeXS
                     color: Color.mError
                 }
             }

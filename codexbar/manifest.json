@@ -19,7 +19,7 @@
   },
   "metadata": {
     "defaultSettings": {
-      "barIcon": "mdi:sparkles",
+      "barIcon": "sparkles",
       "barIconColor": "on-surface",
       "refreshInterval": 120,
       "defaultProvider": "",

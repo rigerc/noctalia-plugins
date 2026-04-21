@@ -11,37 +11,81 @@ SettingsTabPage {
 
     title: rootSettings?.pluginApi?.tr("settings.tabs.general") || "General"
     description: rootSettings?.pluginApi?.tr("settings.general.description") || "Configure bar widget appearance and refresh behavior"
-    icon: "mdi:sparkles"
+    icon: "sparkles"
 
-    NTextInput {
+    NLabel {
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.general.barIcon.label")
         description: rootSettings?.pluginApi?.tr("settings.general.barIcon.desc")
-        text: rootSettings?.editBarIcon ?? "mdi:sparkles"
-        onTextChanged: {
-            if (rootSettings) rootSettings.editBarIcon = text;
+    }
+
+    RowLayout {
+        Layout.fillWidth: true
+        spacing: Style.marginM
+
+        NIcon {
+            Layout.preferredWidth: Style.fontSizeXL * 2
+            Layout.preferredHeight: Style.fontSizeXL * 2
+            Layout.alignment: Qt.AlignVCenter
+            icon: rootSettings?.editBarIcon ?? "sparkles"
+            pointSize: Style.fontSizeXL * 1.6
+            color: Color.resolveColorKey(rootSettings?.editBarIconColor ?? "on-surface")
+        }
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: Style.marginS
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: Style.marginM
+
+                NButton {
+                    text: rootSettings?.pluginApi?.tr("settings.general.barIcon.browse")
+                    onClicked: barIconPicker.open()
+                }
+            }
+
+            NText {
+                Layout.fillWidth: true
+                text: rootSettings?.editBarIcon ?? "sparkles"
+                color: Color.mOnSurfaceVariant
+                elide: Text.ElideRight
+            }
+        }
+    }
+
+    NIconPicker {
+        id: barIconPicker
+        initialIcon: rootSettings?.editBarIcon ?? "sparkles"
+        onIconSelected: iconName => {
+            if (rootSettings)
+                rootSettings.editBarIcon = rootSettings.normalizeIconName(iconName);
         }
     }
 
     NColorChoice {
         Layout.fillWidth: true
         label: rootSettings?.pluginApi?.tr("settings.general.barIconColor.label")
-        value: rootSettings?.editBarIconColor ?? "on-surface"
-        onValueChanged: {
-            if (rootSettings) rootSettings.editBarIconColor = value;
+        currentKey: rootSettings?.editBarIconColor ?? "on-surface"
+        onSelected: key => {
+            if (rootSettings) rootSettings.editBarIconColor = key;
         }
+    }
+
+    NLabel {
+        Layout.fillWidth: true
+        label: rootSettings?.pluginApi?.tr("settings.general.refreshInterval.label")
+        description: rootSettings?.pluginApi?.tr("settings.general.refreshInterval.desc") + " (" + (rootSettings?.editRefreshInterval ?? 120) + "s)"
     }
 
     NSlider {
         Layout.fillWidth: true
-        label: rootSettings?.pluginApi?.tr("settings.general.refreshInterval.label")
-        description: rootSettings?.pluginApi?.tr("settings.general.refreshInterval.desc")
         from: 30
         to: 600
         stepSize: 30
         value: rootSettings?.editRefreshInterval ?? 120
-        suffix: "s"
-        onMoved: {
+        onValueChanged: {
             if (rootSettings) rootSettings.editRefreshInterval = value;
         }
     }
@@ -52,13 +96,13 @@ SettingsTabPage {
 
         NText {
             text: rootSettings?.pluginApi?.tr("settings.general.defaultProvider.label") || "Default Provider"
-            font.pixelSize: Style.fontSizeS
+            pointSize: Style.fontSizeS
             color: Color.mOnSurface
         }
 
         NText {
             text: rootSettings?.pluginApi?.tr("settings.general.defaultProvider.desc") || "Provider shown in the bar widget"
-            font.pixelSize: Style.fontSizeXS
+            pointSize: Style.fontSizeXS
             color: Color.mOnSurfaceVariant
         }
 
@@ -74,11 +118,10 @@ SettingsTabPage {
                 }
                 return items;
             }
-            textRole: "name"
-            valueRole: "key"
-            currentValue: rootSettings?.editDefaultProvider ?? ""
-            onCurrentValueChanged: {
-                if (rootSettings) rootSettings.editDefaultProvider = currentValue;
+            currentKey: rootSettings?.editDefaultProvider ?? ""
+            onSelected: key => {
+                if (rootSettings)
+                    rootSettings.editDefaultProvider = key;
             }
         }
     }

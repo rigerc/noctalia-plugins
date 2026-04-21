@@ -23,17 +23,17 @@ Item {
     function providerIcon(providerId) {
         switch (String(providerId || "")) {
         case "codex":
-            return "mdi:robot-outline";
+            return "cpu";
         case "claude":
-            return "mdi:sparkles";
+            return "sparkles";
         case "kilo":
-            return "mdi:lightning-bolt";
+            return "bolt";
         case "gemini":
-            return "mdi:star-four-points";
+            return "stars";
         case "copilot":
-            return "mdi:github";
+            return "cpu";
         default:
-            return "mdi:robot";
+            return "cpu";
         }
     }
 
@@ -121,7 +121,7 @@ Item {
                     ToastService.showNotice(
                         pluginApi?.tr("notifications.resetTitle"),
                         pluginApi?.tr("notifications.resetBody").replace("{provider}", root.providerDisplayName(providerId)),
-                        "mdi:sparkles"
+                        "sparkles"
                     );
                 }
                 newResets[providerId] = primaryResetsAt;
@@ -136,7 +136,7 @@ Item {
                     ToastService.showNotice(
                         pluginApi?.tr("notifications.lowTitle"),
                         pluginApi?.tr("notifications.lowBody").replace("{provider}", root.providerDisplayName(providerId)).replace("{percent}", String(Math.round(primaryLeft))),
-                        "mdi:bell-outline"
+                        "bell"
                     );
                 }
             }

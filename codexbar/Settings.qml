@@ -13,7 +13,41 @@ ColumnLayout {
     property real preferredWidth: 720 * Style.uiScaleRatio
     property int selectedTab: 0
 
-    property string editBarIcon: cfg.barIcon ?? defaults.barIcon ?? "mdi:sparkles"
+    function normalizeIconName(iconName) {
+        var normalized = String(iconName || "").trim();
+        if (normalized === "")
+            return "sparkles";
+
+        if (normalized.indexOf(":") >= 0)
+            normalized = normalized.split(":").pop();
+        if (normalized.indexOf("--") >= 0)
+            normalized = normalized.split("--").pop();
+        if (normalized.indexOf("tabler-") === 0)
+            normalized = normalized.slice(7);
+
+        switch (normalized) {
+        case "robot-outline":
+            return "cpu";
+        case "robot":
+            return "cpu";
+        case "lightning-bolt":
+            return "bolt";
+        case "star-four-points":
+            return "sparkles";
+        case "bell-outline":
+            return "bell";
+        case "cog-outline":
+            return "settings";
+        case "content-save":
+            return "device-floppy";
+        case "open-in-new":
+            return "external-link";
+        default:
+            return normalized;
+        }
+    }
+
+    property string editBarIcon: normalizeIconName(cfg.barIcon ?? defaults.barIcon ?? "sparkles")
     property string editBarIconColor: cfg.barIconColor ?? defaults.barIconColor ?? "on-surface"
     property int editRefreshInterval: Math.max(30, Math.min(600, Number(cfg.refreshInterval ?? defaults.refreshInterval ?? 120)))
     property string editDefaultProvider: cfg.defaultProvider ?? defaults.defaultProvider ?? ""
@@ -29,15 +63,15 @@ ColumnLayout {
     readonly property var tabModel: [
         {
             "label": pluginApi?.tr("settings.tabs.general"),
-            "icon": "mdi:sparkles"
+            "icon": "sparkles"
         },
         {
             "label": pluginApi?.tr("settings.tabs.notifications"),
-            "icon": "mdi:bell-outline"
+            "icon": "bell"
         },
         {
             "label": pluginApi?.tr("settings.tabs.config"),
-            "icon": "mdi:cog-outline"
+            "icon": "settings"
         }
     ]
 
@@ -45,7 +79,7 @@ ColumnLayout {
         target: pluginApi
 
         function onPluginSettingsChanged() {
-            root.editBarIcon = cfg.barIcon ?? defaults.barIcon ?? "mdi:sparkles";
+            root.editBarIcon = root.normalizeIconName(cfg.barIcon ?? defaults.barIcon ?? "sparkles");
             root.editBarIconColor = cfg.barIconColor ?? defaults.barIconColor ?? "on-surface";
             root.editRefreshInterval = Math.max(30, Math.min(600, Number(cfg.refreshInterval ?? defaults.refreshInterval ?? 120)));
             root.editDefaultProvider = cfg.defaultProvider ?? defaults.defaultProvider ?? "";
@@ -97,7 +131,8 @@ ColumnLayout {
         if (!pluginApi)
             return;
 
-        pluginApi.pluginSettings.barIcon = editBarIcon;
+        pluginApi.pluginSettings.barIcon = normalizeIconName(editBarIcon);
+        delete pluginApi.pluginSettings.barIconPath;
         pluginApi.pluginSettings.barIconColor = editBarIconColor;
         pluginApi.pluginSettings.refreshInterval = editRefreshInterval;
         pluginApi.pluginSettings.defaultProvider = editDefaultProvider;
