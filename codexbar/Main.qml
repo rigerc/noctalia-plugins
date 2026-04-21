@@ -12,6 +12,8 @@ Item {
     property bool isRefreshing: false
     property string lastUpdated: ""
     property var previousResets: ({})
+    property var previousUsedPercents: ({})
+    property bool _cliMissingNotified: false
 
     readonly property var cfg: pluginApi?.pluginSettings || ({})
     readonly property var defaults: pluginApi?.manifest?.metadata?.defaultSettings || ({})
@@ -63,13 +65,22 @@ Item {
         fetchProcess.running = true;
     }
 
+    function _looksLikeMissingCli(exitCode, stderrText) {
+        var text = String(stderrText || "");
+        return exitCode === 127
+            || text.indexOf("not found") >= 0
+            || text.indexOf("No such file") >= 0
+            || text.indexOf("ENOENT") >= 0;
+    }
+
     Process {
         id: fetchProcess
 
-        property var _command: ["codexbar", "--format", "json"]
+        property var _command: ["sh", "-c", "codexbar_path=$(command -v codexbar 2>/dev/null) || exit 127; exec \"$codexbar_path\" --format json"]
         command: _command
 
         stdout: StdioCollector {
+            id: fetchStdout
             onStreamFinished: {
                 var output = this.text.trim();
                 if (!output) {
@@ -90,17 +101,36 @@ Item {
         }
 
         stderr: StdioCollector {
+            id: fetchStderr
             onStreamFinished: {
                 var err = this.text.trim();
-                if (err)
+                if (err) {
                     Logger.w("CodexBar", "stderr: " + err);
+                    if (!root.lastError)
+                        root.lastError = err;
+                }
             }
         }
 
         onExited: function (exitCode, exitStatus) {
             if (exitCode !== 0) {
-                root.lastError = "Exit code " + exitCode;
+                var stderrText = String(fetchStderr?.text || "").trim();
+                if (root._looksLikeMissingCli(exitCode, stderrText)) {
+                    root.lastError = pluginApi?.tr("errors.cliMissing");
+                    if (!root._cliMissingNotified) {
+                        root._cliMissingNotified = true;
+                        ToastService.showNotice(
+                            pluginApi?.tr("errors.cliMissingTitle"),
+                            pluginApi?.tr("errors.cliMissingBody"),
+                            "external-link"
+                        );
+                    }
+                } else if (!root.lastError) {
+                    root.lastError = "Exit code " + exitCode;
+                }
                 Logger.w("CodexBar", "codexbar exited with code " + exitCode);
+            } else {
+                root._cliMissingNotified = false;
             }
             root.isRefreshing = false;
         }
@@ -108,6 +138,8 @@ Item {
 
     function _handleProviderData(providers) {
         var newResets = ({});
+        var newUsedPercents = ({});
+        var now = Date.now();
         for (var i = 0; i < providers.length; i++) {
             var p = providers[i];
             var providerId = String(p.provider || "");
@@ -117,15 +149,32 @@ Item {
 
             if (primaryResetsAt) {
                 var prevReset = root.previousResets[providerId];
+                var prevUsed = root.previousUsedPercents[providerId];
                 if (prevReset && prevReset !== primaryResetsAt && root.notifyOnReset) {
-                    ToastService.showNotice(
-                        pluginApi?.tr("notifications.resetTitle"),
-                        pluginApi?.tr("notifications.resetBody").replace("{provider}", root.providerDisplayName(providerId)),
-                        "sparkles"
-                    );
+                    var prevTime = Date.parse(prevReset);
+                    var nextTime = Date.parse(primaryResetsAt);
+                    var hasTimes = isFinite(prevTime) && isFinite(nextTime);
+
+                    var prevWasDue = hasTimes && prevTime <= now + 5 * 60 * 1000;
+                    var nextAdvanced = hasTimes && nextTime > prevTime;
+                    var usageDropped = typeof prevUsed === "number"
+                        && primaryUsed >= 0
+                        && primaryUsed <= 100
+                        && primaryUsed <= prevUsed - 10;
+
+                    if ((prevWasDue && nextAdvanced) || (usageDropped && nextAdvanced && (nextTime - prevTime) >= 30 * 60 * 1000)) {
+                        ToastService.showNotice(
+                            pluginApi?.tr("notifications.resetTitle"),
+                            pluginApi?.tr("notifications.resetBody").replace("{provider}", root.providerDisplayName(providerId)),
+                            "sparkles"
+                        );
+                    }
                 }
                 newResets[providerId] = primaryResetsAt;
             }
+
+            if (primaryUsed >= 0 && primaryUsed <= 100)
+                newUsedPercents[providerId] = primaryUsed;
 
             if (primaryLeft >= 0 && primaryLeft <= root.lowUsageThreshold && root.notifyOnLowUsage) {
                 var notifKey = providerId + "_low_" + (new Date(primaryResetsAt || Date.now())).toDateString();
@@ -143,6 +192,7 @@ Item {
         }
 
         root.previousResets = newResets;
+        root.previousUsedPercents = newUsedPercents;
         root.providerData = providers;
         root.lastUpdated = new Date().toISOString();
     }

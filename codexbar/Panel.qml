@@ -274,6 +274,15 @@ Item {
                                         color: Color.mOnSurface
                                     }
                                 }
+
+                                NButton {
+                                    Layout.alignment: Qt.AlignLeft
+                                    visible: String(modelData.provider || "") === "codex"
+                                    text: pluginApi?.tr("panel.openCodexUsage")
+                                    icon: "external-link"
+                                    outlined: true
+                                    onClicked: Qt.openUrlExternally("https://chatgpt.com/codex/cloud/settings/analytics#usage")
+                                }
                             }
                         }
                     }

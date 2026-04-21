@@ -13,6 +13,7 @@
     "lastUpdated": "Updated",
     "refresh": "Refresh",
     "noProviders": "No providers detected",
+    "openCodexUsage": "Open Codex usage",
     "credits": "Credits",
     "resetsAt": "Resets",
     "resetsNow": "Now",
@@ -98,6 +99,7 @@
       "description": "Edit ~/.codexbar/config.json directly",
       "securityNote": "This file contains provider secrets and replaces Keychain storage. Keep it private.",
       "reference": "Location: ~/.codexbar/config.json. CodexBar creates the directory if needed and keeps permissions restricted on supported platforms.",
+      "openDocs": "Open CodexBar config docs",
       "providersTitle": "Providers",
       "addProvider": "Add provider",
       "add": "Add",
@@ -170,5 +172,10 @@
     "resetBody": "Your {provider} usage has been reset",
     "lowTitle": "Low Usage Warning",
     "lowBody": "{provider}: only {percent}% remaining"
+  },
+  "errors": {
+    "cliMissingTitle": "CodexBar CLI not found",
+    "cliMissingBody": "Install codexbar and make sure it's available on your PATH. See Settings → Config for docs.",
+    "cliMissing": "CodexBar CLI not found (install codexbar and ensure it's on your PATH)."
   }
 }

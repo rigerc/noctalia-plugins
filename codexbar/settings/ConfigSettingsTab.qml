@@ -11,13 +11,14 @@ SettingsTabPage {
 
     property var rootSettings: null
 
-    title: rootSettings?.pluginApi?.tr("settings.config.title") || "Config"
-    description: rootSettings?.pluginApi?.tr("settings.config.description") || "Edit ~/.codexbar/config.json"
+    title: rootSettings?.pluginApi?.tr("settings.config.title")
+    description: rootSettings?.pluginApi?.tr("settings.config.description")
     icon: "settings"
 
     readonly property string homeDir: Quickshell.env("HOME") || ""
     readonly property string configDir: homeDir !== "" ? homeDir + "/.codexbar" : ""
     readonly property string configPath: configDir !== "" ? configDir + "/config.json" : ""
+    readonly property string docsUrl: "https://github.com/steipete/CodexBar/blob/main/docs/configuration.md"
 
     readonly property var providerIds: [
         "codex", "claude", "cursor", "opencode", "factory", "gemini", "antigravity",
@@ -392,6 +393,13 @@ SettingsTabPage {
             pointSize: Style.fontSizeXS
             wrapMode: Text.Wrap
         }
+
+        NButton {
+            text: rootSettings?.pluginApi?.tr("settings.config.openDocs")
+            icon: "external-link"
+            outlined: true
+            onClicked: Qt.openUrlExternally(tab.docsUrl)
+        }
     }
 
     SectionBox {
@@ -607,7 +615,7 @@ SettingsTabPage {
         }
 
         NButton {
-            text: rootSettings?.pluginApi?.tr("settings.config.save") || "Save Config"
+            text: rootSettings?.pluginApi?.tr("settings.config.save")
             icon: "device-floppy"
             enabled: tab.configIsValid && tab.configPath !== "" && !saveConfigProcess.running
             onClicked: {
@@ -620,7 +628,7 @@ SettingsTabPage {
         }
 
         NButton {
-            text: rootSettings?.pluginApi?.tr("settings.config.openEditor") || "Open in Editor"
+            text: rootSettings?.pluginApi?.tr("settings.config.openEditor")
             icon: "external-link"
             outlined: true
             enabled: tab.configPath !== ""
@@ -666,4 +674,3 @@ SettingsTabPage {
         onTriggered: saveStatus.text = ""
     }
 }
-
