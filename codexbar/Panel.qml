@@ -26,8 +26,8 @@ Item {
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: Style.marginL
-            spacing: Style.marginL
+            anchors.margins: Style.marginXL
+            spacing: Style.marginXL
 
             RowLayout {
                 Layout.fillWidth: true
@@ -62,7 +62,7 @@ Item {
 
                 ColumnLayout {
                     width: parent?.width ?? 0
-                    spacing: Style.marginM
+                    spacing: Style.marginL
 
                     Repeater {
                         model: mainInstance?.providerData || []
@@ -73,7 +73,7 @@ Item {
 
                             ColumnLayout {
                                 width: parent.width
-                                spacing: Style.marginS
+                                spacing: Style.marginM
 
                                 RowLayout {
                                     Layout.fillWidth: true
@@ -111,7 +111,7 @@ Item {
                                     sourceComponent: Component {
                                         ColumnLayout {
                                             width: parent.width
-                                            spacing: Style.marginXS
+                                            spacing: Style.marginS
 
                                             RowLayout {
                                                 Layout.fillWidth: true
@@ -166,7 +166,7 @@ Item {
                                     sourceComponent: Component {
                                         ColumnLayout {
                                             width: parent.width
-                                            spacing: Style.marginXS
+                                            spacing: Style.marginS
 
                                             RowLayout {
                                                 Layout.fillWidth: true

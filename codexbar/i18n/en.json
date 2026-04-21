@@ -36,6 +36,39 @@
       "barIconColor": {
         "label": "Icon Color"
       },
+      "iconTextSpacing": {
+        "label": "Icon/Text Spacing",
+        "desc": "Space between the icon and the percentage text in the bar widget"
+      },
+      "text": {
+        "title": "Text",
+        "description": "Customize the bar widget text style",
+        "pointSize": {
+          "label": "Text Size",
+          "desc": "Point size for the bar widget text (0 = theme default)"
+        },
+        "fontFamily": {
+          "label": "Font Family",
+          "desc": "Optional font family (leave empty for theme default)"
+        },
+        "fontWeight": {
+          "label": "Font Weight",
+          "desc": "Weight of the bar widget text"
+        },
+        "weight": {
+          "normal": "Normal",
+          "medium": "Medium",
+          "bold": "Bold"
+        },
+        "italic": {
+          "label": "Italic",
+          "desc": "Italicize the bar widget text"
+        },
+        "underline": {
+          "label": "Underline",
+          "desc": "Underline the bar widget text"
+        }
+      },
       "refreshInterval": {
         "label": "Refresh Interval",
         "desc": "Seconds between data updates"

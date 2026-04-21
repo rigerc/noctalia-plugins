@@ -49,6 +49,12 @@ ColumnLayout {
 
     property string editBarIcon: normalizeIconName(cfg.barIcon ?? defaults.barIcon ?? "sparkles")
     property string editBarIconColor: cfg.barIconColor ?? defaults.barIconColor ?? "on-surface"
+    property int editBarIconTextSpacing: Math.max(0, Math.min(24, Number(cfg.barIconTextSpacing ?? defaults.barIconTextSpacing ?? 6)))
+    property int editBarTextPointSize: Math.max(0, Math.min(24, Number(cfg.barTextPointSize ?? defaults.barTextPointSize ?? 0)))
+    property string editBarTextFontFamily: String(cfg.barTextFontFamily ?? defaults.barTextFontFamily ?? "")
+    property string editBarTextFontWeight: String(cfg.barTextFontWeight ?? defaults.barTextFontWeight ?? "normal")
+    property bool editBarTextItalic: cfg.barTextItalic ?? defaults.barTextItalic ?? false
+    property bool editBarTextUnderline: cfg.barTextUnderline ?? defaults.barTextUnderline ?? false
     property int editRefreshInterval: Math.max(30, Math.min(600, Number(cfg.refreshInterval ?? defaults.refreshInterval ?? 120)))
     property string editDefaultProvider: cfg.defaultProvider ?? defaults.defaultProvider ?? ""
     property bool editNotifyOnReset: cfg.notifyOnReset ?? defaults.notifyOnReset ?? true
@@ -57,7 +63,7 @@ ColumnLayout {
 
     readonly property var mainInstance: pluginApi?.mainInstance
 
-    spacing: Style.marginM
+    spacing: Style.marginL
     implicitWidth: preferredWidth
 
     readonly property var tabModel: [
@@ -81,6 +87,12 @@ ColumnLayout {
         function onPluginSettingsChanged() {
             root.editBarIcon = root.normalizeIconName(cfg.barIcon ?? defaults.barIcon ?? "sparkles");
             root.editBarIconColor = cfg.barIconColor ?? defaults.barIconColor ?? "on-surface";
+            root.editBarIconTextSpacing = Math.max(0, Math.min(24, Number(cfg.barIconTextSpacing ?? defaults.barIconTextSpacing ?? 6)));
+            root.editBarTextPointSize = Math.max(0, Math.min(24, Number(cfg.barTextPointSize ?? defaults.barTextPointSize ?? 0)));
+            root.editBarTextFontFamily = String(cfg.barTextFontFamily ?? defaults.barTextFontFamily ?? "");
+            root.editBarTextFontWeight = String(cfg.barTextFontWeight ?? defaults.barTextFontWeight ?? "normal");
+            root.editBarTextItalic = cfg.barTextItalic ?? defaults.barTextItalic ?? false;
+            root.editBarTextUnderline = cfg.barTextUnderline ?? defaults.barTextUnderline ?? false;
             root.editRefreshInterval = Math.max(30, Math.min(600, Number(cfg.refreshInterval ?? defaults.refreshInterval ?? 120)));
             root.editDefaultProvider = cfg.defaultProvider ?? defaults.defaultProvider ?? "";
             root.editNotifyOnReset = cfg.notifyOnReset ?? defaults.notifyOnReset ?? true;
@@ -134,6 +146,12 @@ ColumnLayout {
         pluginApi.pluginSettings.barIcon = normalizeIconName(editBarIcon);
         delete pluginApi.pluginSettings.barIconPath;
         pluginApi.pluginSettings.barIconColor = editBarIconColor;
+        pluginApi.pluginSettings.barIconTextSpacing = editBarIconTextSpacing;
+        pluginApi.pluginSettings.barTextPointSize = editBarTextPointSize;
+        pluginApi.pluginSettings.barTextFontFamily = editBarTextFontFamily;
+        pluginApi.pluginSettings.barTextFontWeight = editBarTextFontWeight;
+        pluginApi.pluginSettings.barTextItalic = editBarTextItalic;
+        pluginApi.pluginSettings.barTextUnderline = editBarTextUnderline;
         pluginApi.pluginSettings.refreshInterval = editRefreshInterval;
         pluginApi.pluginSettings.defaultProvider = editDefaultProvider;
         pluginApi.pluginSettings.notifyOnReset = editNotifyOnReset;

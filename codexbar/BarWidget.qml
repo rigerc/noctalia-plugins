@@ -49,6 +49,13 @@ Item {
 
     readonly property string barIcon: normalizeIconName(cfg.barIcon ?? defaults.barIcon ?? "sparkles")
     readonly property string barIconColor: cfg.barIconColor ?? defaults.barIconColor ?? "on-surface"
+    readonly property real barIconTextSpacing: Math.max(0, Math.min(24, Number(cfg.barIconTextSpacing ?? defaults.barIconTextSpacing ?? 6))) * Style.uiScaleRatio
+    readonly property int barTextPointSizeSetting: Math.max(0, Math.min(24, Number(cfg.barTextPointSize ?? defaults.barTextPointSize ?? 0)))
+    readonly property string barTextFontFamily: String(cfg.barTextFontFamily ?? defaults.barTextFontFamily ?? "")
+    readonly property string barTextFontWeightKey: String(cfg.barTextFontWeight ?? defaults.barTextFontWeight ?? "normal")
+    readonly property int barTextFontWeight: barTextFontWeightKey === "bold" ? Font.Bold : barTextFontWeightKey === "medium" ? Font.Medium : Font.Normal
+    readonly property bool barTextItalic: cfg.barTextItalic ?? defaults.barTextItalic ?? false
+    readonly property bool barTextUnderline: cfg.barTextUnderline ?? defaults.barTextUnderline ?? false
     readonly property string defaultProvider: cfg.defaultProvider ?? defaults.defaultProvider ?? ""
     readonly property color resolvedBarIconColor: Color.resolveColorKey(root.barIconColor)
 
@@ -120,7 +127,7 @@ Item {
             id: row
 
             anchors.centerIn: parent
-            spacing: Style.marginXS
+            spacing: root.barIconTextSpacing
 
             NIcon {
                 id: iconDisplay
@@ -142,8 +149,12 @@ Item {
             NText {
                 Layout.alignment: Qt.AlignVCenter
                 text: root.contentText
-                pointSize: Style.fontSizeXS
+                pointSize: root.barTextPointSizeSetting > 0 ? root.barTextPointSizeSetting : Style.fontSizeXS
                 color: root.resolvedBarIconColor
+                font.family: root.barTextFontFamily
+                font.weight: root.barTextFontWeight
+                font.italic: root.barTextItalic
+                font.underline: root.barTextUnderline
             }
         }
     }
