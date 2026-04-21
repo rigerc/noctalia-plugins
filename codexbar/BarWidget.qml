@@ -23,9 +23,41 @@ Item {
     readonly property bool isVertical: barPosition === "left" || barPosition === "right"
     readonly property real capsuleHeight: Style.getCapsuleHeightForScreen(screen?.name)
 
-    readonly property string barIcon: cfg.barIcon ?? defaults.barIcon ?? "mdi:sparkles"
+    function normalizeIconName(iconName) {
+        var normalized = String(iconName || "").trim();
+        if (normalized === "")
+            return "sparkles";
+        if (normalized.indexOf(":") >= 0)
+            normalized = normalized.split(":").pop();
+        if (normalized.indexOf("--") >= 0)
+            normalized = normalized.split("--").pop();
+        if (normalized.indexOf("tabler-") === 0)
+            normalized = normalized.slice(7);
+        switch (normalized) {
+        case "robot-outline":
+            return "cpu";
+        case "robot":
+            return "cpu";
+        case "lightning-bolt":
+            return "bolt";
+        case "star-four-points":
+            return "sparkles";
+        default:
+            return normalized;
+        }
+    }
+
+    readonly property string barIcon: normalizeIconName(cfg.barIcon ?? defaults.barIcon ?? "sparkles")
     readonly property string barIconColor: cfg.barIconColor ?? defaults.barIconColor ?? "on-surface"
+    readonly property real barIconTextSpacing: Math.max(0, Math.min(24, Number(cfg.barIconTextSpacing ?? defaults.barIconTextSpacing ?? 6))) * Style.uiScaleRatio
+    readonly property int barTextPointSizeSetting: Math.max(0, Math.min(24, Number(cfg.barTextPointSize ?? defaults.barTextPointSize ?? 0)))
+    readonly property string barTextFontFamily: String(cfg.barTextFontFamily ?? defaults.barTextFontFamily ?? "")
+    readonly property string barTextFontWeightKey: String(cfg.barTextFontWeight ?? defaults.barTextFontWeight ?? "normal")
+    readonly property int barTextFontWeight: barTextFontWeightKey === "bold" ? Font.Bold : barTextFontWeightKey === "medium" ? Font.Medium : Font.Normal
+    readonly property bool barTextItalic: cfg.barTextItalic ?? defaults.barTextItalic ?? false
+    readonly property bool barTextUnderline: cfg.barTextUnderline ?? defaults.barTextUnderline ?? false
     readonly property string defaultProvider: cfg.defaultProvider ?? defaults.defaultProvider ?? ""
+    readonly property color resolvedBarIconColor: Color.resolveColorKey(root.barIconColor)
 
     readonly property var displayProvider: {
         if (!mainInstance || !Array.isArray(mainInstance.providerData) || mainInstance.providerData.length === 0)
@@ -95,14 +127,14 @@ Item {
             id: row
 
             anchors.centerIn: parent
-            spacing: Style.marginXS
+            spacing: root.barIconTextSpacing
 
             NIcon {
                 id: iconDisplay
                 Layout.preferredWidth: Style.fontSizeM
                 Layout.preferredHeight: Style.fontSizeM
-                icon: mainInstance?.isRefreshing ? "mdi:refresh" : root.barIcon
-                color: Color.resolveColor(root.barIconColor)
+                icon: mainInstance?.isRefreshing ? "refresh" : root.barIcon
+                color: root.resolvedBarIconColor
 
                 RotationAnimator {
                     target: iconDisplay
@@ -117,8 +149,12 @@ Item {
             NText {
                 Layout.alignment: Qt.AlignVCenter
                 text: root.contentText
-                font.pixelSize: Style.fontSizeXS
-                color: Color.resolveColor(root.barIconColor)
+                pointSize: root.barTextPointSizeSetting > 0 ? root.barTextPointSizeSetting : Style.fontSizeXS
+                color: root.resolvedBarIconColor
+                font.family: root.barTextFontFamily
+                font.weight: root.barTextFontWeight
+                font.italic: root.barTextItalic
+                font.underline: root.barTextUnderline
             }
         }
     }
@@ -137,20 +173,24 @@ Item {
 
     HoverHandler {
         id: hoverHandler
-    }
-
-    TooltipService {
-        visible: hoverHandler.hovered
-        text: {
-            if (!hasData)
-                return pluginApi?.tr("widget.noData") || "No data";
-            var name = mainInstance?.providerDisplayName(displayProvider.provider) || displayProvider.provider;
-            var primary = displayProvider?.usage?.primary;
-            var secondary = displayProvider?.usage?.secondary;
-            var lines = [name];
-            if (primary) lines.push("Session: " + (100 - primary.usedPercent) + "% left");
-            if (secondary) lines.push("Weekly: " + (100 - secondary.usedPercent) + "% left");
-            return lines.join("\n");
+        onHoveredChanged: {
+            if (hovered) {
+                var tip;
+                if (!hasData) {
+                    tip = pluginApi?.tr("widget.noData") || "No data";
+                } else {
+                    var name = mainInstance?.providerDisplayName(displayProvider.provider) || displayProvider.provider;
+                    var primary = displayProvider?.usage?.primary;
+                    var secondary = displayProvider?.usage?.secondary;
+                    var lines = [name];
+                    if (primary) lines.push("Session: " + (100 - primary.usedPercent) + "% left");
+                    if (secondary) lines.push("Weekly: " + (100 - secondary.usedPercent) + "% left");
+                    tip = lines.join("\n");
+                }
+                TooltipService.show(root, tip, BarService.getTooltipDirection(root.screen?.name));
+            } else {
+                TooltipService.hide();
+            }
         }
     }
 }

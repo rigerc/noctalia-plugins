@@ -10,7 +10,7 @@ SettingsTabPage {
 
     title: rootSettings?.pluginApi?.tr("settings.tabs.notifications") || "Notifications"
     description: rootSettings?.pluginApi?.tr("settings.notifications.description") || "Configure when to show notifications"
-    icon: "mdi:bell-outline"
+    icon: "bell"
 
     NToggle {
         Layout.fillWidth: true

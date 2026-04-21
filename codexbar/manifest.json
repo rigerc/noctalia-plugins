@@ -19,8 +19,14 @@
   },
   "metadata": {
     "defaultSettings": {
-      "barIcon": "mdi:sparkles",
+      "barIcon": "sparkles",
       "barIconColor": "on-surface",
+      "barIconTextSpacing": 6,
+      "barTextPointSize": 0,
+      "barTextFontFamily": "",
+      "barTextFontWeight": "normal",
+      "barTextItalic": false,
+      "barTextUnderline": false,
       "refreshInterval": 120,
       "defaultProvider": "",
       "notifyOnReset": true,
