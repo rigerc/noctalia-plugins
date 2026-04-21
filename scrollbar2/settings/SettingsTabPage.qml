@@ -31,18 +31,18 @@ ColumnLayout {
         });
     }
 
-    function jumpToSection(sectionId) {
-        var sections = root._resolvedSections();
-        for (var i = 0; i < sections.length; i++) {
-            var section = sections[i];
-            if (section.id !== sectionId)
-                continue;
-            if (pageScroll._internalFlickable)
-                pageScroll._internalFlickable.contentY = pageScroll.clampScrollY(root._sectionY(section));
-            root.activeSectionId = section.id;
-            break;
-        }
-    }
+	    function jumpToSection(sectionId) {
+	        var sections = root._resolvedSections();
+	        for (var i = 0; i < sections.length; i++) {
+	            var section = sections[i];
+	            if (section.id !== sectionId)
+	                continue;
+	            if (pageScroll.contentItem)
+	                pageScroll.contentItem.contentY = pageScroll.clampScrollY(root._sectionY(section));
+	            root.activeSectionId = section.id;
+	            break;
+	        }
+	    }
 
     function _updateActiveSection() {
         var sections = root._resolvedSections();
@@ -51,11 +51,11 @@ ColumnLayout {
             return;
         }
 
-        var currentY = pageScroll._internalFlickable ? pageScroll._internalFlickable.contentY : 0;
-        var bestSection = sections[0];
-        for (var i = 0; i < sections.length; i++) {
-            var section = sections[i];
-            if (root._sectionY(section) <= currentY + Style.marginM)
+	        var currentY = pageScroll.contentItem ? pageScroll.contentItem.contentY : 0;
+	        var bestSection = sections[0];
+	        for (var i = 0; i < sections.length; i++) {
+	            var section = sections[i];
+	            if (root._sectionY(section) <= currentY + Style.marginM)
                 bestSection = section;
         }
         root.activeSectionId = bestSection.id;
@@ -112,14 +112,14 @@ ColumnLayout {
             width: pageScroll.availableWidth
             spacing: Style.marginXL
         }
-    }
+	    }
 
-    Connections {
-        target: pageScroll._internalFlickable
+	    Connections {
+	        target: pageScroll.contentItem
 
         function onContentYChanged() {
             root._updateActiveSection();
-        }
+	    }
     }
 
     Component.onCompleted: root._updateActiveSection()

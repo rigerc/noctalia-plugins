@@ -62,15 +62,15 @@ ColumnLayout {
         return [
             {
                 id: "builtin:default",
-                name: pluginApi?.tr("settings.presets.builtinPresets.default.name") ?? "Default",
-                description: pluginApi?.tr("settings.presets.builtinPresets.default.desc") ?? "",
+                name: pluginApi?.tr("settings.presets.builtinPresets.default.name"),
+                description: pluginApi?.tr("settings.presets.builtinPresets.default.desc"),
                 builtIn: true,
                 settings: d
             },
             {
                 id: "builtin:minimal",
-                name: pluginApi?.tr("settings.presets.builtinPresets.minimal.name") ?? "Minimal",
-                description: pluginApi?.tr("settings.presets.builtinPresets.minimal.desc") ?? "",
+                name: pluginApi?.tr("settings.presets.builtinPresets.minimal.name"),
+                description: pluginApi?.tr("settings.presets.builtinPresets.minimal.desc"),
                 builtIn: true,
                 settings: _deepMerge(d, {
                     track: {
@@ -93,8 +93,8 @@ ColumnLayout {
             },
             {
                 id: "builtin:bordered",
-                name: pluginApi?.tr("settings.presets.builtinPresets.bordered.name") ?? "Bordered",
-                description: pluginApi?.tr("settings.presets.builtinPresets.bordered.desc") ?? "",
+                name: pluginApi?.tr("settings.presets.builtinPresets.bordered.name"),
+                description: pluginApi?.tr("settings.presets.builtinPresets.bordered.desc"),
                 builtIn: true,
                 settings: _deepMerge(d, {
                     track: {
@@ -119,8 +119,8 @@ ColumnLayout {
             },
             {
                 id: "builtin:floating",
-                name: pluginApi?.tr("settings.presets.builtinPresets.floating.name") ?? "Floating",
-                description: pluginApi?.tr("settings.presets.builtinPresets.floating.desc") ?? "",
+                name: pluginApi?.tr("settings.presets.builtinPresets.floating.name"),
+                description: pluginApi?.tr("settings.presets.builtinPresets.floating.desc"),
                 builtIn: true,
                 settings: _deepMerge(d, {
                     display: {
@@ -145,8 +145,8 @@ ColumnLayout {
             },
             {
                 id: "builtin:compact",
-                name: pluginApi?.tr("settings.presets.builtinPresets.compact.name") ?? "Compact",
-                description: pluginApi?.tr("settings.presets.builtinPresets.compact.desc") ?? "",
+                name: pluginApi?.tr("settings.presets.builtinPresets.compact.name"),
+                description: pluginApi?.tr("settings.presets.builtinPresets.compact.desc"),
                 builtIn: true,
                 settings: _deepMerge(d, {
                     track: {
@@ -173,8 +173,8 @@ ColumnLayout {
             },
             {
                 id: "builtin:indicator",
-                name: pluginApi?.tr("settings.presets.builtinPresets.indicator.name") ?? "Indicator",
-                description: pluginApi?.tr("settings.presets.builtinPresets.indicator.desc") ?? "",
+                name: pluginApi?.tr("settings.presets.builtinPresets.indicator.name"),
+                description: pluginApi?.tr("settings.presets.builtinPresets.indicator.desc"),
                 builtIn: true,
                 settings: _deepMerge(d, {
                     track: {
@@ -198,8 +198,8 @@ ColumnLayout {
             },
             {
                 id: "builtin:pill",
-                name: pluginApi?.tr("settings.presets.builtinPresets.pill.name") ?? "Pill",
-                description: pluginApi?.tr("settings.presets.builtinPresets.pill.desc") ?? "",
+                name: pluginApi?.tr("settings.presets.builtinPresets.pill.name"),
+                description: pluginApi?.tr("settings.presets.builtinPresets.pill.desc"),
                 builtIn: true,
                 settings: _deepMerge(d, {
                     track: {
@@ -485,17 +485,17 @@ ColumnLayout {
 
     function _parseImportFile(jsonText) {
         if (!jsonText || jsonText.trim() === "")
-            return { error: pluginApi?.tr("settings.presets.import.errors.empty") ?? "File is empty." };
+            return { error: pluginApi?.tr("settings.presets.import.errors.empty") };
 
         var data;
         try {
             data = JSON.parse(jsonText);
         } catch (e) {
-            return { error: pluginApi?.tr("settings.presets.import.errors.invalidJson") ?? "Invalid JSON file." };
+            return { error: pluginApi?.tr("settings.presets.import.errors.invalidJson") };
         }
 
         if (!data || typeof data !== "object" || Array.isArray(data))
-            return { error: pluginApi?.tr("settings.presets.import.errors.invalidFormat") ?? "Unrecognized file format." };
+            return { error: pluginApi?.tr("settings.presets.import.errors.invalidFormat") };
 
         if (data.scrollbar2Backup) {
             var backupResult = Migrations.validateImport(data.settings || ({}), rootSettings.defaultSettings);
@@ -546,7 +546,7 @@ ColumnLayout {
             };
         }
 
-        return { error: pluginApi?.tr("settings.presets.import.errors.unrecognized") ?? "Not a scrollbar2 export file." };
+        return { error: pluginApi?.tr("settings.presets.import.errors.unrecognized") };
     }
 
     function _applyImportResult(result) {
@@ -566,7 +566,7 @@ ColumnLayout {
 
         if (result.type === "preset") {
             var preset = result.preset;
-            var copyName = preset.name || (pluginApi?.tr("settings.presets.import.importedPreset") ?? "Imported Preset");
+            var copyName = preset.name || (pluginApi?.tr("settings.presets.import.importedPreset"));
             var suffix = 1;
             while (_findPresetByName(copyName)) {
                 suffix++;
@@ -598,7 +598,7 @@ ColumnLayout {
             var existing = rootSettings.deepCopy(api3.pluginSettings._presets || []);
             for (var i = 0; i < result.presets.length; i++) {
                 var ip = result.presets[i];
-                var ipName = ip.name || (pluginApi?.tr("settings.presets.import.importedPreset") ?? "Imported Preset");
+                var ipName = ip.name || (pluginApi?.tr("settings.presets.import.importedPreset"));
                 var ipSuffix = 1;
                 while (_findPresetByName(ipName)) {
                     ipSuffix++;
@@ -625,11 +625,11 @@ ColumnLayout {
             return "";
         var lines = [];
         if (report.appliedMigrations && report.appliedMigrations.length > 0) {
-            var migLabel = pluginApi?.tr("settings.presets.import.report.migrated") ?? "Deprecated settings migrated";
+            var migLabel = pluginApi?.tr("settings.presets.import.report.migrated");
             lines.push(migLabel.replace("{count}", report.appliedMigrations.length));
         }
         if (report.unknownKeys && report.unknownKeys.length > 0) {
-            var unkLabel = pluginApi?.tr("settings.presets.import.report.unknown") ?? "Unrecognized settings removed";
+            var unkLabel = pluginApi?.tr("settings.presets.import.report.unknown");
             lines.push(unkLabel.replace("{count}", report.unknownKeys.length));
         }
         if (report.details && report.details.length > 0) {
@@ -637,9 +637,9 @@ ColumnLayout {
                 var d = report.details[i];
                 lines.push(d.name + ":");
                 if (d.report.appliedMigrations.length > 0)
-                    lines.push("  " + (pluginApi?.tr("settings.presets.import.report.migrated") ?? "").replace("{count}", d.report.appliedMigrations.length));
+                    lines.push("  " + (pluginApi?.tr("settings.presets.import.report.migrated")).replace("{count}", d.report.appliedMigrations.length));
                 if (d.report.unknownKeys.length > 0)
-                    lines.push("  " + (pluginApi?.tr("settings.presets.import.report.unknown") ?? "").replace("{count}", d.report.unknownKeys.length));
+                    lines.push("  " + (pluginApi?.tr("settings.presets.import.report.unknown")).replace("{count}", d.report.unknownKeys.length));
             }
         }
         return lines.join("\n");
@@ -648,25 +648,25 @@ ColumnLayout {
     function _detailsSectionLabel(sectionKey) {
         switch (sectionKey) {
         case "display":
-            return pluginApi?.tr("settings.section.display.label") ?? "Display";
+            return pluginApi?.tr("settings.section.display.label");
         case "track":
-            return pluginApi?.tr("settings.section.track.label") ?? "Track";
+            return pluginApi?.tr("settings.section.track.label");
         case "filtering":
-            return pluginApi?.tr("settings.section.filtering.label") ?? "Filtering";
+            return pluginApi?.tr("settings.section.filtering.label");
         case "animation":
-            return pluginApi?.tr("settings.section.animation.label") ?? "Animation";
+            return pluginApi?.tr("settings.section.animation.label");
         case "focusLine":
-            return pluginApi?.tr("settings.section.focusLine.label") ?? "Focus Line";
+            return pluginApi?.tr("settings.section.focusLine.label");
         case "window":
-            return pluginApi?.tr("settings.section.window.label") ?? "Window";
+            return pluginApi?.tr("settings.section.window.label");
         case "workspaceIndicator":
-            return pluginApi?.tr("settings.section.workspaceIndicator.label") ?? "Workspace Indicator";
+            return pluginApi?.tr("settings.section.workspaceIndicator.label");
         case "specialWorkspaceOverlay":
-            return pluginApi?.tr("settings.section.specialWorkspaceOverlay.label") ?? "Special Workspace Overlay";
+            return pluginApi?.tr("settings.section.specialWorkspaceOverlay.label");
         case "pinnedApps":
-            return pluginApi?.tr("settings.section.pinnedApps.label") ?? "Pinned Apps";
+            return pluginApi?.tr("settings.section.pinnedApps.label");
         case "customStyleRules":
-            return pluginApi?.tr("settings.section.customStyleRules.label") ?? "Style Rules";
+            return pluginApi?.tr("settings.section.customStyleRules.label");
         default:
             return sectionKey;
         }
@@ -763,15 +763,15 @@ ColumnLayout {
     }
 
     NHeader {
-        label: pluginApi?.tr("settings.presets.section.label") ?? "Presets"
-        description: pluginApi?.tr("settings.presets.section.desc") ?? ""
+        label: pluginApi?.tr("settings.presets.section.label")
+        description: pluginApi?.tr("settings.presets.section.desc")
         Layout.fillWidth: true
     }
 
     NLabel {
         id: backupHeader
-        label: pluginApi?.tr("settings.presets.backup.label") ?? "Settings Backup"
-        description: pluginApi?.tr("settings.presets.backup.desc") ?? "Export or import a complete backup of all settings and presets."
+        label: pluginApi?.tr("settings.presets.backup.label")
+        description: pluginApi?.tr("settings.presets.backup.desc")
         Layout.fillWidth: true
     }
 
@@ -780,14 +780,14 @@ ColumnLayout {
         spacing: Style.marginM
 
         NButton {
-            text: pluginApi?.tr("settings.presets.backup.export") ?? "Export Backup"
+            text: pluginApi?.tr("settings.presets.backup.export")
             icon: "download"
             fontSize: Style.fontSizeS
             onClicked: backupExportPicker.openFilePicker()
         }
 
         NButton {
-            text: pluginApi?.tr("settings.presets.backup.import") ?? "Import Backup"
+            text: pluginApi?.tr("settings.presets.backup.import")
             icon: "upload"
             fontSize: Style.fontSizeS
             onClicked: backupImportPicker.openFilePicker()
@@ -800,8 +800,8 @@ ColumnLayout {
 
     NLabel {
         id: builtInHeader
-        label: pluginApi?.tr("settings.presets.builtin.label") ?? "Built-in Presets"
-        description: pluginApi?.tr("settings.presets.builtin.desc") ?? ""
+        label: pluginApi?.tr("settings.presets.builtin.label")
+        description: pluginApi?.tr("settings.presets.builtin.desc")
         Layout.fillWidth: true
     }
 
@@ -839,20 +839,20 @@ ColumnLayout {
         spacing: Style.marginM
 
         NLabel {
-            label: pluginApi?.tr("settings.presets.custom.label") ?? "Custom Presets"
-            description: pluginApi?.tr("settings.presets.custom.desc") ?? ""
+            label: pluginApi?.tr("settings.presets.custom.label")
+            description: pluginApi?.tr("settings.presets.custom.desc")
             Layout.fillWidth: true
         }
 
         NButton {
-            text: pluginApi?.tr("settings.presets.actions.save") ?? "Save Current as Preset"
+            text: pluginApi?.tr("settings.presets.actions.save")
             icon: "device-floppy"
             fontSize: Style.fontSizeS
             onClicked: saveDialog.open()
         }
 
         NButton {
-            text: pluginApi?.tr("settings.presets.actions.importPreset") ?? "Import"
+            text: pluginApi?.tr("settings.presets.actions.importPreset")
             icon: "upload"
             fontSize: Style.fontSizeS
             onClicked: presetImportPicker.openFilePicker()
@@ -860,7 +860,7 @@ ColumnLayout {
 
         NButton {
             visible: root.customPresets.length > 0
-            text: pluginApi?.tr("settings.presets.actions.exportAll") ?? "Export All"
+            text: pluginApi?.tr("settings.presets.actions.exportAll")
             icon: "download"
             fontSize: Style.fontSizeS
             onClicked: bulkExportPicker.openFilePicker()
@@ -868,7 +868,7 @@ ColumnLayout {
 
         NButton {
             visible: root.customPresets.length > 0
-            text: pluginApi?.tr("settings.presets.actions.deleteAll") ?? "Delete All"
+            text: pluginApi?.tr("settings.presets.actions.deleteAll")
             icon: "trash"
             fontSize: Style.fontSizeS
             outlined: true
@@ -930,14 +930,14 @@ ColumnLayout {
             anchors.margins: Style.marginL
 
             NText {
-                text: pluginApi?.tr("settings.presets.empty.label") ?? "No custom presets yet"
+                text: pluginApi?.tr("settings.presets.empty.label")
                 pointSize: Style.fontSizeM
                 color: Color.mOnSurfaceVariant
                 Layout.fillWidth: true
             }
 
             NText {
-                text: pluginApi?.tr("settings.presets.empty.desc") ?? "Save your current settings to create a preset."
+                text: pluginApi?.tr("settings.presets.empty.desc")
                 pointSize: Style.fontSizeS
                 color: Color.mOnSurfaceVariant
                 Layout.fillWidth: true
@@ -971,14 +971,14 @@ ColumnLayout {
             spacing: Style.marginL
 
             NHeader {
-                label: root.pluginApi?.tr("settings.presets.dialog.details.title") ?? "Preset Details"
-                description: root.pluginApi?.tr("settings.presets.dialog.details.desc") ?? ""
+                label: root.pluginApi?.tr("settings.presets.dialog.details.title")
+                description: root.pluginApi?.tr("settings.presets.dialog.details.desc")
             }
 
             NLabel {
                 Layout.fillWidth: true
                 label: detailsDialog._preset?.name ?? ""
-                description: detailsDialog._preset?.description || (detailsDialog._preset?.builtIn ? (root.pluginApi?.tr("settings.presets.badge") ?? "") : "")
+                description: detailsDialog._preset?.description || (detailsDialog._preset?.builtIn ? (root.pluginApi?.tr("settings.presets.badge")) : "")
                 icon: detailsDialog._preset?.builtIn ? "template" : "device-floppy"
                 visible: detailsDialog._preset !== null
             }
@@ -1007,14 +1007,14 @@ ColumnLayout {
 
                             NText {
                                 Layout.fillWidth: true
-                                text: root.pluginApi?.tr("settings.presets.dialog.details.empty.label") ?? "No stored settings"
+                                text: root.pluginApi?.tr("settings.presets.dialog.details.empty.label")
                                 pointSize: Style.fontSizeM
                                 color: Color.mOnSurfaceVariant
                             }
 
                             NText {
                                 Layout.fillWidth: true
-                                text: root.pluginApi?.tr("settings.presets.dialog.details.empty.desc") ?? "This preset does not contain any serialized settings."
+                                text: root.pluginApi?.tr("settings.presets.dialog.details.empty.desc")
                                 pointSize: Style.fontSizeS
                                 color: Color.mOnSurfaceVariant
                                 wrapMode: Text.WordWrap
@@ -1040,7 +1040,7 @@ ColumnLayout {
                                 NLabel {
                                     Layout.fillWidth: true
                                     label: modelData.label || ""
-                                    description: (root.pluginApi?.tr("settings.presets.dialog.details.rowCount") ?? "{count} values")
+                                    description: (root.pluginApi?.tr("settings.presets.dialog.details.rowCount"))
                                         .replace("{count}", modelData.rows?.length ?? 0)
                                     icon: "list-details"
                                 }
@@ -1084,7 +1084,7 @@ ColumnLayout {
                 }
 
                 NButton {
-                    text: root.pluginApi?.tr("common.cancel") ?? "Close"
+                    text: root.pluginApi?.tr("common.cancel")
                     outlined: true
                     onClicked: detailsDialog.close()
                 }
@@ -1116,25 +1116,25 @@ ColumnLayout {
             spacing: Style.marginL
 
             NHeader {
-                label: root.pluginApi?.tr("settings.presets.dialog.save.title") ?? "Save Preset"
-                description: root.pluginApi?.tr("settings.presets.dialog.save.desc") ?? ""
+                label: root.pluginApi?.tr("settings.presets.dialog.save.title")
+                description: root.pluginApi?.tr("settings.presets.dialog.save.desc")
             }
 
             NTextInput {
                 id: saveNameField
                 Layout.fillWidth: true
-                label: root.pluginApi?.tr("settings.presets.dialog.save.nameLabel") ?? "Preset Name"
-                description: root.pluginApi?.tr("settings.presets.dialog.save.nameDesc") ?? ""
-                placeholderText: root.pluginApi?.tr("settings.presets.dialog.save.namePlaceholder") ?? "My Preset"
+                label: root.pluginApi?.tr("settings.presets.dialog.save.nameLabel")
+                description: root.pluginApi?.tr("settings.presets.dialog.save.nameDesc")
+                placeholderText: root.pluginApi?.tr("settings.presets.dialog.save.namePlaceholder")
                 onTextChanged: saveDialog._error = ""
             }
 
             NTextInput {
                 id: saveDescField
                 Layout.fillWidth: true
-                label: root.pluginApi?.tr("settings.presets.dialog.save.descLabel") ?? "Description"
-                description: root.pluginApi?.tr("settings.presets.dialog.save.descDesc") ?? ""
-                placeholderText: root.pluginApi?.tr("settings.presets.dialog.save.descPlaceholder") ?? "A brief description..."
+                label: root.pluginApi?.tr("settings.presets.dialog.save.descLabel")
+                description: root.pluginApi?.tr("settings.presets.dialog.save.descDesc")
+                placeholderText: root.pluginApi?.tr("settings.presets.dialog.save.descPlaceholder")
             }
 
             NText {
@@ -1155,7 +1155,7 @@ ColumnLayout {
                 }
 
                 NButton {
-                    text: root.pluginApi?.tr("common.cancel") ?? "Cancel"
+                    text: root.pluginApi?.tr("common.cancel")
                     outlined: true
                     onClicked: {
                         saveDialog._error = "";
@@ -1166,19 +1166,19 @@ ColumnLayout {
                 }
 
                 NButton {
-                    text: root.pluginApi?.tr("settings.presets.dialog.save.save") ?? "Save"
+                    text: root.pluginApi?.tr("settings.presets.dialog.save.save")
                     onClicked: {
                         var name = saveNameField.text.trim();
                         if (!name) {
-                            saveDialog._error = root.pluginApi?.tr("settings.presets.dialog.save.nameRequired") ?? "Name is required.";
+                            saveDialog._error = root.pluginApi?.tr("settings.presets.dialog.save.nameRequired");
                             return;
                         }
                         if (name.length > 32) {
-                            saveDialog._error = root.pluginApi?.tr("settings.presets.dialog.save.nameTooLong") ?? "Name too long.";
+                            saveDialog._error = root.pluginApi?.tr("settings.presets.dialog.save.nameTooLong");
                             return;
                         }
                         if (root._findPresetByName(name)) {
-                            saveDialog._error = root.pluginApi?.tr("settings.presets.dialog.save.nameExists") ?? "Name already exists.";
+                            saveDialog._error = root.pluginApi?.tr("settings.presets.dialog.save.nameExists");
                             return;
                         }
                         root._savePreset(name, saveDescField.text);
@@ -1217,8 +1217,8 @@ ColumnLayout {
             spacing: Style.marginL
 
             NHeader {
-                label: root.pluginApi?.tr("settings.presets.dialog.delete.title") ?? "Delete Preset"
-                description: (root.pluginApi?.tr("settings.presets.dialog.delete.desc") ?? "Delete \"{name}\"?").replace("{name}", deleteDialog._targetName)
+                label: root.pluginApi?.tr("settings.presets.dialog.delete.title")
+                description: (root.pluginApi?.tr("settings.presets.dialog.delete.desc")).replace("{name}", deleteDialog._targetName)
             }
 
             RowLayout {
@@ -1230,13 +1230,13 @@ ColumnLayout {
                 }
 
                 NButton {
-                    text: root.pluginApi?.tr("common.cancel") ?? "Cancel"
+                    text: root.pluginApi?.tr("common.cancel")
                     outlined: true
                     onClicked: deleteDialog.close()
                 }
 
                 NButton {
-                    text: root.pluginApi?.tr("settings.presets.dialog.delete.confirm") ?? "Delete"
+                    text: root.pluginApi?.tr("settings.presets.dialog.delete.confirm")
                     backgroundColor: Color.mError
                     textColor: Color.mOnError
                     onClicked: {
@@ -1270,8 +1270,8 @@ ColumnLayout {
             spacing: Style.marginL
 
             NHeader {
-                label: root.pluginApi?.tr("settings.presets.dialog.deleteAll.title") ?? "Delete All"
-                description: (root.pluginApi?.tr("settings.presets.dialog.deleteAll.desc") ?? "Delete all {count} presets?").replace("{count}", root.customPresets.length)
+                label: root.pluginApi?.tr("settings.presets.dialog.deleteAll.title")
+                description: (root.pluginApi?.tr("settings.presets.dialog.deleteAll.desc")).replace("{count}", root.customPresets.length)
             }
 
             RowLayout {
@@ -1283,13 +1283,13 @@ ColumnLayout {
                 }
 
                 NButton {
-                    text: root.pluginApi?.tr("common.cancel") ?? "Cancel"
+                    text: root.pluginApi?.tr("common.cancel")
                     outlined: true
                     onClicked: deleteAllDialog.close()
                 }
 
                 NButton {
-                    text: root.pluginApi?.tr("settings.presets.dialog.deleteAll.confirm") ?? "Delete All"
+                    text: root.pluginApi?.tr("settings.presets.dialog.deleteAll.confirm")
                     backgroundColor: Color.mError
                     textColor: Color.mOnError
                     onClicked: {
@@ -1327,14 +1327,14 @@ ColumnLayout {
             spacing: Style.marginL
 
             NHeader {
-                label: root.pluginApi?.tr("settings.presets.dialog.rename.title") ?? "Rename Preset"
-                description: root.pluginApi?.tr("settings.presets.dialog.rename.desc") ?? ""
+                label: root.pluginApi?.tr("settings.presets.dialog.rename.title")
+                description: root.pluginApi?.tr("settings.presets.dialog.rename.desc")
             }
 
             NTextInput {
                 id: renameField
                 Layout.fillWidth: true
-                label: root.pluginApi?.tr("settings.presets.dialog.save.nameLabel") ?? "Preset Name"
+                label: root.pluginApi?.tr("settings.presets.dialog.save.nameLabel")
                 onTextChanged: renameDialog._error = ""
             }
 
@@ -1355,7 +1355,7 @@ ColumnLayout {
                 }
 
                 NButton {
-                    text: root.pluginApi?.tr("common.cancel") ?? "Cancel"
+                    text: root.pluginApi?.tr("common.cancel")
                     outlined: true
                     onClicked: {
                         renameDialog._error = "";
@@ -1364,15 +1364,15 @@ ColumnLayout {
                 }
 
                 NButton {
-                    text: root.pluginApi?.tr("settings.presets.dialog.rename.confirm") ?? "Rename"
+                    text: root.pluginApi?.tr("settings.presets.dialog.rename.confirm")
                     onClicked: {
                         var name = renameField.text.trim();
                         if (!name) {
-                            renameDialog._error = root.pluginApi?.tr("settings.presets.dialog.save.nameRequired") ?? "Name is required.";
+                            renameDialog._error = root.pluginApi?.tr("settings.presets.dialog.save.nameRequired");
                             return;
                         }
                         if (root._findPresetByName(name, renameDialog._targetId)) {
-                            renameDialog._error = root.pluginApi?.tr("settings.presets.dialog.save.nameExists") ?? "Name already exists.";
+                            renameDialog._error = root.pluginApi?.tr("settings.presets.dialog.save.nameExists");
                             return;
                         }
                         root._renamePreset(renameDialog._targetId, name);
@@ -1409,8 +1409,8 @@ ColumnLayout {
             spacing: Style.marginL
 
             NHeader {
-                label: root.pluginApi?.tr("settings.presets.dialog.update.title") ?? "Update Preset"
-                description: (root.pluginApi?.tr("settings.presets.dialog.update.desc") ?? "Overwrite \"{name}\"?").replace("{name}", updateDialog._targetName)
+                label: root.pluginApi?.tr("settings.presets.dialog.update.title")
+                description: (root.pluginApi?.tr("settings.presets.dialog.update.desc")).replace("{name}", updateDialog._targetName)
             }
 
             RowLayout {
@@ -1422,13 +1422,13 @@ ColumnLayout {
                 }
 
                 NButton {
-                    text: root.pluginApi?.tr("common.cancel") ?? "Cancel"
+                    text: root.pluginApi?.tr("common.cancel")
                     outlined: true
                     onClicked: updateDialog.close()
                 }
 
                 NButton {
-                    text: root.pluginApi?.tr("settings.presets.dialog.update.confirm") ?? "Update"
+                    text: root.pluginApi?.tr("settings.presets.dialog.update.confirm")
                     onClicked: {
                         root._updatePreset(updateDialog._targetId);
                         updateDialog.close();
@@ -1457,7 +1457,7 @@ ColumnLayout {
         }
 
         onLoadFailed: {
-            importErrorDialog._errorMessage = pluginApi?.tr("settings.presets.import.errors.readFailed") ?? "Failed to read file.";
+            importErrorDialog._errorMessage = pluginApi?.tr("settings.presets.import.errors.readFailed");
             importErrorDialog.open();
         }
     }
@@ -1473,7 +1473,7 @@ ColumnLayout {
     NFilePicker {
         id: backupExportPicker
         selectionMode: "folders"
-        title: pluginApi?.tr("settings.presets.backup.export") ?? "Export Backup"
+        title: pluginApi?.tr("settings.presets.backup.export")
         initialPath: Quickshell.env("HOME") + "/Downloads"
 
         onAccepted: paths => {
@@ -1485,7 +1485,7 @@ ColumnLayout {
     NFilePicker {
         id: backupImportPicker
         selectionMode: "files"
-        title: pluginApi?.tr("settings.presets.backup.import") ?? "Import Backup"
+        title: pluginApi?.tr("settings.presets.backup.import")
         initialPath: Quickshell.env("HOME")
         nameFilters: ["*.json"]
 
@@ -1498,7 +1498,7 @@ ColumnLayout {
     NFilePicker {
         id: presetExportPicker
         selectionMode: "folders"
-        title: pluginApi?.tr("settings.presets.actions.export") ?? "Export Preset"
+        title: pluginApi?.tr("settings.presets.actions.export")
         initialPath: Quickshell.env("HOME") + "/Downloads"
 
         property var _targetPreset: null
@@ -1513,7 +1513,7 @@ ColumnLayout {
     NFilePicker {
         id: presetImportPicker
         selectionMode: "files"
-        title: pluginApi?.tr("settings.presets.actions.importPreset") ?? "Import Preset"
+        title: pluginApi?.tr("settings.presets.actions.importPreset")
         initialPath: Quickshell.env("HOME")
         nameFilters: ["*.json"]
 
@@ -1526,7 +1526,7 @@ ColumnLayout {
     NFilePicker {
         id: bulkExportPicker
         selectionMode: "folders"
-        title: pluginApi?.tr("settings.presets.actions.exportAll") ?? "Export All Presets"
+        title: pluginApi?.tr("settings.presets.actions.exportAll")
         initialPath: Quickshell.env("HOME") + "/Downloads"
 
         onAccepted: paths => {
@@ -1560,18 +1560,18 @@ ColumnLayout {
             spacing: Style.marginL
 
             NHeader {
-                label: root.pluginApi?.tr("settings.presets.dialog.importConfirm.title") ?? "Confirm Import"
+                label: root.pluginApi?.tr("settings.presets.dialog.importConfirm.title")
                 description: {
                     var r = importConfirmDialog._importResult;
                     if (!r)
                         return "";
                     switch (r.type) {
                     case "backup":
-                        return root.pluginApi?.tr("settings.presets.dialog.importConfirm.backupDesc") ?? "This will replace your current settings and merge presets.";
+                        return root.pluginApi?.tr("settings.presets.dialog.importConfirm.backupDesc");
                     case "preset":
-                        return root.pluginApi?.tr("settings.presets.dialog.importConfirm.presetDesc") ?? "Add this preset to your custom presets?";
+                        return root.pluginApi?.tr("settings.presets.dialog.importConfirm.presetDesc");
                     case "presets":
-                        return (root.pluginApi?.tr("settings.presets.dialog.importConfirm.presetsDesc") ?? "Import {count} presets?").replace("{count}", r.presets ? r.presets.length : 0);
+                        return (root.pluginApi?.tr("settings.presets.dialog.importConfirm.presetsDesc")).replace("{count}", r.presets ? r.presets.length : 0);
                     default:
                         return "";
                     }
@@ -1590,7 +1590,7 @@ ColumnLayout {
                     spacing: Style.marginS
 
                     NText {
-                        text: root.pluginApi?.tr("settings.presets.import.report.label") ?? "Migration Report"
+                        text: root.pluginApi?.tr("settings.presets.import.report.label")
                         pointSize: Style.fontSizeM
                         font.weight: Style.fontWeightMedium
                         color: Color.mOnSurface
@@ -1616,7 +1616,7 @@ ColumnLayout {
                 }
 
                 NButton {
-                    text: root.pluginApi?.tr("common.cancel") ?? "Cancel"
+                    text: root.pluginApi?.tr("common.cancel")
                     outlined: true
                     onClicked: {
                         importConfirmDialog._importResult = null;
@@ -1626,7 +1626,7 @@ ColumnLayout {
                 }
 
                 NButton {
-                    text: root.pluginApi?.tr("settings.presets.dialog.importConfirm.confirm") ?? "Import"
+                    text: root.pluginApi?.tr("settings.presets.dialog.importConfirm.confirm")
                     onClicked: {
                         root._applyImportResult(importConfirmDialog._importResult);
                         importConfirmDialog._importResult = null;
@@ -1662,7 +1662,7 @@ ColumnLayout {
             spacing: Style.marginL
 
             NHeader {
-                label: root.pluginApi?.tr("settings.presets.dialog.importError.title") ?? "Import Error"
+                label: root.pluginApi?.tr("settings.presets.dialog.importError.title")
                 description: importErrorDialog._errorMessage
             }
 
@@ -1675,7 +1675,7 @@ ColumnLayout {
                 }
 
                 NButton {
-                    text: root.pluginApi?.tr("common.cancel") ?? "Close"
+                    text: root.pluginApi?.tr("common.cancel")
                     outlined: true
                     onClicked: {
                         importErrorDialog._errorMessage = "";

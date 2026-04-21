@@ -24,6 +24,7 @@ PopupWindow {
   // For submenu support
   property bool isSubMenu: false
   property var parentMenu: null
+  property var _subMenuComponent: null
 
   // Explicit offset for centering on target item (used by main menu via openAtItem)
   property real targetOffsetX: 0
@@ -37,6 +38,19 @@ PopupWindow {
 
   // Hover timer for submenu delay
   property var pendingSubMenuTarget: null
+
+  function _ensureSubMenuComponent() {
+    if (root._subMenuComponent)
+      return root._subMenuComponent;
+
+    root._subMenuComponent = Qt.createComponent(Qt.resolvedUrl("ScrollbarContextMenu.qml"));
+    if (root._subMenuComponent.status === Component.Error) {
+      Logger.e("ScrollbarContextMenu", "Failed to load submenu component: " + root._subMenuComponent.errorString());
+      root._subMenuComponent = null;
+      return null;
+    }
+    return root._subMenuComponent;
+  }
 
   readonly property string barPosition: Settings.getBarPositionForScreen(screen?.name)
   readonly property real barHeight: Style.getBarHeightForScreen(screen?.name)
@@ -300,9 +314,14 @@ PopupWindow {
             }
 
             // Create and show submenu
-            menuItem.subMenu = Qt.createComponent("ScrollbarContextMenu.qml").createObject(root, {
+            const component = root._ensureSubMenuComponent();
+            if (!component || component.status !== Component.Ready)
+              return;
+
+            menuItem.subMenu = component.createObject(root, {
               "model": modelData.children || [],
               "isSubMenu": true,
+              "parentMenu": root,
               "screen": root.screen,
               "anchorItem": menuItem
             });
@@ -315,6 +334,8 @@ PopupWindow {
               menuItem.subMenu.visible = true;
               // Connect submenu triggered to parent
               menuItem.subMenu.triggered.connect(root.triggered);
+            } else {
+              Logger.w("ScrollbarContextMenu", "Failed to create submenu object.");
             }
           }
 

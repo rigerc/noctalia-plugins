@@ -53,7 +53,7 @@ Item {
 
         NText {
             text: root.isBuiltIn
-                ? (root.pluginApi?.tr("settings.presets.badge") ?? "")
+                ? (root.pluginApi?.tr("settings.presets.badge"))
                 : (root.presetDescription || "")
             pointSize: Style.fontSizeS
             color: root.isActive ? Qt.alpha(Color.mOnPrimary, 0.7) : Color.mOnSurfaceVariant
@@ -97,17 +97,17 @@ Item {
         model: {
             var actions = [
                 {
-                    "label": root.pluginApi?.tr("settings.presets.actions.apply") ?? "",
+                    "label": root.pluginApi?.tr("settings.presets.actions.apply"),
                     "action": "apply",
                     "icon": "check"
                 },
                 {
-                    "label": root.pluginApi?.tr("settings.presets.actions.details") ?? "",
+                    "label": root.pluginApi?.tr("settings.presets.actions.details"),
                     "action": "details",
                     "icon": "list-details"
                 },
                 {
-                    "label": root.pluginApi?.tr("settings.presets.actions.export") ?? "",
+                    "label": root.pluginApi?.tr("settings.presets.actions.export"),
                     "action": "export",
                     "icon": "download"
                 }
@@ -115,22 +115,22 @@ Item {
 
             if (!root.isBuiltIn) {
                 actions.push({
-                    "label": root.pluginApi?.tr("settings.presets.actions.rename") ?? "",
+                    "label": root.pluginApi?.tr("settings.presets.actions.rename"),
                     "action": "rename",
                     "icon": "pencil"
                 });
                 actions.push({
-                    "label": root.pluginApi?.tr("settings.presets.actions.update") ?? "",
+                    "label": root.pluginApi?.tr("settings.presets.actions.update"),
                     "action": "update",
                     "icon": "refresh"
                 });
                 actions.push({
-                    "label": root.pluginApi?.tr("settings.presets.actions.duplicate") ?? "",
+                    "label": root.pluginApi?.tr("settings.presets.actions.duplicate"),
                     "action": "duplicate",
                     "icon": "copy"
                 });
                 actions.push({
-                    "label": root.pluginApi?.tr("settings.presets.actions.delete") ?? "",
+                    "label": root.pluginApi?.tr("settings.presets.actions.delete"),
                     "action": "delete",
                     "icon": "trash"
                 });

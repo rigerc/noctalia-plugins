@@ -781,7 +781,7 @@ Item {
             return;
         }
 
-        if (displayedSpecialWorkspaceText === nextText && JSON.stringify(displayedSpecialWorkspaceIcons) === JSON.stringify(nextIcons))
+        if (displayedSpecialWorkspaceText === nextText && root._sameStringList(displayedSpecialWorkspaceIcons, nextIcons))
             return;
 
         if (!animationEnabled || animationSpeed <= 0) {
@@ -799,6 +799,20 @@ Item {
         displayedSpecialWorkspaceIcons = nextIcons;
         specialWorkspaceOverlayTransitionProgress = 0;
         specialWorkspaceOverlaySwap.restart();
+    }
+
+    function _sameStringList(a, b) {
+        if (a === b)
+            return true;
+        if (!Array.isArray(a) || !Array.isArray(b))
+            return false;
+        if (a.length !== b.length)
+            return false;
+        for (let i = 0; i < a.length; i++) {
+            if (String(a[i] ?? "") !== String(b[i] ?? ""))
+                return false;
+        }
+        return true;
     }
 
     function currentSpecialWorkspaceOverlayIcons() {
