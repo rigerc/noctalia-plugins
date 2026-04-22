@@ -15,6 +15,7 @@ Upstream project: <https://github.com/steipete/CodexBar>
 - **Bar widget**
   - Show remaining usage for one or more fields (session / weekly / status).
   - Optional **Show on hover** (icon-only until hovered).
+  - Optional low-usage icon alert for either the 5h or 7d window.
   - Right-click menu: Refresh, Settings.
 - **Panel**
   - Per-provider cards with session + weekly bars, reset countdown, credits, status indicator.
@@ -51,6 +52,7 @@ Open the plugin settings to configure:
 
 - **Bar icon** and **text content** (choose which fields are shown and their order).
 - **Show on hover** (when enabled, the bar widget shows icon-only until hovered).
+- **Low-usage icon alert** (choose 5h or 7d, choose the tint color; 0% remaining forces full error red).
 - **Text styling** (color + opacity).
 - **Refresh interval** and **default provider**.
 - **Notifications** (reset / low usage).
@@ -71,13 +73,17 @@ These values live in Noctalia’s plugin settings store (`pluginApi.pluginSettin
 - `barTextSeparatorSpacing` (number): Spaces around the separator.
 - `barTextUseIconColor` (bool): Currently unused (reserved for a future “text follows icon color” option).
 - `barTextShowOnHover` (bool): Icon-only until hover.
+- `barTextExpandOnChange` (bool): Temporarily expand a hover-only pill after a value change.
 - `barTextColor` (string): Noctalia color key.
 - `barTextOpacity` (number 0–1): Applied to bar text color.
+- `barLowUsageAlertEnabled` (bool): Tint the bar icon when the selected window is low.
+- `barLowUsageAlertWindow` (string): `primary` (5h) or `secondary` (7d).
+- `barLowUsageAlertColor` (string): Noctalia color key used at 50% opacity while low.
 - `refreshInterval` (number seconds): Auto-refresh interval.
 - `defaultProvider` (string): Provider ID to prefer in the bar widget (empty = auto).
 - `notifyOnReset` (bool): Toast on detected reset.
 - `notifyOnLowUsage` (bool): Toast when remaining usage is low.
-- `lowUsageThreshold` (number 5–50): Remaining percentage to trigger low-usage toasts.
+- `lowUsageThreshold` (number 5–50): Remaining percentage used by low-usage toasts and the optional bar icon alert.
 
 ## Config editor (CodexBar config)
 

@@ -151,6 +151,9 @@ ColumnLayout {
     property string editBarTextFieldToAdd: firstAvailableBarTextField(editBarTextFields)
     property bool editBarTextShowOnHover: cfg.barTextShowOnHover ?? defaults.barTextShowOnHover ?? false
     property bool editBarTextExpandOnChange: cfg.barTextExpandOnChange ?? defaults.barTextExpandOnChange ?? false
+    property bool editBarLowUsageAlertEnabled: cfg.barLowUsageAlertEnabled ?? defaults.barLowUsageAlertEnabled ?? false
+    property string editBarLowUsageAlertWindow: String(cfg.barLowUsageAlertWindow ?? defaults.barLowUsageAlertWindow ?? "primary")
+    property string editBarLowUsageAlertColor: String(cfg.barLowUsageAlertColor ?? defaults.barLowUsageAlertColor ?? "error")
     property int editRefreshInterval: normalizeRefreshInterval(cfg.refreshInterval ?? defaults.refreshInterval ?? 120)
     property string editDefaultProvider: cfg.defaultProvider ?? defaults.defaultProvider ?? ""
     property bool editNotifyOnReset: cfg.notifyOnReset ?? defaults.notifyOnReset ?? true
@@ -224,6 +227,17 @@ ColumnLayout {
         }
     ]
 
+    readonly property var lowUsageAlertWindowOptions: [
+        {
+            "key": "primary",
+            "name": pluginApi?.tr("settings.general.lowUsageAlert.window.options.primary")
+        },
+        {
+            "key": "secondary",
+            "name": pluginApi?.tr("settings.general.lowUsageAlert.window.options.secondary")
+        }
+    ]
+
     readonly property var tabModel: [
         {
             "label": pluginApi?.tr("settings.tabs.general"),
@@ -252,6 +266,9 @@ ColumnLayout {
             root.editBarTextOpacityPercent = Math.max(0, Math.min(100, Math.round(Number(cfg.barTextOpacity ?? defaults.barTextOpacity ?? 1) * 100)));
             root.editBarTextShowOnHover = cfg.barTextShowOnHover ?? defaults.barTextShowOnHover ?? false;
             root.editBarTextExpandOnChange = cfg.barTextExpandOnChange ?? defaults.barTextExpandOnChange ?? false;
+            root.editBarLowUsageAlertEnabled = cfg.barLowUsageAlertEnabled ?? defaults.barLowUsageAlertEnabled ?? false;
+            root.editBarLowUsageAlertWindow = String(cfg.barLowUsageAlertWindow ?? defaults.barLowUsageAlertWindow ?? "primary");
+            root.editBarLowUsageAlertColor = String(cfg.barLowUsageAlertColor ?? defaults.barLowUsageAlertColor ?? "error");
             root.editRefreshInterval = root.normalizeRefreshInterval(cfg.refreshInterval ?? defaults.refreshInterval ?? 120);
             root.editDefaultProvider = cfg.defaultProvider ?? defaults.defaultProvider ?? "";
             root.editNotifyOnReset = cfg.notifyOnReset ?? defaults.notifyOnReset ?? true;
@@ -313,6 +330,9 @@ ColumnLayout {
         pluginApi.pluginSettings.barTextOpacity = Math.max(0, Math.min(1, editBarTextOpacityPercent / 100));
         pluginApi.pluginSettings.barTextShowOnHover = editBarTextShowOnHover;
         pluginApi.pluginSettings.barTextExpandOnChange = editBarTextExpandOnChange;
+        pluginApi.pluginSettings.barLowUsageAlertEnabled = editBarLowUsageAlertEnabled;
+        pluginApi.pluginSettings.barLowUsageAlertWindow = editBarLowUsageAlertWindow === "secondary" ? "secondary" : "primary";
+        pluginApi.pluginSettings.barLowUsageAlertColor = editBarLowUsageAlertColor;
         pluginApi.pluginSettings.refreshInterval = normalizeRefreshInterval(editRefreshInterval);
         pluginApi.pluginSettings.defaultProvider = editDefaultProvider;
         pluginApi.pluginSettings.notifyOnReset = editNotifyOnReset;

@@ -96,6 +96,17 @@ Item {
         return indicator.charAt(0).toUpperCase() + indicator.slice(1);
     }
 
+    function usageLeftPercent(usage) {
+        var usedPercent = Number(usage?.usedPercent);
+        if (!isFinite(usedPercent) || usedPercent < 0)
+            return -1;
+        return Math.max(0, Math.min(100, Math.round(100 - usedPercent)));
+    }
+
+    function normalizeLowUsageAlertWindow(windowKey) {
+        return String(windowKey || "").trim() === "secondary" ? "secondary" : "primary";
+    }
+
     function barTextJoiner() {
         var padding = "";
         for (var index = 0; index < root.barTextSeparatorSpacing; index++)
@@ -120,11 +131,10 @@ Item {
         if (!usage)
             return "";
 
-        var usedPercent = Number(usage.usedPercent);
-        if (!isFinite(usedPercent) || usedPercent < 0)
+        var leftPercent = root.usageLeftPercent(usage);
+        if (leftPercent < 0)
             return "";
 
-        var leftPercent = Math.max(0, Math.min(100, Math.round(100 - usedPercent)));
         if (root.barTextFields.length === 1)
             return leftPercent + "%";
 
@@ -144,8 +154,13 @@ Item {
     readonly property real barTextOpacity: Math.max(0, Math.min(1, Number(cfg.barTextOpacity ?? defaults.barTextOpacity ?? 1)))
     readonly property bool barTextShowOnHover: cfg.barTextShowOnHover ?? defaults.barTextShowOnHover ?? false
     readonly property bool barTextExpandOnChange: cfg.barTextExpandOnChange ?? defaults.barTextExpandOnChange ?? false
+    readonly property bool barLowUsageAlertEnabled: cfg.barLowUsageAlertEnabled ?? defaults.barLowUsageAlertEnabled ?? false
+    readonly property string barLowUsageAlertWindow: normalizeLowUsageAlertWindow(cfg.barLowUsageAlertWindow ?? defaults.barLowUsageAlertWindow ?? "primary")
+    readonly property string barLowUsageAlertColorKey: String(cfg.barLowUsageAlertColor ?? defaults.barLowUsageAlertColor ?? "error")
     readonly property string defaultProvider: cfg.defaultProvider ?? defaults.defaultProvider ?? ""
-    readonly property color resolvedBarIconColor: Color.resolveColorKey(root.barIconColor)
+    readonly property int lowUsageThreshold: Math.max(5, Math.min(50, Number(cfg.lowUsageThreshold ?? defaults.lowUsageThreshold ?? 20)))
+    readonly property color resolvedBaseBarIconColor: Color.resolveColorKey(root.barIconColor)
+    readonly property color resolvedLowUsageAlertBaseColor: Color.resolveColorKey(root.barLowUsageAlertColorKey)
     readonly property color resolvedBarTextBaseColor: Color.resolveColorKey(root.barTextColorKey)
     readonly property color resolvedBarTextColor: Qt.alpha(root.resolvedBarTextBaseColor, root.barTextOpacity)
 
@@ -160,6 +175,22 @@ Item {
             }
         }
         return mainInstance.providerData[0] || null;
+    }
+
+    readonly property var lowUsageAlertUsage: root.barLowUsageAlertWindow === "secondary"
+        ? root.displayProvider?.usage?.secondary
+        : root.displayProvider?.usage?.primary
+    readonly property int lowUsageAlertRemainingPercent: root.usageLeftPercent(root.lowUsageAlertUsage)
+    readonly property bool lowUsageAlertCritical: root.barLowUsageAlertEnabled && root.lowUsageAlertRemainingPercent === 0
+    readonly property bool lowUsageAlertActive: root.barLowUsageAlertEnabled
+        && root.lowUsageAlertRemainingPercent > 0
+        && root.lowUsageAlertRemainingPercent <= root.lowUsageThreshold
+    readonly property color resolvedBarIconColor: {
+        if (root.lowUsageAlertCritical)
+            return Color.mError;
+        if (root.lowUsageAlertActive)
+            return Qt.alpha(root.resolvedLowUsageAlertBaseColor, 0.5);
+        return root.resolvedBaseBarIconColor;
     }
 
     readonly property bool hasData: {

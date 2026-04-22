@@ -48,6 +48,22 @@
           "desc": "Temporarily expand the bar widget after refresh when the displayed values change."
         }
       },
+      "lowUsageAlert": {
+        "enabled": {
+          "label": "Alert icon on low usage",
+          "desc": "Tint the bar icon when the selected usage window falls below the Notifications low-usage threshold. At 0% remaining it switches to full error red."
+        },
+        "window": {
+          "label": "Alert Window",
+          "options": {
+            "primary": "5h Window",
+            "secondary": "7d Window"
+          }
+        },
+        "color": {
+          "label": "Low-usage Icon Color"
+        }
+      },
       "barIcon": {
         "label": "Bar Icon",
         "desc": "Choose the icon shown in the bar widget",

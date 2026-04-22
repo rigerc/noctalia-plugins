@@ -290,6 +290,40 @@ SettingsTabPage {
             }
         }
 
+        NToggle {
+            Layout.fillWidth: true
+            label: rootSettings?.pluginApi?.tr("settings.general.lowUsageAlert.enabled.label")
+            description: rootSettings?.pluginApi?.tr("settings.general.lowUsageAlert.enabled.desc")
+            checked: rootSettings?.editBarLowUsageAlertEnabled ?? false
+            onToggled: checked => {
+                if (rootSettings)
+                    rootSettings.editBarLowUsageAlertEnabled = checked;
+            }
+        }
+
+        NComboBox {
+            Layout.fillWidth: true
+            label: rootSettings?.pluginApi?.tr("settings.general.lowUsageAlert.window.label")
+            model: rootSettings?.lowUsageAlertWindowOptions || []
+            currentKey: rootSettings?.editBarLowUsageAlertWindow ?? "primary"
+            enabled: rootSettings?.editBarLowUsageAlertEnabled ?? false
+            onSelected: key => {
+                if (rootSettings)
+                    rootSettings.editBarLowUsageAlertWindow = key === "secondary" ? "secondary" : "primary";
+            }
+        }
+
+        NColorChoice {
+            Layout.fillWidth: true
+            label: rootSettings?.pluginApi?.tr("settings.general.lowUsageAlert.color.label")
+            currentKey: rootSettings?.editBarLowUsageAlertColor ?? "error"
+            enabled: rootSettings?.editBarLowUsageAlertEnabled ?? false
+            onSelected: key => {
+                if (rootSettings)
+                    rootSettings.editBarLowUsageAlertColor = key;
+            }
+        }
+
         NComboBox {
             Layout.fillWidth: true
             label: rootSettings?.pluginApi?.tr("settings.general.refreshInterval.label")
