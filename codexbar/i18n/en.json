@@ -160,18 +160,15 @@
         "openDocs": "Open CodexBar config docs",
         "providersTitle": "Providers",
         "addProvider": "Add provider",
-        "addMissing": "Add missing",
         "add": "Add",
         "advancedFields": "Advanced fields",
         "advancedTitle": "Advanced",
         "showRaw": "Show raw JSON",
       "applyRaw": "Apply raw JSON",
       "rawApplied": "Raw JSON applied",
-      "schemaInvalid": "Config schema is invalid",
+        "schemaInvalid": "Config schema is invalid",
         "providerAlreadyExists": "Provider already exists in the config",
         "providerAdded": "Provider added",
-        "providersAdded": "{count} providers added",
-        "noProvidersToAdd": "No providers to add",
         "schemaTitle": "Config Schema",
         "schemaSummary": "Root object should include `version` and a `providers` array. Provider order controls CLI and app display order.",
         "quickEditorTitle": "Quick Editor",
@@ -195,6 +192,7 @@
       "template": "Load Template",
       "save": "Save Config",
       "openEditor": "Open in Editor",
+      "validate": "Validate",
       "saved": "Saved",
       "saveFailed": "Save failed",
       "loadFallback": "Config file missing or unreadable. Starting from an empty object.",
@@ -225,7 +223,10 @@
       "providerSaved": "Provider saved",
       "providerRemoved": "Provider removed",
       "providerMissing": "Selected provider was not present in the config",
-      "versionUpdated": "Config version updated"
+      "versionUpdated": "Config version updated",
+      "cliValid": "CLI validation passed",
+      "cliInvalid": "CLI validation failed",
+      "cliValidateParseFailed": "Could not parse CLI validation output"
     }
   },
   "notifications": {
@@ -237,6 +238,7 @@
   "errors": {
     "cliMissingTitle": "CodexBar CLI not found",
     "cliMissingBody": "Install codexbar and make sure it's available on your PATH. See Settings → Config for docs.",
-    "cliMissing": "CodexBar CLI not found (install codexbar and ensure it's on your PATH)."
+    "cliMissing": "CodexBar CLI not found (install codexbar and ensure it's on your PATH).",
+    "cliParseFailed": "CodexBar produced invalid JSON output."
   }
 }

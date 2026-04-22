@@ -97,9 +97,12 @@ Item {
                         delegate: NBox {
                             required property var modelData
                             Layout.fillWidth: true
+                            implicitHeight: cardBody.implicitHeight + Style.marginL * 2
 
                             ColumnLayout {
-                                width: parent.width
+                                id: cardBody
+                                anchors.fill: parent
+                                anchors.margins: Style.marginL
                                 spacing: Style.marginL
 
                                 RowLayout {
@@ -133,10 +136,13 @@ Item {
                                 NBox {
                                     Layout.fillWidth: true
                                     visible: !!modelData.error
+                                    implicitHeight: errorBody.implicitHeight + Style.marginM * 2
 
                                     ColumnLayout {
-                                        anchors.fill: parent
-                                        anchors.margins: Style.marginM
+                                        id: errorBody
+                                        x: Style.marginM
+                                        y: Style.marginM
+                                        width: Math.max(0, parent.width - Style.marginM * 2)
                                         spacing: Style.marginS
 
                                         RowLayout {
@@ -319,7 +325,7 @@ Item {
 
                                 RowLayout {
                                     Layout.fillWidth: true
-                                    visible: modelData.credits?.remaining != null
+                                    visible: !!modelData.credits && modelData.credits.remaining != null
 
                                     NText {
                                         text: pluginApi?.tr("panel.credits") + ":"
@@ -328,7 +334,7 @@ Item {
                                     }
 
                                     NText {
-                                        text: String(modelData.credits.remaining)
+                                        text: modelData.credits ? String(modelData.credits.remaining) : ""
                                         pointSize: Style.fontSizeS
                                         color: Color.mOnSurface
                                     }

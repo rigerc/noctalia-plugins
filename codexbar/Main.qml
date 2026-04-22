@@ -14,6 +14,7 @@ Item {
     property var previousResets: ({})
     property var previousUsedPercents: ({})
     property bool _cliMissingNotified: false
+    property bool _lastFetchHadJson: false
 
     readonly property var cfg: pluginApi?.pluginSettings || ({})
     readonly property var defaults: pluginApi?.manifest?.metadata?.defaultSettings || ({})
@@ -94,6 +95,10 @@ Item {
         }
     }
 
+    function isCliErrorPayload(providerData) {
+        return String(providerData?.provider || "") === "cli" && !!providerData?.error;
+    }
+
     function refresh() {
         if (root.isRefreshing)
             return;
@@ -111,6 +116,118 @@ Item {
             || text.indexOf("ENOENT") >= 0;
     }
 
+    function _tryParseJsonValue(text) {
+        try {
+            return {
+                "ok": true,
+                "value": JSON.parse(text)
+            };
+        } catch (error) {
+            return {
+                "ok": false,
+                "error": error
+            };
+        }
+    }
+
+    function _extractLikelyJsonFragment(text) {
+        var source = String(text || "");
+        var firstBrace = source.indexOf("{");
+        var firstBracket = source.indexOf("[");
+        var start = -1;
+
+        if (firstBrace >= 0 && firstBracket >= 0)
+            start = Math.min(firstBrace, firstBracket);
+        else if (firstBrace >= 0)
+            start = firstBrace;
+        else if (firstBracket >= 0)
+            start = firstBracket;
+
+        if (start < 0)
+            return "";
+
+        var lastBrace = source.lastIndexOf("}");
+        var lastBracket = source.lastIndexOf("]");
+        var end = -1;
+        if (lastBrace >= 0 && lastBracket >= 0)
+            end = Math.max(lastBrace, lastBracket);
+        else if (lastBrace >= 0)
+            end = lastBrace;
+        else if (lastBracket >= 0)
+            end = lastBracket;
+
+        if (end < start)
+            return "";
+        return source.slice(start, end + 1);
+    }
+
+    function parseCodexbarOutput(rawText) {
+        var trimmed = String(rawText || "").trim();
+        if (trimmed === "")
+            return {
+                "ok": false,
+                "error": "empty output"
+            };
+
+        var parsedFull = root._tryParseJsonValue(trimmed);
+        if (parsedFull.ok) {
+            return {
+                "ok": true,
+                "value": parsedFull.value
+            };
+        }
+
+        var lines = trimmed.split(/\r?\n/);
+        var values = [];
+        for (var index = 0; index < lines.length; index++) {
+            var line = String(lines[index] || "").trim();
+            if (line === "")
+                continue;
+
+            var parsedLine = root._tryParseJsonValue(line);
+            if (parsedLine.ok) {
+                values.push(parsedLine.value);
+                continue;
+            }
+
+            var fragment = root._extractLikelyJsonFragment(line);
+            if (fragment === "")
+                continue;
+
+            var parsedFrag = root._tryParseJsonValue(fragment);
+            if (parsedFrag.ok)
+                values.push(parsedFrag.value);
+        }
+
+        if (values.length === 0) {
+            return {
+                "ok": false,
+                "error": parsedFull.error ? String(parsedFull.error) : "parse error"
+            };
+        }
+
+        if (values.length === 1) {
+            return {
+                "ok": true,
+                "value": values[0]
+            };
+        }
+
+        var merged = [];
+        for (var v = 0; v < values.length; v++) {
+            var value = values[v];
+            if (Array.isArray(value))
+                merged = merged.concat(value);
+            else
+                merged.push(value);
+        }
+
+        return {
+            "ok": true,
+            "value": merged
+        };
+    }
+
     Process {
         id: fetchProcess
 
@@ -125,19 +242,24 @@ Item {
         stdout: StdioCollector {
             id: fetchStdout
             onStreamFinished: {
-                var output = this.text.trim();
+                var rawOutput = String(this.text || "");
+                var output = rawOutput.trim();
                 if (!output) {
                     root.isRefreshing = false;
+                    root._lastFetchHadJson = false;
                     return;
                 }
 
-                try {
-                    var data = JSON.parse(output);
+                var parsed = root.parseCodexbarOutput(rawOutput);
+                if (!parsed.ok) {
+                    root._lastFetchHadJson = false;
+                    Logger.e("CodexBar", "Failed to parse JSON: " + parsed.error);
+                    root.lastError = pluginApi?.tr("errors.cliParseFailed") || "Failed to parse JSON output";
+                } else {
+                    root._lastFetchHadJson = true;
+                    var data = parsed.value;
                     var providers = Array.isArray(data) ? data : [data];
                     root._handleProviderData(providers);
-                } catch (e) {
-                    Logger.e("CodexBar", "Failed to parse JSON: " + e.message);
-                    root.lastError = e.message;
                 }
                 root.isRefreshing = false;
             }
@@ -168,6 +290,9 @@ Item {
                             "external-link"
                         );
                     }
+                } else if (root._lastFetchHadJson) {
+                    // codexbar may exit non-zero when providers contain errors, but still emit valid JSON.
+                    // Prefer rendering provider-level errors in the UI over showing a generic exit code.
                 } else if (!root.lastError) {
                     root.lastError = "Exit code " + exitCode;
                 }
@@ -182,13 +307,23 @@ Item {
     function _handleProviderData(providers) {
         var newResets = ({});
         var newUsedPercents = ({});
+        var filteredProviders = [];
         var now = Date.now();
         for (var i = 0; i < providers.length; i++) {
             var p = providers[i];
+            if (root.isCliErrorPayload(p)) {
+                var cliMessage = String(p.error?.message || "").trim();
+                if (cliMessage !== "")
+                    root.lastError = cliMessage;
+                continue;
+            }
+
             var providerId = String(p.provider || "");
             var primaryResetsAt = p.usage?.primary?.resetsAt || "";
             var primaryUsed = p.usage?.primary?.usedPercent ?? -1;
             var primaryLeft = 100 - primaryUsed;
+
+            filteredProviders.push(p);
 
             if (primaryResetsAt) {
                 var prevReset = root.previousResets[providerId];
@@ -236,7 +371,7 @@ Item {
 
         root.previousResets = newResets;
         root.previousUsedPercents = newUsedPercents;
-        root.providerData = providers;
+        root.providerData = filteredProviders;
         root.lastUpdated = new Date().toISOString();
     }
 
