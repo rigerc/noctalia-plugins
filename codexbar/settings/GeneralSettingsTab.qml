@@ -278,6 +278,129 @@ SettingsTabPage {
             }
         }
 
+        NToggle {
+            Layout.fillWidth: true
+            label: rootSettings?.pluginApi?.tr("settings.general.behavior.expandOnChange.label")
+            description: rootSettings?.pluginApi?.tr("settings.general.behavior.expandOnChange.desc")
+            checked: rootSettings?.editBarTextExpandOnChange ?? false
+            enabled: rootSettings?.editBarTextShowOnHover ?? false
+            onToggled: checked => {
+                if (rootSettings)
+                    rootSettings.editBarTextExpandOnChange = checked;
+            }
+        }
+
+        NToggle {
+            Layout.fillWidth: true
+            label: rootSettings?.pluginApi?.tr("settings.general.behavior.countdownOnEmpty.label")
+            description: rootSettings?.pluginApi?.tr("settings.general.behavior.countdownOnEmpty.desc")
+            checked: rootSettings?.editBarCountdownOnEmpty ?? false
+            onToggled: checked => {
+                if (rootSettings)
+                    rootSettings.editBarCountdownOnEmpty = checked;
+            }
+        }
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: Style.marginM
+            visible: rootSettings?.editBarCountdownOnEmpty ?? false
+
+            NText {
+                text: rootSettings?.pluginApi?.tr("settings.general.behavior.countdownWindows.label")
+                pointSize: Style.fontSizeS
+                color: Color.mOnSurface
+            }
+
+            Repeater {
+                model: rootSettings?.editBarCountdownWindows || []
+
+                delegate: NBox {
+                    required property int index
+                    required property var modelData
+
+                    Layout.fillWidth: true
+                    implicitHeight: countdownWinRow.implicitHeight + Style.marginM * 2
+
+                    RowLayout {
+                        id: countdownWinRow
+                        anchors.fill: parent
+                        anchors.margins: Style.marginM
+                        spacing: Style.marginM
+
+                        NText {
+                            Layout.fillWidth: true
+                            text: {
+                                var options = rootSettings?.countdownWindowOptions || [];
+                                for (var optionIndex = 0; optionIndex < options.length; optionIndex++) {
+                                    if (options[optionIndex].key === modelData)
+                                        return options[optionIndex].name;
+                                }
+                                return String(modelData || "");
+                            }
+                            pointSize: Style.fontSizeM
+                            color: Color.mOnSurface
+                        }
+
+                        NButton {
+                            icon: "trash"
+                            outlined: true
+                            enabled: (rootSettings?.editBarCountdownWindows?.length ?? 0) > 1
+                            onClicked: {
+                                if (rootSettings)
+                                    rootSettings.removeCountdownWindow(index);
+                            }
+                        }
+                    }
+                }
+            }
+
+            NButton {
+                visible: (rootSettings?.editBarCountdownWindows?.length ?? 0) < 3
+                text: rootSettings?.pluginApi?.tr("settings.general.textFields.addButton")
+                icon: "plus"
+                outlined: true
+                onClicked: {
+                    if (rootSettings)
+                        rootSettings.addCountdownWindow(rootSettings.editCountdownWindowToAdd);
+                }
+            }
+        }
+
+        NToggle {
+            Layout.fillWidth: true
+            label: rootSettings?.pluginApi?.tr("settings.general.lowUsageAlert.enabled.label")
+            description: rootSettings?.pluginApi?.tr("settings.general.lowUsageAlert.enabled.desc")
+            checked: rootSettings?.editBarLowUsageAlertEnabled ?? false
+            onToggled: checked => {
+                if (rootSettings)
+                    rootSettings.editBarLowUsageAlertEnabled = checked;
+            }
+        }
+
+        NComboBox {
+            Layout.fillWidth: true
+            label: rootSettings?.pluginApi?.tr("settings.general.lowUsageAlert.window.label")
+            model: rootSettings?.lowUsageAlertWindowOptions || []
+            currentKey: rootSettings?.editBarLowUsageAlertWindow ?? "primary"
+            enabled: rootSettings?.editBarLowUsageAlertEnabled ?? false
+            onSelected: key => {
+                if (rootSettings)
+                    rootSettings.editBarLowUsageAlertWindow = (key === "secondary" || key === "tertiary") ? key : "primary";
+            }
+        }
+
+        NColorChoice {
+            Layout.fillWidth: true
+            label: rootSettings?.pluginApi?.tr("settings.general.lowUsageAlert.color.label")
+            currentKey: rootSettings?.editBarLowUsageAlertColor ?? "error"
+            enabled: rootSettings?.editBarLowUsageAlertEnabled ?? false
+            onSelected: key => {
+                if (rootSettings)
+                    rootSettings.editBarLowUsageAlertColor = key;
+            }
+        }
+
         NComboBox {
             Layout.fillWidth: true
             label: rootSettings?.pluginApi?.tr("settings.general.refreshInterval.label")

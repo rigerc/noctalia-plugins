@@ -19,30 +19,24 @@ SettingsTabPage {
     readonly property string configDir: homeDir !== "" ? homeDir + "/.codexbar" : ""
     readonly property string configPath: configDir !== "" ? configDir + "/config.json" : ""
     readonly property string docsUrl: "https://github.com/steipete/CodexBar/blob/main/docs/configuration.md"
+    readonly property string providerDocsUrl: "https://github.com/steipete/CodexBar/blob/main/docs/providers.md"
 
-    readonly property var providerIds: [
-        "codex", "zai", "claude", "cursor", "opencode", "opencodego", "alibaba",
-        "factory", "gemini", "antigravity", "copilot", "minimax", "kimi", "kilo",
-        "kiro", "vertexai", "augment", "jetbrains", "kimik2", "amp", "ollama",
-        "synthetic", "warp", "openrouter", "perplexity", "abacus"
-    ]
+    readonly property var providerIds: ["codex", "zai", "claude", "cursor", "opencode", "opencodego", "alibaba", "factory", "gemini", "antigravity", "copilot", "minimax", "kimi", "kilo", "kiro", "vertexai", "augment", "jetbrains", "kimik2", "amp", "ollama", "synthetic", "warp", "openrouter", "perplexity", "abacus"]
     readonly property var sourceModes: ["auto", "web", "cli", "oauth", "api"]
     readonly property var cookieSourceModes: ["auto", "manual", "off"]
 
     readonly property var providerOptions: providerIds.map(id => ({
-        "key": id,
-        "name": id
-    }))
+                "key": id,
+                "name": id
+            }))
     readonly property var sourceModeOptions: sourceModes.map(m => ({
-        "key": m,
-        "name": m
-    }))
+                "key": m,
+                "name": m
+            }))
     readonly property var cookieSourceModeOptions: cookieSourceModes.map(m => ({
-        "key": m,
-        "name": m
-    }))
-
-    readonly property string defaultTemplate: '{\n  "version": 1,\n  "providers": [\n    {\n      "id": "codex",\n      "enabled": true,\n      "source": "auto",\n      "cookieSource": "auto",\n      "cookieHeader": null,\n      "apiKey": null,\n      "region": null,\n      "workspaceID": null,\n      "tokenAccounts": null\n    }\n  ]\n}\n'
+                "key": m,
+                "name": m
+            }))
 
     property string configContent: ""
     property bool configIsValid: true
@@ -263,14 +257,6 @@ SettingsTabPage {
         tab.validateConfigContent(true);
     }
 
-    function resetToTemplate() {
-        var parsed = tab.parseJsonOrNull(tab.defaultTemplate);
-        if (!parsed)
-            return;
-        tab.loadModelFromParsed(parsed);
-        tab.setStatus(rootSettings?.pluginApi?.tr("settings.config.templateLoaded"), false);
-    }
-
     function applyRawToModel() {
         var parsed = tab.parseJsonOrNull(tab.configContent);
         if (!parsed) {
@@ -360,10 +346,7 @@ SettingsTabPage {
         var configDirEsc = tab.configDir.replace(/'/g, "'\\''");
         var delimiter = "__CODEXBAR_CONFIG_EOF__";
 
-        while (tab.configContent.indexOf("\n" + delimiter + "\n") >= 0
-               || tab.configContent === delimiter
-               || tab.configContent.indexOf(delimiter + "\n") === 0
-               || tab.configContent.lastIndexOf("\n" + delimiter) === tab.configContent.length - delimiter.length - 1) {
+        while (tab.configContent.indexOf("\n" + delimiter + "\n") >= 0 || tab.configContent === delimiter || tab.configContent.indexOf(delimiter + "\n") === 0 || tab.configContent.lastIndexOf("\n" + delimiter) === tab.configContent.length - delimiter.length - 1) {
             delimiter += "_";
         }
 
@@ -401,8 +384,7 @@ SettingsTabPage {
                     continue;
                 try {
                     appendParsed(JSON.parse(line));
-                } catch (_lineError) {
-                }
+                } catch (_lineError) {}
             }
         }
 
@@ -438,11 +420,7 @@ SettingsTabPage {
     }
 
     function buildValidateCommand() {
-        return [
-            "sh",
-            "-c",
-            "codexbar_path=$(command -v codexbar 2>/dev/null) || exit 127; exec \"$codexbar_path\" config validate --json-only --format json"
-        ];
+        return ["sh", "-c", "codexbar_path=$(command -v codexbar 2>/dev/null) || exit 127; exec \"$codexbar_path\" config validate --json-only --format json"];
     }
 
     function runCliValidation() {
@@ -460,19 +438,19 @@ SettingsTabPage {
         printErrors: false
 
         onLoaded: {
-            tab.configContent = text() || tab.defaultTemplate;
+            tab.configContent = text() || "{\n  \"version\": 1,\n  \"providers\": []\n}\n";
             var parsed = tab.parseJsonOrNull(tab.configContent);
             if (!parsed || !tab.loadModelFromParsed(parsed)) {
-                tab.configContent = tab.defaultTemplate;
-                tab.loadModelFromParsed(tab.parseJsonOrNull(tab.defaultTemplate));
+                tab.configContent = "{\n  \"version\": 1,\n  \"providers\": []\n}\n";
+                tab.loadModelFromParsed(tab.parseJsonOrNull(tab.configContent));
                 tab.setStatus(rootSettings?.pluginApi?.tr("settings.config.loadFallback"), false);
             }
             tab.runCliValidation();
         }
         onLoadFailed: function (error) {
             Logger.w("CodexBar", "Config load error: " + error);
-            tab.configContent = tab.defaultTemplate;
-            tab.loadModelFromParsed(tab.parseJsonOrNull(tab.defaultTemplate));
+            tab.configContent = "{\n  \"version\": 1,\n  \"providers\": []\n}\n";
+            tab.loadModelFromParsed(tab.parseJsonOrNull(tab.configContent));
             tab.setStatus(rootSettings?.pluginApi?.tr("settings.config.loadFallback"), false);
             tab.runCliValidation();
         }
@@ -498,6 +476,13 @@ SettingsTabPage {
             icon: "external-link"
             outlined: true
             onClicked: Qt.openUrlExternally(tab.docsUrl)
+        }
+
+        NButton {
+            text: rootSettings?.pluginApi?.tr("settings.config.openProviderDocs")
+            icon: "external-link"
+            outlined: true
+            onClicked: Qt.openUrlExternally(tab.providerDocsUrl)
         }
     }
 
@@ -725,14 +710,6 @@ SettingsTabPage {
         spacing: Style.marginM
 
         NButton {
-            text: rootSettings?.pluginApi?.tr("settings.config.template")
-            icon: "file-plus"
-            outlined: true
-            enabled: !saveConfigProcess.running && !validateConfigProcess.running
-            onClicked: tab.resetToTemplate()
-        }
-
-        NButton {
             text: rootSettings?.pluginApi?.tr("settings.config.save")
             icon: "device-floppy"
             enabled: tab.configIsValid && tab.configPath !== "" && !saveConfigProcess.running && !validateConfigProcess.running
@@ -825,10 +802,7 @@ SettingsTabPage {
             var entries = tab.parseCliValidationOutput(validateStdout.text);
             if (entries === null) {
                 var stderrText = String(validateStderr.text || "").trim();
-                tab.setValidationSummary(
-                    stderrText !== "" ? stderrText : rootSettings?.pluginApi?.tr("settings.config.cliValidateParseFailed"),
-                    true
-                );
+                tab.setValidationSummary(stderrText !== "" ? stderrText : rootSettings?.pluginApi?.tr("settings.config.cliValidateParseFailed"), true);
                 return;
             }
 

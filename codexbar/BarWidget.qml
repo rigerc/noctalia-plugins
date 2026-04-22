@@ -18,6 +18,8 @@ Item {
     readonly property var cfg: pluginApi?.pluginSettings || ({})
     readonly property var defaults: pluginApi?.manifest?.metadata?.defaultSettings || ({})
     readonly property var mainInstance: pluginApi?.mainInstance
+    property bool temporarilyExpanded: false
+    property string previousStableContentText: ""
 
     readonly property string barPosition: Settings.getBarPositionForScreen(screen?.name)
     readonly property bool isVertical: barPosition === "left" || barPosition === "right"
@@ -48,7 +50,7 @@ Item {
     }
 
     function normalizeBarTextFields(fields) {
-        var allowed = ["primary", "secondary", "status"];
+        var allowed = ["primary", "secondary", "tertiary", "status"];
         var normalized = [];
         var source = Array.isArray(fields) ? fields : [fields];
 
@@ -94,6 +96,43 @@ Item {
         return indicator.charAt(0).toUpperCase() + indicator.slice(1);
     }
 
+    function usageLeftPercent(usage) {
+        var usedPercent = Number(usage?.usedPercent);
+        if (!isFinite(usedPercent) || usedPercent < 0)
+            return -1;
+        return Math.max(0, Math.min(100, Math.round(100 - usedPercent)));
+    }
+
+    function normalizeLowUsageAlertWindow(windowKey) {
+        var key = String(windowKey || "").trim();
+        return (key === "secondary" || key === "tertiary") ? key : "primary";
+    }
+
+    function normalizeCountdownWindows(windows) {
+        var allowed = ["primary", "secondary", "tertiary"];
+        var normalized = [];
+        var source = Array.isArray(windows) ? windows : [windows];
+        for (var index = 0; index < source.length; index++) {
+            var key = String(source[index] || "").trim();
+            if (allowed.indexOf(key) < 0 || normalized.indexOf(key) >= 0)
+                continue;
+            normalized.push(key);
+        }
+        if (normalized.length === 0)
+            normalized.push("primary");
+        return normalized;
+    }
+
+    function windowLabelForCountdown(fieldKey) {
+        var provider = root.displayProvider;
+        if (!provider)
+            return "";
+        var label = provider._windowLabels ? provider._windowLabels[fieldKey] : root.usageWindowLabel(provider.usage && provider.usage[fieldKey] ? provider.usage[fieldKey].windowMinutes : 0, fieldKey);
+        if (!label)
+            label = fieldKey.charAt(0).toUpperCase() + fieldKey.slice(1);
+        return label;
+    }
+
     function barTextJoiner() {
         var padding = "";
         for (var index = 0; index < root.barTextSeparatorSpacing; index++)
@@ -114,22 +153,20 @@ Item {
             return statusText === "" ? "" : "Status: " + statusText;
         }
 
-        var usage = fieldKey === "secondary" ? provider?.usage?.secondary : provider?.usage?.primary;
+        var usage = provider?.usage ? provider.usage[fieldKey] : null;
         if (!usage)
             return "";
 
-        var usedPercent = Number(usage.usedPercent);
-        if (!isFinite(usedPercent) || usedPercent < 0)
+        var leftPercent = root.usageLeftPercent(usage);
+        if (leftPercent < 0)
             return "";
 
-        var leftPercent = Math.max(0, Math.min(100, Math.round(100 - usedPercent)));
         if (root.barTextFields.length === 1)
             return leftPercent + "%";
 
-        var label = root.usageWindowLabel(
-            usage.windowMinutes,
-            fieldKey === "secondary" ? "7d" : "5h"
-        );
+        var label = provider._windowLabels ? provider._windowLabels[fieldKey] : root.usageWindowLabel(usage.windowMinutes, fieldKey);
+        if (!label)
+            label = fieldKey.charAt(0).toUpperCase() + fieldKey.slice(1);
         return label + " " + leftPercent + "%";
     }
 
@@ -141,8 +178,16 @@ Item {
     readonly property string barTextColorKey: String(cfg.barTextColor ?? defaults.barTextColor ?? "on-surface")
     readonly property real barTextOpacity: Math.max(0, Math.min(1, Number(cfg.barTextOpacity ?? defaults.barTextOpacity ?? 1)))
     readonly property bool barTextShowOnHover: cfg.barTextShowOnHover ?? defaults.barTextShowOnHover ?? false
+    readonly property bool barTextExpandOnChange: cfg.barTextExpandOnChange ?? defaults.barTextExpandOnChange ?? false
+    readonly property bool barLowUsageAlertEnabled: cfg.barLowUsageAlertEnabled ?? defaults.barLowUsageAlertEnabled ?? false
+    readonly property string barLowUsageAlertWindow: normalizeLowUsageAlertWindow(cfg.barLowUsageAlertWindow ?? defaults.barLowUsageAlertWindow ?? "primary")
+    readonly property string barLowUsageAlertColorKey: String(cfg.barLowUsageAlertColor ?? defaults.barLowUsageAlertColor ?? "error")
+    readonly property bool barCountdownOnEmpty: cfg.barCountdownOnEmpty ?? defaults.barCountdownOnEmpty ?? false
+    readonly property var barCountdownWindows: normalizeCountdownWindows(cfg.barCountdownWindows ?? defaults.barCountdownWindows ?? ["primary"])
     readonly property string defaultProvider: cfg.defaultProvider ?? defaults.defaultProvider ?? ""
-    readonly property color resolvedBarIconColor: Color.resolveColorKey(root.barIconColor)
+    readonly property int lowUsageThreshold: Math.max(5, Math.min(50, Number(cfg.lowUsageThreshold ?? defaults.lowUsageThreshold ?? 20)))
+    readonly property color resolvedBaseBarIconColor: Color.resolveColorKey(root.barIconColor)
+    readonly property color resolvedLowUsageAlertBaseColor: Color.resolveColorKey(root.barLowUsageAlertColorKey)
     readonly property color resolvedBarTextBaseColor: Color.resolveColorKey(root.barTextColorKey)
     readonly property color resolvedBarTextColor: Qt.alpha(root.resolvedBarTextBaseColor, root.barTextOpacity)
 
@@ -157,6 +202,36 @@ Item {
             }
         }
         return mainInstance.providerData[0] || null;
+    }
+
+    readonly property var lowUsageAlertUsage: root.displayProvider?.usage ? root.displayProvider.usage[root.barLowUsageAlertWindow] : null
+    readonly property int lowUsageAlertRemainingPercent: root.usageLeftPercent(root.lowUsageAlertUsage)
+    readonly property bool lowUsageAlertCritical: root.barLowUsageAlertEnabled && root.lowUsageAlertRemainingPercent === 0
+    readonly property bool lowUsageAlertActive: root.barLowUsageAlertEnabled && root.lowUsageAlertRemainingPercent > 0 && root.lowUsageAlertRemainingPercent <= root.lowUsageThreshold
+    readonly property var countdownEntries: {
+        if (!root.barCountdownOnEmpty || !root.displayProvider?.usage)
+            return [];
+        var entries = [];
+        for (var i = 0; i < root.barCountdownWindows.length; i++) {
+            var winKey = root.barCountdownWindows[i];
+            var usage = root.displayProvider.usage[winKey];
+            if (!usage || !usage.resetsAt)
+                continue;
+            var leftPercent = root.usageLeftPercent(usage);
+            if (leftPercent !== 0)
+                continue;
+            entries.push(winKey);
+        }
+        return entries;
+    }
+    readonly property bool countdownActive: root.countdownEntries.length > 0
+    readonly property string countdownProviderName: root.countdownActive && root.displayProvider ? (root.mainInstance?.providerDisplayName(root.displayProvider.provider) || root.displayProvider.provider) : ""
+    readonly property color resolvedBarIconColor: {
+        if (root.lowUsageAlertCritical)
+            return Color.mError;
+        if (root.lowUsageAlertActive)
+            return Qt.alpha(root.resolvedLowUsageAlertBaseColor, 0.5);
+        return root.resolvedBaseBarIconColor;
     }
 
     readonly property bool hasData: {
@@ -180,10 +255,45 @@ Item {
             return pluginApi?.tr("widget.error");
 
         var parts = [];
+        var countdownSet = {};
+        for (var ci = 0; ci < root.countdownEntries.length; ci++)
+            countdownSet[root.countdownEntries[ci]] = true;
+
+        var hideNonCountdown = root.barTextShowOnHover && root.countdownActive;
+
         for (var index = 0; index < root.barTextFields.length; index++) {
-            var part = root.fieldText(root.barTextFields[index]);
+            var fieldKey = root.barTextFields[index];
+            if (fieldKey === "status") {
+                if (!hideNonCountdown) {
+                    var statusPart = root.fieldText("status");
+                    if (statusPart !== "")
+                        parts.push(statusPart);
+                }
+                continue;
+            }
+            if (countdownSet[fieldKey]) {
+                var cLabel = root.windowLabelForCountdown(fieldKey);
+                var cTime = mainInstance.formatResetsCountdown(root.displayProvider.usage[fieldKey].resetsAt);
+                parts.push(root.countdownProviderName + " " + cLabel + " " + pluginApi?.tr("widget.resetsIn") + " " + cTime);
+                delete countdownSet[fieldKey];
+                continue;
+            }
+            if (hideNonCountdown)
+                continue;
+            var part = root.fieldText(fieldKey);
             if (part !== "")
                 parts.push(part);
+        }
+
+        var remainingKeys = Object.keys(countdownSet);
+        for (var ri = 0; ri < remainingKeys.length; ri++) {
+            var rk = remainingKeys[ri];
+            var usage = root.displayProvider.usage ? root.displayProvider.usage[rk] : null;
+            if (!usage || !usage.resetsAt)
+                continue;
+            var rl = root.windowLabelForCountdown(rk);
+            var rt = mainInstance.formatResetsCountdown(usage.resetsAt);
+            parts.push(root.countdownProviderName + " " + rl + " " + pluginApi?.tr("widget.resetsIn") + " " + rt);
         }
 
         if (parts.length === 0)
@@ -209,12 +319,30 @@ Item {
 
         var primary = displayProvider?.usage?.primary;
         var secondary = displayProvider?.usage?.secondary;
+        var tertiary = displayProvider?.usage?.tertiary;
         var status = displayProvider?.status;
         var lines = [name];
-        if (primary)
-            lines.push("Session: " + (100 - primary.usedPercent) + "% left");
-        if (secondary)
-            lines.push("Weekly: " + (100 - secondary.usedPercent) + "% left");
+        if (primary) {
+            var pLine = (displayProvider._windowLabels ? displayProvider._windowLabels.primary : "Primary") + ": " + (100 - primary.usedPercent) + "% left";
+            var pCountdown = mainInstance.formatResetsCountdown(primary.resetsAt);
+            if (pCountdown !== "")
+                pLine += " (" + pluginApi?.tr("panel.resetsIn") + " " + pCountdown + ")";
+            lines.push(pLine);
+        }
+        if (secondary) {
+            var sLine = (displayProvider._windowLabels ? displayProvider._windowLabels.secondary : "Secondary") + ": " + (100 - secondary.usedPercent) + "% left";
+            var sCountdown = mainInstance.formatResetsCountdown(secondary.resetsAt);
+            if (sCountdown !== "")
+                sLine += " (" + pluginApi?.tr("panel.resetsIn") + " " + sCountdown + ")";
+            lines.push(sLine);
+        }
+        if (tertiary) {
+            var tLine = (displayProvider._windowLabels ? displayProvider._windowLabels.tertiary : "Tertiary") + ": " + (100 - tertiary.usedPercent) + "% left";
+            var tCountdown = mainInstance.formatResetsCountdown(tertiary.resetsAt);
+            if (tCountdown !== "")
+                tLine += " (" + pluginApi?.tr("panel.resetsIn") + " " + tCountdown + ")";
+            lines.push(tLine);
+        }
         if (status && root.formatStatusText(status) !== "")
             lines.push("Status: " + root.formatStatusText(status));
         return lines.join("\n");
@@ -222,6 +350,25 @@ Item {
 
     implicitWidth: pill.implicitWidth
     implicitHeight: pill.implicitHeight
+
+    onContentTextChanged: {
+        if (mainInstance?.isRefreshing)
+            return;
+
+        if (previousStableContentText !== "" && contentText !== previousStableContentText && barTextShowOnHover && barTextExpandOnChange) {
+            temporarilyExpanded = true;
+            expandTimer.restart();
+        }
+
+        previousStableContentText = contentText;
+    }
+
+    Timer {
+        id: expandTimer
+        interval: 2500
+        repeat: false
+        onTriggered: root.temporarilyExpanded = false
+    }
 
     NPopupContextMenu {
         id: contextMenu
@@ -241,7 +388,8 @@ Item {
             contextMenu.close();
             PanelService.closeContextMenu(screen);
             if (action === "refresh") {
-                if (mainInstance) mainInstance.refresh();
+                if (mainInstance)
+                    mainInstance.refresh();
             } else if (action === "settings") {
                 BarService.openPluginSettings(screen, pluginApi.manifest);
             }
@@ -257,7 +405,7 @@ Item {
         text: root.barTextOpacity > 0 ? root.contentText : ""
         tooltipText: root.tooltipText
         autoHide: false
-        forceOpen: !root.barTextShowOnHover
+        forceOpen: !root.barTextShowOnHover || root.temporarilyExpanded || root.countdownActive
         customIconColor: root.resolvedBarIconColor
         customTextColor: root.barTextOpacity > 0 ? root.resolvedBarTextColor : "transparent"
 
