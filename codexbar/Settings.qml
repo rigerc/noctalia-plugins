@@ -40,6 +40,54 @@ ColumnLayout {
         return best;
     }
 
+    function normalizeCountdownWindows(windows) {
+        var allowed = ["primary", "secondary", "tertiary"];
+        var normalized = [];
+        var source = Array.isArray(windows) ? windows : [windows];
+        for (var index = 0; index < source.length; index++) {
+            var key = String(source[index] || "").trim();
+            if (allowed.indexOf(key) < 0 || normalized.indexOf(key) >= 0)
+                continue;
+            normalized.push(key);
+        }
+        if (normalized.length === 0)
+            normalized.push("primary");
+        return normalized;
+    }
+
+    function firstAvailableCountdownWindow(currentWindows) {
+        var windows = Array.isArray(currentWindows) ? currentWindows : [];
+        var allowed = ["primary", "secondary", "tertiary"];
+        for (var index = 0; index < allowed.length; index++) {
+            if (windows.indexOf(allowed[index]) < 0)
+                return allowed[index];
+        }
+        return allowed[0];
+    }
+
+    function syncCountdownWindowToAdd() {
+        root.editCountdownWindowToAdd = root.firstAvailableCountdownWindow(root.editBarCountdownWindows);
+    }
+
+    function addCountdownWindow(windowKey) {
+        var key = String(windowKey || "").trim();
+        if (key === "" || root.editBarCountdownWindows.indexOf(key) >= 0)
+            return;
+        root.editBarCountdownWindows = root.editBarCountdownWindows.concat([key]);
+        root.syncCountdownWindowToAdd();
+    }
+
+    function removeCountdownWindow(index) {
+        if (!Array.isArray(root.editBarCountdownWindows) || root.editBarCountdownWindows.length <= 1)
+            return;
+        if (index < 0 || index >= root.editBarCountdownWindows.length)
+            return;
+        var next = root.editBarCountdownWindows.slice();
+        next.splice(index, 1);
+        root.editBarCountdownWindows = root.normalizeCountdownWindows(next);
+        root.syncCountdownWindowToAdd();
+    }
+
     function normalizeIconName(iconName) {
         var normalized = String(iconName || "").trim();
         if (normalized === "")
@@ -154,6 +202,9 @@ ColumnLayout {
     property bool editBarLowUsageAlertEnabled: cfg.barLowUsageAlertEnabled ?? defaults.barLowUsageAlertEnabled ?? false
     property string editBarLowUsageAlertWindow: String(cfg.barLowUsageAlertWindow ?? defaults.barLowUsageAlertWindow ?? "primary")
     property string editBarLowUsageAlertColor: String(cfg.barLowUsageAlertColor ?? defaults.barLowUsageAlertColor ?? "error")
+    property bool editBarCountdownOnEmpty: cfg.barCountdownOnEmpty ?? defaults.barCountdownOnEmpty ?? false
+    property var editBarCountdownWindows: normalizeCountdownWindows(cfg.barCountdownWindows ?? defaults.barCountdownWindows ?? ["primary"])
+    property string editCountdownWindowToAdd: firstAvailableCountdownWindow(editBarCountdownWindows)
     property int editRefreshInterval: normalizeRefreshInterval(cfg.refreshInterval ?? defaults.refreshInterval ?? 120)
     property string editDefaultProvider: cfg.defaultProvider ?? defaults.defaultProvider ?? ""
     property bool editNotifyOnReset: cfg.notifyOnReset ?? defaults.notifyOnReset ?? true
@@ -246,6 +297,21 @@ ColumnLayout {
         }
     ]
 
+    readonly property var countdownWindowOptions: [
+        {
+            "key": "primary",
+            "name": pluginApi?.tr("settings.general.behavior.countdownWindows.options.primary")
+        },
+        {
+            "key": "secondary",
+            "name": pluginApi?.tr("settings.general.behavior.countdownWindows.options.secondary")
+        },
+        {
+            "key": "tertiary",
+            "name": pluginApi?.tr("settings.general.behavior.countdownWindows.options.tertiary")
+        }
+    ]
+
     readonly property var tabModel: [
         {
             "label": pluginApi?.tr("settings.tabs.general"),
@@ -277,12 +343,15 @@ ColumnLayout {
             root.editBarLowUsageAlertEnabled = cfg.barLowUsageAlertEnabled ?? defaults.barLowUsageAlertEnabled ?? false;
             root.editBarLowUsageAlertWindow = String(cfg.barLowUsageAlertWindow ?? defaults.barLowUsageAlertWindow ?? "primary");
             root.editBarLowUsageAlertColor = String(cfg.barLowUsageAlertColor ?? defaults.barLowUsageAlertColor ?? "error");
+            root.editBarCountdownOnEmpty = cfg.barCountdownOnEmpty ?? defaults.barCountdownOnEmpty ?? false;
+            root.editBarCountdownWindows = root.normalizeCountdownWindows(cfg.barCountdownWindows ?? defaults.barCountdownWindows ?? ["primary"]);
             root.editRefreshInterval = root.normalizeRefreshInterval(cfg.refreshInterval ?? defaults.refreshInterval ?? 120);
             root.editDefaultProvider = cfg.defaultProvider ?? defaults.defaultProvider ?? "";
             root.editNotifyOnReset = cfg.notifyOnReset ?? defaults.notifyOnReset ?? true;
             root.editNotifyOnLowUsage = cfg.notifyOnLowUsage ?? defaults.notifyOnLowUsage ?? true;
             root.editLowUsageThreshold = Math.max(5, Math.min(50, Number(cfg.lowUsageThreshold ?? defaults.lowUsageThreshold ?? 20)));
             root.syncBarTextFieldToAdd();
+            root.syncCountdownWindowToAdd();
         }
     }
 
@@ -341,6 +410,8 @@ ColumnLayout {
         pluginApi.pluginSettings.barLowUsageAlertEnabled = editBarLowUsageAlertEnabled;
         pluginApi.pluginSettings.barLowUsageAlertWindow = (editBarLowUsageAlertWindow === "secondary" || editBarLowUsageAlertWindow === "tertiary") ? editBarLowUsageAlertWindow : "primary";
         pluginApi.pluginSettings.barLowUsageAlertColor = editBarLowUsageAlertColor;
+        pluginApi.pluginSettings.barCountdownOnEmpty = editBarCountdownOnEmpty;
+        pluginApi.pluginSettings.barCountdownWindows = normalizeCountdownWindows(editBarCountdownWindows);
         pluginApi.pluginSettings.refreshInterval = normalizeRefreshInterval(editRefreshInterval);
         pluginApi.pluginSettings.defaultProvider = editDefaultProvider;
         pluginApi.pluginSettings.notifyOnReset = editNotifyOnReset;

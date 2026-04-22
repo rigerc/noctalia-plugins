@@ -4,7 +4,8 @@
     "noData": "No data",
     "error": "Error",
     "providerError": "Provider error",
-    "refreshing": "..."
+    "refreshing": "...",
+    "resetsIn": "resets in"
   },
   "menu": {
     "refresh": "Refresh",
@@ -48,6 +49,18 @@
         "expandOnChange": {
           "label": "Expand on change",
           "desc": "Temporarily expand the bar widget after refresh when the displayed values change."
+        },
+        "countdownOnEmpty": {
+          "label": "Show countdown on empty",
+          "desc": "When a monitored usage window hits 0%, show a live countdown to its reset time in the bar text."
+        },
+        "countdownWindows": {
+          "label": "Countdown Windows",
+          "options": {
+            "primary": "Primary Window",
+            "secondary": "Secondary Window",
+            "tertiary": "Tertiary Window"
+          }
         }
       },
       "lowUsageAlert": {

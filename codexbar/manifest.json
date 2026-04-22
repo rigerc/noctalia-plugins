@@ -32,6 +32,8 @@
       "barLowUsageAlertEnabled": false,
       "barLowUsageAlertWindow": "primary",
       "barLowUsageAlertColor": "error",
+      "barCountdownOnEmpty": false,
+      "barCountdownWindows": ["primary"],
       "refreshInterval": 120,
       "defaultProvider": "",
       "notifyOnReset": true,

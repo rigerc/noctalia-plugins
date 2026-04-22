@@ -30,20 +30,6 @@ Item {
         return s.charAt(0).toUpperCase() + s.slice(1);
     }
 
-    function formatResetsCountdown(resetsAt) {
-        if (!resetsAt)
-            return "";
-        var d = new Date(resetsAt);
-        var diff = (d.getTime() - Date.now()) / 1000;
-        if (diff <= 0)
-            return pluginApi?.tr("panel.resetsNow") || "Now";
-        var h = Math.floor(diff / 3600);
-        var m = Math.floor((diff % 3600) / 60);
-        if (h > 0)
-            return h + "h " + m + "m";
-        return m + "m";
-    }
-
     function formatProviderError(errorValue) {
         if (!errorValue)
             return "";
@@ -266,7 +252,7 @@ Item {
                                                             if (!win)
                                                                 return "";
                                                             if (win.resetsAt)
-                                                                return pluginApi?.tr("panel.resetsIn") + " " + root.formatResetsCountdown(win.resetsAt);
+                                                                return pluginApi?.tr("panel.resetsIn") + " " + mainInstance.formatResetsCountdown(win.resetsAt);
                                                             return String(win.resetDescription || "").trim();
                                                         }
                                                         pointSize: Style.fontSizeXS

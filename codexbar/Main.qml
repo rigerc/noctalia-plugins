@@ -19,6 +19,22 @@ Item {
     property string rawStderrBuffer: ""
     property int _fetchRequestId: 0
     property int _timedOutRequestId: -1
+    property int countdownTick: 0
+
+    function formatResetsCountdown(resetsAt) {
+        if (!resetsAt)
+            return "";
+        var _ = root.countdownTick;
+        var d = new Date(resetsAt);
+        var diff = (d.getTime() - Date.now()) / 1000;
+        if (diff <= 0)
+            return pluginApi?.tr("panel.resetsNow") || "Now";
+        var h = Math.floor(diff / 3600);
+        var m = Math.floor((diff % 3600) / 60);
+        if (h > 0)
+            return h + "h " + m + "m";
+        return m + "m";
+    }
 
     readonly property var cfg: pluginApi?.pluginSettings || ({})
     readonly property var defaults: pluginApi?.manifest?.metadata?.defaultSettings || ({})
@@ -336,6 +352,15 @@ Item {
                 running = true;
             }
         }
+    }
+
+    Timer {
+        id: countdownTickTimer
+        interval: 60000
+        repeat: true
+        running: true
+        triggeredOnStart: true
+        onTriggered: root.countdownTick += 1
     }
 
     IpcHandler {
