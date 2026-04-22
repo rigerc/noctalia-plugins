@@ -28,6 +28,7 @@
       "barTextColor": "on-surface",
       "barTextOpacity": 1,
       "barTextShowOnHover": false,
+      "barTextExpandOnChange": false,
       "refreshInterval": 120,
       "defaultProvider": "",
       "notifyOnReset": true,

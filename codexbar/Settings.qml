@@ -150,6 +150,7 @@ ColumnLayout {
     property int editBarTextOpacityPercent: Math.max(0, Math.min(100, Math.round(Number(cfg.barTextOpacity ?? defaults.barTextOpacity ?? 1) * 100)))
     property string editBarTextFieldToAdd: firstAvailableBarTextField(editBarTextFields)
     property bool editBarTextShowOnHover: cfg.barTextShowOnHover ?? defaults.barTextShowOnHover ?? false
+    property bool editBarTextExpandOnChange: cfg.barTextExpandOnChange ?? defaults.barTextExpandOnChange ?? false
     property int editRefreshInterval: normalizeRefreshInterval(cfg.refreshInterval ?? defaults.refreshInterval ?? 120)
     property string editDefaultProvider: cfg.defaultProvider ?? defaults.defaultProvider ?? ""
     property bool editNotifyOnReset: cfg.notifyOnReset ?? defaults.notifyOnReset ?? true
@@ -250,6 +251,7 @@ ColumnLayout {
             root.editBarTextColor = String(cfg.barTextColor ?? defaults.barTextColor ?? "on-surface");
             root.editBarTextOpacityPercent = Math.max(0, Math.min(100, Math.round(Number(cfg.barTextOpacity ?? defaults.barTextOpacity ?? 1) * 100)));
             root.editBarTextShowOnHover = cfg.barTextShowOnHover ?? defaults.barTextShowOnHover ?? false;
+            root.editBarTextExpandOnChange = cfg.barTextExpandOnChange ?? defaults.barTextExpandOnChange ?? false;
             root.editRefreshInterval = root.normalizeRefreshInterval(cfg.refreshInterval ?? defaults.refreshInterval ?? 120);
             root.editDefaultProvider = cfg.defaultProvider ?? defaults.defaultProvider ?? "";
             root.editNotifyOnReset = cfg.notifyOnReset ?? defaults.notifyOnReset ?? true;
@@ -310,6 +312,7 @@ ColumnLayout {
         pluginApi.pluginSettings.barTextColor = editBarTextColor;
         pluginApi.pluginSettings.barTextOpacity = Math.max(0, Math.min(1, editBarTextOpacityPercent / 100));
         pluginApi.pluginSettings.barTextShowOnHover = editBarTextShowOnHover;
+        pluginApi.pluginSettings.barTextExpandOnChange = editBarTextExpandOnChange;
         pluginApi.pluginSettings.refreshInterval = normalizeRefreshInterval(editRefreshInterval);
         pluginApi.pluginSettings.defaultProvider = editDefaultProvider;
         pluginApi.pluginSettings.notifyOnReset = editNotifyOnReset;

@@ -278,6 +278,18 @@ SettingsTabPage {
             }
         }
 
+        NToggle {
+            Layout.fillWidth: true
+            label: rootSettings?.pluginApi?.tr("settings.general.behavior.expandOnChange.label")
+            description: rootSettings?.pluginApi?.tr("settings.general.behavior.expandOnChange.desc")
+            checked: rootSettings?.editBarTextExpandOnChange ?? false
+            enabled: rootSettings?.editBarTextShowOnHover ?? false
+            onToggled: checked => {
+                if (rootSettings)
+                    rootSettings.editBarTextExpandOnChange = checked;
+            }
+        }
+
         NComboBox {
             Layout.fillWidth: true
             label: rootSettings?.pluginApi?.tr("settings.general.refreshInterval.label")

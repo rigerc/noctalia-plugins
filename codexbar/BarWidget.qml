@@ -18,6 +18,8 @@ Item {
     readonly property var cfg: pluginApi?.pluginSettings || ({})
     readonly property var defaults: pluginApi?.manifest?.metadata?.defaultSettings || ({})
     readonly property var mainInstance: pluginApi?.mainInstance
+    property bool temporarilyExpanded: false
+    property string previousStableContentText: ""
 
     readonly property string barPosition: Settings.getBarPositionForScreen(screen?.name)
     readonly property bool isVertical: barPosition === "left" || barPosition === "right"
@@ -141,6 +143,7 @@ Item {
     readonly property string barTextColorKey: String(cfg.barTextColor ?? defaults.barTextColor ?? "on-surface")
     readonly property real barTextOpacity: Math.max(0, Math.min(1, Number(cfg.barTextOpacity ?? defaults.barTextOpacity ?? 1)))
     readonly property bool barTextShowOnHover: cfg.barTextShowOnHover ?? defaults.barTextShowOnHover ?? false
+    readonly property bool barTextExpandOnChange: cfg.barTextExpandOnChange ?? defaults.barTextExpandOnChange ?? false
     readonly property string defaultProvider: cfg.defaultProvider ?? defaults.defaultProvider ?? ""
     readonly property color resolvedBarIconColor: Color.resolveColorKey(root.barIconColor)
     readonly property color resolvedBarTextBaseColor: Color.resolveColorKey(root.barTextColorKey)
@@ -223,6 +226,28 @@ Item {
     implicitWidth: pill.implicitWidth
     implicitHeight: pill.implicitHeight
 
+    onContentTextChanged: {
+        if (mainInstance?.isRefreshing)
+            return;
+
+        if (previousStableContentText !== ""
+                && contentText !== previousStableContentText
+                && barTextShowOnHover
+                && barTextExpandOnChange) {
+            temporarilyExpanded = true;
+            expandTimer.restart();
+        }
+
+        previousStableContentText = contentText;
+    }
+
+    Timer {
+        id: expandTimer
+        interval: 2500
+        repeat: false
+        onTriggered: root.temporarilyExpanded = false
+    }
+
     NPopupContextMenu {
         id: contextMenu
         model: [
@@ -257,7 +282,7 @@ Item {
         text: root.barTextOpacity > 0 ? root.contentText : ""
         tooltipText: root.tooltipText
         autoHide: false
-        forceOpen: !root.barTextShowOnHover
+        forceOpen: !root.barTextShowOnHover || root.temporarilyExpanded
         customIconColor: root.resolvedBarIconColor
         customTextColor: root.barTextOpacity > 0 ? root.resolvedBarTextColor : "transparent"
 

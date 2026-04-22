@@ -42,6 +42,10 @@
         "showOnHover": {
           "label": "Show on hover",
           "desc": "When enabled, the bar widget only shows the icon until you hover it."
+        },
+        "expandOnChange": {
+          "label": "Expand on change",
+          "desc": "Temporarily expand the bar widget after refresh when the displayed values change."
         }
       },
       "barIcon": {
