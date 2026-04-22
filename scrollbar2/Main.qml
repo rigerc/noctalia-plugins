@@ -38,8 +38,11 @@ Item {
     property string lastLiveSignature: ""
     property string lastTitleSignature: ""
     property string lastWorkspaceSignature: ""
+    property string lastWindowOrderPollSignature: ""
     property bool snapshotsInitialized: false
     property bool workspaceSnapshotInitialized: false
+    property double _lastDebugNoopLogMs: 0
+    property string _pendingPostRefreshReason: ""
     property var cycleStateByApp: ({})
     property var _desktopEntryIdCache: ({})
     property var activeSpecialByMonitor: ({})
@@ -66,6 +69,35 @@ Item {
         repeat: false
         onTriggered: {
             root.advanceHyprlandReorder();
+        }
+    }
+
+    Timer {
+        id: debugPollTimer
+        interval: 500
+        repeat: true
+        running: root.debugLoggingEnabled()
+        onTriggered: root.updateSnapshots("debugPoll")
+    }
+
+    Timer {
+        id: postBackendRefreshTimer
+        interval: 120
+        repeat: false
+        onTriggered: {
+            const reason = root._pendingPostRefreshReason || "postBackendRefresh";
+            root._pendingPostRefreshReason = "";
+            root.updateSnapshots(reason);
+        }
+    }
+
+    Timer {
+        id: windowOrderPollTimer
+        interval: 500
+        repeat: true
+        running: (root.entryOrder?.length ?? 0) > 0
+        onTriggered: {
+            root.refreshBackendState("windowOrderPoll");
         }
     }
 
@@ -784,7 +816,99 @@ Item {
         return "fallback:" + String(window.workspaceId ?? "") + ":" + String(window.output ?? "") + ":" + String(window.appId ?? "");
     }
 
+    function safeGetProperty(obj, prop, defaultValue) {
+        try {
+            const value = obj ? obj[prop] : undefined;
+            if (value !== undefined && value !== null)
+                return String(value);
+        } catch (error) {}
+        return defaultValue;
+    }
+
+    function getHyprlandTitle(toplevel) {
+        try {
+            const title = toplevel?.wayland?.title;
+            if (title)
+                return String(title);
+        } catch (error) {}
+        return safeGetProperty(toplevel, "title", "");
+    }
+
+    function getHyprlandAppId(toplevel) {
+        try {
+            const appId = toplevel?.wayland?.appId;
+            if (appId)
+                return String(appId);
+        } catch (error) {}
+        return safeGetProperty(toplevel, "class", "") || safeGetProperty(toplevel, "initialClass", "") || safeGetProperty(toplevel, "appId", "");
+    }
+
+    function toSortedHyprlandWindows(windows) {
+        return (windows || []).sort(function (a, b) {
+            if ((a?.workspaceId ?? -1) !== (b?.workspaceId ?? -1))
+                return Number(a?.workspaceId ?? -1) - Number(b?.workspaceId ?? -1);
+            if ((a?.x ?? 0) !== (b?.x ?? 0))
+                return Number(a?.x ?? 0) - Number(b?.x ?? 0);
+            if ((a?.y ?? 0) !== (b?.y ?? 0))
+                return Number(a?.y ?? 0) - Number(b?.y ?? 0);
+            return String(a?.id ?? "").localeCompare(String(b?.id ?? ""));
+        });
+    }
+
     function collectWindows() {
+        // For Hyprland, build directly from Hyprland toplevels so we can reflect reorder/move
+        // updates even if `CompositorService.windows` lags behind until a focus/title change.
+        if (CompositorService.isHyprland) {
+            const result = [];
+            try {
+                const toplevels = Hyprland.toplevels?.values || [];
+                for (let i = 0; i < toplevels.length; i++) {
+                    const toplevel = toplevels[i];
+                    const id = String(toplevel?.address || "").trim();
+                    if (id === "")
+                        continue;
+
+                    const ipcData = toplevel?.lastIpcObject || ({});
+                    const title = getHyprlandTitle(toplevel);
+                    const appId = getHyprlandAppId(toplevel);
+                    const wsId = toplevel?.workspace?.id ?? -1;
+                    const output = toplevel?.monitor?.name || "";
+                    const focused = toplevel?.activated === true;
+                    const groupedWindows = cloneStringArray(ipcData.grouped);
+
+                    let x = 0;
+                    let y = 0;
+                    try {
+                        if (ipcData && ipcData.at) {
+                            x = ipcData.at[0];
+                            y = ipcData.at[1];
+                        } else if (toplevel?.x !== undefined) {
+                            x = toplevel.x;
+                            y = toplevel.y;
+                        }
+                    } catch (error) {}
+
+                    result.push({
+                        "id": id,
+                        "title": title,
+                        "appId": appId,
+                        "workspaceId": (typeof wsId === "number" && !isNaN(wsId)) ? wsId : Number(wsId),
+                        "isFocused": focused,
+                        "output": String(output || ""),
+                        "x": (typeof x === "number" && !isNaN(x)) ? x : 0,
+                        "y": (typeof y === "number" && !isNaN(y)) ? y : 0,
+                        "isFloating": ipcData.floating === true,
+                        "isUrgent": toplevel?.urgent === true || ipcData.urgent === true,
+                        "tags": normalizeWindowTags(ipcData.tags),
+                        "groupedWindowAddresses": groupedWindows,
+                        "isGrouped": groupedWindows.length > 0 || ipcData.grouped === true || ipcData.group === true
+                    });
+                }
+            } catch (error) {}
+
+            return toSortedHyprlandWindows(result);
+        }
+
         const windows = [];
         const backendMetadata = backendMetadataByWindowId();
         try {
@@ -1145,7 +1269,32 @@ Item {
         return "";
     }
 
+    function debugLoggingEnabled() {
+        return settingValue("debug", "logging", false) === true;
+    }
+
+    function schedulePostBackendRefreshSnapshot(reason) {
+        _pendingPostRefreshReason = String(reason || "postBackendRefresh");
+        postBackendRefreshTimer.restart();
+    }
+
+    function formatKeyList(keys, limit) {
+        const maxItems = Math.max(1, Number(limit ?? 20));
+        if (!Array.isArray(keys))
+            return "[]";
+        if (keys.length <= maxItems)
+            return "[" + keys.join(",") + "]";
+        return "[" + keys.slice(0, maxItems).join(",") + ",… +" + String(keys.length - maxItems) + "]";
+    }
+
     function updateSnapshots(reason) {
+        const debugEnabled = debugLoggingEnabled();
+        const prevEntryOrder = Array.isArray(entryOrder) ? entryOrder.slice() : [];
+        const prevModelRev = entryModelRevision;
+        const prevStateRev = entryStateRevision;
+        const prevLiveRev = liveRevision;
+        const prevTitleRev = titleRevision;
+
         const nextWorkspaces = collectWorkspaces().map(cloneWorkspaceData);
         const nextWorkspaceSignature = refreshWorkspaceSnapshot(nextWorkspaces);
         const windows = collectWindows();
@@ -1159,17 +1308,45 @@ Item {
         const stateChanged = !snapshotsInitialized || nextEntryStateSignature !== lastEntryStateSignature;
         const liveChanged = !snapshotsInitialized || nextLiveSignature !== lastLiveSignature;
         const titleChanged = !snapshotsInitialized || nextTitleSignature !== lastTitleSignature;
+        const anyChanged = modelChanged || stateChanged || liveChanged || titleChanged;
 
-        if (modelChanged) {
-            entryModelRevision += 1;
-            lastEntryModelSignature = nextEntryModelSignature;
+        if (debugEnabled) {
+            // Avoid log spam when nothing is changing (e.g. rapid compositor events with identical snapshots).
+            const now = Date.now();
+            const shouldLogNoop = !anyChanged && (now - _lastDebugNoopLogMs) > 1200;
+            if (anyChanged || shouldLogNoop) {
+                if (shouldLogNoop)
+                    _lastDebugNoopLogMs = now;
+
+                const windowKeys = (windows || []).map(function (w) {
+                    return getWindowKey(w);
+                });
+                Logger.d("Scrollbar2",
+                         "updateSnapshots reason=" + String(reason || "")
+                         + " windows=" + String(windows?.length ?? 0)
+                         + " changed(model=" + String(modelChanged) + " state=" + String(stateChanged) + " live=" + String(liveChanged) + " title=" + String(titleChanged) + ")"
+                         + " order(prev=" + formatKeyList(prevEntryOrder, 18) + " next=" + formatKeyList(nextSnapshot?.entryOrder, 18) + ")"
+                         + " winOrder=" + formatKeyList(windowKeys, 18));
+            }
         }
 
+        // Important: update the underlying snapshot data before bumping revision counters.
+        // `WindowBarView.qml` uses `entryModelRevision` as the dependency trigger when reading
+        // `mainInstance.entryOrder`. If the revision changes first, the view can snapshot the
+        // *old* order and then never re-evaluate, causing late/erratic updates and duplicates.
         if (modelChanged || stateChanged) {
             entryOrder = nextSnapshot.entryOrder;
             entryRecordsByKey = nextSnapshot.entryRecordsByKey;
-            entryStateRevision += 1;
             lastEntryStateSignature = nextEntryStateSignature;
+        }
+        if (modelChanged) {
+            lastEntryModelSignature = nextEntryModelSignature;
+        }
+        if (modelChanged) {
+            entryModelRevision += 1;
+        }
+        if (modelChanged || stateChanged) {
+            entryStateRevision += 1;
         }
 
         if (modelChanged || titleChanged) {
@@ -1187,6 +1364,14 @@ Item {
         }
 
         snapshotsInitialized = true;
+
+        if (debugEnabled && (entryModelRevision !== prevModelRev || entryStateRevision !== prevStateRev || liveRevision !== prevLiveRev || titleRevision !== prevTitleRev)) {
+            Logger.d("Scrollbar2",
+                     "revisions model=" + String(prevModelRev) + "->" + String(entryModelRevision)
+                     + " state=" + String(prevStateRev) + "->" + String(entryStateRevision)
+                     + " live=" + String(prevLiveRev) + "->" + String(liveRevision)
+                     + " title=" + String(prevTitleRev) + "->" + String(titleRevision));
+        }
     }
 
     function entryMatchesFilters(entry, screenName, onlySameOutput, onlyActiveWorkspaces, activeWorkspaceIds) {
@@ -1284,17 +1469,22 @@ Item {
         return true;
     }
 
-    function refreshBackendState() {
+    function refreshBackendState(reason) {
+        const normalizedReason = String(reason || "");
+        const windowsOnly = normalizedReason === "windowOrderPoll";
+
         try {
             if (CompositorService.isHyprland) {
                 Hyprland.refreshToplevels();
-                Hyprland.refreshWorkspaces();
+                if (!windowsOnly)
+                    Hyprland.refreshWorkspaces();
             } else if (CompositorService.isNiri) {
                 Niri.refreshWindows();
-                Niri.refreshWorkspaces();
+                if (!windowsOnly)
+                    Niri.refreshWorkspaces();
             }
         } catch (error) {}
-        updateSnapshots("refreshBackendState");
+        schedulePostBackendRefreshSnapshot(normalizedReason || "refreshBackendState");
     }
 
     function dispatchHyprland(request) {
@@ -1732,11 +1922,33 @@ Item {
         target: CompositorService.isHyprland ? Hyprland : null
 
         function onRawEvent(event) {
-            if (event.name !== "activespecialv2")
+            if (!event || !event.name)
                 return;
 
-            const values = event.parse(3);
-            root.updateActiveSpecialForMonitor(values[2], values[0], values[1]);
+            if (event.name === "activespecialv2") {
+                const values = event.parse(3);
+                root.updateActiveSpecialForMonitor(values[2], values[0], values[1]);
+                return;
+            }
+
+            // Hyprland reorders/moves often arrive as raw events; depending solely on
+            // `CompositorService.windowListChanged` can make order updates appear late.
+            // Schedule a snapshot pass slightly after the backend has processed the event.
+            switch (event.name) {
+            case "movewindow":
+            case "movewindowv2":
+            case "openwindow":
+            case "closewindow":
+            case "changefloatingmode":
+            case "changegroupactive":
+            case "togglegroup":
+            case "moveintogroup":
+            case "moveoutofgroup":
+                root.refreshBackendState("hyprlandRaw:" + event.name);
+                break;
+            default:
+                break;
+            }
         }
     }
 

@@ -197,6 +197,12 @@
         "desc": "Scroll the mouse wheel over the workspace indicator to switch between workspaces."
       }
     },
+    "debug": {
+      "logging": {
+        "label": "Debug Logging",
+        "desc": "Write detailed snapshot and ordering diagnostics to the shell log. Use this only when debugging refresh issues."
+      }
+    },
     "track": {
       "position": {
         "label": "Track Position",
@@ -309,6 +315,11 @@
       "customStyleRules": {
         "label": "Custom Style Rules",
         "desc": "Override segment colors for matching windows using ordered regex rules."
+      }
+      ,
+      "debug": {
+        "label": "Debug",
+        "desc": "Developer diagnostics for snapshot updates and compositor ordering."
       }
     },
     "focusLine": {

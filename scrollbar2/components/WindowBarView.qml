@@ -311,7 +311,11 @@ Item {
             entries = [];
             return;
         }
-        entries = mainInstance.getFilteredEntryKeys(screenName, onlySameOutput, onlyActiveWorkspaces) || [];
+        const nextEntries = mainInstance.getFilteredEntryKeys(screenName, onlySameOutput, onlyActiveWorkspaces) || [];
+        if (settingValue("debug", "logging", false) === true && !_sameStringList(entries, nextEntries)) {
+            Logger.d("Scrollbar2", "WindowBarView entries updated: screen=" + screenName + " onlySameOutput=" + String(onlySameOutput) + " onlyActiveWorkspaces=" + String(onlyActiveWorkspaces) + " entries=[" + nextEntries.join(",") + "]");
+        }
+        entries = nextEntries;
     }
 
     function refreshPinnedEntriesCache() {
@@ -1057,8 +1061,8 @@ Item {
     }
 
     function syncEntryLifecycle() {
-        const activeKeys = (entries || []).map(function (entry) {
-            return String(entry?.entryKey || "");
+        const activeKeys = (entries || []).map(function (entryKey) {
+            return String(entryKey ?? "");
         }).filter(function (entryKey) {
             return entryKey !== "";
         });

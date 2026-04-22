@@ -35,6 +35,12 @@ SettingsTabPage {
             "label": rootSettings?.pluginApi?.tr("settings.section.animation.label"),
             "icon": "transition-right",
             "target": behaviorSection.animationSectionTarget
+        },
+        {
+            "id": "debug",
+            "label": rootSettings?.pluginApi?.tr("settings.section.debug.label"),
+            "icon": "bug",
+            "target": behaviorSection.debugSectionTarget
         }
     ]
 
