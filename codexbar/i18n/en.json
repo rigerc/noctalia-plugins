@@ -15,12 +15,14 @@
     "lastUpdated": "Updated",
     "refresh": "Refresh",
     "noProviders": "No providers detected",
-    "openCodexUsage": "Open Codex usage",
+    "openStatusPage": "Open status page",
     "credits": "Credits",
     "resetsAt": "Resets",
+    "resetsIn": "Resets in",
     "resetsNow": "Now",
     "providerError": "Provider error",
     "status": "Status",
+    "statusOperational": "Operational",
     "usage": "Usage",
     "left": "left"
   },
@@ -56,8 +58,9 @@
         "window": {
           "label": "Alert Window",
           "options": {
-            "primary": "5h Window",
-            "secondary": "7d Window"
+            "primary": "Primary Window",
+            "secondary": "Secondary Window",
+            "tertiary": "Tertiary Window"
           }
         },
         "color": {
@@ -81,11 +84,12 @@
         "description": "Choose which values appear in the bar text, set their order, and control separator formatting. Status requires `codexbar --status`.",
         "add": "Add Text Field",
         "addButton": "Add",
-        "options": {
-          "primary": "5h Window",
-          "secondary": "Weekly Window",
-          "status": "Status"
-        },
+          "options": {
+            "primary": "Primary Window",
+            "secondary": "Secondary Window",
+            "tertiary": "Tertiary Window",
+            "status": "Status"
+          },
         "separator": {
           "label": "Separator",
           "desc": "Text inserted between each selected field"

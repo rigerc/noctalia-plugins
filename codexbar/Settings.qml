@@ -14,7 +14,7 @@ ColumnLayout {
     property int selectedTab: 0
 
     function allowedBarTextFieldKeys() {
-        return ["primary", "secondary", "status"];
+        return ["primary", "secondary", "tertiary", "status"];
     }
 
     function allowedRefreshIntervals() {
@@ -175,6 +175,10 @@ ColumnLayout {
             "name": pluginApi?.tr("settings.general.textFields.options.secondary")
         },
         {
+            "key": "tertiary",
+            "name": pluginApi?.tr("settings.general.textFields.options.tertiary")
+        },
+        {
             "key": "status",
             "name": pluginApi?.tr("settings.general.textFields.options.status")
         }
@@ -235,6 +239,10 @@ ColumnLayout {
         {
             "key": "secondary",
             "name": pluginApi?.tr("settings.general.lowUsageAlert.window.options.secondary")
+        },
+        {
+            "key": "tertiary",
+            "name": pluginApi?.tr("settings.general.lowUsageAlert.window.options.tertiary")
         }
     ]
 
@@ -331,7 +339,7 @@ ColumnLayout {
         pluginApi.pluginSettings.barTextShowOnHover = editBarTextShowOnHover;
         pluginApi.pluginSettings.barTextExpandOnChange = editBarTextExpandOnChange;
         pluginApi.pluginSettings.barLowUsageAlertEnabled = editBarLowUsageAlertEnabled;
-        pluginApi.pluginSettings.barLowUsageAlertWindow = editBarLowUsageAlertWindow === "secondary" ? "secondary" : "primary";
+        pluginApi.pluginSettings.barLowUsageAlertWindow = (editBarLowUsageAlertWindow === "secondary" || editBarLowUsageAlertWindow === "tertiary") ? editBarLowUsageAlertWindow : "primary";
         pluginApi.pluginSettings.barLowUsageAlertColor = editBarLowUsageAlertColor;
         pluginApi.pluginSettings.refreshInterval = normalizeRefreshInterval(editRefreshInterval);
         pluginApi.pluginSettings.defaultProvider = editDefaultProvider;

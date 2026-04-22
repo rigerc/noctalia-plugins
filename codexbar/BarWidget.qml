@@ -50,7 +50,7 @@ Item {
     }
 
     function normalizeBarTextFields(fields) {
-        var allowed = ["primary", "secondary", "status"];
+        var allowed = ["primary", "secondary", "tertiary", "status"];
         var normalized = [];
         var source = Array.isArray(fields) ? fields : [fields];
 
@@ -104,7 +104,8 @@ Item {
     }
 
     function normalizeLowUsageAlertWindow(windowKey) {
-        return String(windowKey || "").trim() === "secondary" ? "secondary" : "primary";
+        var key = String(windowKey || "").trim();
+        return (key === "secondary" || key === "tertiary") ? key : "primary";
     }
 
     function barTextJoiner() {
@@ -127,7 +128,7 @@ Item {
             return statusText === "" ? "" : "Status: " + statusText;
         }
 
-        var usage = fieldKey === "secondary" ? provider?.usage?.secondary : provider?.usage?.primary;
+        var usage = provider?.usage ? provider.usage[fieldKey] : null;
         if (!usage)
             return "";
 
@@ -138,10 +139,11 @@ Item {
         if (root.barTextFields.length === 1)
             return leftPercent + "%";
 
-        var label = root.usageWindowLabel(
-            usage.windowMinutes,
-            fieldKey === "secondary" ? "7d" : "5h"
-        );
+        var label = provider._windowLabels
+            ? provider._windowLabels[fieldKey]
+            : root.usageWindowLabel(usage.windowMinutes, fieldKey);
+        if (!label)
+            label = fieldKey.charAt(0).toUpperCase() + fieldKey.slice(1);
         return label + " " + leftPercent + "%";
     }
 
@@ -177,9 +179,9 @@ Item {
         return mainInstance.providerData[0] || null;
     }
 
-    readonly property var lowUsageAlertUsage: root.barLowUsageAlertWindow === "secondary"
-        ? root.displayProvider?.usage?.secondary
-        : root.displayProvider?.usage?.primary
+    readonly property var lowUsageAlertUsage: root.displayProvider?.usage
+        ? root.displayProvider.usage[root.barLowUsageAlertWindow]
+        : null
     readonly property int lowUsageAlertRemainingPercent: root.usageLeftPercent(root.lowUsageAlertUsage)
     readonly property bool lowUsageAlertCritical: root.barLowUsageAlertEnabled && root.lowUsageAlertRemainingPercent === 0
     readonly property bool lowUsageAlertActive: root.barLowUsageAlertEnabled
@@ -243,12 +245,15 @@ Item {
 
         var primary = displayProvider?.usage?.primary;
         var secondary = displayProvider?.usage?.secondary;
+        var tertiary = displayProvider?.usage?.tertiary;
         var status = displayProvider?.status;
         var lines = [name];
         if (primary)
-            lines.push("Session: " + (100 - primary.usedPercent) + "% left");
+            lines.push((displayProvider._windowLabels ? displayProvider._windowLabels.primary : "Primary") + ": " + (100 - primary.usedPercent) + "% left");
         if (secondary)
-            lines.push("Weekly: " + (100 - secondary.usedPercent) + "% left");
+            lines.push((displayProvider._windowLabels ? displayProvider._windowLabels.secondary : "Secondary") + ": " + (100 - secondary.usedPercent) + "% left");
+        if (tertiary)
+            lines.push((displayProvider._windowLabels ? displayProvider._windowLabels.tertiary : "Tertiary") + ": " + (100 - tertiary.usedPercent) + "% left");
         if (status && root.formatStatusText(status) !== "")
             lines.push("Status: " + root.formatStatusText(status));
         return lines.join("\n");

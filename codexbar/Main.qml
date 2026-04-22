@@ -13,20 +13,23 @@ Item {
     property string lastUpdated: ""
     property var previousResets: ({})
     property var previousUsedPercents: ({})
+    property var _lowNotified: ({})
     property bool _cliMissingNotified: false
-    property bool _lastFetchHadJson: false
+    property string rawJsonBuffer: ""
+    property string rawStderrBuffer: ""
+    property int _fetchRequestId: 0
+    property int _timedOutRequestId: -1
 
     readonly property var cfg: pluginApi?.pluginSettings || ({})
     readonly property var defaults: pluginApi?.manifest?.metadata?.defaultSettings || ({})
     readonly property int refreshInterval: root.normalizeRefreshInterval(cfg.refreshInterval ?? defaults.refreshInterval ?? 120)
     readonly property var barTextFields: root.normalizeBarTextFields(cfg.barTextFields ?? defaults.barTextFields ?? ["primary"])
-    readonly property bool shouldFetchStatus: barTextFields.indexOf("status") >= 0
     readonly property bool notifyOnReset: cfg.notifyOnReset ?? defaults.notifyOnReset ?? true
     readonly property bool notifyOnLowUsage: cfg.notifyOnLowUsage ?? defaults.notifyOnLowUsage ?? true
     readonly property int lowUsageThreshold: Math.max(5, Math.min(50, Number(cfg.lowUsageThreshold ?? defaults.lowUsageThreshold ?? 20)))
 
     function normalizeBarTextFields(fields) {
-        var allowed = ["primary", "secondary", "status"];
+        var allowed = ["primary", "secondary", "tertiary", "status"];
         var normalized = [];
         var source = Array.isArray(fields) ? fields : [fields];
 
@@ -95,8 +98,19 @@ Item {
         }
     }
 
-    function isCliErrorPayload(providerData) {
-        return String(providerData?.provider || "") === "cli" && !!providerData?.error;
+    function durationLabel(windowMinutes) {
+        var m = Number(windowMinutes || 0);
+        if (!isFinite(m) || m <= 0)
+            return "";
+        if (m % 1440 === 0)
+            return (m / 1440) + "d";
+        if (m % 60 === 0)
+            return (m / 60) + "h";
+        return m + "m";
+    }
+
+    function isCliErrorPayload(entry) {
+        return String(entry?.provider || "") === "cli" && !!entry?.error;
     }
 
     function refresh() {
@@ -105,7 +119,12 @@ Item {
 
         root.isRefreshing = true;
         root.lastError = "";
+        root.rawJsonBuffer = "";
+        root.rawStderrBuffer = "";
+        root._fetchRequestId += 1;
+        root._timedOutRequestId = -1;
         fetchProcess.running = true;
+        fetchTimeout.restart();
     }
 
     function _looksLikeMissingCli(exitCode, stderrText) {
@@ -116,206 +135,38 @@ Item {
             || text.indexOf("ENOENT") >= 0;
     }
 
-    function _tryParseJsonValue(text) {
-        try {
-            return {
-                "ok": true,
-                "value": JSON.parse(text)
-            };
-        } catch (error) {
-            return {
-                "ok": false,
-                "error": error
-            };
-        }
-    }
-
-    function _extractLikelyJsonFragment(text) {
-        var source = String(text || "");
-        var firstBrace = source.indexOf("{");
-        var firstBracket = source.indexOf("[");
-        var start = -1;
-
-        if (firstBrace >= 0 && firstBracket >= 0)
-            start = Math.min(firstBrace, firstBracket);
-        else if (firstBrace >= 0)
-            start = firstBrace;
-        else if (firstBracket >= 0)
-            start = firstBracket;
-
-        if (start < 0)
-            return "";
-
-        var lastBrace = source.lastIndexOf("}");
-        var lastBracket = source.lastIndexOf("]");
-        var end = -1;
-        if (lastBrace >= 0 && lastBracket >= 0)
-            end = Math.max(lastBrace, lastBracket);
-        else if (lastBrace >= 0)
-            end = lastBrace;
-        else if (lastBracket >= 0)
-            end = lastBracket;
-
-        if (end < start)
-            return "";
-        return source.slice(start, end + 1);
-    }
-
-    function parseCodexbarOutput(rawText) {
-        var trimmed = String(rawText || "").trim();
-        if (trimmed === "")
-            return {
-                "ok": false,
-                "error": "empty output"
-            };
-
-        var parsedFull = root._tryParseJsonValue(trimmed);
-        if (parsedFull.ok) {
-            return {
-                "ok": true,
-                "value": parsedFull.value
-            };
-        }
-
-        var lines = trimmed.split(/\r?\n/);
-        var values = [];
-        for (var index = 0; index < lines.length; index++) {
-            var line = String(lines[index] || "").trim();
-            if (line === "")
-                continue;
-
-            var parsedLine = root._tryParseJsonValue(line);
-            if (parsedLine.ok) {
-                values.push(parsedLine.value);
-                continue;
-            }
-
-            var fragment = root._extractLikelyJsonFragment(line);
-            if (fragment === "")
-                continue;
-
-            var parsedFrag = root._tryParseJsonValue(fragment);
-            if (parsedFrag.ok)
-                values.push(parsedFrag.value);
-        }
-
-        if (values.length === 0) {
-            return {
-                "ok": false,
-                "error": parsedFull.error ? String(parsedFull.error) : "parse error"
-            };
-        }
-
-        if (values.length === 1) {
-            return {
-                "ok": true,
-                "value": values[0]
-            };
-        }
-
-        var merged = [];
-        for (var v = 0; v < values.length; v++) {
-            var value = values[v];
-            if (Array.isArray(value))
-                merged = merged.concat(value);
-            else
-                merged.push(value);
-        }
-
-        return {
-            "ok": true,
-            "value": merged
-        };
-    }
-
-    Process {
-        id: fetchProcess
-
-        property var _command: {
-            var script = "codexbar_path=$(command -v codexbar 2>/dev/null) || exit 127; exec \"$codexbar_path\" --format json";
-            if (root.shouldFetchStatus)
-                script += " --status";
-            return ["sh", "-c", script];
-        }
-        command: _command
-
-        stdout: StdioCollector {
-            id: fetchStdout
-            onStreamFinished: {
-                var rawOutput = String(this.text || "");
-                var output = rawOutput.trim();
-                if (!output) {
-                    root.isRefreshing = false;
-                    root._lastFetchHadJson = false;
-                    return;
-                }
-
-                var parsed = root.parseCodexbarOutput(rawOutput);
-                if (!parsed.ok) {
-                    root._lastFetchHadJson = false;
-                    Logger.e("CodexBar", "Failed to parse JSON: " + parsed.error);
-                    root.lastError = pluginApi?.tr("errors.cliParseFailed") || "Failed to parse JSON output";
-                } else {
-                    root._lastFetchHadJson = true;
-                    var data = parsed.value;
-                    var providers = Array.isArray(data) ? data : [data];
-                    root._handleProviderData(providers);
-                }
-                root.isRefreshing = false;
-            }
-        }
-
-        stderr: StdioCollector {
-            id: fetchStderr
-            onStreamFinished: {
-                var err = this.text.trim();
-                if (err) {
-                    Logger.w("CodexBar", "stderr: " + err);
-                    if (!root.lastError)
-                        root.lastError = err;
-                }
-            }
-        }
-
-        onExited: function (exitCode, exitStatus) {
-            if (exitCode !== 0) {
-                var stderrText = String(fetchStderr?.text || "").trim();
-                if (root._looksLikeMissingCli(exitCode, stderrText)) {
-                    root.lastError = pluginApi?.tr("errors.cliMissing");
-                    if (!root._cliMissingNotified) {
-                        root._cliMissingNotified = true;
-                        ToastService.showNotice(
-                            pluginApi?.tr("errors.cliMissingTitle"),
-                            pluginApi?.tr("errors.cliMissingBody"),
-                            "external-link"
-                        );
-                    }
-                } else if (root._lastFetchHadJson) {
-                    // codexbar may exit non-zero when providers contain errors, but still emit valid JSON.
-                    // Prefer rendering provider-level errors in the UI over showing a generic exit code.
-                } else if (!root.lastError) {
-                    root.lastError = "Exit code " + exitCode;
-                }
-                Logger.w("CodexBar", "codexbar exited with code " + exitCode);
-            } else {
-                root._cliMissingNotified = false;
-            }
-            root.isRefreshing = false;
-        }
-    }
-
-    function _handleProviderData(providers) {
+    function normalizeProvidersPayload(providers) {
         var newResets = ({});
         var newUsedPercents = ({});
         var filteredProviders = [];
         var now = Date.now();
+
         for (var i = 0; i < providers.length; i++) {
             var p = providers[i];
+            if (!p || typeof p !== "object" || !p.provider) {
+                if (p && p.error)
+                    root.lastError = String(p.error.message || p.error || "").trim();
+                continue;
+            }
+
             if (root.isCliErrorPayload(p)) {
                 var cliMessage = String(p.error?.message || "").trim();
                 if (cliMessage !== "")
                     root.lastError = cliMessage;
                 continue;
+            }
+
+            p._windowLabels = ({});
+            var roles = ["primary", "secondary", "tertiary"];
+            for (var r = 0; r < roles.length; r++) {
+                var role = roles[r];
+                var win = p.usage ? p.usage[role] : null;
+                if (win) {
+                    var label = root.durationLabel(win.windowMinutes);
+                    if (!label && win.resetDescription)
+                        label = String(win.resetDescription).trim();
+                    p._windowLabels[role] = label || (role.charAt(0).toUpperCase() + role.slice(1));
+                }
             }
 
             var providerId = String(p.provider || "");
@@ -375,7 +226,100 @@ Item {
         root.lastUpdated = new Date().toISOString();
     }
 
-    property var _lowNotified: ({})
+    Process {
+        id: fetchProcess
+
+        property var _command: {
+            var script = "codexbar_path=$(command -v codexbar 2>/dev/null) || exit 127; exec \"$codexbar_path\" --format json --status";
+            return ["sh", "-c", script];
+        }
+        command: _command
+
+        stdout: StdioCollector {
+            id: fetchStdout
+            onStreamFinished: {
+                root.rawJsonBuffer = String(this.text || "");
+            }
+        }
+
+        stderr: StdioCollector {
+            id: fetchStderr
+            onStreamFinished: {
+                var err = String(this.text || "").trim();
+                if (err) {
+                    Logger.w("CodexBar", "stderr: " + err);
+                    root.rawStderrBuffer = err;
+                }
+            }
+        }
+
+        onExited: function (exitCode, exitStatus) {
+            var exitedRequestId = root._fetchRequestId;
+            fetchTimeout.stop();
+            root.isRefreshing = false;
+
+            if (root._timedOutRequestId === exitedRequestId) {
+                root._timedOutRequestId = -1;
+                root.rawJsonBuffer = "";
+                root.rawStderrBuffer = "";
+                return;
+            }
+
+            if (exitCode === 0 && root.rawJsonBuffer.length > 0) {
+                try {
+                    var payload = JSON.parse(root.rawJsonBuffer);
+                    var list = Array.isArray(payload) ? payload : [payload];
+                    root.normalizeProvidersPayload(list);
+
+                    var first = list.length > 0 ? list[0] : null;
+                    if (first && first.error && !first.usage && !root.lastError) {
+                        root.lastError = first.error.message || "Failed to fetch usage from provider.";
+                    }
+                } catch (parseError) {
+                    root.lastError = root.rawStderrBuffer.length > 0
+                        ? root.rawStderrBuffer
+                        : pluginApi?.tr("errors.cliParseFailed") || "Failed to parse CodexBar output.";
+                    Logger.e("CodexBar", "JSON parse error: " + parseError);
+                }
+            } else if (exitCode !== 0) {
+                var stderrText = root.rawStderrBuffer;
+                if (root._looksLikeMissingCli(exitCode, stderrText)) {
+                    root.lastError = pluginApi?.tr("errors.cliMissing");
+                    if (!root._cliMissingNotified) {
+                        root._cliMissingNotified = true;
+                        ToastService.showNotice(
+                            pluginApi?.tr("errors.cliMissingTitle"),
+                            pluginApi?.tr("errors.cliMissingBody"),
+                            "external-link"
+                        );
+                    }
+                } else if (!root.lastError) {
+                    root.lastError = stderrText.length > 0 ? stderrText : "Exit code " + exitCode;
+                }
+                Logger.w("CodexBar", "codexbar exited with code " + exitCode);
+            } else {
+                root._cliMissingNotified = false;
+            }
+
+            root.rawJsonBuffer = "";
+            root.rawStderrBuffer = "";
+        }
+    }
+
+    Timer {
+        id: fetchTimeout
+        interval: 20000
+        repeat: false
+        onTriggered: {
+            if (fetchProcess.running) {
+                root._timedOutRequestId = root._fetchRequestId;
+                fetchProcess.running = false;
+                root.isRefreshing = false;
+                root.lastError = "codexbar timed out while fetching usage data.";
+                Logger.w("CodexBar", "Fetch timed out after " + interval + "ms");
+            }
+        }
+    }
 
     Timer {
         id: updateTimer
@@ -392,11 +336,6 @@ Item {
                 running = true;
             }
         }
-    }
-
-    onShouldFetchStatusChanged: {
-        if (!root.isRefreshing && Array.isArray(root.providerData) && root.providerData.length > 0)
-            root.refresh();
     }
 
     IpcHandler {

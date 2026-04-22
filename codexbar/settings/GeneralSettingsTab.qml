@@ -309,7 +309,7 @@ SettingsTabPage {
             enabled: rootSettings?.editBarLowUsageAlertEnabled ?? false
             onSelected: key => {
                 if (rootSettings)
-                    rootSettings.editBarLowUsageAlertWindow = key === "secondary" ? "secondary" : "primary";
+                    rootSettings.editBarLowUsageAlertWindow = (key === "secondary" || key === "tertiary") ? key : "primary";
             }
         }
 
