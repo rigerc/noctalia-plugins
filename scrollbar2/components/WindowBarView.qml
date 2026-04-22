@@ -47,6 +47,8 @@ Item {
     property var liveSegmentSnapshots: ({})
     property int closingEntryUidSeed: 0
     property var previousGlobalEntryKeys: []
+    property var entries: []
+    property var pinnedEntries: []
 
     Timer {
         id: dragCleanupTimer
@@ -304,12 +306,67 @@ Item {
         return source.map(normalizeStyleRule);
     }
 
-    function ruleMatchSubject(entry, matchField) {
+    function refreshEntriesCache() {
+        if (!mainInstance) {
+            entries = [];
+            return;
+        }
+        const nextEntries = mainInstance.getFilteredEntryKeys(screenName, onlySameOutput, onlyActiveWorkspaces) || [];
+        if (settingValue("debug", "logging", false) === true && !_sameStringList(entries, nextEntries)) {
+            Logger.d("Scrollbar2", "WindowBarView entries updated: screen=" + screenName + " onlySameOutput=" + String(onlySameOutput) + " onlyActiveWorkspaces=" + String(onlyActiveWorkspaces) + " entries=[" + nextEntries.join(",") + "]");
+        }
+        entries = nextEntries;
+    }
+
+    function refreshPinnedEntriesCache() {
+        if (!mainInstance) {
+            pinnedEntries = [];
+            return;
+        }
+        const source = mainInstance.getVisiblePinnedApps(screenName, onlySameOutput, onlyActiveWorkspaces) || [];
+        pinnedEntries = source.filter(function (item) {
+            return !(pinnedAppsHideWhenActive && item?.hasVisibleWindows);
+        });
+    }
+
+    function entryKeyOf(entry) {
+        if (typeof entry === "string")
+            return String(entry);
+        return String(entry?.entryKey || "");
+    }
+
+    function entryRecord(entry) {
+        entryStateRev;
+        const entryKey = entryKeyOf(entry);
+        if (entryKey === "")
+            return null;
+        return mainInstance?.getEntryRecord(entryKey) || null;
+    }
+
+    function entryAppId(entry) {
+        return String(entryRecord(entry)?.appId || "");
+    }
+
+    function entryCanonicalAppId(entry) {
+        const record = entryRecord(entry);
+        return String(record?.canonicalAppId || mainInstance?.resolveToDesktopEntryId(record?.appId || "") || record?.appId || "");
+    }
+
+    function entryHasSharedTitle(entry) {
+        titleRev;
+        const entryKey = entryKeyOf(entry);
+        if (entryKey === "")
+            return false;
+        return mainInstance?.entryHasSharedTitle(entryKey) === true;
+    }
+
+    function ruleMatchSubject(entryKey, matchField) {
+        const entry = entryRecord(entryKey);
         if (!entry)
             return "";
         const normalizedMatchField = normalizeStyleRuleMatchField(matchField);
         if (normalizedMatchField === "title")
-            return currentTitle(entry);
+            return currentTitle(entryKey);
         if (normalizedMatchField === "tag")
             return Array.isArray(entry?.tags) ? entry.tags.join(" ") : "";
         if (normalizedMatchField === "floating")
@@ -319,13 +376,15 @@ Item {
         if (normalizedMatchField === "grouped")
             return entry?.isGrouped ? "grouped" : "";
         if (normalizedMatchField === "sharedAppId")
-            return entry?.sharesAppIdentity ? String(entry?.canonicalAppId || mainInstance?.resolveToDesktopEntryId(entry?.appId || "") || entry?.appId || "") : "";
+            return entry?.sharesAppIdentity ? entryCanonicalAppId(entryKey) : "";
         if (normalizedMatchField === "sharedTitle")
-            return entry?.sharesTitleIdentity ? currentTitle(entry) : "";
-        return String(entry?.canonicalAppId || mainInstance?.resolveToDesktopEntryId(entry?.appId || "") || entry?.appId || "");
+            return entryHasSharedTitle(entryKey) ? currentTitle(entryKey) : "";
+        return entryCanonicalAppId(entryKey);
     }
 
-    function matchingStyleRule(entry) {
+    function matchingStyleRule(entryKey) {
+        if (!entryKey)
+            return null;
         const rules = styleRuleItems();
         for (let index = 0; index < rules.length; index++) {
             const rule = rules[index];
@@ -334,7 +393,7 @@ Item {
             if (!rule?.enabled)
                 continue;
 
-            const subject = ruleMatchSubject(entry, rule.matchField);
+            const subject = ruleMatchSubject(entryKey, rule.matchField);
             if (subject === "")
                 continue;
             if (pattern === "") {
@@ -359,10 +418,7 @@ Item {
     }
 
     function styleRuleStateValue(entryKey, groupKey, stateKey) {
-        const entry = entries.find(function (candidate) {
-            return candidate?.entryKey === entryKey;
-        }) || null;
-        const matchingRule = matchingStyleRule(entry);
+        const matchingRule = matchingStyleRule(entryKey);
         if (!matchingRule)
             return null;
         return matchingRule.colors?.[groupKey]?.[stateKey] ?? null;
@@ -381,10 +437,7 @@ Item {
     }
 
     function customStyleRuleForEntry(entryKey) {
-        const entry = entries.find(function (candidate) {
-            return candidate?.entryKey === entryKey;
-        }) || null;
-        return matchingStyleRule(entry);
+        return matchingStyleRule(entryKey);
     }
 
     function customRuleIconName(entryKey) {
@@ -636,22 +689,13 @@ Item {
     readonly property bool windowOpenAnimationActive: windowAnimationEnabled && windowOpenAnimationEnabled && windowAnimationSpeed > 0
     readonly property bool windowCloseAnimationActive: windowAnimationEnabled && windowCloseAnimationEnabled && windowAnimationSpeed > 0
 
-    readonly property int revisionToken: (mainInstance?.structureRevision ?? 0) + (mainInstance?.liveRevision ?? 0) + (mainInstance?.titleRevision ?? 0) + (mainInstance?.workspaceRevision ?? 0) + (mainInstance?.activeSpecialRevision ?? 0)
-    readonly property var entries: {
-        revisionToken;
-        if (!mainInstance)
-            return [];
-        return mainInstance.getFilteredEntries(screenName, onlySameOutput, onlyActiveWorkspaces) || [];
-    }
-    readonly property var pinnedEntries: {
-        revisionToken;
-        if (!mainInstance)
-            return [];
-        const source = mainInstance.getVisiblePinnedApps(screenName, onlySameOutput, onlyActiveWorkspaces) || [];
-        return source.filter(function (item) {
-            return !(pinnedAppsHideWhenActive && item?.hasVisibleWindows);
-        });
-    }
+    readonly property int entryModelRev: mainInstance?.entryModelRevision ?? 0
+    readonly property int entryStateRev: mainInstance?.entryStateRevision ?? 0
+    readonly property int titleRev: mainInstance?.titleRevision ?? 0
+    readonly property int liveRev: mainInstance?.liveRevision ?? 0
+    readonly property int workspaceRev: mainInstance?.workspaceRevision ?? 0
+    readonly property int activeSpecialRev: mainInstance?.activeSpecialRevision ?? 0
+    readonly property int specialWorkspaceRevisionToken: workspaceRev + activeSpecialRev
     readonly property var activeWorkspace: mainInstance?.resolveWorkspaceForScreen(screenName) ?? null
     readonly property string activeWorkspaceIdText: {
         if (!activeWorkspace)
@@ -749,10 +793,11 @@ Item {
     readonly property real leftAccessoryWidth: (showWorkspaceIndicator && workspaceIndicatorPosition === "left" ? totalIndicatorWidth : 0) + (pinnedSegmentCount > 0 && pinnedAppsPosition === "left" ? pinnedAreaWidth : 0)
     readonly property real rightAccessoryWidth: (showWorkspaceIndicator && workspaceIndicatorPosition === "right" ? totalIndicatorWidth : 0) + (pinnedSegmentCount > 0 && pinnedAppsPosition === "right" ? pinnedAreaWidth : 0)
     readonly property int focusedIndex: {
+        liveRev;
         if (!mainInstance?.activeEntryKey)
             return -1;
         for (let i = 0; i < entries.length; i++) {
-            if (entries[i]?.entryKey === mainInstance.activeEntryKey)
+            if (entries[i] === mainInstance.activeEntryKey)
                 return i;
         }
         return -1;
@@ -928,12 +973,9 @@ Item {
     }
 
     function currentGlobalEntryKeys() {
-        const source = mainInstance?.allEntries || [];
-        return source.map(function (entry) {
-            return String(entry?.entryKey || "");
-        }).filter(function (entryKey) {
-            return entryKey !== "";
-        });
+        entryModelRev;
+        const source = mainInstance?.entryOrder || [];
+        return Array.isArray(source) ? source.slice() : [];
     }
 
     function specialWorkspaceOverlayTransitionOffset() {
@@ -1019,8 +1061,8 @@ Item {
     }
 
     function syncEntryLifecycle() {
-        const activeKeys = (entries || []).map(function (entry) {
-            return String(entry?.entryKey || "");
+        const activeKeys = (entries || []).map(function (entryKey) {
+            return String(entryKey ?? "");
         }).filter(function (entryKey) {
             return entryKey !== "";
         });
@@ -1084,7 +1126,24 @@ Item {
     onWorkspaceIndicatorTextChanged: updateWorkspaceIndicatorPresentation()
     onWorkspaceIndicatorBadgeCountChanged: updateWorkspaceIndicatorPresentation()
     onSpecialWorkspaceOverlayLabelTextChanged: updateSpecialWorkspaceOverlayPresentation()
-    onRevisionTokenChanged: updateSpecialWorkspaceOverlayPresentation()
+    onSpecialWorkspaceRevisionTokenChanged: updateSpecialWorkspaceOverlayPresentation()
+    onScreenNameChanged: {
+        refreshEntriesCache();
+        refreshPinnedEntriesCache();
+    }
+    onOnlySameOutputChanged: {
+        refreshEntriesCache();
+        refreshPinnedEntriesCache();
+    }
+    onOnlyActiveWorkspacesChanged: {
+        refreshEntriesCache();
+        refreshPinnedEntriesCache();
+    }
+    onPinnedAppsHideWhenActiveChanged: refreshPinnedEntriesCache()
+    onMainInstanceChanged: {
+        refreshEntriesCache();
+        refreshPinnedEntriesCache();
+    }
     onWindowCloseAnimationActiveChanged: {
         if (!windowCloseAnimationActive) {
             closingEntries = [];
@@ -1092,6 +1151,8 @@ Item {
         }
     }
     Component.onCompleted: {
+        refreshEntriesCache();
+        refreshPinnedEntriesCache();
         syncEntryLifecycle();
         updateWorkspaceIndicatorPresentation();
         updateSpecialWorkspaceOverlayPresentation();
@@ -1230,7 +1291,13 @@ Item {
     function focusedEntry() {
         if (focusedIndex < 0 || focusedIndex >= entries.length)
             return null;
-        return entries[focusedIndex];
+        return entryRecord(entries[focusedIndex]);
+    }
+
+    function focusedEntryKey() {
+        if (focusedIndex < 0 || focusedIndex >= entries.length)
+            return "";
+        return String(entries[focusedIndex] || "");
     }
 
     function horizontalAlignment(alignKey) {
@@ -1273,11 +1340,11 @@ Item {
     }
 
     function currentTitle(entry) {
-        if (!entry)
+        titleRev;
+        const entryKey = entryKeyOf(entry);
+        if (!entryKey)
             return "";
-        if (mainInstance?.titleEntriesByKey && mainInstance.titleEntriesByKey[entry.entryKey] !== undefined)
-            return mainInstance.titleEntriesByKey[entry.entryKey];
-        return entry.fallbackTitle || "";
+        return mainInstance?.getEntryTitle(entryKey) || "";
     }
 
     function clearDragState() {
@@ -1291,7 +1358,7 @@ Item {
 
     function entryIndexByKey(entryKey) {
         for (let i = 0; i < entries.length; i++) {
-            if (entries[i]?.entryKey === entryKey)
+            if (entries[i] === entryKey)
                 return i;
         }
         return -1;
@@ -1307,12 +1374,8 @@ Item {
         if (!sourceEntryKey || !targetEntryKey || sourceEntryKey === targetEntryKey)
             return false;
 
-        const sourceEntry = entries.find(function (candidate) {
-            return candidate?.entryKey === sourceEntryKey;
-        }) || null;
-        const targetEntry = entries.find(function (candidate) {
-            return candidate?.entryKey === targetEntryKey;
-        }) || null;
+        const sourceEntry = entryRecord(sourceEntryKey);
+        const targetEntry = entryRecord(targetEntryKey);
         if (!sourceEntry || !targetEntry)
             return false;
         if (sourceEntry?.isFloating || targetEntry?.isFloating)
@@ -1348,18 +1411,18 @@ Item {
         if (normalizedIndex < 0 || normalizedIndex === sourceIndex)
             return false;
 
-        const remainingEntries = entries.filter(function (entry) {
-            return entry?.entryKey !== sourceEntryKey;
+        const remainingEntries = entries.filter(function (entryKey) {
+            return entryKey !== sourceEntryKey;
         });
         const insertIndex = Math.max(0, Math.min(remainingEntries.length, normalizedIndex));
-        const previousNeighbor = insertIndex > 0 ? remainingEntries[insertIndex - 1] : null;
-        const nextNeighbor = insertIndex < remainingEntries.length ? remainingEntries[insertIndex] : null;
+        const previousNeighbor = insertIndex > 0 ? String(remainingEntries[insertIndex - 1] || "") : "";
+        const nextNeighbor = insertIndex < remainingEntries.length ? String(remainingEntries[insertIndex] || "") : "";
 
         if (!previousNeighbor && !nextNeighbor)
             return false;
-        if (previousNeighbor && !canDropOnEntry(sourceEntryKey, previousNeighbor.entryKey))
+        if (previousNeighbor && !canDropOnEntry(sourceEntryKey, previousNeighbor))
             return false;
-        if (nextNeighbor && !canDropOnEntry(sourceEntryKey, nextNeighbor.entryKey))
+        if (nextNeighbor && !canDropOnEntry(sourceEntryKey, nextNeighbor))
             return false;
 
         return mainInstance?.canReorderToIndex(sourceEntryKey, normalizedIndex, screenName, onlySameOutput, onlyActiveWorkspaces) === true;
@@ -1782,8 +1845,8 @@ Item {
                 required property var modelData
                 required property int index
 
-                readonly property string entryKey: modelData.entryKey ?? ""
-                readonly property string title: root.currentTitle(modelData)
+                readonly property string entryKey: String(modelData || "")
+                readonly property string title: root.currentTitle(entryKey)
                 readonly property bool showLabel: root.labelVisible(entryKey)
                 readonly property bool reorderable: root.canDragEntry(entryKey)
                 readonly property var styleRule: root.customStyleRuleForEntry(entryKey)
@@ -1810,7 +1873,7 @@ Item {
                             "y": segmentItem.y + segmentsRow.y,
                             "width": segmentItem.width,
                             "height": segmentItem.height,
-                            "appId": String(segmentItem.modelData?.appId ?? ""),
+                            "appId": root.entryAppId(segmentItem.entryKey),
                             "title": segmentItem.title,
                             "showLabel": segmentItem.showLabel,
                             "backgroundColor": root.segmentBackgroundColor(segmentItem.entryKey),
@@ -2079,7 +2142,7 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 anchors.horizontalCenterOffset: Math.round((parent.width - width) * (root.iconAnchor(root.iconAlign) - 0.5))
-                                source: ThemeIcons.iconForAppId(segmentItem.modelData.appId)
+                                source: ThemeIcons.iconForAppId(root.entryAppId(segmentItem.entryKey))
                                 smooth: true
                                 asynchronous: true
                                 visible: status === Image.Ready && customRuleIcon.visible === false
@@ -2301,7 +2364,7 @@ Item {
                             root.mainInstance?.closeEntry(segmentItem.entryKey);
                         } else if (mouse.button === Qt.RightButton) {
                             TooltipService.hide();
-                            root.openContextMenu(segmentItem, segmentItem.modelData);
+                            root.openContextMenu(segmentItem, root.entryRecord(segmentItem.entryKey));
                         } else if (mouse.button === Qt.LeftButton) {
                             root.mainInstance?.focusEntry(segmentItem.entryKey);
                         }
@@ -2407,7 +2470,7 @@ Item {
             }
 
             if (nextIndex >= 0 && nextIndex < root.segmentCount) {
-                root.mainInstance?.focusEntry(root.entries[nextIndex].entryKey);
+                root.mainInstance?.focusEntry(root.entries[nextIndex]);
                 wheel.accepted = true;
             }
         }
@@ -2840,7 +2903,7 @@ Item {
                 IconImage {
                     id: centeredIcon
                     anchors.fill: parent
-                    source: ThemeIcons.iconForAppId(root.focusedEntry()?.appId ?? "")
+                    source: ThemeIcons.iconForAppId(root.entryAppId(root.focusedEntryKey()))
                     smooth: true
                     asynchronous: true
                     visible: status === Image.Ready
@@ -2858,7 +2921,7 @@ Item {
                 NText {
                     anchors.centerIn: parent
                     visible: !centeredIcon.visible
-                    text: root.currentTitle(root.focusedEntry()).length > 0 ? root.currentTitle(root.focusedEntry()).charAt(0).toUpperCase() : "?"
+                    text: root.currentTitle(root.focusedEntryKey()).length > 0 ? root.currentTitle(root.focusedEntryKey()).charAt(0).toUpperCase() : "?"
                     pointSize: Math.max(Style.fontSizeXS, root.titleFontSize * root.titleScale * 0.95)
                     font.weight: Style.fontWeightBold
                     color: Qt.alpha(root.iconColorFocused, root.iconColorFocusedOpacity)
@@ -2867,7 +2930,7 @@ Item {
 
             NText {
                 visible: root.showTitle
-                text: root.currentTitle(root.focusedEntry())
+                text: root.currentTitle(root.focusedEntryKey())
                 elide: Text.ElideRight
                 maximumLineCount: 1
                 color: Qt.alpha(root.titleColorFocused, root.titleColorFocusedOpacity)
@@ -2964,9 +3027,24 @@ Item {
     Connections {
         target: mainInstance
 
-        function onStructureRevisionChanged() {
+        function onEntryModelRevisionChanged() {
+            root.refreshEntriesCache();
+            root.refreshPinnedEntriesCache();
             root.hoveredEntryKey = "";
             root.hoveredPinnedAppId = "";
+        }
+
+        function onEntryStateRevisionChanged() {
+            root.refreshPinnedEntriesCache();
+        }
+
+        function onWorkspaceRevisionChanged() {
+            root.refreshEntriesCache();
+            root.refreshPinnedEntriesCache();
+        }
+
+        function onCurrentSettingsChanged() {
+            root.refreshPinnedEntriesCache();
         }
     }
 

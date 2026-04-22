@@ -1,0 +1,52 @@
+name: Update README
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'registry.json'
+      - 'README.md.tmpl'
+      - '.github/workflows/update-readme.yml'
+  workflow_dispatch:
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    if: ${{ github.repository == 'rigerc/noctalia-plugins' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install gomplate
+        run: |
+          curl -sL https://github.com/hairyhenderson/gomplate/releases/latest/download/gomplate_linux-amd64 -o /usr/local/bin/gomplate
+          chmod +x /usr/local/bin/gomplate
+
+      - name: Generate README
+        run: gomplate -d registry=registry.json -f README.md.tmpl -o README.md
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if git diff --quiet README.md; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "No changes to README.md"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Changes detected in README.md"
+          fi
+
+      - name: Commit and push changes
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add README.md
+          git commit -m "chore: update README.md from registry [skip ci]"
+          git push

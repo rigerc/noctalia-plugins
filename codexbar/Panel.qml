@@ -17,6 +17,33 @@ Item {
 
     readonly property var mainInstance: pluginApi?.mainInstance
 
+    function formatResetsCountdown(resetsAt) {
+        if (!resetsAt)
+            return "";
+        var d = new Date(resetsAt);
+        var diff = (d.getTime() - Date.now()) / 1000;
+        if (diff <= 0)
+            return pluginApi?.tr("panel.resetsNow") || "Now";
+        var h = Math.floor(diff / 3600);
+        var m = Math.floor((diff % 3600) / 60);
+        if (h > 0)
+            return h + "h " + m + "m";
+        return m + "m";
+    }
+
+    function formatProviderError(errorValue) {
+        if (!errorValue)
+            return "";
+        var message = String(errorValue.message || "").trim();
+        if (message !== "")
+            return message;
+        try {
+            return JSON.stringify(errorValue);
+        } catch (_e) {
+            return String(errorValue);
+        }
+    }
+
     anchors.fill: parent
 
     Rectangle {
@@ -70,10 +97,13 @@ Item {
                         delegate: NBox {
                             required property var modelData
                             Layout.fillWidth: true
+                            implicitHeight: cardBody.implicitHeight + Style.marginL * 2
 
                             ColumnLayout {
-                                width: parent.width
-                                spacing: Style.marginM
+                                id: cardBody
+                                anchors.fill: parent
+                                anchors.margins: Style.marginL
+                                spacing: Style.marginL
 
                                 RowLayout {
                                     Layout.fillWidth: true
@@ -103,15 +133,129 @@ Item {
                                     }
                                 }
 
+                                NBox {
+                                    Layout.fillWidth: true
+                                    visible: !!modelData.error
+                                    implicitHeight: errorBody.implicitHeight + Style.marginM * 2
+
+                                    ColumnLayout {
+                                        id: errorBody
+                                        x: Style.marginM
+                                        y: Style.marginM
+                                        width: Math.max(0, parent.width - Style.marginM * 2)
+                                        spacing: Style.marginS
+
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            spacing: Style.marginS
+
+                                            NIcon {
+                                                Layout.preferredWidth: Style.fontSizeM
+                                                Layout.preferredHeight: Style.fontSizeM
+                                                icon: "alert-triangle"
+                                                color: Color.mError
+                                            }
+
+                                            NText {
+                                                Layout.fillWidth: true
+                                                text: pluginApi?.tr("panel.providerError")
+                                                pointSize: Style.fontSizeS
+                                                color: Color.mError
+                                                font.weight: Font.Medium
+                                            }
+                                        }
+
+                                        NText {
+                                            Layout.fillWidth: true
+                                            text: root.formatProviderError(modelData.error)
+                                            pointSize: Style.fontSizeXS
+                                            color: Color.mOnSurfaceVariant
+                                            wrapMode: Text.Wrap
+                                        }
+                                    }
+                                }
+
                                 Loader {
                                     Layout.fillWidth: true
-                                    active: modelData.usage?.primary != null
+                                    active: modelData.usage?.secondary != null
                                     visible: active
 
                                     sourceComponent: Component {
                                         ColumnLayout {
                                             width: parent.width
-                                            spacing: Style.marginS
+                                            spacing: Style.marginL
+
+                                            RowLayout {
+                                                Layout.fillWidth: true
+
+                                                NText {
+                                                    text: pluginApi?.tr("panel.usage") + " (weekly)"
+                                                    pointSize: Style.fontSizeM
+                                                    color: Color.mOnSurfaceVariant
+                                                }
+
+                                                Item {
+                                                    Layout.fillWidth: true
+                                                }
+
+                                                NText {
+                                                    text: (100 - modelData.usage.secondary.usedPercent) + "% " + pluginApi?.tr("panel.left")
+                                                    pointSize: Style.fontSizeM
+                                                    color: Color.mOnSurface
+                                                    font.weight: Font.Medium
+                                                }
+                                            }
+
+                                            Rectangle {
+                                                Layout.fillWidth: true
+                                                Layout.preferredHeight: 6 * Style.uiScaleRatio
+                                                radius: 3 * Style.uiScaleRatio
+                                                color: Color.mSurfaceVariant
+
+                                                Rectangle {
+                                                    anchors.left: parent.left
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                    width: parent.width * (modelData.usage.secondary.usedPercent / 100)
+                                                    height: parent.height
+                                                    radius: parent.radius
+                                                    color: Color.mPrimary
+                                                }
+                                            }
+
+                                            RowLayout {
+                                                Layout.fillWidth: true
+                                                visible: !!modelData.usage?.secondary?.resetsAt
+
+                                                NText {
+                                                    text: pluginApi?.tr("panel.resetsAt") + ":"
+                                                    pointSize: Style.fontSizeS
+                                                    color: Color.mOnSurfaceVariant
+                                                }
+
+                                                Item {
+                                                    Layout.fillWidth: true
+                                                }
+
+                                                NText {
+                                                    text: root.formatResetsCountdown(modelData.usage?.secondary?.resetsAt)
+                                                    pointSize: Style.fontSizeS
+                                                    color: Color.mOnSurface
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Loader {
+                                    Layout.fillWidth: true
+                                    active: modelData.usage?.primary != null
+                                    visible: active
+                                    Layout.topMargin: modelData.usage?.secondary != null ? Style.marginL : 0
+
+                                    sourceComponent: Component {
+                                        ColumnLayout {
+                                            width: parent.width
+                                            spacing: Style.marginL
 
                                             RowLayout {
                                                 Layout.fillWidth: true
@@ -154,25 +298,13 @@ Item {
                                                     }
                                                 }
                                             }
-                                        }
-                                    }
-                                }
-
-                                Loader {
-                                    Layout.fillWidth: true
-                                    active: modelData.usage?.secondary != null
-                                    visible: active
-
-                                    sourceComponent: Component {
-                                        ColumnLayout {
-                                            width: parent.width
-                                            spacing: Style.marginS
 
                                             RowLayout {
                                                 Layout.fillWidth: true
+                                                visible: !!modelData.usage?.primary?.resetsAt
 
                                                 NText {
-                                                    text: pluginApi?.tr("panel.usage") + " (weekly)"
+                                                    text: pluginApi?.tr("panel.resetsAt") + ":"
                                                     pointSize: Style.fontSizeS
                                                     color: Color.mOnSurfaceVariant
                                                 }
@@ -182,25 +314,9 @@ Item {
                                                 }
 
                                                 NText {
-                                                    text: (100 - modelData.usage.secondary.usedPercent) + "% " + pluginApi?.tr("panel.left")
+                                                    text: root.formatResetsCountdown(modelData.usage?.primary?.resetsAt)
                                                     pointSize: Style.fontSizeS
-                                                    color: Color.mOnSurfaceVariant
-                                                }
-                                            }
-
-                                            Rectangle {
-                                                Layout.fillWidth: true
-                                                Layout.preferredHeight: 4 * Style.uiScaleRatio
-                                                radius: 2 * Style.uiScaleRatio
-                                                color: Color.mSurfaceVariant
-
-                                                Rectangle {
-                                                    anchors.left: parent.left
-                                                    anchors.verticalCenter: parent.verticalCenter
-                                                    width: parent.width * (modelData.usage.secondary.usedPercent / 100)
-                                                    height: parent.height
-                                                    radius: parent.radius
-                                                    color: Color.mPrimary
+                                                    color: Color.mOnSurface
                                                 }
                                             }
                                         }
@@ -209,34 +325,7 @@ Item {
 
                                 RowLayout {
                                     Layout.fillWidth: true
-                                    visible: !!modelData.usage?.primary?.resetsAt
-
-                                    NText {
-                                        text: pluginApi?.tr("panel.resetsAt") + ":"
-                                        pointSize: Style.fontSizeS
-                                        color: Color.mOnSurfaceVariant
-                                    }
-
-                                    NText {
-                                        text: {
-                                            var resetsAt = modelData.usage?.primary?.resetsAt;
-                                            if (!resetsAt) return "";
-                                            var d = new Date(resetsAt);
-                                            var diff = (d.getTime() - Date.now()) / 1000;
-                                            if (diff <= 0) return pluginApi?.tr("panel.resetsNow") || "Now";
-                                            var h = Math.floor(diff / 3600);
-                                            var m = Math.floor((diff % 3600) / 60);
-                                            if (h > 0) return h + "h " + m + "m";
-                                            return m + "m";
-                                        }
-                                        pointSize: Style.fontSizeS
-                                        color: Color.mOnSurface
-                                    }
-                                }
-
-                                RowLayout {
-                                    Layout.fillWidth: true
-                                    visible: modelData.credits?.remaining != null
+                                    visible: !!modelData.credits && modelData.credits.remaining != null
 
                                     NText {
                                         text: pluginApi?.tr("panel.credits") + ":"
@@ -245,7 +334,7 @@ Item {
                                     }
 
                                     NText {
-                                        text: String(modelData.credits.remaining)
+                                        text: modelData.credits ? String(modelData.credits.remaining) : ""
                                         pointSize: Style.fontSizeS
                                         color: Color.mOnSurface
                                     }
@@ -273,6 +362,15 @@ Item {
                                         pointSize: Style.fontSizeXS
                                         color: Color.mOnSurface
                                     }
+                                }
+
+                                NButton {
+                                    Layout.alignment: Qt.AlignLeft
+                                    visible: String(modelData.provider || "") === "codex"
+                                    text: pluginApi?.tr("panel.openCodexUsage")
+                                    icon: "external-link"
+                                    outlined: true
+                                    onClicked: Qt.openUrlExternally("https://chatgpt.com/codex/cloud/settings/analytics#usage")
                                 }
                             }
                         }

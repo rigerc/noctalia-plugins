@@ -11,18 +11,20 @@ SettingsTabPage {
 
     property var rootSettings: null
 
-    title: rootSettings?.pluginApi?.tr("settings.config.title") || "Config"
-    description: rootSettings?.pluginApi?.tr("settings.config.description") || "Edit ~/.codexbar/config.json"
+    title: rootSettings?.pluginApi?.tr("settings.config.title")
+    description: rootSettings?.pluginApi?.tr("settings.config.description")
     icon: "settings"
 
     readonly property string homeDir: Quickshell.env("HOME") || ""
     readonly property string configDir: homeDir !== "" ? homeDir + "/.codexbar" : ""
     readonly property string configPath: configDir !== "" ? configDir + "/config.json" : ""
+    readonly property string docsUrl: "https://github.com/steipete/CodexBar/blob/main/docs/configuration.md"
 
     readonly property var providerIds: [
-        "codex", "claude", "cursor", "opencode", "factory", "gemini", "antigravity",
-        "copilot", "zai", "minimax", "kimi", "kilo", "kiro", "vertexai", "augment",
-        "jetbrains", "kimik2", "amp", "ollama", "synthetic", "warp", "openrouter"
+        "codex", "zai", "claude", "cursor", "opencode", "opencodego", "alibaba",
+        "factory", "gemini", "antigravity", "copilot", "minimax", "kimi", "kilo",
+        "kiro", "vertexai", "augment", "jetbrains", "kimik2", "amp", "ollama",
+        "synthetic", "warp", "openrouter", "perplexity", "abacus"
     ]
     readonly property var sourceModes: ["auto", "web", "cli", "oauth", "api"]
     readonly property var cookieSourceModes: ["auto", "manual", "off"]
@@ -50,7 +52,9 @@ SettingsTabPage {
 
     property int versionValue: 1
     property var providers: []
+    property int providersCount: 0
     property string addProviderId: "codex"
+    property string lastCliValidationSummary: ""
 
     component SectionBox: NBox {
         id: section
@@ -73,8 +77,18 @@ SettingsTabPage {
         statusTimer.restart();
     }
 
+    function setValidationSummary(message, isError) {
+        tab.lastCliValidationSummary = message;
+        validationStatus.text = message;
+        validationStatus.color = isError ? Color.mError : Color.mPrimary;
+    }
+
     function markDirty() {
         tab.isDirty = true;
+    }
+
+    function syncProvidersCount() {
+        tab.providersCount = Array.isArray(tab.providers) ? tab.providers.length : 0;
     }
 
     function parseJsonOrNull(text) {
@@ -233,6 +247,7 @@ SettingsTabPage {
             };
         });
 
+        tab.syncProvidersCount();
         tab.isDirty = false;
         tab.syncJsonFromModel();
         return true;
@@ -300,6 +315,7 @@ SettingsTabPage {
             "tokenAccounts": null
         });
         tab.providers = next;
+        tab.syncProvidersCount();
         tab.markDirty();
         tab.syncJsonFromModel();
         tab.setStatus(rootSettings?.pluginApi?.tr("settings.config.providerAdded"), false);
@@ -309,6 +325,7 @@ SettingsTabPage {
         var next = tab.providers.slice();
         next.splice(index, 1);
         tab.providers = next;
+        tab.syncProvidersCount();
         tab.markDirty();
         tab.syncJsonFromModel();
     }
@@ -322,6 +339,7 @@ SettingsTabPage {
         next[index] = next[toIndex];
         next[toIndex] = tmp;
         tab.providers = next;
+        tab.syncProvidersCount();
         tab.markDirty();
         tab.syncJsonFromModel();
     }
@@ -355,6 +373,86 @@ SettingsTabPage {
         return script;
     }
 
+    function parseCliValidationOutput(outputText) {
+        var trimmed = String(outputText || "").trim();
+        if (trimmed === "")
+            return [];
+
+        var lines = trimmed.split(/\r?\n/);
+        var merged = [];
+        var parsedSomething = false;
+
+        function appendParsed(parsedValue) {
+            parsedSomething = true;
+            if (Array.isArray(parsedValue)) {
+                for (var i = 0; i < parsedValue.length; i++)
+                    merged.push(parsedValue[i]);
+            } else if (parsedValue !== null && parsedValue !== undefined) {
+                merged.push(parsedValue);
+            }
+        }
+
+        try {
+            appendParsed(JSON.parse(trimmed));
+        } catch (_fullError) {
+            for (var lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+                var line = String(lines[lineIndex] || "").trim();
+                if (line === "")
+                    continue;
+                try {
+                    appendParsed(JSON.parse(line));
+                } catch (_lineError) {
+                }
+            }
+        }
+
+        if (!parsedSomething)
+            return null;
+
+        var filtered = [];
+        for (var index = 0; index < merged.length; index++) {
+            var entry = merged[index];
+            if (entry && entry.provider === "cli" && entry.error)
+                continue;
+            filtered.push(entry);
+        }
+        return filtered;
+    }
+
+    function validationSeverity(entry) {
+        return String(entry?.severity || "").toLowerCase();
+    }
+
+    function formatValidationMessage(entries) {
+        if (!entries || entries.length === 0)
+            return rootSettings?.pluginApi?.tr("settings.config.cliValid");
+
+        var first = entries[0];
+        var provider = String(first?.provider || "").trim();
+        var message = String(first?.message || "").trim();
+        if (provider !== "" && message !== "")
+            return provider + ": " + message;
+        if (message !== "")
+            return message;
+        return rootSettings?.pluginApi?.tr("settings.config.cliInvalid");
+    }
+
+    function buildValidateCommand() {
+        return [
+            "sh",
+            "-c",
+            "codexbar_path=$(command -v codexbar 2>/dev/null) || exit 127; exec \"$codexbar_path\" config validate --json-only --format json"
+        ];
+    }
+
+    function runCliValidation() {
+        if (tab.configPath === "" || validateConfigProcess.running)
+            return;
+
+        validateConfigProcess.command = tab.buildValidateCommand();
+        validateConfigProcess.running = true;
+    }
+
     FileView {
         id: configFile
         path: tab.configPath !== "" ? tab.configPath : undefined
@@ -369,12 +467,14 @@ SettingsTabPage {
                 tab.loadModelFromParsed(tab.parseJsonOrNull(tab.defaultTemplate));
                 tab.setStatus(rootSettings?.pluginApi?.tr("settings.config.loadFallback"), false);
             }
+            tab.runCliValidation();
         }
         onLoadFailed: function (error) {
             Logger.w("CodexBar", "Config load error: " + error);
             tab.configContent = tab.defaultTemplate;
             tab.loadModelFromParsed(tab.parseJsonOrNull(tab.defaultTemplate));
             tab.setStatus(rootSettings?.pluginApi?.tr("settings.config.loadFallback"), false);
+            tab.runCliValidation();
         }
     }
 
@@ -391,6 +491,13 @@ SettingsTabPage {
             color: Color.mOnSurfaceVariant
             pointSize: Style.fontSizeXS
             wrapMode: Text.Wrap
+        }
+
+        NButton {
+            text: rootSettings?.pluginApi?.tr("settings.config.openDocs")
+            icon: "external-link"
+            outlined: true
+            onClicked: Qt.openUrlExternally(tab.docsUrl)
         }
     }
 
@@ -429,13 +536,24 @@ SettingsTabPage {
             spacing: Style.marginM
 
             Repeater {
-                model: tab.providers
+                model: tab.providersCount
 
                 delegate: SectionBox {
                     required property int index
-                    required property var modelData
 
+                    readonly property var providerData: tab.providers && index >= 0 && index < tab.providers.length ? tab.providers[index] : ({})
                     property bool showAdvanced: false
+                    property string editRegion: providerData.region ?? ""
+                    property string editWorkspaceId: providerData.workspaceID ?? ""
+                    property string editApiKey: providerData.apiKey ?? ""
+                    property string editCookieHeader: providerData.cookieHeader ?? ""
+
+                    function commitOptionalField(field, value) {
+                        var normalized = value !== "" ? value : null;
+                        if ((providerData[field] ?? null) === normalized)
+                            return;
+                        tab.updateProviderField(index, field, normalized);
+                    }
 
                     RowLayout {
                         Layout.fillWidth: true
@@ -443,7 +561,7 @@ SettingsTabPage {
 
                         NText {
                             Layout.fillWidth: true
-                            text: modelData.id
+                            text: providerData.id || ""
                             color: Color.mOnSurface
                             pointSize: Style.fontSizeM
                             font.weight: Font.Medium
@@ -470,7 +588,7 @@ SettingsTabPage {
 
                     NToggle {
                         label: rootSettings?.pluginApi?.tr("settings.config.enabledField")
-                        checked: modelData.enabled !== false
+                        checked: providerData.enabled !== false
                         onToggled: checked => tab.updateProviderField(index, "enabled", checked)
                     }
 
@@ -478,7 +596,7 @@ SettingsTabPage {
                         Layout.fillWidth: true
                         label: rootSettings?.pluginApi?.tr("settings.config.sourceField")
                         model: tab.sourceModeOptions
-                        currentKey: modelData.source || "auto"
+                        currentKey: providerData.source || "auto"
                         onSelected: key => tab.updateProviderField(index, "source", key)
                     }
 
@@ -486,7 +604,7 @@ SettingsTabPage {
                         Layout.fillWidth: true
                         label: rootSettings?.pluginApi?.tr("settings.config.cookieSourceField")
                         model: tab.cookieSourceModeOptions
-                        currentKey: modelData.cookieSource || "auto"
+                        currentKey: providerData.cookieSource || "auto"
                         onSelected: key => tab.updateProviderField(index, "cookieSource", key)
                     }
 
@@ -504,29 +622,37 @@ SettingsTabPage {
                         NTextInput {
                             Layout.fillWidth: true
                             label: rootSettings?.pluginApi?.tr("settings.config.regionField")
-                            text: modelData.region ?? ""
-                            onTextChanged: tab.updateProviderField(index, "region", text !== "" ? text : null)
+                            text: editRegion
+                            onTextChanged: editRegion = text
+                            onEditingFinished: commitOptionalField("region", editRegion)
+                            onAccepted: commitOptionalField("region", editRegion)
                         }
 
                         NTextInput {
                             Layout.fillWidth: true
                             label: rootSettings?.pluginApi?.tr("settings.config.workspaceField")
-                            text: modelData.workspaceID ?? ""
-                            onTextChanged: tab.updateProviderField(index, "workspaceID", text !== "" ? text : null)
+                            text: editWorkspaceId
+                            onTextChanged: editWorkspaceId = text
+                            onEditingFinished: commitOptionalField("workspaceID", editWorkspaceId)
+                            onAccepted: commitOptionalField("workspaceID", editWorkspaceId)
                         }
 
                         NTextInput {
                             Layout.fillWidth: true
                             label: rootSettings?.pluginApi?.tr("settings.config.apiKeyField")
-                            text: modelData.apiKey ?? ""
-                            onTextChanged: tab.updateProviderField(index, "apiKey", text !== "" ? text : null)
+                            text: editApiKey
+                            onTextChanged: editApiKey = text
+                            onEditingFinished: commitOptionalField("apiKey", editApiKey)
+                            onAccepted: commitOptionalField("apiKey", editApiKey)
                         }
 
                         NTextInput {
                             Layout.fillWidth: true
                             label: rootSettings?.pluginApi?.tr("settings.config.cookieHeaderField")
-                            text: modelData.cookieHeader ?? ""
-                            onTextChanged: tab.updateProviderField(index, "cookieHeader", text !== "" ? text : null)
+                            text: editCookieHeader
+                            onTextChanged: editCookieHeader = text
+                            onEditingFinished: commitOptionalField("cookieHeader", editCookieHeader)
+                            onAccepted: commitOptionalField("cookieHeader", editCookieHeader)
                         }
                     }
                 }
@@ -602,14 +728,14 @@ SettingsTabPage {
             text: rootSettings?.pluginApi?.tr("settings.config.template")
             icon: "file-plus"
             outlined: true
-            enabled: !saveConfigProcess.running
+            enabled: !saveConfigProcess.running && !validateConfigProcess.running
             onClicked: tab.resetToTemplate()
         }
 
         NButton {
-            text: rootSettings?.pluginApi?.tr("settings.config.save") || "Save Config"
+            text: rootSettings?.pluginApi?.tr("settings.config.save")
             icon: "device-floppy"
-            enabled: tab.configIsValid && tab.configPath !== "" && !saveConfigProcess.running
+            enabled: tab.configIsValid && tab.configPath !== "" && !saveConfigProcess.running && !validateConfigProcess.running
             onClicked: {
                 if (!tab.validateConfigContent(true))
                     return;
@@ -620,7 +746,15 @@ SettingsTabPage {
         }
 
         NButton {
-            text: rootSettings?.pluginApi?.tr("settings.config.openEditor") || "Open in Editor"
+            text: rootSettings?.pluginApi?.tr("settings.config.validate")
+            icon: "checkup-list"
+            outlined: true
+            enabled: tab.configPath !== "" && !saveConfigProcess.running && !validateConfigProcess.running
+            onClicked: tab.runCliValidation()
+        }
+
+        NButton {
+            text: rootSettings?.pluginApi?.tr("settings.config.openEditor")
             icon: "external-link"
             outlined: true
             enabled: tab.configPath !== ""
@@ -639,6 +773,15 @@ SettingsTabPage {
         }
     }
 
+    NText {
+        id: validationStatus
+        Layout.fillWidth: true
+        text: tab.lastCliValidationSummary
+        pointSize: Style.fontSizeXS
+        color: Color.mOnSurfaceVariant
+        wrapMode: Text.Wrap
+    }
+
     Process {
         id: saveConfigProcess
         running: false
@@ -646,16 +789,67 @@ SettingsTabPage {
         stdout: StdioCollector {}
         stderr: StdioCollector {
             onStreamFinished: {
-                Logger.w("CodexBar", "Config save stderr: " + this.text);
+                var text = String(this.text || "").trim();
+                if (text !== "")
+                    Logger.d("CodexBar", "Config save stderr: " + text);
             }
         }
 
         onExited: function (exitCode) {
             if (exitCode === 0) {
                 tab.setStatus(rootSettings?.pluginApi?.tr("settings.config.saved"), false);
+                tab.runCliValidation();
             } else {
                 tab.setStatus(rootSettings?.pluginApi?.tr("settings.config.saveFailed") + ": exit " + exitCode, true);
             }
+        }
+    }
+
+    Process {
+        id: validateConfigProcess
+        running: false
+
+        stdout: StdioCollector {
+            id: validateStdout
+        }
+        stderr: StdioCollector {
+            id: validateStderr
+            onStreamFinished: {
+                var text = String(this.text || "").trim();
+                if (text !== "")
+                    Logger.d("CodexBar", "Config validate stderr: " + text);
+            }
+        }
+
+        onExited: function (exitCode) {
+            var entries = tab.parseCliValidationOutput(validateStdout.text);
+            if (entries === null) {
+                var stderrText = String(validateStderr.text || "").trim();
+                tab.setValidationSummary(
+                    stderrText !== "" ? stderrText : rootSettings?.pluginApi?.tr("settings.config.cliValidateParseFailed"),
+                    true
+                );
+                return;
+            }
+
+            if (exitCode === 127) {
+                tab.setValidationSummary(rootSettings?.pluginApi?.tr("errors.cliMissing"), true);
+                return;
+            }
+
+            if (entries.length === 0) {
+                tab.setValidationSummary(rootSettings?.pluginApi?.tr("settings.config.cliValid"), false);
+                return;
+            }
+
+            var hasError = false;
+            for (var i = 0; i < entries.length; i++) {
+                if (tab.validationSeverity(entries[i]) === "error") {
+                    hasError = true;
+                    break;
+                }
+            }
+            tab.setValidationSummary(tab.formatValidationMessage(entries), hasError);
         }
     }
 
@@ -666,4 +860,3 @@ SettingsTabPage {
         onTriggered: saveStatus.text = ""
     }
 }
-

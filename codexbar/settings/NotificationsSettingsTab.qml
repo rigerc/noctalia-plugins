@@ -17,8 +17,9 @@ SettingsTabPage {
         label: rootSettings?.pluginApi?.tr("settings.notifications.notifyOnReset.label")
         description: rootSettings?.pluginApi?.tr("settings.notifications.notifyOnReset.desc")
         checked: rootSettings?.editNotifyOnReset ?? true
-        onCheckedChanged: {
-            if (rootSettings) rootSettings.editNotifyOnReset = checked;
+        onToggled: checked => {
+            if (rootSettings)
+                rootSettings.editNotifyOnReset = checked;
         }
     }
 
@@ -27,8 +28,9 @@ SettingsTabPage {
         label: rootSettings?.pluginApi?.tr("settings.notifications.notifyOnLowUsage.label")
         description: rootSettings?.pluginApi?.tr("settings.notifications.notifyOnLowUsage.desc")
         checked: rootSettings?.editNotifyOnLowUsage ?? true
-        onCheckedChanged: {
-            if (rootSettings) rootSettings.editNotifyOnLowUsage = checked;
+        onToggled: checked => {
+            if (rootSettings)
+                rootSettings.editNotifyOnLowUsage = checked;
         }
     }
 

@@ -239,6 +239,9 @@
         "middleClickClose": true,
         "workspaceScrollSwitch": false
       },
+      "debug": {
+        "logging": false
+      },
       "customStyleRules": [],
       "_presets": [],
       "_activePresetId": ""

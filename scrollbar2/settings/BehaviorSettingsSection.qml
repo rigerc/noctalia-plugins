@@ -10,6 +10,7 @@ ColumnLayout {
     property alias filteringSectionTarget: filteringContent
     property alias animationSectionTarget: animationContent
     property alias mouseInteractionSectionTarget: mouseInteractionContent
+    property alias debugSectionTarget: debugContent
 
     Layout.fillWidth: true
     spacing: Style.marginL
@@ -219,6 +220,33 @@ ColumnLayout {
                 checked: rootSettings?.settingValue("mouseInteraction", "workspaceScrollSwitch") ?? false
                 onToggled: checked => rootSettings?.setSetting("mouseInteraction", "workspaceScrollSwitch", checked)
                 defaultValue: rootSettings?.defaultValue("mouseInteraction", "workspaceScrollSwitch") ?? false
+            }
+        }
+    }
+
+    NBox {
+        Layout.fillWidth: true
+        Layout.preferredHeight: debugContent.implicitHeight + Style.marginL * 2
+
+        ColumnLayout {
+            id: debugContent
+            anchors.fill: parent
+            anchors.margins: Style.marginL
+            spacing: Style.marginM
+
+            NHeader {
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.section.debug.label")
+                description: rootSettings?.pluginApi?.tr("settings.section.debug.desc")
+            }
+
+            NToggle {
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.debug.logging.label")
+                description: rootSettings?.pluginApi?.tr("settings.debug.logging.desc")
+                checked: rootSettings?.settingValue("debug", "logging") ?? false
+                onToggled: checked => rootSettings?.setSetting("debug", "logging", checked)
+                defaultValue: rootSettings?.defaultValue("debug", "logging") ?? false
             }
         }
     }
