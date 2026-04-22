@@ -15,23 +15,7 @@
         "Bar",
         "Panel"
       ],
-      "lastUpdated": "2026-04-21T20:21:56+02:00"
-    },
-    {
-      "id": "scrollbar",
-      "name": "Scrollbar",
-      "version": "1.8.0",
-      "official": false,
-      "author": "rigerc",
-      "description": "A focused, scrolling window strip for the bar with centered selection and customizable overflow edge cues.",
-      "repository": "https://github.com/noctalia-dev/noctalia-plugins",
-      "minNoctaliaVersion": "4.6.6",
-      "license": "MIT",
-      "tags": [
-        "Bar",
-        "Utility"
-      ],
-      "lastUpdated": "2026-04-17T22:34:58+02:00"
+      "lastUpdated": "2026-04-22T19:52:14+02:00"
     },
     {
       "id": "scrollbar2",
@@ -47,7 +31,7 @@
         "Bar",
         "Utility"
       ],
-      "lastUpdated": "2026-04-21T17:47:44+02:00"
+      "lastUpdated": "2026-04-22T19:31:48+02:00"
     }
   ]
 }
