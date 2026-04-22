@@ -31,11 +31,15 @@
       "description": "Configure bar widget appearance and refresh behavior",
       "appearance": {
         "title": "Appearance",
-        "description": "Adjust the icon and spacing used by the bar widget."
+        "description": "Adjust the icon used by the bar widget."
       },
       "behavior": {
         "title": "Behavior",
-        "description": "Choose which provider is shown and how often CodexBar refreshes."
+        "description": "Choose which provider is shown and how often CodexBar refreshes.",
+        "showOnHover": {
+          "label": "Show on hover",
+          "desc": "When enabled, the bar widget only shows the icon until you hover it."
+        }
       },
       "barIcon": {
         "label": "Bar Icon",
@@ -105,7 +109,7 @@
       },
       "textStyle": {
         "title": "Text Style",
-        "description": "Set text color, opacity, and font styling."
+        "description": "Set text color and opacity."
       },
       "refreshInterval": {
         "label": "Refresh Interval",

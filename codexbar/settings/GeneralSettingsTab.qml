@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 import qs.Commons
-import qs.Services.System
 import qs.Widgets
 
 SettingsTabPage {
@@ -104,21 +103,6 @@ SettingsTabPage {
             onSelected: key => {
                 if (rootSettings)
                     rootSettings.editBarIconColor = key;
-            }
-        }
-
-        NSpinBox {
-            Layout.fillWidth: true
-            label: rootSettings?.pluginApi?.tr("settings.general.iconTextSpacing.label")
-            description: rootSettings?.pluginApi?.tr("settings.general.iconTextSpacing.desc")
-            from: 0
-            to: 24
-            stepSize: 1
-            value: rootSettings?.editBarIconTextSpacing ?? 6
-            suffix: "px"
-            onValueChanged: {
-                if (rootSettings)
-                    rootSettings.editBarIconTextSpacing = value;
             }
         }
     }
@@ -277,58 +261,22 @@ SettingsTabPage {
                     rootSettings.editBarTextOpacityPercent = value;
             }
         }
-
-        NSpinBox {
-            Layout.fillWidth: true
-            label: rootSettings?.pluginApi?.tr("settings.general.text.pointSize.label")
-            description: rootSettings?.pluginApi?.tr("settings.general.text.pointSize.desc")
-            from: 0
-            to: 24
-            stepSize: 1
-            value: rootSettings?.editBarTextPointSize ?? 0
-            suffix: "pt"
-            onValueChanged: {
-                if (rootSettings)
-                    rootSettings.editBarTextPointSize = value;
-            }
-        }
-
-        NSearchableComboBox {
-            Layout.fillWidth: true
-            label: rootSettings?.pluginApi?.tr("settings.general.text.fontFamily.label")
-            description: rootSettings?.pluginApi?.tr("settings.general.text.fontFamily.desc")
-            model: FontService.availableFonts
-            currentKey: rootSettings?.editBarTextFontFamily ?? ""
-            placeholder: rootSettings?.pluginApi?.tr("settings.general.text.fontFamily.placeholder")
-            searchPlaceholder: rootSettings?.pluginApi?.tr("settings.general.text.fontFamily.searchPlaceholder")
-            popupHeight: 360
-            onSelected: key => {
-                if (rootSettings)
-                    rootSettings.editBarTextFontFamily = key;
-            }
-        }
-
-        NComboBox {
-            Layout.fillWidth: true
-            label: rootSettings?.pluginApi?.tr("settings.general.text.fontWeight.label")
-            description: rootSettings?.pluginApi?.tr("settings.general.text.fontWeight.desc")
-            model: [
-                {"key": "regular", "name": rootSettings?.pluginApi?.tr("settings.general.text.weight.regular")},
-                {"key": "medium", "name": rootSettings?.pluginApi?.tr("settings.general.text.weight.medium")},
-                {"key": "semibold", "name": rootSettings?.pluginApi?.tr("settings.general.text.weight.semibold")},
-                {"key": "bold", "name": rootSettings?.pluginApi?.tr("settings.general.text.weight.bold")}
-            ]
-            currentKey: rootSettings?.editBarTextFontWeight ?? "regular"
-            onSelected: key => {
-                if (rootSettings)
-                    rootSettings.editBarTextFontWeight = key;
-            }
-        }
     }
 
     SettingsCard {
         title: rootSettings?.pluginApi?.tr("settings.general.behavior.title")
         description: rootSettings?.pluginApi?.tr("settings.general.behavior.description")
+
+        NToggle {
+            Layout.fillWidth: true
+            label: rootSettings?.pluginApi?.tr("settings.general.behavior.showOnHover.label")
+            description: rootSettings?.pluginApi?.tr("settings.general.behavior.showOnHover.desc")
+            checked: rootSettings?.editBarTextShowOnHover ?? false
+            onToggled: checked => {
+                if (rootSettings)
+                    rootSettings.editBarTextShowOnHover = checked;
+            }
+        }
 
         NComboBox {
             Layout.fillWidth: true

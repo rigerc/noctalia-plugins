@@ -23,11 +23,12 @@ Shows AI provider usage stats in your Noctalia bar and panel by running the exte
 
 Open the plugin settings to configure:
 
-- Spacing between the icon and the text in the bar widget.
-- Font family, size, weight, italic, and underline for the bar widget text.
+- Bar icon, text content, and text styling (color/opacity).
+- Show bar text only on hover (icon-only when idle).
+- Refresh interval and default provider.
+- Notifications (reset / low usage).
 
 ## Troubleshooting
 
 - If the widget shows no data, run `codexbar --format json --pretty` in a terminal and fix any CLI/config issues first.
 - If Noctalia can’t find `codexbar`, make sure it’s installed system-wide and that Noctalia inherits the correct `PATH`.
-

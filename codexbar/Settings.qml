@@ -143,16 +143,13 @@ ColumnLayout {
 
     property string editBarIcon: normalizeIconName(cfg.barIcon ?? defaults.barIcon ?? "sparkles")
     property string editBarIconColor: cfg.barIconColor ?? defaults.barIconColor ?? "on-surface"
-    property int editBarIconTextSpacing: Math.max(0, Math.min(24, Number(cfg.barIconTextSpacing ?? defaults.barIconTextSpacing ?? 6)))
     property var editBarTextFields: normalizeBarTextFields(cfg.barTextFields ?? defaults.barTextFields ?? ["primary"])
     property string editBarTextSeparator: String(cfg.barTextSeparator ?? defaults.barTextSeparator ?? "·")
     property int editBarTextSeparatorSpacing: Math.max(0, Math.min(4, Number(cfg.barTextSeparatorSpacing ?? defaults.barTextSeparatorSpacing ?? 1)))
     property string editBarTextColor: String(cfg.barTextColor ?? defaults.barTextColor ?? "on-surface")
     property int editBarTextOpacityPercent: Math.max(0, Math.min(100, Math.round(Number(cfg.barTextOpacity ?? defaults.barTextOpacity ?? 1) * 100)))
     property string editBarTextFieldToAdd: firstAvailableBarTextField(editBarTextFields)
-    property int editBarTextPointSize: Math.max(0, Math.min(24, Number(cfg.barTextPointSize ?? defaults.barTextPointSize ?? 0)))
-    property string editBarTextFontFamily: String(cfg.barTextFontFamily ?? defaults.barTextFontFamily ?? "")
-    property string editBarTextFontWeight: String(cfg.barTextFontWeight ?? defaults.barTextFontWeight ?? "regular")
+    property bool editBarTextShowOnHover: cfg.barTextShowOnHover ?? defaults.barTextShowOnHover ?? false
     property int editRefreshInterval: normalizeRefreshInterval(cfg.refreshInterval ?? defaults.refreshInterval ?? 120)
     property string editDefaultProvider: cfg.defaultProvider ?? defaults.defaultProvider ?? ""
     property bool editNotifyOnReset: cfg.notifyOnReset ?? defaults.notifyOnReset ?? true
@@ -247,15 +244,12 @@ ColumnLayout {
         function onPluginSettingsChanged() {
             root.editBarIcon = root.normalizeIconName(cfg.barIcon ?? defaults.barIcon ?? "sparkles");
             root.editBarIconColor = cfg.barIconColor ?? defaults.barIconColor ?? "on-surface";
-            root.editBarIconTextSpacing = Math.max(0, Math.min(24, Number(cfg.barIconTextSpacing ?? defaults.barIconTextSpacing ?? 6)));
             root.editBarTextFields = root.normalizeBarTextFields(cfg.barTextFields ?? defaults.barTextFields ?? ["primary"]);
             root.editBarTextSeparator = String(cfg.barTextSeparator ?? defaults.barTextSeparator ?? "·");
             root.editBarTextSeparatorSpacing = Math.max(0, Math.min(4, Number(cfg.barTextSeparatorSpacing ?? defaults.barTextSeparatorSpacing ?? 1)));
             root.editBarTextColor = String(cfg.barTextColor ?? defaults.barTextColor ?? "on-surface");
             root.editBarTextOpacityPercent = Math.max(0, Math.min(100, Math.round(Number(cfg.barTextOpacity ?? defaults.barTextOpacity ?? 1) * 100)));
-            root.editBarTextPointSize = Math.max(0, Math.min(24, Number(cfg.barTextPointSize ?? defaults.barTextPointSize ?? 0)));
-            root.editBarTextFontFamily = String(cfg.barTextFontFamily ?? defaults.barTextFontFamily ?? "");
-            root.editBarTextFontWeight = String(cfg.barTextFontWeight ?? defaults.barTextFontWeight ?? "regular");
+            root.editBarTextShowOnHover = cfg.barTextShowOnHover ?? defaults.barTextShowOnHover ?? false;
             root.editRefreshInterval = root.normalizeRefreshInterval(cfg.refreshInterval ?? defaults.refreshInterval ?? 120);
             root.editDefaultProvider = cfg.defaultProvider ?? defaults.defaultProvider ?? "";
             root.editNotifyOnReset = cfg.notifyOnReset ?? defaults.notifyOnReset ?? true;
@@ -310,15 +304,12 @@ ColumnLayout {
         pluginApi.pluginSettings.barIcon = normalizeIconName(editBarIcon);
         delete pluginApi.pluginSettings.barIconPath;
         pluginApi.pluginSettings.barIconColor = editBarIconColor;
-        pluginApi.pluginSettings.barIconTextSpacing = editBarIconTextSpacing;
         pluginApi.pluginSettings.barTextFields = normalizeBarTextFields(editBarTextFields);
         pluginApi.pluginSettings.barTextSeparator = editBarTextSeparator;
         pluginApi.pluginSettings.barTextSeparatorSpacing = editBarTextSeparatorSpacing;
         pluginApi.pluginSettings.barTextColor = editBarTextColor;
         pluginApi.pluginSettings.barTextOpacity = Math.max(0, Math.min(1, editBarTextOpacityPercent / 100));
-        pluginApi.pluginSettings.barTextPointSize = editBarTextPointSize;
-        pluginApi.pluginSettings.barTextFontFamily = editBarTextFontFamily;
-        pluginApi.pluginSettings.barTextFontWeight = editBarTextFontWeight;
+        pluginApi.pluginSettings.barTextShowOnHover = editBarTextShowOnHover;
         pluginApi.pluginSettings.refreshInterval = normalizeRefreshInterval(editRefreshInterval);
         pluginApi.pluginSettings.defaultProvider = editDefaultProvider;
         pluginApi.pluginSettings.notifyOnReset = editNotifyOnReset;

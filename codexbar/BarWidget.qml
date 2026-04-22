@@ -1,7 +1,7 @@
 import QtQuick
-import QtQuick.Layouts
 import Quickshell
 import qs.Commons
+import qs.Modules.Bar.Extras
 import qs.Services.UI
 import qs.Widgets
 
@@ -135,24 +135,12 @@ Item {
 
     readonly property string barIcon: normalizeIconName(cfg.barIcon ?? defaults.barIcon ?? "sparkles")
     readonly property string barIconColor: cfg.barIconColor ?? defaults.barIconColor ?? "on-surface"
-    readonly property real barIconTextSpacing: Math.max(0, Math.min(24, Number(cfg.barIconTextSpacing ?? defaults.barIconTextSpacing ?? 6))) * Style.uiScaleRatio
     readonly property var barTextFields: normalizeBarTextFields(cfg.barTextFields ?? defaults.barTextFields ?? ["primary"])
     readonly property string barTextSeparator: String(cfg.barTextSeparator ?? defaults.barTextSeparator ?? "·")
     readonly property int barTextSeparatorSpacing: Math.max(0, Math.min(4, Number(cfg.barTextSeparatorSpacing ?? defaults.barTextSeparatorSpacing ?? 1)))
     readonly property string barTextColorKey: String(cfg.barTextColor ?? defaults.barTextColor ?? "on-surface")
     readonly property real barTextOpacity: Math.max(0, Math.min(1, Number(cfg.barTextOpacity ?? defaults.barTextOpacity ?? 1)))
-    readonly property int barTextPointSizeSetting: Math.max(0, Math.min(24, Number(cfg.barTextPointSize ?? defaults.barTextPointSize ?? 0)))
-    readonly property string barTextFontFamily: String(cfg.barTextFontFamily ?? defaults.barTextFontFamily ?? "")
-    readonly property string barTextFontWeightKey: String(cfg.barTextFontWeight ?? defaults.barTextFontWeight ?? "regular")
-    readonly property int barTextFontWeight: {
-        if (barTextFontWeightKey === "medium")
-            return Style.fontWeightMedium;
-        if (barTextFontWeightKey === "semibold")
-            return Style.fontWeightSemiBold;
-        if (barTextFontWeightKey === "bold")
-            return Style.fontWeightBold;
-        return Style.fontWeightRegular;
-    }
+    readonly property bool barTextShowOnHover: cfg.barTextShowOnHover ?? defaults.barTextShowOnHover ?? false
     readonly property string defaultProvider: cfg.defaultProvider ?? defaults.defaultProvider ?? ""
     readonly property color resolvedBarIconColor: Color.resolveColorKey(root.barIconColor)
     readonly property color resolvedBarTextBaseColor: Color.resolveColorKey(root.barTextColorKey)
@@ -199,8 +187,29 @@ Item {
         return parts.join(root.barTextJoiner());
     }
 
-    implicitWidth: isVertical ? capsuleHeight : row.width + Style.marginM * 2
-    implicitHeight: isVertical ? row.width + Style.marginM * 2 : capsuleHeight
+    readonly property var tooltipText: {
+        if (!hasData)
+            return pluginApi?.tr("widget.noData");
+
+        if (!displayProvider)
+            return "";
+
+        var name = mainInstance?.providerDisplayName(displayProvider.provider) || displayProvider.provider;
+        var primary = displayProvider?.usage?.primary;
+        var secondary = displayProvider?.usage?.secondary;
+        var status = displayProvider?.status;
+        var lines = [name];
+        if (primary)
+            lines.push("Session: " + (100 - primary.usedPercent) + "% left");
+        if (secondary)
+            lines.push("Weekly: " + (100 - secondary.usedPercent) + "% left");
+        if (status && root.formatStatusText(status) !== "")
+            lines.push("Status: " + root.formatStatusText(status));
+        return lines.join("\n");
+    }
+
+    implicitWidth: pill.implicitWidth
+    implicitHeight: pill.implicitHeight
 
     NPopupContextMenu {
         id: contextMenu
@@ -227,86 +236,26 @@ Item {
         }
     }
 
-    Rectangle {
-        id: capsule
+    BarPill {
+        id: pill
 
-        readonly property real contentWidth: row.width + Style.marginM * 2
-        readonly property real contentHeight: row.height + Style.marginM
+        screen: root.screen
+        oppositeDirection: BarService.getPillDirection(root)
+        icon: mainInstance?.isRefreshing ? "refresh" : root.barIcon
+        text: root.barTextOpacity > 0 ? root.contentText : ""
+        tooltipText: root.tooltipText
+        autoHide: false
+        forceOpen: !root.barTextShowOnHover
+        customIconColor: root.resolvedBarIconColor
+        customTextColor: root.barTextOpacity > 0 ? root.resolvedBarTextColor : "transparent"
 
-        anchors.centerIn: parent
-        width: isVertical ? parent.width : contentWidth
-        height: isVertical ? contentHeight : parent.height
-        radius: Style.radiusL
-        color: Style.capsuleColor
-
-        RowLayout {
-            id: row
-
-            anchors.centerIn: parent
-            spacing: root.barIconTextSpacing
-
-            NIcon {
-                id: iconDisplay
-                Layout.preferredWidth: Style.fontSizeM
-                Layout.preferredHeight: Style.fontSizeM
-                icon: mainInstance?.isRefreshing ? "refresh" : root.barIcon
-                color: root.resolvedBarIconColor
-
-                RotationAnimator {
-                    target: iconDisplay
-                    from: 0
-                    to: 360
-                    duration: 1000
-                    running: mainInstance?.isRefreshing ?? false
-                    loops: Animation.Infinite
-                }
-            }
-
-            NText {
-                Layout.alignment: Qt.AlignVCenter
-                text: root.contentText
-                pointSize: root.barTextPointSizeSetting > 0 ? root.barTextPointSizeSetting : Style.fontSizeXS
-                color: root.resolvedBarTextColor
-                font.family: root.barTextFontFamily
-                font.weight: root.barTextFontWeight
-            }
+        onClicked: {
+            if (pluginApi)
+                pluginApi.togglePanel(root.screen, pill);
         }
-    }
 
-    MouseArea {
-        anchors.fill: parent
-        acceptedButtons: Qt.LeftButton | Qt.RightButton
-        onClicked: mouse => {
-            if (mouse.button === Qt.LeftButton) {
-                if (pluginApi) pluginApi.togglePanel(root.screen, root);
-            } else if (mouse.button === Qt.RightButton) {
-                PanelService.showContextMenu(contextMenu, root, screen);
-            }
-        }
-    }
-
-    HoverHandler {
-        id: hoverHandler
-        onHoveredChanged: {
-            if (hovered) {
-                var tip;
-                if (!hasData) {
-                    tip = pluginApi?.tr("widget.noData") || "No data";
-                } else {
-                    var name = mainInstance?.providerDisplayName(displayProvider.provider) || displayProvider.provider;
-                    var primary = displayProvider?.usage?.primary;
-                    var secondary = displayProvider?.usage?.secondary;
-                    var status = displayProvider?.status;
-                    var lines = [name];
-                    if (primary) lines.push("Session: " + (100 - primary.usedPercent) + "% left");
-                    if (secondary) lines.push("Weekly: " + (100 - secondary.usedPercent) + "% left");
-                    if (status && root.formatStatusText(status) !== "") lines.push("Status: " + root.formatStatusText(status));
-                    tip = lines.join("\n");
-                }
-                TooltipService.show(root, tip, BarService.getTooltipDirection(root.screen?.name));
-            } else {
-                TooltipService.hide();
-            }
+        onRightClicked: {
+            PanelService.showContextMenu(contextMenu, pill, screen);
         }
     }
 }
