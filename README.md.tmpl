@@ -3,4 +3,7 @@
 > 🤖 This is a vibe coded project built by Codex and me. Treat the code and behavior as experimental, and verify changes before relying on it.
 
 ## Plugins
-- **[Scrollbar](scrollbar/README.md)** — A focused, scrolling window strip for the bar with centered selection and customizable overflow edge cues.
+
+{{- range (ds "registry").plugins | sort "id" }}
+- **[{{ .name }}]({{ .id }}/README.md)** — {{ .description }}
+{{- end }}

@@ -162,6 +162,8 @@ Item {
     readonly property bool hasData: {
         if (!displayProvider)
             return false;
+        if (displayProvider.error)
+            return true;
         for (var index = 0; index < root.barTextFields.length; index++) {
             if (root.fieldText(root.barTextFields[index]) !== "")
                 return true;
@@ -174,6 +176,8 @@ Item {
             return "...";
         if (!displayProvider)
             return "—";
+        if (displayProvider.error)
+            return pluginApi?.tr("widget.error");
 
         var parts = [];
         for (var index = 0; index < root.barTextFields.length; index++) {
@@ -195,6 +199,14 @@ Item {
             return "";
 
         var name = mainInstance?.providerDisplayName(displayProvider.provider) || displayProvider.provider;
+        var providerError = displayProvider.error;
+        if (providerError) {
+            var message = String(providerError.message || "").trim();
+            if (message === "")
+                message = JSON.stringify(providerError);
+            return [name, pluginApi?.tr("widget.providerError"), message].join("\n");
+        }
+
         var primary = displayProvider?.usage?.primary;
         var secondary = displayProvider?.usage?.secondary;
         var status = displayProvider?.status;

@@ -278,6 +278,39 @@ SettingsTabPage {
         return false;
     }
 
+    function addMissingProviders() {
+        var missing = [];
+        for (var i = 0; i < tab.providerIds.length; i++) {
+            var providerId = tab.providerIds[i];
+            if (!tab.providerExists(providerId))
+                missing.push(providerId);
+        }
+
+        if (missing.length === 0) {
+            tab.setStatus(rootSettings?.pluginApi?.tr("settings.config.noProvidersToAdd"), false);
+            return;
+        }
+
+        var next = tab.providers.slice();
+        for (var j = 0; j < missing.length; j++) {
+            next.push({
+                "id": missing[j],
+                "enabled": true,
+                "source": "auto",
+                "cookieSource": "auto",
+                "cookieHeader": null,
+                "apiKey": null,
+                "region": null,
+                "workspaceID": null,
+                "tokenAccounts": null
+            });
+        }
+        tab.providers = next;
+        tab.markDirty();
+        tab.syncJsonFromModel();
+        tab.setStatus(rootSettings?.pluginApi?.tr("settings.config.providersAdded").replace("{count}", String(missing.length)), false);
+    }
+
     function addProvider() {
         if (!tab.addProviderId || tab.addProviderId.trim() === "") {
             tab.setStatus(rootSettings?.pluginApi?.tr("settings.config.providerMissing"), true);
@@ -429,6 +462,13 @@ SettingsTabPage {
                 text: rootSettings?.pluginApi?.tr("settings.config.add")
                 icon: "plus"
                 onClicked: tab.addProvider()
+            }
+
+            NButton {
+                text: rootSettings?.pluginApi?.tr("settings.config.addMissing")
+                icon: "playlist-add"
+                outlined: true
+                onClicked: tab.addMissingProviders()
             }
         }
 
