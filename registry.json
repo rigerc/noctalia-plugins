@@ -20,7 +20,7 @@
     {
       "id": "scrollbar2",
       "name": "Scrollbar2",
-      "version": "1.7.0",
+      "version": "1.12.0",
       "official": false,
       "author": "rigerc",
       "description": "A configurable window bar with equal-width segments, animated focus tracking, and optional floating panel placement.",
@@ -31,7 +31,7 @@
         "Bar",
         "Utility"
       ],
-      "lastUpdated": "2026-04-22T19:31:48+02:00"
+      "lastUpdated": "2026-04-23T20:10:36+02:00"
     }
   ]
 }
