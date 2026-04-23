@@ -16,6 +16,7 @@ ColumnLayout {
     property real currentOpacity: 1
     property var defaultOpacity: undefined
     property bool showOpacityControl: false
+    property bool opacityExpanded: false
     property real opacityFrom: 0
     property real opacityTo: 1
     property real opacityStepSize: 0.01
@@ -99,6 +100,7 @@ ColumnLayout {
 
     signal colorSelected(string value)
     signal opacitySelected(real value)
+    signal opacityExpandedToggled(bool expanded)
 
     Layout.fillWidth: true
     spacing: Style.marginM
@@ -420,7 +422,7 @@ ColumnLayout {
             Layout.preferredWidth: 200 * Style.uiScaleRatio
             spacing: 0
 
-            property bool expanded: false
+            property bool expanded: root.opacityExpanded
             property bool _userInteracted: false
 
             Rectangle {
@@ -457,7 +459,7 @@ ColumnLayout {
 
                     onClicked: {
                         opacityCollapsible._userInteracted = true;
-                        opacityCollapsible.expanded = !opacityCollapsible.expanded;
+                        root.opacityExpandedToggled(!opacityCollapsible.expanded);
                     }
 
                     Rectangle {

@@ -192,7 +192,7 @@ Item {
     function normalizeStyleRuleColorState(settingValue, fallbackColor, fallbackOpacity) {
         const currentValue = (settingValue && typeof settingValue === "object" && !Array.isArray(settingValue)) ? settingValue : ({});
         return {
-            "enabled": currentValue.enabled !== false,
+            "enabled": currentValue.enabled === true,
             "color": String(currentValue.color ?? fallbackColor),
             "opacity": normalizeOpacityValue(currentValue.opacity, fallbackOpacity)
         };
@@ -427,9 +427,7 @@ Item {
     function resolvedSegmentStyle(entryKey) {
         const state = segmentState(entryKey);
         const overrideState = styleRuleStateValue(entryKey, "segment", state);
-        if (overrideState) {
-            if (overrideState.enabled === false)
-                return "transparent";
+        if (overrideState?.enabled === true) {
             const overrideColor = resolveColor(overrideState.color, state === "focused" ? focusLineFocusedColor : (state === "hover" ? focusLineHoverColor : focusLineDefaultColor));
             return colorWithOpacity(overrideColor, focusLineOpacity * overrideState.opacity);
         }
@@ -451,9 +449,10 @@ Item {
         const fallbackOpacity = kind === "icon" ? (state === "focused" ? iconColorFocusedOpacity : (state === "hover" ? iconColorHoverOpacity : iconColorDefaultOpacity)) : (state === "focused" ? titleColorFocusedOpacity : (state === "hover" ? titleColorHoverOpacity : titleColorDefaultOpacity));
         const fallbackColor = kind === "icon" ? (state === "focused" ? iconColorFocused : (state === "hover" ? iconColorHover : iconColorDefault)) : (state === "focused" ? titleColorFocused : (state === "hover" ? titleColorHover : titleColorDefault));
         const overrideState = styleRuleStateValue(entryKey, kind, state);
-        const effectiveKey = String(overrideState?.color ?? fallbackKey);
-        const effectiveOpacity = overrideState ? overrideState.opacity : fallbackOpacity;
-        const effectiveColor = overrideState ? resolveColor(effectiveKey, fallbackColor) : fallbackColor;
+        const hasExplicitOverride = overrideState?.enabled === true;
+        const effectiveKey = String(hasExplicitOverride ? overrideState.color : fallbackKey);
+        const effectiveOpacity = hasExplicitOverride ? overrideState.opacity : fallbackOpacity;
+        const effectiveColor = hasExplicitOverride ? resolveColor(effectiveKey, fallbackColor) : fallbackColor;
         return {
             "key": effectiveKey,
             "opacity": effectiveOpacity,

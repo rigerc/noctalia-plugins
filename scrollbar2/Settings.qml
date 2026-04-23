@@ -17,6 +17,7 @@ ColumnLayout {
     property int selectedTab: 0
     property string _activePresetId: pluginApi?.pluginSettings?._activePresetId || ""
     property int styleRulesRevision: 0
+    property var expandedStyleRuleOpacityPanels: ({})
     readonly property var mainInstance: pluginApi?.mainInstance ?? null
     readonly property var tabModel: [
         {
@@ -354,10 +355,11 @@ ColumnLayout {
         return normalized;
     }
 
-    function normalizeColorStateMap(settingValue, fallbackMap, fallbackOpacity) {
+    function normalizeColorStateMap(settingValue, fallbackMap, fallbackOpacity, defaultEnabled) {
         const normalized = ({});
         const currentValue = (settingValue && typeof settingValue === "object" && !Array.isArray(settingValue)) ? settingValue : ({});
         const opacityValue = fallbackOpacity === undefined ? 1 : fallbackOpacity;
+        const enabledByDefault = defaultEnabled !== false;
 
         for (const key in fallbackMap) {
             const currentState = currentValue[key];
@@ -366,7 +368,7 @@ ColumnLayout {
                 fallbackMap[key],
                 opacityValue
             );
-            normalized[key].enabled = currentState?.enabled !== false;
+            normalized[key].enabled = currentState?.enabled === undefined ? enabledByDefault : currentState.enabled === true;
         }
 
         return normalized;
@@ -386,7 +388,9 @@ ColumnLayout {
                         "focused": "primary",
                         "hover": "hover",
                         "default": "surface-variant"
-                    }
+                    },
+                    undefined,
+                    false
                 ),
                 "icon": normalizeColorStateMap(
                     source.colors?.icon,
@@ -394,7 +398,9 @@ ColumnLayout {
                         "focused": "on-surface",
                         "hover": "on-hover",
                         "default": "on-surface-variant"
-                    }
+                    },
+                    undefined,
+                    false
                 ),
                 "title": normalizeColorStateMap(
                     source.colors?.title,
@@ -402,7 +408,9 @@ ColumnLayout {
                         "focused": "on-surface",
                         "hover": "on-hover",
                         "default": "on-surface-variant"
-                    }
+                    },
+                    undefined,
+                    false
                 )
             },
             "blink": {
@@ -846,6 +854,24 @@ ColumnLayout {
         return Array.isArray(rules) ? rules.slice() : [];
     }
 
+    function styleRuleColorStatePanelKey(index, colorGroup, stateKey) {
+        return [String(index), String(colorGroup), String(stateKey)].join(":");
+    }
+
+    function isStyleRuleColorStatePanelExpanded(index, colorGroup, stateKey) {
+        return expandedStyleRuleOpacityPanels?.[styleRuleColorStatePanelKey(index, colorGroup, stateKey)] === true;
+    }
+
+    function setStyleRuleColorStatePanelExpanded(index, colorGroup, stateKey, expanded) {
+        const key = styleRuleColorStatePanelKey(index, colorGroup, stateKey);
+        const next = Object.assign({}, expandedStyleRuleOpacityPanels);
+        if (expanded)
+            next[key] = true;
+        else
+            delete next[key];
+        expandedStyleRuleOpacityPanels = next;
+    }
+
     function defaultStyleRuleItems() {
         return Array.isArray(defaultSettings?.customStyleRules) ? defaultSettings.customStyleRules : [];
     }
@@ -858,7 +884,9 @@ ColumnLayout {
                     "focused": "primary",
                     "hover": "hover",
                     "default": "surface-variant"
-                }
+                },
+                undefined,
+                false
             ),
             "icon": normalizeColorStateMap(
                 editSettings?.window?.iconColors,
@@ -866,7 +894,9 @@ ColumnLayout {
                     "focused": "on-surface",
                     "hover": "on-hover",
                     "default": "on-surface-variant"
-                }
+                },
+                undefined,
+                false
             ),
             "title": normalizeColorStateMap(
                 editSettings?.window?.titleColors,
@@ -874,7 +904,9 @@ ColumnLayout {
                     "focused": "on-surface",
                     "hover": "on-hover",
                     "default": "on-surface-variant"
-                }
+                },
+                undefined,
+                false
             )
         };
     }
