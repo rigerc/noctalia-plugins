@@ -806,6 +806,7 @@ Item {
     readonly property bool dragPreviewActive: dragSessionActive && dragInsertIndex >= 0 && normalizedPreviewIndex >= 0 && canPreviewInsertIndex(dragSourceEntryKey, dragInsertIndex)
     readonly property int previewFocusIndex: dragPreviewActive ? normalizedPreviewIndex : -1
     readonly property int effectiveFocusIndex: previewFocusIndex >= 0 ? previewFocusIndex : focusedIndex
+    readonly property bool contextMenuOpen: contextMenu.visible
 
     implicitWidth: hostVisible && (segmentCount > 0 || showWorkspaceIndicator || pinnedSegmentCount > 0 || showSpecialWorkspaceOverlay) ? leftAccessoryWidth + effectiveTrackWidth + rightAccessoryWidth : 0
     implicitHeight: hostVisible && (segmentCount > 0 || showWorkspaceIndicator || pinnedSegmentCount > 0 || showSpecialWorkspaceOverlay) ? Math.max(availableContainerHeight, workspaceContainer.height, pinnedAppsContainer.height, specialWorkspaceOverlay.height) : 0

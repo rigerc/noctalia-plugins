@@ -171,6 +171,165 @@ ColumnLayout {
                 defaultValue: rootSettings?.defaultValue("display", "gradientDirection") ?? "vertical"
                 onSelected: key => rootSettings?.setSetting("display", "gradientDirection", key)
             }
+
+            NHeader {
+                visible: rootSettings?.isVisibleByConditions(["floatingPanelMode"]) ?? true
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.display.autoHide.sectionLabel")
+                description: rootSettings?.pluginApi?.tr("settings.display.autoHide.sectionDesc")
+            }
+
+            NToggle {
+                visible: rootSettings?.isVisibleByConditions(["floatingPanelMode"]) ?? true
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.display.autoHide.enabled.label")
+                description: rootSettings?.pluginApi?.tr("settings.display.autoHide.enabled.desc")
+                checked: rootSettings?.nestedSettingValue("display", "autoHide", "enabled") ?? false
+                defaultValue: rootSettings?.defaultNestedValue("display", "autoHide", "enabled") ?? false
+                onToggled: checked => rootSettings?.setNestedSetting("display", "autoHide", "enabled", checked)
+            }
+
+            NComboBox {
+                visible: rootSettings?.isVisibleByConditions(["floatingPanelMode", "autoHideEnabled"]) ?? false
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.display.autoHide.revealMode.label")
+                description: rootSettings?.pluginApi?.tr("settings.display.autoHide.revealMode.desc")
+                model: rootSettings?.autoHideRevealModeModel
+                currentKey: rootSettings?.nestedSettingValue("display", "autoHide", "revealMode") ?? "edgeSliver"
+                defaultValue: rootSettings?.defaultNestedValue("display", "autoHide", "revealMode") ?? "edgeSliver"
+                onSelected: key => rootSettings?.setNestedSetting("display", "autoHide", "revealMode", key)
+            }
+
+            NValueSlider {
+                visible: rootSettings?.isVisibleByConditions(["floatingPanelMode", "autoHideEnabled"]) ?? false
+                label: rootSettings?.pluginApi?.tr("settings.display.autoHide.delayMs.label")
+                description: rootSettings?.pluginApi?.tr("settings.display.autoHide.delayMs.desc")
+                from: 0
+                to: 5000
+                stepSize: 50
+                value: rootSettings?.nestedSettingValue("display", "autoHide", "delayMs") ?? 1000
+                text: Math.round(value) + " ms"
+                defaultValue: rootSettings?.defaultNestedValue("display", "autoHide", "delayMs") ?? 1000
+                showReset: true
+                onMoved: sliderValue => rootSettings?.setNestedSetting("display", "autoHide", "delayMs", Math.round(sliderValue))
+            }
+
+            NValueSlider {
+                visible: rootSettings?.isVisibleByConditions(["floatingPanelMode", "autoHideEnabled", "autoHideAnimatedEffect"]) ?? false
+                label: rootSettings?.pluginApi?.tr("settings.display.autoHide.durationMs.label")
+                description: rootSettings?.pluginApi?.tr("settings.display.autoHide.durationMs.desc")
+                from: 0
+                to: 1500
+                stepSize: 25
+                value: rootSettings?.nestedSettingValue("display", "autoHide", "durationMs") ?? 200
+                text: Math.round(value) + " ms"
+                defaultValue: rootSettings?.defaultNestedValue("display", "autoHide", "durationMs") ?? 200
+                showReset: true
+                onMoved: sliderValue => rootSettings?.setNestedSetting("display", "autoHide", "durationMs", Math.round(sliderValue))
+            }
+
+            NComboBox {
+                visible: rootSettings?.isVisibleByConditions(["floatingPanelMode", "autoHideEnabled"]) ?? false
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.display.autoHide.effect.label")
+                description: rootSettings?.pluginApi?.tr("settings.display.autoHide.effect.desc")
+                model: rootSettings?.autoHideEffectModel
+                currentKey: rootSettings?.nestedSettingValue("display", "autoHide", "effect") ?? "slideFade"
+                defaultValue: rootSettings?.defaultNestedValue("display", "autoHide", "effect") ?? "slideFade"
+                onSelected: key => rootSettings?.setNestedSetting("display", "autoHide", "effect", key)
+            }
+
+            NToggle {
+                visible: rootSettings?.isVisibleByConditions(["floatingPanelMode", "autoHideEnabled"]) ?? false
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.display.autoHide.dynamicMargin.label")
+                description: rootSettings?.pluginApi?.tr("settings.display.autoHide.dynamicMargin.desc")
+                checked: rootSettings?.nestedSettingValue("display", "autoHide", "dynamicMargin") ?? false
+                defaultValue: rootSettings?.defaultNestedValue("display", "autoHide", "dynamicMargin") ?? false
+                onToggled: checked => rootSettings?.setNestedSetting("display", "autoHide", "dynamicMargin", checked)
+            }
+
+            NComboBox {
+                visible: rootSettings?.isVisibleByConditions(["floatingPanelMode", "autoHideEnabled", "autoHideSlideEffect"]) ?? false
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.display.autoHide.slideDirection.label")
+                description: rootSettings?.pluginApi?.tr("settings.display.autoHide.slideDirection.desc")
+                model: rootSettings?.autoHideSlideDirectionModel
+                currentKey: rootSettings?.nestedSettingValue("display", "autoHide", "slideDirection") ?? "auto"
+                defaultValue: rootSettings?.defaultNestedValue("display", "autoHide", "slideDirection") ?? "auto"
+                onSelected: key => rootSettings?.setNestedSetting("display", "autoHide", "slideDirection", key)
+            }
+
+            NValueSlider {
+                visible: rootSettings?.isVisibleByConditions(["floatingPanelMode", "autoHideEnabled", "autoHideEdgeSliverMode"]) ?? false
+                label: rootSettings?.pluginApi?.tr("settings.display.autoHide.edgeSliverSize.label")
+                description: rootSettings?.pluginApi?.tr("settings.display.autoHide.edgeSliverSize.desc")
+                from: 2
+                to: 48
+                stepSize: 1
+                value: rootSettings?.nestedSettingValue("display", "autoHide", "edgeSliverSize") ?? 8
+                text: Math.round(value) + " px"
+                defaultValue: rootSettings?.defaultNestedValue("display", "autoHide", "edgeSliverSize") ?? 8
+                showReset: true
+                onMoved: sliderValue => rootSettings?.setNestedSetting("display", "autoHide", "edgeSliverSize", Math.round(sliderValue))
+            }
+
+            NValueSlider {
+                visible: rootSettings?.isVisibleByConditions(["floatingPanelMode", "autoHideEnabled", "autoHideEdgeSliverMode"]) ?? false
+                label: rootSettings?.pluginApi?.tr("settings.display.autoHide.edgeSliverWidth.label")
+                description: rootSettings?.pluginApi?.tr("settings.display.autoHide.edgeSliverWidth.desc")
+                from: 10
+                to: 100
+                stepSize: 1
+                value: rootSettings?.nestedSettingValue("display", "autoHide", "edgeSliverWidth") ?? 100
+                text: Math.round(value) + "%"
+                defaultValue: rootSettings?.defaultNestedValue("display", "autoHide", "edgeSliverWidth") ?? 100
+                showReset: true
+                onMoved: sliderValue => rootSettings?.setNestedSetting("display", "autoHide", "edgeSliverWidth", Math.round(sliderValue))
+            }
+
+            NValueSlider {
+                visible: rootSettings?.isVisibleByConditions(["floatingPanelMode", "autoHideEnabled", "autoHideEdgeSliverMode"]) ?? false
+                label: rootSettings?.pluginApi?.tr("settings.display.autoHide.edgeSliverMargin.label")
+                description: rootSettings?.pluginApi?.tr("settings.display.autoHide.edgeSliverMargin.desc")
+                from: 0
+                to: 64
+                stepSize: 1
+                value: rootSettings?.nestedSettingValue("display", "autoHide", "edgeSliverMargin") ?? 0
+                text: Math.round(value) + " px"
+                defaultValue: rootSettings?.defaultNestedValue("display", "autoHide", "edgeSliverMargin") ?? 0
+                showReset: true
+                onMoved: sliderValue => rootSettings?.setNestedSetting("display", "autoHide", "edgeSliverMargin", Math.round(sliderValue))
+            }
+
+            NValueSlider {
+                visible: rootSettings?.isVisibleByConditions(["floatingPanelMode", "autoHideEnabled", "autoHideEdgeSliverMode"]) ?? false
+                label: rootSettings?.pluginApi?.tr("settings.display.autoHide.edgeSliverRadius.label")
+                description: rootSettings?.pluginApi?.tr("settings.display.autoHide.edgeSliverRadius.desc")
+                from: 0
+                to: 64
+                stepSize: 1
+                value: rootSettings?.nestedSettingValue("display", "autoHide", "edgeSliverRadius") ?? 0
+                text: value <= 0 ? rootSettings?.pluginApi?.tr("common.auto") : Math.round(value) + " px"
+                defaultValue: rootSettings?.defaultNestedValue("display", "autoHide", "edgeSliverRadius") ?? 0
+                showReset: true
+                onMoved: sliderValue => rootSettings?.setNestedSetting("display", "autoHide", "edgeSliverRadius", Math.round(sliderValue))
+            }
+
+            HybridColorChoice {
+                pluginApi: rootSettings?.pluginApi
+                visible: rootSettings?.isVisibleByConditions(["floatingPanelMode", "autoHideEnabled", "autoHideEdgeSliverMode"]) ?? false
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.display.autoHide.edgeSliverColor.label")
+                description: rootSettings?.pluginApi?.tr("settings.display.autoHide.edgeSliverColor.desc")
+                currentColor: rootSettings?.nestedSettingValue("display", "autoHide", "edgeSliverColor") ?? "none"
+                defaultColor: rootSettings?.defaultNestedValue("display", "autoHide", "edgeSliverColor") ?? "none"
+                currentOpacity: rootSettings?.nestedSettingValue("display", "autoHide", "edgeSliverOpacity") ?? 1
+                defaultOpacity: rootSettings?.defaultNestedValue("display", "autoHide", "edgeSliverOpacity") ?? 1
+                showOpacityControl: true
+                onColorSelected: value => rootSettings?.setNestedSetting("display", "autoHide", "edgeSliverColor", value)
+                onOpacitySelected: value => rootSettings?.setNestedSetting("display", "autoHide", "edgeSliverOpacity", value)
+            }
         }
     }
 

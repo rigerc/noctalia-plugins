@@ -15,6 +15,17 @@
   "options": {
     "displayModeFloatingPanel": "Floating Panel",
     "displayModeBar": "Bar",
+    "autoHideRevealModeEdgeSliver": "Edge Sliver",
+    "autoHideRevealModeHoverZone": "Hover Zone",
+    "autoHideEffectSlideFade": "Slide + Fade",
+    "autoHideEffectSlide": "Slide",
+    "autoHideEffectFade": "Fade",
+    "autoHideEffectInstant": "Instant",
+    "autoHideSlideDirectionAuto": "Auto",
+    "autoHideSlideDirectionUp": "Up",
+    "autoHideSlideDirectionDown": "Down",
+    "autoHideSlideDirectionLeft": "Left",
+    "autoHideSlideDirectionRight": "Right",
     "trackPositionTop": "Top",
     "trackPositionBottom": "Bottom",
     "focusAlignSegment": "Focused Segment",
@@ -171,6 +182,58 @@
       "gradientDirection": {
         "label": "Gradient Direction",
         "desc": "Choose whether the gradient runs vertically or horizontally."
+      },
+      "autoHide": {
+        "sectionLabel": "Floating Panel Auto-Hide",
+        "sectionDesc": "Automatically hide the floating panel when the pointer is away, then reveal it again from the anchored edge.",
+        "enabled": {
+          "label": "Enable Auto-Hide",
+          "desc": "Only applies in Floating Panel mode. Bar mode stays unchanged."
+        },
+        "revealMode": {
+          "label": "Reveal Mode",
+          "desc": "Choose whether the hidden panel leaves a thin visible strip or only an invisible edge hotspot."
+        },
+        "delayMs": {
+          "label": "Hide Delay",
+          "desc": "How long the pointer must stay away before the floating panel hides."
+        },
+        "durationMs": {
+          "label": "Animation Duration",
+          "desc": "How long the auto-hide reveal and collapse motion should take."
+        },
+        "effect": {
+          "label": "Auto-Hide Effect",
+          "desc": "Choose whether auto-hide uses slide, fade, both, or no animation."
+        },
+        "dynamicMargin": {
+          "label": "Dynamically Adjust Margin",
+          "desc": "Shrink the floating panel margin along with the auto-hide progress so the hidden state sits tighter to the bar content."
+        },
+        "slideDirection": {
+          "label": "Slide Direction",
+          "desc": "Choose which direction slide-based auto-hide effects should move."
+        },
+        "edgeSliverSize": {
+          "label": "Edge Sliver Size",
+          "desc": "Thickness of the visible reveal strip when Reveal Mode is set to Edge Sliver."
+        },
+        "edgeSliverWidth": {
+          "label": "Edge Sliver Width",
+          "desc": "Width of the visible reveal strip relative to the floating panel width."
+        },
+        "edgeSliverMargin": {
+          "label": "Edge Sliver Margin",
+          "desc": "Inset applied around the visible reveal strip from the floating panel bounds."
+        },
+        "edgeSliverRadius": {
+          "label": "Edge Sliver Border Radius",
+          "desc": "Corner radius for the reveal strip. Set to 0 to keep the automatic radius."
+        },
+        "edgeSliverColor": {
+          "label": "Edge Sliver Color",
+          "desc": "Theme key or hex color for the edge sliver. Use `none` to inherit the floating panel background fallback."
+        }
       }
     },
     "filtering": {
