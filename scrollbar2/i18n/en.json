@@ -474,6 +474,14 @@
         "label": "Right Padding",
         "desc": "Right inner padding for window content inside each segment."
       },
+      "paddingTop": {
+        "label": "Top Padding",
+        "desc": "Top inner padding for window content inside each segment."
+      },
+      "paddingBottom": {
+        "label": "Bottom Padding",
+        "desc": "Bottom inner padding for window content inside each segment."
+      },
       "font": {
         "label": "Font Family",
         "desc": "Font family used for window titles."

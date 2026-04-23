@@ -1,7 +1,7 @@
 {
   "id": "scrollbar2",
   "name": "Scrollbar2",
-  "version": "1.11.0",
+  "version": "1.12.0",
   "minNoctaliaVersion": "4.6.6",
   "author": "rigerc",
   "license": "MIT",
@@ -119,6 +119,8 @@
         "titleAlign": "left",
         "paddingLeft": 7,
         "paddingRight": 7,
+        "paddingTop": 0,
+        "paddingBottom": 0,
         "fontWeights": {
           "focused": "semibold",
           "hover": "medium",

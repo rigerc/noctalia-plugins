@@ -130,6 +130,32 @@ ColumnLayout {
                 onMoved: sliderValue => rootSettings?.setSetting("window", "paddingRight", Math.round(sliderValue))
             }
 
+            NValueSlider {
+                label: rootSettings?.pluginApi?.tr("settings.window.paddingTop.label")
+                description: rootSettings?.pluginApi?.tr("settings.window.paddingTop.desc")
+                from: 0
+                to: 32
+                stepSize: 1
+                value: rootSettings?.settingValue("window", "paddingTop") ?? 0
+                text: Math.round(value) + " px"
+                defaultValue: rootSettings?.defaultValue("window", "paddingTop") ?? 0
+                showReset: true
+                onMoved: sliderValue => rootSettings?.setSetting("window", "paddingTop", Math.round(sliderValue))
+            }
+
+            NValueSlider {
+                label: rootSettings?.pluginApi?.tr("settings.window.paddingBottom.label")
+                description: rootSettings?.pluginApi?.tr("settings.window.paddingBottom.desc")
+                from: 0
+                to: 32
+                stepSize: 1
+                value: rootSettings?.settingValue("window", "paddingBottom") ?? 0
+                text: Math.round(value) + " px"
+                defaultValue: rootSettings?.defaultValue("window", "paddingBottom") ?? 0
+                showReset: true
+                onMoved: sliderValue => rootSettings?.setSetting("window", "paddingBottom", Math.round(sliderValue))
+            }
+
             NSearchableComboBox {
                 visible: rootSettings?.isVisibleByConditions(["showTitle"]) ?? true
                 Layout.fillWidth: true

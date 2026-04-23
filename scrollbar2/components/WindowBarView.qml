@@ -516,6 +516,8 @@ Item {
     readonly property real windowMargin: Math.max(0, settingValue("window", "margin", 2) * Style.uiScaleRatio)
     readonly property real windowPaddingLeft: Math.max(0, settingValue("window", "paddingLeft", 7) * Style.uiScaleRatio)
     readonly property real windowPaddingRight: Math.max(0, settingValue("window", "paddingRight", 7) * Style.uiScaleRatio)
+    readonly property real windowPaddingTop: Math.max(0, settingValue("window", "paddingTop", 0) * Style.uiScaleRatio)
+    readonly property real windowPaddingBottom: Math.max(0, settingValue("window", "paddingBottom", 0) * Style.uiScaleRatio)
     readonly property string titleFontFamily: settingValue("window", "font", "JetBrains Mono")
     readonly property real titleFontSize: Math.max(1, settingValue("window", "fontSize", 11) * Style.uiScaleRatio)
     readonly property real iconScale: Math.max(0.5, settingValue("window", "iconScale", 1.0))
@@ -764,10 +766,10 @@ Item {
     readonly property real computedContentHeight: {
         if (!showIcon && !showTitle)
             return Math.max(trackThickness, focusLineThickness);
-        const windowContentHeight = computedLabelHeight + horizontalPadding * 2;
+        const windowContentHeight = computedLabelHeight + windowPaddingTop + windowPaddingBottom;
         return Math.max(trackThickness, focusLineThickness, windowContentHeight);
     }
-    readonly property real availableContainerHeight: Math.max(1, root.height > 0 ? root.height : (hostMode === "bar" ? Style.getCapsuleHeightForScreen(screenName) : computedContentHeight))
+    readonly property real availableContainerHeight: Math.max(1, hostMode === "bar" && root.height > 0 ? root.height : (hostMode === "bar" ? Style.getCapsuleHeightForScreen(screenName) : computedContentHeight))
     readonly property real visibleTrackThickness: Math.min(availableContainerHeight, trackThickness)
     readonly property real visibleFocusLineThickness: Math.min(availableContainerHeight, focusLineThickness)
     readonly property real segmentWidth: {
@@ -2084,6 +2086,8 @@ Item {
                         anchors.margins: root.windowMargin
                         anchors.leftMargin: root.windowMargin + root.windowPaddingLeft
                         anchors.rightMargin: root.windowMargin + root.windowPaddingRight
+                        anchors.topMargin: root.windowMargin + root.windowPaddingTop
+                        anchors.bottomMargin: root.windowMargin + root.windowPaddingBottom
                         spacing: root.labelGap
                         visible: root.showIcon || root.showTitle
                         layoutDirection: root.focusedOnly && root.focusedAlign === "right" && segmentItem.showLabel ? Qt.RightToLeft : Qt.LeftToRight
@@ -2701,6 +2705,8 @@ Item {
                     anchors.margins: root.windowMargin
                     anchors.leftMargin: root.windowMargin + root.windowPaddingLeft
                     anchors.rightMargin: root.windowMargin + root.windowPaddingRight
+                    anchors.topMargin: root.windowMargin + root.windowPaddingTop
+                    anchors.bottomMargin: root.windowMargin + root.windowPaddingBottom
                     spacing: root.labelGap
                     visible: root.showIcon || root.showTitle
 
