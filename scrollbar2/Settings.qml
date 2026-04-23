@@ -876,8 +876,6 @@ ColumnLayout {
 
     function setPath(path, value) {
         const keys = String(path || "").split(".");
-        if (keys.length === 0)
-            return;
         const next = deepCopy(editSettings);
         let current = next;
         for (let i = 0; i < keys.length - 1; i++) {

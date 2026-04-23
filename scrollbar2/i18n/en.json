@@ -853,18 +853,24 @@
         "label": "Segment Colors",
         "desc": "Background colors applied to matched segments by state.",
         "focused": {
+          "label": "Focused Segment Color",
+          "desc": "Background color for the focused segment.",
           "enabled": {
             "label": "Override Focused Segment Color",
             "desc": "Apply this custom rule's focused segment color instead of the global focused segment color."
           }
         },
         "hover": {
+          "label": "Hover Segment Color",
+          "desc": "Background color for the hovered segment.",
           "enabled": {
             "label": "Override Hover Segment Color",
             "desc": "Apply this custom rule's hover segment color instead of the global hover segment color."
           }
         },
         "default": {
+          "label": "Default Segment Color",
+          "desc": "Background color for the default segment.",
           "enabled": {
             "label": "Override Default Segment Color",
             "desc": "Apply this custom rule's default segment color instead of the global default segment color."
@@ -875,18 +881,24 @@
         "label": "Icon Colors",
         "desc": "Icon tint colors applied to matched segments by state.",
         "focused": {
+          "label": "Focused Icon Color",
+          "desc": "Icon tint color for the focused segment.",
           "enabled": {
             "label": "Override Focused Icon Color",
             "desc": "Apply this custom rule's focused icon color instead of the global focused icon color."
           }
         },
         "hover": {
+          "label": "Hover Icon Color",
+          "desc": "Icon tint color for the hovered segment.",
           "enabled": {
             "label": "Override Hover Icon Color",
             "desc": "Apply this custom rule's hover icon color instead of the global hover icon color."
           }
         },
         "default": {
+          "label": "Default Icon Color",
+          "desc": "Icon tint color for the default segment.",
           "enabled": {
             "label": "Override Default Icon Color",
             "desc": "Apply this custom rule's default icon color instead of the global default icon color."
@@ -897,18 +909,24 @@
         "label": "Title Colors",
         "desc": "Title text colors applied to matched segments by state.",
         "focused": {
+          "label": "Focused Title Color",
+          "desc": "Title text color for the focused segment.",
           "enabled": {
             "label": "Override Focused Title Color",
             "desc": "Apply this custom rule's focused title color instead of the global focused title color."
           }
         },
         "hover": {
+          "label": "Hover Title Color",
+          "desc": "Title text color for the hovered segment.",
           "enabled": {
             "label": "Override Hover Title Color",
             "desc": "Apply this custom rule's hover title color instead of the global hover title color."
           }
         },
         "default": {
+          "label": "Default Title Color",
+          "desc": "Title text color for the default segment.",
           "enabled": {
             "label": "Override Default Title Color",
             "desc": "Apply this custom rule's default title color instead of the global default title color."

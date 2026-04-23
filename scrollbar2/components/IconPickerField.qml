@@ -17,7 +17,6 @@ RowLayout {
     property string pickText: "Pick"
     property string clearText: "Clear"
 
-    signal iconPicked(string iconName)
     signal iconCleared()
 
     Layout.fillWidth: true

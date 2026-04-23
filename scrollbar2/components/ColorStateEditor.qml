@@ -34,6 +34,8 @@ ColumnLayout {
     spacing: Style.marginS
 
     function _getLabelKey(stateKey) {
+        if (styleRuleMode)
+            return "settings.customStyleRules." + styleRuleColorGroup + "Colors." + stateKey;
         if (settingPath.indexOf("focusLine") === 0)
             return "settings.focusLine.colors." + stateKey;
         if (settingPath.indexOf("window.iconColors") === 0)

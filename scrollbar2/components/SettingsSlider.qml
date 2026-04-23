@@ -30,8 +30,6 @@ NValueSlider {
     text: {
         if (showAutoAtZero && value <= 0)
             return _autoText;
-        if (unit === "%" || unit === "ms" || unit === "pt" || unit === "px")
-            return Math.round(value) + " " + unit;
         return Math.round(value) + " " + unit;
     }
 
