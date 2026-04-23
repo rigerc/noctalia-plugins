@@ -11,6 +11,10 @@ ColumnLayout {
     property alias trackColorsSectionTarget: trackColorsContent
     property alias focusColorsSectionTarget: focusColorsContent
     property alias windowColorsSectionTarget: windowColorsContent
+    readonly property bool trackEdgeFadeSettingsActive: (rootSettings?.nestedSettingValue("track", "edgeFade", "leftEnabled") ?? false)
+        || (rootSettings?.nestedSettingValue("track", "edgeFade", "rightEnabled") ?? false)
+    readonly property bool iconSettingsActive: rootSettings?.isVisibleByConditions(["showIcons"]) ?? true
+    readonly property bool titleSettingsActive: rootSettings?.isVisibleByConditions(["showTitle"]) ?? true
 
     Layout.fillWidth: true
     spacing: Style.marginL
@@ -55,6 +59,33 @@ ColumnLayout {
                 onColorSelected: value => rootSettings?.setSetting("track", "separatorColor", value)
             }
 
+            NValueSlider {
+                label: rootSettings?.pluginApi?.tr("settings.focusLine.opacity.label")
+                description: rootSettings?.pluginApi?.tr("settings.focusLine.opacity.desc")
+                from: 0
+                to: 1
+                stepSize: 0.01
+                value: rootSettings?.settingValue("focusLine", "opacity") ?? 1
+                text: Math.round(value * 100) + "%"
+                defaultValue: rootSettings?.defaultValue("focusLine", "opacity") ?? 1
+                showReset: true
+                onMoved: sliderValue => rootSettings?.setSetting("focusLine", "opacity", Math.round(sliderValue * 100) / 100)
+            }
+
+            HybridColorChoice {
+                pluginApi: rootSettings?.pluginApi
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.focusLine.lineColor.label")
+                description: rootSettings?.pluginApi?.tr("settings.focusLine.lineColor.desc")
+                currentColor: rootSettings?.objectSettingValue("focusLine", "lineColor", "color") ?? "primary"
+                defaultColor: rootSettings?.defaultObjectValue("focusLine", "lineColor", "color") ?? "primary"
+                currentOpacity: rootSettings?.objectSettingValue("focusLine", "lineColor", "opacity") ?? 1
+                defaultOpacity: rootSettings?.defaultObjectValue("focusLine", "lineColor", "opacity") ?? 1
+                showOpacityControl: true
+                onColorSelected: value => rootSettings?.setObjectSetting("focusLine", "lineColor", "color", value)
+                onOpacitySelected: value => rootSettings?.setObjectSetting("focusLine", "lineColor", "opacity", value)
+            }
+
             NToggle {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.track.edgeFade.leftEnabled.label")
@@ -74,8 +105,8 @@ ColumnLayout {
             }
 
             NValueSlider {
-                visible: (rootSettings?.nestedSettingValue("track", "edgeFade", "leftEnabled") ?? false)
-                    || (rootSettings?.nestedSettingValue("track", "edgeFade", "rightEnabled") ?? false)
+                enabled: root.trackEdgeFadeSettingsActive
+                opacity: root.trackEdgeFadeSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.track.edgeFade.width.label")
                 description: rootSettings?.pluginApi?.tr("settings.track.edgeFade.width.desc")
                 from: 0
@@ -119,6 +150,7 @@ ColumnLayout {
                 pluginApi: rootSettings?.pluginApi
                 Layout.fillWidth: true
                 enabled: rootSettings?.stateSettingValue("focusLine", "colors", "focused", "enabled") ?? true
+                opacity: enabled ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.focusLine.colors.focused.label")
                 description: rootSettings?.pluginApi?.tr("settings.focusLine.colors.focused.desc")
                 currentColor: rootSettings?.stateSettingValue("focusLine", "colors", "focused", "color") ?? "primary"
@@ -143,6 +175,7 @@ ColumnLayout {
                 pluginApi: rootSettings?.pluginApi
                 Layout.fillWidth: true
                 enabled: rootSettings?.stateSettingValue("focusLine", "colors", "hover", "enabled") ?? true
+                opacity: enabled ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.focusLine.colors.hover.label")
                 description: rootSettings?.pluginApi?.tr("settings.focusLine.colors.hover.desc")
                 currentColor: rootSettings?.stateSettingValue("focusLine", "colors", "hover", "color") ?? "hover"
@@ -167,6 +200,7 @@ ColumnLayout {
                 pluginApi: rootSettings?.pluginApi
                 Layout.fillWidth: true
                 enabled: rootSettings?.stateSettingValue("focusLine", "colors", "default", "enabled") ?? true
+                opacity: enabled ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.focusLine.colors.default.label")
                 description: rootSettings?.pluginApi?.tr("settings.focusLine.colors.default.desc")
                 currentColor: rootSettings?.stateSettingValue("focusLine", "colors", "default", "color") ?? "surface-variant"
@@ -198,8 +232,9 @@ ColumnLayout {
 
             HybridColorChoice {
                 pluginApi: rootSettings?.pluginApi
-                visible: rootSettings?.isVisibleByConditions(["showIcons"]) ?? true
                 Layout.fillWidth: true
+                enabled: root.iconSettingsActive
+                opacity: root.iconSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.window.iconColors.focused.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.iconColors.focused.desc")
                 currentColor: rootSettings?.stateSettingValue("window", "iconColors", "focused", "color") ?? "on-surface"
@@ -213,8 +248,9 @@ ColumnLayout {
 
             HybridColorChoice {
                 pluginApi: rootSettings?.pluginApi
-                visible: rootSettings?.isVisibleByConditions(["showIcons"]) ?? true
                 Layout.fillWidth: true
+                enabled: root.iconSettingsActive
+                opacity: root.iconSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.window.iconColors.hover.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.iconColors.hover.desc")
                 currentColor: rootSettings?.stateSettingValue("window", "iconColors", "hover", "color") ?? "on-hover"
@@ -228,8 +264,9 @@ ColumnLayout {
 
             HybridColorChoice {
                 pluginApi: rootSettings?.pluginApi
-                visible: rootSettings?.isVisibleByConditions(["showIcons"]) ?? true
                 Layout.fillWidth: true
+                enabled: root.iconSettingsActive
+                opacity: root.iconSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.window.iconColors.default.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.iconColors.default.desc")
                 currentColor: rootSettings?.stateSettingValue("window", "iconColors", "default", "color") ?? "on-surface-variant"
@@ -243,8 +280,9 @@ ColumnLayout {
 
             HybridColorChoice {
                 pluginApi: rootSettings?.pluginApi
-                visible: rootSettings?.isVisibleByConditions(["showTitle"]) ?? true
                 Layout.fillWidth: true
+                enabled: root.titleSettingsActive
+                opacity: root.titleSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.window.titleColors.focused.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.titleColors.focused.desc")
                 currentColor: rootSettings?.stateSettingValue("window", "titleColors", "focused", "color") ?? "on-surface"
@@ -258,8 +296,9 @@ ColumnLayout {
 
             HybridColorChoice {
                 pluginApi: rootSettings?.pluginApi
-                visible: rootSettings?.isVisibleByConditions(["showTitle"]) ?? true
                 Layout.fillWidth: true
+                enabled: root.titleSettingsActive
+                opacity: root.titleSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.window.titleColors.hover.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.titleColors.hover.desc")
                 currentColor: rootSettings?.stateSettingValue("window", "titleColors", "hover", "color") ?? "on-hover"
@@ -273,8 +312,9 @@ ColumnLayout {
 
             HybridColorChoice {
                 pluginApi: rootSettings?.pluginApi
-                visible: rootSettings?.isVisibleByConditions(["showTitle"]) ?? true
                 Layout.fillWidth: true
+                enabled: root.titleSettingsActive
+                opacity: root.titleSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.window.titleColors.default.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.titleColors.default.desc")
                 currentColor: rootSettings?.stateSettingValue("window", "titleColors", "default", "color") ?? "on-surface-variant"

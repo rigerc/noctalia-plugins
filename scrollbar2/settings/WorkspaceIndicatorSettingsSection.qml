@@ -12,6 +12,11 @@ ColumnLayout {
     property alias indicatorSectionTarget: indicatorContent
     property alias badgeSectionTarget: badgeContent
     property alias animationSectionTarget: animationContent
+    readonly property bool workspaceIndicatorSettingsActive: rootSettings?.isVisibleByConditions(["workspaceIndicatorEnabled"]) ?? false
+    readonly property bool workspaceIndicatorBadgeSettingsActive: workspaceIndicatorSettingsActive
+        && (rootSettings?.isVisibleByConditions(["workspaceIndicatorBadgeEnabled"]) ?? false)
+    readonly property bool workspaceIndicatorAnimationSettingsActive: workspaceIndicatorSettingsActive
+        && (rootSettings?.isVisibleByConditions(["workspaceIndicatorAnimationEnabled"]) ?? true)
 
     Layout.fillWidth: true
     spacing: Style.marginL
@@ -42,8 +47,9 @@ ColumnLayout {
             }
 
             NComboBox {
-                visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorEnabled"]) ?? false
                 Layout.fillWidth: true
+                enabled: root.workspaceIndicatorSettingsActive
+                opacity: root.workspaceIndicatorSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.labelMode.label")
                 description: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.labelMode.desc")
                 model: rootSettings?.workspaceIndicatorLabelModeModel
@@ -53,8 +59,9 @@ ColumnLayout {
             }
 
             NTextInput {
-                visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorEnabled"]) ?? false
                 Layout.fillWidth: true
+                enabled: root.workspaceIndicatorSettingsActive
+                opacity: root.workspaceIndicatorSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.presetText.label")
                 description: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.presetText.desc")
                 text: rootSettings?.settingValue("workspaceIndicator", "presetText") ?? ""
@@ -62,8 +69,9 @@ ColumnLayout {
             }
 
             NComboBox {
-                visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorEnabled"]) ?? false
                 Layout.fillWidth: true
+                enabled: root.workspaceIndicatorSettingsActive
+                opacity: root.workspaceIndicatorSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.position.label")
                 description: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.position.desc")
                 model: rootSettings?.workspaceIndicatorPositionModel
@@ -73,8 +81,9 @@ ColumnLayout {
             }
 
             NComboBox {
-                visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorEnabled"]) ?? false
                 Layout.fillWidth: true
+                enabled: root.workspaceIndicatorSettingsActive
+                opacity: root.workspaceIndicatorSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.verticalAlign.label")
                 description: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.verticalAlign.desc")
                 model: rootSettings?.focusVerticalModel
@@ -84,7 +93,8 @@ ColumnLayout {
             }
 
             NValueSlider {
-                visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorEnabled"]) ?? false
+                enabled: root.workspaceIndicatorSettingsActive
+                opacity: root.workspaceIndicatorSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.paddingX.label")
                 description: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.paddingX.desc")
                 from: 0
@@ -98,7 +108,8 @@ ColumnLayout {
             }
 
             NValueSlider {
-                visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorEnabled"]) ?? false
+                enabled: root.workspaceIndicatorSettingsActive
+                opacity: root.workspaceIndicatorSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.paddingY.label")
                 description: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.paddingY.desc")
                 from: 0
@@ -112,7 +123,8 @@ ColumnLayout {
             }
 
             NValueSlider {
-                visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorEnabled"]) ?? false
+                enabled: root.workspaceIndicatorSettingsActive
+                opacity: root.workspaceIndicatorSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.marginLeft.label")
                 description: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.marginLeft.desc")
                 from: 0
@@ -126,7 +138,8 @@ ColumnLayout {
             }
 
             NValueSlider {
-                visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorEnabled"]) ?? false
+                enabled: root.workspaceIndicatorSettingsActive
+                opacity: root.workspaceIndicatorSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.marginRight.label")
                 description: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.marginRight.desc")
                 from: 0
@@ -140,7 +153,8 @@ ColumnLayout {
             }
 
             NValueSlider {
-                visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorEnabled"]) ?? false
+                enabled: root.workspaceIndicatorSettingsActive
+                opacity: root.workspaceIndicatorSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.borderRadius.label")
                 description: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.borderRadius.desc")
                 from: 0
@@ -155,8 +169,9 @@ ColumnLayout {
 
             HybridColorChoice {
                 pluginApi: rootSettings?.pluginApi
-                visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorEnabled"]) ?? false
                 Layout.fillWidth: true
+                enabled: root.workspaceIndicatorSettingsActive
+                opacity: root.workspaceIndicatorSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.background.label")
                 description: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.background.desc")
                 currentColor: rootSettings?.objectSettingValue("workspaceIndicator", "background", "color") ?? "surface"
@@ -169,8 +184,9 @@ ColumnLayout {
             }
 
             NSearchableComboBox {
-                visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorEnabled"]) ?? false
                 Layout.fillWidth: true
+                enabled: root.workspaceIndicatorSettingsActive
+                opacity: root.workspaceIndicatorSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.font.family.label")
                 description: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.font.family.desc")
                 model: FontService.availableFonts
@@ -180,7 +196,8 @@ ColumnLayout {
             }
 
             NValueSlider {
-                visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorEnabled"]) ?? false
+                enabled: root.workspaceIndicatorSettingsActive
+                opacity: root.workspaceIndicatorSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.font.size.label")
                 description: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.font.size.desc")
                 from: 0
@@ -194,8 +211,9 @@ ColumnLayout {
             }
 
             NComboBox {
-                visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorEnabled"]) ?? false
                 Layout.fillWidth: true
+                enabled: root.workspaceIndicatorSettingsActive
+                opacity: root.workspaceIndicatorSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.font.weight.label")
                 description: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.font.weight.desc")
                 model: rootSettings?.fontWeightModel
@@ -206,8 +224,9 @@ ColumnLayout {
 
             HybridColorChoice {
                 pluginApi: rootSettings?.pluginApi
-                visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorEnabled"]) ?? false
                 Layout.fillWidth: true
+                enabled: root.workspaceIndicatorSettingsActive
+                opacity: root.workspaceIndicatorSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.font.color.label")
                 description: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.font.color.desc")
                 currentColor: rootSettings?.stateSettingValue("workspaceIndicator", "font", "color", "color") ?? "on-surface"
@@ -224,7 +243,6 @@ ColumnLayout {
     NBox {
         Layout.fillWidth: true
         Layout.preferredHeight: badgeContent.implicitHeight + Style.marginL * 2
-        visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorEnabled"]) ?? false
 
         ColumnLayout {
             id: badgeContent
@@ -240,6 +258,8 @@ ColumnLayout {
 
             NToggle {
                 Layout.fillWidth: true
+                enabled: root.workspaceIndicatorSettingsActive
+                opacity: root.workspaceIndicatorSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.badge.enabled.label")
                 description: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.badge.enabled.desc")
                 checked: rootSettings?.nestedSettingValue("workspaceIndicator", "badge", "enabled") ?? false
@@ -249,8 +269,9 @@ ColumnLayout {
 
             HybridColorChoice {
                 pluginApi: rootSettings?.pluginApi
-                visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorBadgeEnabled"]) ?? false
                 Layout.fillWidth: true
+                enabled: root.workspaceIndicatorBadgeSettingsActive
+                opacity: root.workspaceIndicatorBadgeSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.badge.background.label")
                 description: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.badge.background.desc")
                 currentColor: rootSettings?.nestedSettingValue("workspaceIndicator", "badge", "background")?.color ?? "primary"
@@ -263,8 +284,9 @@ ColumnLayout {
             }
 
             NSearchableComboBox {
-                visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorBadgeEnabled"]) ?? false
                 Layout.fillWidth: true
+                enabled: root.workspaceIndicatorBadgeSettingsActive
+                opacity: root.workspaceIndicatorBadgeSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.badge.font.family.label")
                 description: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.badge.font.family.desc")
                 model: FontService.availableFonts
@@ -282,7 +304,8 @@ ColumnLayout {
             }
 
             NValueSlider {
-                visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorBadgeEnabled"]) ?? false
+                enabled: root.workspaceIndicatorBadgeSettingsActive
+                opacity: root.workspaceIndicatorBadgeSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.badge.font.size.label")
                 description: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.badge.font.size.desc")
                 from: 0
@@ -304,8 +327,9 @@ ColumnLayout {
             }
 
             NComboBox {
-                visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorBadgeEnabled"]) ?? false
                 Layout.fillWidth: true
+                enabled: root.workspaceIndicatorBadgeSettingsActive
+                opacity: root.workspaceIndicatorBadgeSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.badge.font.weight.label")
                 description: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.badge.font.weight.desc")
                 model: rootSettings?.fontWeightModel
@@ -324,8 +348,9 @@ ColumnLayout {
 
             HybridColorChoice {
                 pluginApi: rootSettings?.pluginApi
-                visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorBadgeEnabled"]) ?? false
                 Layout.fillWidth: true
+                enabled: root.workspaceIndicatorBadgeSettingsActive
+                opacity: root.workspaceIndicatorBadgeSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.badge.font.color.label")
                 description: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.badge.font.color.desc")
                 currentColor: rootSettings?.nestedSettingValue("workspaceIndicator", "badge", "font")?.color?.color ?? "on-primary"
@@ -358,7 +383,6 @@ ColumnLayout {
     NBox {
         Layout.fillWidth: true
         Layout.preferredHeight: animationContent.implicitHeight + Style.marginL * 2
-        visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorEnabled"]) ?? false
 
         ColumnLayout {
             id: animationContent
@@ -374,6 +398,8 @@ ColumnLayout {
 
             NToggle {
                 Layout.fillWidth: true
+                enabled: root.workspaceIndicatorSettingsActive
+                opacity: root.workspaceIndicatorSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.animation.enabled.label")
                 description: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.animation.enabled.desc")
                 checked: rootSettings?.nestedSettingValue("workspaceIndicator", "animation", "enabled") ?? true
@@ -382,8 +408,9 @@ ColumnLayout {
             }
 
             NComboBox {
-                visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorAnimationEnabled"]) ?? true
                 Layout.fillWidth: true
+                enabled: root.workspaceIndicatorAnimationSettingsActive
+                opacity: root.workspaceIndicatorAnimationSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.animation.type.label")
                 description: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.animation.type.desc")
                 model: rootSettings?.animationTypeModel
@@ -393,8 +420,9 @@ ColumnLayout {
             }
 
             NComboBox {
-                visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorAnimationEnabled"]) ?? true
                 Layout.fillWidth: true
+                enabled: root.workspaceIndicatorAnimationSettingsActive
+                opacity: root.workspaceIndicatorAnimationSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.animation.axis.label")
                 description: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.animation.axis.desc")
                 model: rootSettings?.axisModel
@@ -404,7 +432,8 @@ ColumnLayout {
             }
 
             NValueSlider {
-                visible: rootSettings?.isVisibleByConditions(["workspaceIndicatorAnimationEnabled"]) ?? true
+                enabled: root.workspaceIndicatorAnimationSettingsActive
+                opacity: root.workspaceIndicatorAnimationSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.animation.speed.label")
                 description: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.animation.speed.desc")
                 from: 50

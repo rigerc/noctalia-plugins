@@ -11,6 +11,10 @@ ColumnLayout {
     property var rootSettings: null
     property alias specialWorkspaceSectionTarget: content
     property alias animationSectionTarget: animationContent
+    readonly property bool specialWorkspaceSettingsActive: rootSettings?.isVisibleByConditions(["specialWorkspaceOverlayEnabled"]) ?? false
+    readonly property bool specialWorkspaceCustomSettingsActive: rootSettings?.isVisibleByConditions(["specialWorkspaceOverlayEnabled", "specialWorkspaceOverlayCustomMode"]) ?? false
+    readonly property bool specialWorkspaceAnimationSettingsActive: specialWorkspaceSettingsActive
+        && (rootSettings?.isVisibleByConditions(["specialWorkspaceOverlayAnimationEnabled"]) ?? true)
 
     Layout.fillWidth: true
     spacing: Style.marginL
@@ -41,8 +45,9 @@ ColumnLayout {
             }
 
             NComboBox {
-                visible: rootSettings?.isVisibleByConditions(["specialWorkspaceOverlayEnabled"]) ?? false
                 Layout.fillWidth: true
+                enabled: root.specialWorkspaceSettingsActive
+                opacity: root.specialWorkspaceSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.textMode.label")
                 description: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.textMode.desc")
                 model: rootSettings?.specialWorkspaceOverlayTextModeModel
@@ -52,8 +57,9 @@ ColumnLayout {
             }
 
             NTextInput {
-                visible: rootSettings?.isVisibleByConditions(["specialWorkspaceOverlayEnabled", "specialWorkspaceOverlayCustomMode"]) ?? false
                 Layout.fillWidth: true
+                enabled: root.specialWorkspaceCustomSettingsActive
+                opacity: root.specialWorkspaceCustomSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.customLabel.label")
                 description: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.customLabel.desc")
                 text: rootSettings?.settingValue("specialWorkspaceOverlay", "customLabel") ?? ""
@@ -61,8 +67,9 @@ ColumnLayout {
             }
 
             NToggle {
-                visible: rootSettings?.isVisibleByConditions(["specialWorkspaceOverlayEnabled"]) ?? false
                 Layout.fillWidth: true
+                enabled: root.specialWorkspaceSettingsActive
+                opacity: root.specialWorkspaceSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.showWindowIcons.label")
                 description: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.showWindowIcons.desc")
                 checked: rootSettings?.settingValue("specialWorkspaceOverlay", "showWindowIcons") ?? false
@@ -71,7 +78,8 @@ ColumnLayout {
             }
 
             NValueSlider {
-                visible: rootSettings?.isVisibleByConditions(["specialWorkspaceOverlayEnabled"]) ?? false
+                enabled: root.specialWorkspaceSettingsActive
+                opacity: root.specialWorkspaceSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.widthPercent.label")
                 description: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.widthPercent.desc")
                 from: 50
@@ -85,7 +93,8 @@ ColumnLayout {
             }
 
             NValueSlider {
-                visible: rootSettings?.isVisibleByConditions(["specialWorkspaceOverlayEnabled"]) ?? false
+                enabled: root.specialWorkspaceSettingsActive
+                opacity: root.specialWorkspaceSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.heightPercent.label")
                 description: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.heightPercent.desc")
                 from: 50
@@ -99,7 +108,8 @@ ColumnLayout {
             }
 
             NValueSlider {
-                visible: rootSettings?.isVisibleByConditions(["specialWorkspaceOverlayEnabled"]) ?? false
+                enabled: root.specialWorkspaceSettingsActive
+                opacity: root.specialWorkspaceSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.borderRadius.label")
                 description: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.borderRadius.desc")
                 from: 0
@@ -114,8 +124,9 @@ ColumnLayout {
 
             HybridColorChoice {
                 pluginApi: rootSettings?.pluginApi
-                visible: rootSettings?.isVisibleByConditions(["specialWorkspaceOverlayEnabled"]) ?? false
                 Layout.fillWidth: true
+                enabled: root.specialWorkspaceSettingsActive
+                opacity: root.specialWorkspaceSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.background.label")
                 description: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.background.desc")
                 currentColor: rootSettings?.objectSettingValue("specialWorkspaceOverlay", "background", "color") ?? "surface"
@@ -128,8 +139,9 @@ ColumnLayout {
             }
 
             NSearchableComboBox {
-                visible: rootSettings?.isVisibleByConditions(["specialWorkspaceOverlayEnabled"]) ?? false
                 Layout.fillWidth: true
+                enabled: root.specialWorkspaceSettingsActive
+                opacity: root.specialWorkspaceSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.font.family.label")
                 description: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.font.family.desc")
                 model: FontService.availableFonts
@@ -139,7 +151,8 @@ ColumnLayout {
             }
 
             NValueSlider {
-                visible: rootSettings?.isVisibleByConditions(["specialWorkspaceOverlayEnabled"]) ?? false
+                enabled: root.specialWorkspaceSettingsActive
+                opacity: root.specialWorkspaceSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.font.size.label")
                 description: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.font.size.desc")
                 from: 1
@@ -153,8 +166,9 @@ ColumnLayout {
             }
 
             NComboBox {
-                visible: rootSettings?.isVisibleByConditions(["specialWorkspaceOverlayEnabled"]) ?? false
                 Layout.fillWidth: true
+                enabled: root.specialWorkspaceSettingsActive
+                opacity: root.specialWorkspaceSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.font.weight.label")
                 description: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.font.weight.desc")
                 model: rootSettings?.fontWeightModel
@@ -165,8 +179,9 @@ ColumnLayout {
 
             HybridColorChoice {
                 pluginApi: rootSettings?.pluginApi
-                visible: rootSettings?.isVisibleByConditions(["specialWorkspaceOverlayEnabled"]) ?? false
                 Layout.fillWidth: true
+                enabled: root.specialWorkspaceSettingsActive
+                opacity: root.specialWorkspaceSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.font.color.label")
                 description: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.font.color.desc")
                 currentColor: rootSettings?.stateSettingValue("specialWorkspaceOverlay", "font", "color", "color") ?? "on-surface"
@@ -183,7 +198,6 @@ ColumnLayout {
     NBox {
         Layout.fillWidth: true
         Layout.preferredHeight: animationContent.implicitHeight + Style.marginL * 2
-        visible: rootSettings?.isVisibleByConditions(["specialWorkspaceOverlayEnabled"]) ?? false
 
         ColumnLayout {
             id: animationContent
@@ -199,6 +213,8 @@ ColumnLayout {
 
             NToggle {
                 Layout.fillWidth: true
+                enabled: root.specialWorkspaceSettingsActive
+                opacity: root.specialWorkspaceSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.animation.enabled.label")
                 description: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.animation.enabled.desc")
                 checked: rootSettings?.nestedSettingValue("specialWorkspaceOverlay", "animation", "enabled")
@@ -209,8 +225,9 @@ ColumnLayout {
             }
 
             NComboBox {
-                visible: rootSettings?.isVisibleByConditions(["specialWorkspaceOverlayAnimationEnabled"]) ?? true
                 Layout.fillWidth: true
+                enabled: root.specialWorkspaceAnimationSettingsActive
+                opacity: root.specialWorkspaceAnimationSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.animation.type.label")
                 description: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.animation.type.desc")
                 model: rootSettings?.animationTypeModel
@@ -222,8 +239,9 @@ ColumnLayout {
             }
 
             NComboBox {
-                visible: rootSettings?.isVisibleByConditions(["specialWorkspaceOverlayAnimationEnabled"]) ?? true
                 Layout.fillWidth: true
+                enabled: root.specialWorkspaceAnimationSettingsActive
+                opacity: root.specialWorkspaceAnimationSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.animation.axis.label")
                 description: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.animation.axis.desc")
                 model: rootSettings?.axisModel
@@ -233,7 +251,8 @@ ColumnLayout {
             }
 
             NValueSlider {
-                visible: rootSettings?.isVisibleByConditions(["specialWorkspaceOverlayAnimationEnabled"]) ?? true
+                enabled: root.specialWorkspaceAnimationSettingsActive
+                opacity: root.specialWorkspaceAnimationSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.animation.speed.label")
                 description: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.animation.speed.desc")
                 from: 50

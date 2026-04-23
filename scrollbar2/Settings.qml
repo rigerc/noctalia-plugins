@@ -30,6 +30,14 @@ ColumnLayout {
             "icon": "palette"
         },
         {
+            "label": pluginApi?.tr("settings.navTabs.behavior"),
+            "icon": "adjustments"
+        },
+        {
+            "label": pluginApi?.tr("settings.navTabs.workspaces"),
+            "icon": "layers-union"
+        },
+        {
             "label": pluginApi?.tr("settings.navTabs.pinnedApps"),
             "icon": "apps"
         },
@@ -1103,7 +1111,7 @@ ColumnLayout {
         target: mainInstance
 
         function onRequestedStyleRuleRevisionChanged() {
-            root.selectedTab = 3;
+            root.selectedTab = 5;
         }
     }
 
@@ -1111,7 +1119,7 @@ ColumnLayout {
         refreshEditSettings();
         // Handle navigation that was triggered before this instance was loaded
         if (mainInstance?.requestedStyleRuleNavigationPending ?? false) {
-            root.selectedTab = 3;
+            root.selectedTab = 5;
             mainInstance.requestedStyleRuleNavigationPending = false;
         }
     }
@@ -1146,6 +1154,14 @@ ColumnLayout {
         }
 
         AppearanceSettingsTab {
+            rootSettings: root
+        }
+
+        BehaviorSettingsTab {
+            rootSettings: root
+        }
+
+        WorkspacesSettingsTab {
             rootSettings: root
         }
 

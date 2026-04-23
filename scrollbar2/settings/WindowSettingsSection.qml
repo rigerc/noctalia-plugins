@@ -10,7 +10,9 @@ ColumnLayout {
 
     property var rootSettings: null
     property alias windowSectionTarget: windowContent
-    property alias focusLineSectionTarget: focusLineContent
+    readonly property bool focusedOnlySettingsActive: rootSettings?.isVisibleByConditions(["focusedOnly"]) ?? false
+    readonly property bool iconSettingsActive: rootSettings?.isVisibleByConditions(["showIcons"]) ?? true
+    readonly property bool titleSettingsActive: rootSettings?.isVisibleByConditions(["showTitle"]) ?? true
 
     Layout.fillWidth: true
     spacing: Style.marginL
@@ -68,8 +70,9 @@ ColumnLayout {
             }
 
             NComboBox {
-                visible: rootSettings?.isVisibleByConditions(["focusedOnly"]) ?? false
                 Layout.fillWidth: true
+                enabled: root.focusedOnlySettingsActive
+                opacity: root.focusedOnlySettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.window.focusedAlign.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.focusedAlign.desc")
                 model: rootSettings?.focusAlignModel
@@ -157,8 +160,9 @@ ColumnLayout {
             }
 
             NSearchableComboBox {
-                visible: rootSettings?.isVisibleByConditions(["showTitle"]) ?? true
                 Layout.fillWidth: true
+                enabled: root.titleSettingsActive
+                opacity: root.titleSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.window.font.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.font.desc")
                 model: FontService.availableFonts
@@ -168,7 +172,8 @@ ColumnLayout {
             }
 
             NValueSlider {
-                visible: rootSettings?.isVisibleByConditions(["showTitle"]) ?? true
+                enabled: root.titleSettingsActive
+                opacity: root.titleSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.window.fontSize.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.fontSize.desc")
                 from: 0
@@ -182,8 +187,9 @@ ColumnLayout {
             }
 
             NComboBox {
-                visible: rootSettings?.isVisibleByConditions(["showTitle"]) ?? true
                 Layout.fillWidth: true
+                enabled: root.titleSettingsActive
+                opacity: root.titleSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.window.fontWeights.focused.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.fontWeights.focused.desc")
                 model: rootSettings?.fontWeightModel
@@ -193,8 +199,9 @@ ColumnLayout {
             }
 
             NComboBox {
-                visible: rootSettings?.isVisibleByConditions(["showTitle"]) ?? true
                 Layout.fillWidth: true
+                enabled: root.titleSettingsActive
+                opacity: root.titleSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.window.fontWeights.hover.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.fontWeights.hover.desc")
                 model: rootSettings?.fontWeightModel
@@ -204,8 +211,9 @@ ColumnLayout {
             }
 
             NComboBox {
-                visible: rootSettings?.isVisibleByConditions(["showTitle"]) ?? true
                 Layout.fillWidth: true
+                enabled: root.titleSettingsActive
+                opacity: root.titleSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.window.fontWeights.default.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.fontWeights.default.desc")
                 model: rootSettings?.fontWeightModel
@@ -215,8 +223,9 @@ ColumnLayout {
             }
 
             NComboBox {
-                visible: rootSettings?.isVisibleByConditions(["showIcons"]) ?? true
                 Layout.fillWidth: true
+                enabled: root.iconSettingsActive
+                opacity: root.iconSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.window.iconAlign.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.iconAlign.desc")
                 model: rootSettings?.horizontalAlignModel
@@ -226,7 +235,8 @@ ColumnLayout {
             }
 
             NValueSlider {
-                visible: rootSettings?.isVisibleByConditions(["showIcons"]) ?? true
+                enabled: root.iconSettingsActive
+                opacity: root.iconSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.window.iconScale.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.iconScale.desc")
                 from: 0.5
@@ -240,8 +250,9 @@ ColumnLayout {
             }
 
             NComboBox {
-                visible: rootSettings?.isVisibleByConditions(["showTitle"]) ?? true
                 Layout.fillWidth: true
+                enabled: root.titleSettingsActive
+                opacity: root.titleSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.window.titleAlign.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.titleAlign.desc")
                 model: rootSettings?.horizontalAlignModel
@@ -251,7 +262,8 @@ ColumnLayout {
             }
 
             NValueSlider {
-                visible: rootSettings?.isVisibleByConditions(["showTitle"]) ?? true
+                enabled: root.titleSettingsActive
+                opacity: root.titleSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.window.titleScale.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.titleScale.desc")
                 from: 0.5
@@ -262,100 +274,6 @@ ColumnLayout {
                 defaultValue: rootSettings?.defaultValue("window", "titleScale") ?? 1.0
                 showReset: true
                 onMoved: sliderValue => rootSettings?.setSetting("window", "titleScale", Math.round(sliderValue * 100) / 100)
-            }
-        }
-    }
-
-    NBox {
-        Layout.fillWidth: true
-        Layout.preferredHeight: focusLineContent.implicitHeight + Style.marginL * 2
-
-        ColumnLayout {
-            id: focusLineContent
-            anchors.fill: parent
-            anchors.margins: Style.marginL
-            spacing: Style.marginM
-
-            NHeader {
-                Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.section.focusLine.label")
-                description: rootSettings?.pluginApi?.tr("settings.section.focusLine.desc")
-            }
-
-            NValueSlider {
-                label: rootSettings?.pluginApi?.tr("settings.focusLine.thickness.label")
-                description: rootSettings?.pluginApi?.tr("settings.focusLine.thickness.desc")
-                from: 1
-                to: 40
-                stepSize: 1
-                value: rootSettings?.settingValue("focusLine", "thickness") ?? 6
-                text: Math.round(value) + " px"
-                defaultValue: rootSettings?.defaultValue("focusLine", "thickness") ?? 6
-                showReset: true
-                onMoved: sliderValue => rootSettings?.setSetting("focusLine", "thickness", Math.round(sliderValue))
-            }
-
-            NValueSlider {
-                label: rootSettings?.pluginApi?.tr("settings.focusLine.width.label")
-                description: rootSettings?.pluginApi?.tr("settings.focusLine.width.desc")
-                from: 1
-                to: 100
-                stepSize: 1
-                value: rootSettings?.settingValue("focusLine", "width") ?? 100
-                text: Math.round(value) + "%"
-                defaultValue: rootSettings?.defaultValue("focusLine", "width") ?? 100
-                showReset: true
-                onMoved: sliderValue => rootSettings?.setSetting("focusLine", "width", Math.round(sliderValue))
-            }
-
-            NValueSlider {
-                label: rootSettings?.pluginApi?.tr("settings.focusLine.borderRadius.label")
-                description: rootSettings?.pluginApi?.tr("settings.focusLine.borderRadius.desc")
-                from: 0
-                to: 24
-                stepSize: 1
-                value: rootSettings?.settingValue("focusLine", "borderRadius") ?? 3
-                text: Math.round(value) + " px"
-                defaultValue: rootSettings?.defaultValue("focusLine", "borderRadius") ?? 3
-                showReset: true
-                onMoved: sliderValue => rootSettings?.setSetting("focusLine", "borderRadius", Math.round(sliderValue))
-            }
-
-            NComboBox {
-                Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.focusLine.verticalAlign.label")
-                description: rootSettings?.pluginApi?.tr("settings.focusLine.verticalAlign.desc")
-                model: rootSettings?.focusVerticalModel
-                currentKey: rootSettings?.settingValue("focusLine", "verticalAlign") ?? "bottom"
-                defaultValue: rootSettings?.defaultValue("focusLine", "verticalAlign") ?? "bottom"
-                onSelected: key => rootSettings?.setSetting("focusLine", "verticalAlign", key)
-            }
-
-            NValueSlider {
-                label: rootSettings?.pluginApi?.tr("settings.focusLine.opacity.label")
-                description: rootSettings?.pluginApi?.tr("settings.focusLine.opacity.desc")
-                from: 0
-                to: 1
-                stepSize: 0.01
-                value: rootSettings?.settingValue("focusLine", "opacity") ?? 1
-                text: Math.round(value * 100) + "%"
-                defaultValue: rootSettings?.defaultValue("focusLine", "opacity") ?? 1
-                showReset: true
-                onMoved: sliderValue => rootSettings?.setSetting("focusLine", "opacity", Math.round(sliderValue * 100) / 100)
-            }
-
-            HybridColorChoice {
-                pluginApi: rootSettings?.pluginApi
-                Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.focusLine.lineColor.label")
-                description: rootSettings?.pluginApi?.tr("settings.focusLine.lineColor.desc")
-                currentColor: rootSettings?.objectSettingValue("focusLine", "lineColor", "color") ?? "primary"
-                defaultColor: rootSettings?.defaultObjectValue("focusLine", "lineColor", "color") ?? "primary"
-                currentOpacity: rootSettings?.objectSettingValue("focusLine", "lineColor", "opacity") ?? 1
-                defaultOpacity: rootSettings?.defaultObjectValue("focusLine", "lineColor", "opacity") ?? 1
-                showOpacityControl: true
-                onColorSelected: value => rootSettings?.setObjectSetting("focusLine", "lineColor", "color", value)
-                onOpacitySelected: value => rootSettings?.setObjectSetting("focusLine", "lineColor", "opacity", value)
             }
         }
     }

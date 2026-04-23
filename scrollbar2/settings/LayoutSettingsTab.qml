@@ -23,24 +23,6 @@ SettingsTabPage {
             "label": rootSettings?.pluginApi?.tr("settings.section.track.label"),
             "icon": "line",
             "target": displaySection.trackSectionTarget
-        },
-        {
-            "id": "filtering",
-            "label": rootSettings?.pluginApi?.tr("settings.section.filtering.label"),
-            "icon": "filter",
-            "target": behaviorSection.filteringSectionTarget
-        },
-        {
-            "id": "animation",
-            "label": rootSettings?.pluginApi?.tr("settings.section.animation.label"),
-            "icon": "transition-right",
-            "target": behaviorSection.animationSectionTarget
-        },
-        {
-            "id": "debug",
-            "label": rootSettings?.pluginApi?.tr("settings.section.debug.label"),
-            "icon": "bug",
-            "target": behaviorSection.debugSectionTarget
         }
     ]
 
@@ -54,24 +36,6 @@ SettingsTabPage {
 
     DisplaySettingsSection {
         id: displaySection
-        Layout.fillWidth: true
-        rootSettings: root.rootSettings
-    }
-
-    NDivider {
-        Layout.fillWidth: true
-    }
-
-    NLabel {
-        Layout.fillWidth: true
-        label: rootSettings?.pluginApi?.tr("settings.pageGroups.motion.label")
-        description: rootSettings?.pluginApi?.tr("settings.pageGroups.motion.desc")
-        icon: "transition-right"
-        iconColor: Color.mOnSurfaceVariant
-    }
-
-    BehaviorSettingsSection {
-        id: behaviorSection
         Layout.fillWidth: true
         rootSettings: root.rootSettings
     }
