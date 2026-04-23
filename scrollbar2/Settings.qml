@@ -17,6 +17,7 @@ ColumnLayout {
     property int selectedTab: 0
     property string _activePresetId: pluginApi?.pluginSettings?._activePresetId || ""
     property int styleRulesRevision: 0
+    property var expandedStyleRuleOpacityPanels: ({})
     readonly property var mainInstance: pluginApi?.mainInstance ?? null
     readonly property var tabModel: [
         {
@@ -116,6 +117,56 @@ ColumnLayout {
         {
             "key": "bar",
             "name": pluginApi?.tr("options.displayModeBar")
+        }
+    ]
+    readonly property var autoHideRevealModeModel: [
+        {
+            "key": "edgeSliver",
+            "name": pluginApi?.tr("options.autoHideRevealModeEdgeSliver")
+        },
+        {
+            "key": "hoverZone",
+            "name": pluginApi?.tr("options.autoHideRevealModeHoverZone")
+        }
+    ]
+    readonly property var autoHideEffectModel: [
+        {
+            "key": "slideFade",
+            "name": pluginApi?.tr("options.autoHideEffectSlideFade")
+        },
+        {
+            "key": "slide",
+            "name": pluginApi?.tr("options.autoHideEffectSlide")
+        },
+        {
+            "key": "fade",
+            "name": pluginApi?.tr("options.autoHideEffectFade")
+        },
+        {
+            "key": "instant",
+            "name": pluginApi?.tr("options.autoHideEffectInstant")
+        }
+    ]
+    readonly property var autoHideSlideDirectionModel: [
+        {
+            "key": "auto",
+            "name": pluginApi?.tr("options.autoHideSlideDirectionAuto")
+        },
+        {
+            "key": "up",
+            "name": pluginApi?.tr("options.autoHideSlideDirectionUp")
+        },
+        {
+            "key": "down",
+            "name": pluginApi?.tr("options.autoHideSlideDirectionDown")
+        },
+        {
+            "key": "left",
+            "name": pluginApi?.tr("options.autoHideSlideDirectionLeft")
+        },
+        {
+            "key": "right",
+            "name": pluginApi?.tr("options.autoHideSlideDirectionRight")
         }
     ]
     readonly property var trackPositionModel: [
@@ -354,10 +405,11 @@ ColumnLayout {
         return normalized;
     }
 
-    function normalizeColorStateMap(settingValue, fallbackMap, fallbackOpacity) {
+    function normalizeColorStateMap(settingValue, fallbackMap, fallbackOpacity, defaultEnabled) {
         const normalized = ({});
         const currentValue = (settingValue && typeof settingValue === "object" && !Array.isArray(settingValue)) ? settingValue : ({});
         const opacityValue = fallbackOpacity === undefined ? 1 : fallbackOpacity;
+        const enabledByDefault = defaultEnabled !== false;
 
         for (const key in fallbackMap) {
             const currentState = currentValue[key];
@@ -366,7 +418,7 @@ ColumnLayout {
                 fallbackMap[key],
                 opacityValue
             );
-            normalized[key].enabled = currentState?.enabled !== false;
+            normalized[key].enabled = currentState?.enabled === undefined ? enabledByDefault : currentState.enabled === true;
         }
 
         return normalized;
@@ -386,7 +438,9 @@ ColumnLayout {
                         "focused": "primary",
                         "hover": "hover",
                         "default": "surface-variant"
-                    }
+                    },
+                    undefined,
+                    false
                 ),
                 "icon": normalizeColorStateMap(
                     source.colors?.icon,
@@ -394,7 +448,9 @@ ColumnLayout {
                         "focused": "on-surface",
                         "hover": "on-hover",
                         "default": "on-surface-variant"
-                    }
+                    },
+                    undefined,
+                    false
                 ),
                 "title": normalizeColorStateMap(
                     source.colors?.title,
@@ -402,7 +458,9 @@ ColumnLayout {
                         "focused": "on-surface",
                         "hover": "on-hover",
                         "default": "on-surface-variant"
-                    }
+                    },
+                    undefined,
+                    false
                 )
             },
             "blink": {
@@ -453,6 +511,24 @@ ColumnLayout {
             "none",
             0
         );
+        next.display.autoHide = next.display.autoHide && typeof next.display.autoHide === "object" && !Array.isArray(next.display.autoHide) ? next.display.autoHide : ({});
+        next.display.autoHide.enabled = next.display.autoHide.enabled === true;
+        if (["edgeSliver", "hoverZone"].indexOf(String(next.display.autoHide.revealMode || "")) < 0)
+            next.display.autoHide.revealMode = "edgeSliver";
+        next.display.autoHide.delayMs = Math.max(0, Math.min(5000, Math.round(Number(next.display.autoHide.delayMs ?? 1000))));
+        next.display.autoHide.durationMs = Math.max(0, Math.min(1500, Math.round(Number(next.display.autoHide.durationMs ?? 200))));
+        if (["slideFade", "slide", "fade", "instant"].indexOf(String(next.display.autoHide.effect || "")) < 0)
+            next.display.autoHide.effect = "slideFade";
+        next.display.autoHide.dynamicMargin = next.display.autoHide.dynamicMargin === true;
+        if (["auto", "up", "down", "left", "right"].indexOf(String(next.display.autoHide.slideDirection || "")) < 0)
+            next.display.autoHide.slideDirection = "auto";
+        next.display.autoHide.edgeSliverSize = Math.max(2, Math.min(48, Math.round(Number(next.display.autoHide.edgeSliverSize ?? 8))));
+        next.display.autoHide.edgeSliverWidth = Math.max(10, Math.min(100, Math.round(Number(next.display.autoHide.edgeSliverWidth ?? 100))));
+        next.display.autoHide.edgeSliverMargin = Math.max(0, Math.min(64, Math.round(Number(next.display.autoHide.edgeSliverMargin ?? 0))));
+        next.display.autoHide.edgeSliverRadius = Math.max(0, Math.min(64, Math.round(Number(next.display.autoHide.edgeSliverRadius ?? 0))));
+        if (next.display.autoHide.edgeSliverColor === undefined || next.display.autoHide.edgeSliverColor === null || next.display.autoHide.edgeSliverColor === "")
+            next.display.autoHide.edgeSliverColor = "none";
+        next.display.autoHide.edgeSliverOpacity = normalizeOpacityValue(next.display.autoHide.edgeSliverOpacity, 1);
         next.track.fill = normalizeColorSetting(
             next.track.fill,
             "surface",
@@ -742,6 +818,16 @@ ColumnLayout {
         switch (key) {
         case "floatingPanelMode":
             return (settingValue("display", "mode") ?? "floatingPanel") === "floatingPanel";
+        case "autoHideEnabled":
+            return nestedSettingValue("display", "autoHide", "enabled") ?? false;
+        case "autoHideSlideEffect": {
+            const effect = nestedSettingValue("display", "autoHide", "effect") ?? "slideFade";
+            return effect === "slideFade" || effect === "slide";
+        }
+        case "autoHideAnimatedEffect":
+            return (nestedSettingValue("display", "autoHide", "effect") ?? "slideFade") !== "instant";
+        case "autoHideEdgeSliverMode":
+            return (nestedSettingValue("display", "autoHide", "revealMode") ?? "edgeSliver") === "edgeSliver";
         case "displayGradientEnabled":
             return settingValue("display", "gradientEnabled") ?? false;
         case "workspaceIndicatorEnabled":
@@ -846,6 +932,24 @@ ColumnLayout {
         return Array.isArray(rules) ? rules.slice() : [];
     }
 
+    function styleRuleColorStatePanelKey(index, colorGroup, stateKey) {
+        return [String(index), String(colorGroup), String(stateKey)].join(":");
+    }
+
+    function isStyleRuleColorStatePanelExpanded(index, colorGroup, stateKey) {
+        return expandedStyleRuleOpacityPanels?.[styleRuleColorStatePanelKey(index, colorGroup, stateKey)] === true;
+    }
+
+    function setStyleRuleColorStatePanelExpanded(index, colorGroup, stateKey, expanded) {
+        const key = styleRuleColorStatePanelKey(index, colorGroup, stateKey);
+        const next = Object.assign({}, expandedStyleRuleOpacityPanels);
+        if (expanded)
+            next[key] = true;
+        else
+            delete next[key];
+        expandedStyleRuleOpacityPanels = next;
+    }
+
     function defaultStyleRuleItems() {
         return Array.isArray(defaultSettings?.customStyleRules) ? defaultSettings.customStyleRules : [];
     }
@@ -858,7 +962,9 @@ ColumnLayout {
                     "focused": "primary",
                     "hover": "hover",
                     "default": "surface-variant"
-                }
+                },
+                undefined,
+                false
             ),
             "icon": normalizeColorStateMap(
                 editSettings?.window?.iconColors,
@@ -866,7 +972,9 @@ ColumnLayout {
                     "focused": "on-surface",
                     "hover": "on-hover",
                     "default": "on-surface-variant"
-                }
+                },
+                undefined,
+                false
             ),
             "title": normalizeColorStateMap(
                 editSettings?.window?.titleColors,
@@ -874,7 +982,9 @@ ColumnLayout {
                     "focused": "on-surface",
                     "hover": "on-hover",
                     "default": "on-surface-variant"
-                }
+                },
+                undefined,
+                false
             )
         };
     }

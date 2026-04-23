@@ -192,7 +192,7 @@ Item {
     function normalizeStyleRuleColorState(settingValue, fallbackColor, fallbackOpacity) {
         const currentValue = (settingValue && typeof settingValue === "object" && !Array.isArray(settingValue)) ? settingValue : ({});
         return {
-            "enabled": currentValue.enabled !== false,
+            "enabled": currentValue.enabled === true,
             "color": String(currentValue.color ?? fallbackColor),
             "opacity": normalizeOpacityValue(currentValue.opacity, fallbackOpacity)
         };
@@ -427,9 +427,7 @@ Item {
     function resolvedSegmentStyle(entryKey) {
         const state = segmentState(entryKey);
         const overrideState = styleRuleStateValue(entryKey, "segment", state);
-        if (overrideState) {
-            if (overrideState.enabled === false)
-                return "transparent";
+        if (overrideState?.enabled === true) {
             const overrideColor = resolveColor(overrideState.color, state === "focused" ? focusLineFocusedColor : (state === "hover" ? focusLineHoverColor : focusLineDefaultColor));
             return colorWithOpacity(overrideColor, focusLineOpacity * overrideState.opacity);
         }
@@ -451,9 +449,10 @@ Item {
         const fallbackOpacity = kind === "icon" ? (state === "focused" ? iconColorFocusedOpacity : (state === "hover" ? iconColorHoverOpacity : iconColorDefaultOpacity)) : (state === "focused" ? titleColorFocusedOpacity : (state === "hover" ? titleColorHoverOpacity : titleColorDefaultOpacity));
         const fallbackColor = kind === "icon" ? (state === "focused" ? iconColorFocused : (state === "hover" ? iconColorHover : iconColorDefault)) : (state === "focused" ? titleColorFocused : (state === "hover" ? titleColorHover : titleColorDefault));
         const overrideState = styleRuleStateValue(entryKey, kind, state);
-        const effectiveKey = String(overrideState?.color ?? fallbackKey);
-        const effectiveOpacity = overrideState ? overrideState.opacity : fallbackOpacity;
-        const effectiveColor = overrideState ? resolveColor(effectiveKey, fallbackColor) : fallbackColor;
+        const hasExplicitOverride = overrideState?.enabled === true;
+        const effectiveKey = String(hasExplicitOverride ? overrideState.color : fallbackKey);
+        const effectiveOpacity = hasExplicitOverride ? overrideState.opacity : fallbackOpacity;
+        const effectiveColor = hasExplicitOverride ? resolveColor(effectiveKey, fallbackColor) : fallbackColor;
         return {
             "key": effectiveKey,
             "opacity": effectiveOpacity,
@@ -517,6 +516,8 @@ Item {
     readonly property real windowMargin: Math.max(0, settingValue("window", "margin", 2) * Style.uiScaleRatio)
     readonly property real windowPaddingLeft: Math.max(0, settingValue("window", "paddingLeft", 7) * Style.uiScaleRatio)
     readonly property real windowPaddingRight: Math.max(0, settingValue("window", "paddingRight", 7) * Style.uiScaleRatio)
+    readonly property real windowPaddingTop: Math.max(0, settingValue("window", "paddingTop", 0) * Style.uiScaleRatio)
+    readonly property real windowPaddingBottom: Math.max(0, settingValue("window", "paddingBottom", 0) * Style.uiScaleRatio)
     readonly property string titleFontFamily: settingValue("window", "font", "JetBrains Mono")
     readonly property real titleFontSize: Math.max(1, settingValue("window", "fontSize", 11) * Style.uiScaleRatio)
     readonly property real iconScale: Math.max(0.5, settingValue("window", "iconScale", 1.0))
@@ -765,10 +766,10 @@ Item {
     readonly property real computedContentHeight: {
         if (!showIcon && !showTitle)
             return Math.max(trackThickness, focusLineThickness);
-        const windowContentHeight = computedLabelHeight + horizontalPadding * 2;
+        const windowContentHeight = computedLabelHeight + windowPaddingTop + windowPaddingBottom;
         return Math.max(trackThickness, focusLineThickness, windowContentHeight);
     }
-    readonly property real availableContainerHeight: Math.max(1, root.height > 0 ? root.height : (hostMode === "bar" ? Style.getCapsuleHeightForScreen(screenName) : computedContentHeight))
+    readonly property real availableContainerHeight: Math.max(1, hostMode === "bar" && root.height > 0 ? root.height : (hostMode === "bar" ? Style.getCapsuleHeightForScreen(screenName) : computedContentHeight))
     readonly property real visibleTrackThickness: Math.min(availableContainerHeight, trackThickness)
     readonly property real visibleFocusLineThickness: Math.min(availableContainerHeight, focusLineThickness)
     readonly property real segmentWidth: {
@@ -807,6 +808,7 @@ Item {
     readonly property bool dragPreviewActive: dragSessionActive && dragInsertIndex >= 0 && normalizedPreviewIndex >= 0 && canPreviewInsertIndex(dragSourceEntryKey, dragInsertIndex)
     readonly property int previewFocusIndex: dragPreviewActive ? normalizedPreviewIndex : -1
     readonly property int effectiveFocusIndex: previewFocusIndex >= 0 ? previewFocusIndex : focusedIndex
+    readonly property bool contextMenuOpen: contextMenu.visible
 
     implicitWidth: hostVisible && (segmentCount > 0 || showWorkspaceIndicator || pinnedSegmentCount > 0 || showSpecialWorkspaceOverlay) ? leftAccessoryWidth + effectiveTrackWidth + rightAccessoryWidth : 0
     implicitHeight: hostVisible && (segmentCount > 0 || showWorkspaceIndicator || pinnedSegmentCount > 0 || showSpecialWorkspaceOverlay) ? Math.max(availableContainerHeight, workspaceContainer.height, pinnedAppsContainer.height, specialWorkspaceOverlay.height) : 0
@@ -2005,6 +2007,7 @@ Item {
                         anchors.margins: root.windowMargin
                         radius: Math.min(Math.max(0, root.windowBorderRadius), Math.max(0, Math.min(width, height) / 2))
                         color: root.segmentBackgroundColor(segmentItem.entryKey)
+                        z: 0
 
                         Behavior on color {
                             enabled: root.animationEnabled
@@ -2084,9 +2087,12 @@ Item {
                         anchors.margins: root.windowMargin
                         anchors.leftMargin: root.windowMargin + root.windowPaddingLeft
                         anchors.rightMargin: root.windowMargin + root.windowPaddingRight
+                        anchors.topMargin: root.windowMargin + root.windowPaddingTop
+                        anchors.bottomMargin: root.windowMargin + root.windowPaddingBottom
                         spacing: root.labelGap
                         visible: root.showIcon || root.showTitle
                         layoutDirection: root.focusedOnly && root.focusedAlign === "right" && segmentItem.showLabel ? Qt.RightToLeft : Qt.LeftToRight
+                        z: 10
 
                         NIcon {
                             readonly property bool active: (segmentItem.styleRule?.iconPrefix?.enabled ?? false) && (segmentItem.styleRule?.iconPrefix?.target ?? "icon") === "icon"
@@ -2701,6 +2707,8 @@ Item {
                     anchors.margins: root.windowMargin
                     anchors.leftMargin: root.windowMargin + root.windowPaddingLeft
                     anchors.rightMargin: root.windowMargin + root.windowPaddingRight
+                    anchors.topMargin: root.windowMargin + root.windowPaddingTop
+                    anchors.bottomMargin: root.windowMargin + root.windowPaddingBottom
                     spacing: root.labelGap
                     visible: root.showIcon || root.showTitle
 
@@ -2843,7 +2851,8 @@ Item {
         y: 0
         width: segmentWidth
         height: availableContainerHeight
-        z: 20
+        // Keep the moving focus strip below segment content so state fills remain true backgrounds.
+        z: 0
 
         Behavior on x {
             enabled: root.animationEnabled

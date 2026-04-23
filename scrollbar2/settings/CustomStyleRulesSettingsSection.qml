@@ -265,6 +265,10 @@ ColumnLayout {
                         HybridColorChoice {
                             pluginApi: rootSettings?.pluginApi
                             Layout.fillWidth: true
+                            opacityExpandedControlled: true
+                            opacityExpanded: rootSettings?.isStyleRuleColorStatePanelExpanded(index, "segment", "focused") ?? false
+                            onOpacityExpandedToggled: expanded => rootSettings?.setStyleRuleColorStatePanelExpanded(index, "segment", "focused", expanded)
+                            enabled: modelData?.colors?.segment?.focused?.enabled === true
                             label: rootSettings?.pluginApi?.tr("settings.focusLine.colors.focused.label")
                             description: rootSettings?.pluginApi?.tr("settings.focusLine.colors.focused.desc")
                             currentColor: modelData?.colors?.segment?.focused?.color ?? "primary"
@@ -276,9 +280,22 @@ ColumnLayout {
                             onOpacitySelected: value => rootSettings?.updateStyleRuleColorState(index, "segment", "focused", "opacity", value)
                         }
 
+                        NToggle {
+                            Layout.fillWidth: true
+                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.segmentColors.focused.enabled.label")
+                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.segmentColors.focused.enabled.desc")
+                            checked: modelData?.colors?.segment?.focused?.enabled === true
+                            onToggled: checked => rootSettings?.updateStyleRuleColorState(index, "segment", "focused", "enabled", checked)
+                            defaultValue: false
+                        }
+
                         HybridColorChoice {
                             pluginApi: rootSettings?.pluginApi
                             Layout.fillWidth: true
+                            opacityExpandedControlled: true
+                            opacityExpanded: rootSettings?.isStyleRuleColorStatePanelExpanded(index, "segment", "hover") ?? false
+                            onOpacityExpandedToggled: expanded => rootSettings?.setStyleRuleColorStatePanelExpanded(index, "segment", "hover", expanded)
+                            enabled: modelData?.colors?.segment?.hover?.enabled === true
                             label: rootSettings?.pluginApi?.tr("settings.focusLine.colors.hover.label")
                             description: rootSettings?.pluginApi?.tr("settings.focusLine.colors.hover.desc")
                             currentColor: modelData?.colors?.segment?.hover?.color ?? "hover"
@@ -290,9 +307,22 @@ ColumnLayout {
                             onOpacitySelected: value => rootSettings?.updateStyleRuleColorState(index, "segment", "hover", "opacity", value)
                         }
 
+                        NToggle {
+                            Layout.fillWidth: true
+                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.segmentColors.hover.enabled.label")
+                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.segmentColors.hover.enabled.desc")
+                            checked: modelData?.colors?.segment?.hover?.enabled === true
+                            onToggled: checked => rootSettings?.updateStyleRuleColorState(index, "segment", "hover", "enabled", checked)
+                            defaultValue: false
+                        }
+
                         HybridColorChoice {
                             pluginApi: rootSettings?.pluginApi
                             Layout.fillWidth: true
+                            opacityExpandedControlled: true
+                            opacityExpanded: rootSettings?.isStyleRuleColorStatePanelExpanded(index, "segment", "default") ?? false
+                            onOpacityExpandedToggled: expanded => rootSettings?.setStyleRuleColorStatePanelExpanded(index, "segment", "default", expanded)
+                            enabled: modelData?.colors?.segment?.default?.enabled === true
                             label: rootSettings?.pluginApi?.tr("settings.focusLine.colors.default.label")
                             description: rootSettings?.pluginApi?.tr("settings.focusLine.colors.default.desc")
                             currentColor: modelData?.colors?.segment?.default?.color ?? "surface-variant"
@@ -304,6 +334,15 @@ ColumnLayout {
                             onOpacitySelected: value => rootSettings?.updateStyleRuleColorState(index, "segment", "default", "opacity", value)
                         }
 
+                        NToggle {
+                            Layout.fillWidth: true
+                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.segmentColors.default.enabled.label")
+                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.segmentColors.default.enabled.desc")
+                            checked: modelData?.colors?.segment?.default?.enabled === true
+                            onToggled: checked => rootSettings?.updateStyleRuleColorState(index, "segment", "default", "enabled", checked)
+                            defaultValue: false
+                        }
+
                         NHeader {
                             Layout.fillWidth: true
                             label: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconColors.label")
@@ -313,6 +352,10 @@ ColumnLayout {
                         HybridColorChoice {
                             pluginApi: rootSettings?.pluginApi
                             Layout.fillWidth: true
+                            opacityExpandedControlled: true
+                            opacityExpanded: rootSettings?.isStyleRuleColorStatePanelExpanded(index, "icon", "focused") ?? false
+                            onOpacityExpandedToggled: expanded => rootSettings?.setStyleRuleColorStatePanelExpanded(index, "icon", "focused", expanded)
+                            enabled: modelData?.colors?.icon?.focused?.enabled === true
                             label: rootSettings?.pluginApi?.tr("settings.window.iconColors.focused.label")
                             description: rootSettings?.pluginApi?.tr("settings.window.iconColors.focused.desc")
                             currentColor: modelData?.colors?.icon?.focused?.color ?? "on-surface"
@@ -324,9 +367,22 @@ ColumnLayout {
                             onOpacitySelected: value => rootSettings?.updateStyleRuleColorState(index, "icon", "focused", "opacity", value)
                         }
 
+                        NToggle {
+                            Layout.fillWidth: true
+                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconColors.focused.enabled.label")
+                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconColors.focused.enabled.desc")
+                            checked: modelData?.colors?.icon?.focused?.enabled === true
+                            onToggled: checked => rootSettings?.updateStyleRuleColorState(index, "icon", "focused", "enabled", checked)
+                            defaultValue: false
+                        }
+
                         HybridColorChoice {
                             pluginApi: rootSettings?.pluginApi
                             Layout.fillWidth: true
+                            opacityExpandedControlled: true
+                            opacityExpanded: rootSettings?.isStyleRuleColorStatePanelExpanded(index, "icon", "hover") ?? false
+                            onOpacityExpandedToggled: expanded => rootSettings?.setStyleRuleColorStatePanelExpanded(index, "icon", "hover", expanded)
+                            enabled: modelData?.colors?.icon?.hover?.enabled === true
                             label: rootSettings?.pluginApi?.tr("settings.window.iconColors.hover.label")
                             description: rootSettings?.pluginApi?.tr("settings.window.iconColors.hover.desc")
                             currentColor: modelData?.colors?.icon?.hover?.color ?? "on-hover"
@@ -338,9 +394,22 @@ ColumnLayout {
                             onOpacitySelected: value => rootSettings?.updateStyleRuleColorState(index, "icon", "hover", "opacity", value)
                         }
 
+                        NToggle {
+                            Layout.fillWidth: true
+                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconColors.hover.enabled.label")
+                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconColors.hover.enabled.desc")
+                            checked: modelData?.colors?.icon?.hover?.enabled === true
+                            onToggled: checked => rootSettings?.updateStyleRuleColorState(index, "icon", "hover", "enabled", checked)
+                            defaultValue: false
+                        }
+
                         HybridColorChoice {
                             pluginApi: rootSettings?.pluginApi
                             Layout.fillWidth: true
+                            opacityExpandedControlled: true
+                            opacityExpanded: rootSettings?.isStyleRuleColorStatePanelExpanded(index, "icon", "default") ?? false
+                            onOpacityExpandedToggled: expanded => rootSettings?.setStyleRuleColorStatePanelExpanded(index, "icon", "default", expanded)
+                            enabled: modelData?.colors?.icon?.default?.enabled === true
                             label: rootSettings?.pluginApi?.tr("settings.window.iconColors.default.label")
                             description: rootSettings?.pluginApi?.tr("settings.window.iconColors.default.desc")
                             currentColor: modelData?.colors?.icon?.default?.color ?? "on-surface-variant"
@@ -352,6 +421,15 @@ ColumnLayout {
                             onOpacitySelected: value => rootSettings?.updateStyleRuleColorState(index, "icon", "default", "opacity", value)
                         }
 
+                        NToggle {
+                            Layout.fillWidth: true
+                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconColors.default.enabled.label")
+                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconColors.default.enabled.desc")
+                            checked: modelData?.colors?.icon?.default?.enabled === true
+                            onToggled: checked => rootSettings?.updateStyleRuleColorState(index, "icon", "default", "enabled", checked)
+                            defaultValue: false
+                        }
+
                         NHeader {
                             Layout.fillWidth: true
                             label: rootSettings?.pluginApi?.tr("settings.customStyleRules.titleColors.label")
@@ -361,6 +439,10 @@ ColumnLayout {
                         HybridColorChoice {
                             pluginApi: rootSettings?.pluginApi
                             Layout.fillWidth: true
+                            opacityExpandedControlled: true
+                            opacityExpanded: rootSettings?.isStyleRuleColorStatePanelExpanded(index, "title", "focused") ?? false
+                            onOpacityExpandedToggled: expanded => rootSettings?.setStyleRuleColorStatePanelExpanded(index, "title", "focused", expanded)
+                            enabled: modelData?.colors?.title?.focused?.enabled === true
                             label: rootSettings?.pluginApi?.tr("settings.window.titleColors.focused.label")
                             description: rootSettings?.pluginApi?.tr("settings.window.titleColors.focused.desc")
                             currentColor: modelData?.colors?.title?.focused?.color ?? "on-surface"
@@ -372,9 +454,22 @@ ColumnLayout {
                             onOpacitySelected: value => rootSettings?.updateStyleRuleColorState(index, "title", "focused", "opacity", value)
                         }
 
+                        NToggle {
+                            Layout.fillWidth: true
+                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.titleColors.focused.enabled.label")
+                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.titleColors.focused.enabled.desc")
+                            checked: modelData?.colors?.title?.focused?.enabled === true
+                            onToggled: checked => rootSettings?.updateStyleRuleColorState(index, "title", "focused", "enabled", checked)
+                            defaultValue: false
+                        }
+
                         HybridColorChoice {
                             pluginApi: rootSettings?.pluginApi
                             Layout.fillWidth: true
+                            opacityExpandedControlled: true
+                            opacityExpanded: rootSettings?.isStyleRuleColorStatePanelExpanded(index, "title", "hover") ?? false
+                            onOpacityExpandedToggled: expanded => rootSettings?.setStyleRuleColorStatePanelExpanded(index, "title", "hover", expanded)
+                            enabled: modelData?.colors?.title?.hover?.enabled === true
                             label: rootSettings?.pluginApi?.tr("settings.window.titleColors.hover.label")
                             description: rootSettings?.pluginApi?.tr("settings.window.titleColors.hover.desc")
                             currentColor: modelData?.colors?.title?.hover?.color ?? "on-hover"
@@ -386,9 +481,22 @@ ColumnLayout {
                             onOpacitySelected: value => rootSettings?.updateStyleRuleColorState(index, "title", "hover", "opacity", value)
                         }
 
+                        NToggle {
+                            Layout.fillWidth: true
+                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.titleColors.hover.enabled.label")
+                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.titleColors.hover.enabled.desc")
+                            checked: modelData?.colors?.title?.hover?.enabled === true
+                            onToggled: checked => rootSettings?.updateStyleRuleColorState(index, "title", "hover", "enabled", checked)
+                            defaultValue: false
+                        }
+
                         HybridColorChoice {
                             pluginApi: rootSettings?.pluginApi
                             Layout.fillWidth: true
+                            opacityExpandedControlled: true
+                            opacityExpanded: rootSettings?.isStyleRuleColorStatePanelExpanded(index, "title", "default") ?? false
+                            onOpacityExpandedToggled: expanded => rootSettings?.setStyleRuleColorStatePanelExpanded(index, "title", "default", expanded)
+                            enabled: modelData?.colors?.title?.default?.enabled === true
                             label: rootSettings?.pluginApi?.tr("settings.window.titleColors.default.label")
                             description: rootSettings?.pluginApi?.tr("settings.window.titleColors.default.desc")
                             currentColor: modelData?.colors?.title?.default?.color ?? "on-surface-variant"
@@ -398,6 +506,15 @@ ColumnLayout {
                             showOpacityControl: true
                             onColorSelected: value => rootSettings?.updateStyleRuleColorState(index, "title", "default", "color", value)
                             onOpacitySelected: value => rootSettings?.updateStyleRuleColorState(index, "title", "default", "opacity", value)
+                        }
+
+                        NToggle {
+                            Layout.fillWidth: true
+                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.titleColors.default.enabled.label")
+                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.titleColors.default.enabled.desc")
+                            checked: modelData?.colors?.title?.default?.enabled === true
+                            onToggled: checked => rootSettings?.updateStyleRuleColorState(index, "title", "default", "enabled", checked)
+                            defaultValue: false
                         }
 
                         NHeader {

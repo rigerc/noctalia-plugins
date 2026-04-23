@@ -15,6 +15,17 @@
   "options": {
     "displayModeFloatingPanel": "Floating Panel",
     "displayModeBar": "Bar",
+    "autoHideRevealModeEdgeSliver": "Edge Sliver",
+    "autoHideRevealModeHoverZone": "Hover Zone",
+    "autoHideEffectSlideFade": "Slide + Fade",
+    "autoHideEffectSlide": "Slide",
+    "autoHideEffectFade": "Fade",
+    "autoHideEffectInstant": "Instant",
+    "autoHideSlideDirectionAuto": "Auto",
+    "autoHideSlideDirectionUp": "Up",
+    "autoHideSlideDirectionDown": "Down",
+    "autoHideSlideDirectionLeft": "Left",
+    "autoHideSlideDirectionRight": "Right",
     "trackPositionTop": "Top",
     "trackPositionBottom": "Bottom",
     "focusAlignSegment": "Focused Segment",
@@ -78,8 +89,8 @@
         "desc": "Control which windows appear in the track and how transitions animate."
       },
       "labels": {
-        "label": "Window Labels & Focus Line",
-        "desc": "Adjust segment content, typography, spacing, and the active focus indicator."
+        "label": "Window Labels, Focus Line & Backgrounds",
+        "desc": "Adjust segment content, typography, state background fills, and the moving focus indicator."
       },
       "colors": {
         "label": "Colors",
@@ -171,6 +182,58 @@
       "gradientDirection": {
         "label": "Gradient Direction",
         "desc": "Choose whether the gradient runs vertically or horizontally."
+      },
+      "autoHide": {
+        "sectionLabel": "Floating Panel Auto-Hide",
+        "sectionDesc": "Automatically hide the floating panel when the pointer is away, then reveal it again from the anchored edge.",
+        "enabled": {
+          "label": "Enable Auto-Hide",
+          "desc": "Only applies in Floating Panel mode. Bar mode stays unchanged."
+        },
+        "revealMode": {
+          "label": "Reveal Mode",
+          "desc": "Choose whether the hidden panel leaves a thin visible strip or only an invisible edge hotspot."
+        },
+        "delayMs": {
+          "label": "Hide Delay",
+          "desc": "How long the pointer must stay away before the floating panel hides."
+        },
+        "durationMs": {
+          "label": "Animation Duration",
+          "desc": "How long the auto-hide reveal and collapse motion should take."
+        },
+        "effect": {
+          "label": "Auto-Hide Effect",
+          "desc": "Choose whether auto-hide uses slide, fade, both, or no animation."
+        },
+        "dynamicMargin": {
+          "label": "Dynamically Adjust Margin",
+          "desc": "Shrink the floating panel margin and both display offsets along with the auto-hide progress so the hidden state sits tighter to the bar content."
+        },
+        "slideDirection": {
+          "label": "Slide Direction",
+          "desc": "Choose which direction slide-based auto-hide effects should move."
+        },
+        "edgeSliverSize": {
+          "label": "Edge Sliver Size",
+          "desc": "Thickness of the visible reveal strip when Reveal Mode is set to Edge Sliver."
+        },
+        "edgeSliverWidth": {
+          "label": "Edge Sliver Width",
+          "desc": "Width of the visible reveal strip relative to the floating panel width."
+        },
+        "edgeSliverMargin": {
+          "label": "Edge Sliver Margin",
+          "desc": "Inset applied around the visible reveal strip from the floating panel bounds."
+        },
+        "edgeSliverRadius": {
+          "label": "Edge Sliver Border Radius",
+          "desc": "Corner radius for the reveal strip. Set to 0 to keep the automatic radius."
+        },
+        "edgeSliverColor": {
+          "label": "Edge Sliver Color",
+          "desc": "Theme key or hex color for the edge sliver. Use `none` to inherit the floating panel background fallback."
+        }
       }
     },
     "filtering": {
@@ -285,8 +348,8 @@
         "desc": "Theme-aware color for the track line."
       },
       "focusColors": {
-        "label": "Focus Colors",
-        "desc": "Focused, hover, and default colors used by the focus system."
+        "label": "Segment Background Colors",
+        "desc": "Focused, hover, and inactive background fills for window segments, separate from the moving focus line."
       },
       "windowColors": {
         "label": "Window Colors",
@@ -350,27 +413,27 @@
       "colors": {
         "focused": {
           "enabled": {
-            "label": "Enable Focused Color",
-            "desc": "Show a background fill for the active segment."
+            "label": "Enable Focused Segment Background",
+            "desc": "Show a background fill behind the active segment's content."
           },
-          "label": "Focused Color",
-          "desc": "Theme key or hex color for the active segment."
+          "label": "Focused Segment Background",
+          "desc": "Theme key or hex color for the active segment background."
         },
         "hover": {
           "enabled": {
-            "label": "Enable Hover Color",
-            "desc": "Show a background fill when hovering a segment."
+            "label": "Enable Hover Segment Background",
+            "desc": "Show a background fill behind a hovered segment's content."
           },
-          "label": "Hover Color",
-          "desc": "Theme key or hex color for hovered segments."
+          "label": "Hover Segment Background",
+          "desc": "Theme key or hex color for the hovered segment background."
         },
         "default": {
           "enabled": {
-            "label": "Enable Default Color",
-            "desc": "Show a background fill for resting segments."
+            "label": "Enable Inactive Segment Background",
+            "desc": "Show a background fill behind inactive segment content."
           },
-          "label": "Default Color",
-          "desc": "Theme key or hex color for resting segments."
+          "label": "Inactive Segment Background",
+          "desc": "Theme key or hex color for the inactive segment background."
         }
       }
     },
@@ -410,6 +473,14 @@
       "paddingRight": {
         "label": "Right Padding",
         "desc": "Right inner padding for window content inside each segment."
+      },
+      "paddingTop": {
+        "label": "Top Padding",
+        "desc": "Top inner padding for window content inside each segment."
+      },
+      "paddingBottom": {
+        "label": "Bottom Padding",
+        "desc": "Bottom inner padding for window content inside each segment."
       },
       "font": {
         "label": "Font Family",
@@ -775,15 +846,69 @@
       },
       "segmentColors": {
         "label": "Segment Colors",
-        "desc": "Background colors applied to matched segments by state."
+        "desc": "Background colors applied to matched segments by state.",
+        "focused": {
+          "enabled": {
+            "label": "Override Focused Segment Color",
+            "desc": "Apply this custom rule's focused segment color instead of the global focused segment color."
+          }
+        },
+        "hover": {
+          "enabled": {
+            "label": "Override Hover Segment Color",
+            "desc": "Apply this custom rule's hover segment color instead of the global hover segment color."
+          }
+        },
+        "default": {
+          "enabled": {
+            "label": "Override Default Segment Color",
+            "desc": "Apply this custom rule's default segment color instead of the global default segment color."
+          }
+        }
       },
       "iconColors": {
         "label": "Icon Colors",
-        "desc": "Icon tint colors applied to matched segments by state."
+        "desc": "Icon tint colors applied to matched segments by state.",
+        "focused": {
+          "enabled": {
+            "label": "Override Focused Icon Color",
+            "desc": "Apply this custom rule's focused icon color instead of the global focused icon color."
+          }
+        },
+        "hover": {
+          "enabled": {
+            "label": "Override Hover Icon Color",
+            "desc": "Apply this custom rule's hover icon color instead of the global hover icon color."
+          }
+        },
+        "default": {
+          "enabled": {
+            "label": "Override Default Icon Color",
+            "desc": "Apply this custom rule's default icon color instead of the global default icon color."
+          }
+        }
       },
       "titleColors": {
         "label": "Title Colors",
-        "desc": "Title text colors applied to matched segments by state."
+        "desc": "Title text colors applied to matched segments by state.",
+        "focused": {
+          "enabled": {
+            "label": "Override Focused Title Color",
+            "desc": "Apply this custom rule's focused title color instead of the global focused title color."
+          }
+        },
+        "hover": {
+          "enabled": {
+            "label": "Override Hover Title Color",
+            "desc": "Apply this custom rule's hover title color instead of the global hover title color."
+          }
+        },
+        "default": {
+          "enabled": {
+            "label": "Override Default Title Color",
+            "desc": "Apply this custom rule's default title color instead of the global default title color."
+          }
+        }
       },
       "blink": {
         "label": "Blink Animation",

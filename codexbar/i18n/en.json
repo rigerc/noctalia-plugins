@@ -9,6 +9,8 @@
   },
   "menu": {
     "refresh": "Refresh",
+    "enableShowOnHover": "Enable Show on Hover",
+    "disableShowOnHover": "Disable Show on Hover",
     "settings": "Widget settings"
   },
   "panel": {
