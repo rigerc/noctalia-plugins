@@ -2007,6 +2007,7 @@ Item {
                         anchors.margins: root.windowMargin
                         radius: Math.min(Math.max(0, root.windowBorderRadius), Math.max(0, Math.min(width, height) / 2))
                         color: root.segmentBackgroundColor(segmentItem.entryKey)
+                        z: 0
 
                         Behavior on color {
                             enabled: root.animationEnabled
@@ -2091,6 +2092,7 @@ Item {
                         spacing: root.labelGap
                         visible: root.showIcon || root.showTitle
                         layoutDirection: root.focusedOnly && root.focusedAlign === "right" && segmentItem.showLabel ? Qt.RightToLeft : Qt.LeftToRight
+                        z: 10
 
                         NIcon {
                             readonly property bool active: (segmentItem.styleRule?.iconPrefix?.enabled ?? false) && (segmentItem.styleRule?.iconPrefix?.target ?? "icon") === "icon"
@@ -2849,7 +2851,8 @@ Item {
         y: 0
         width: segmentWidth
         height: availableContainerHeight
-        z: 20
+        // Keep the moving focus strip below segment content so state fills remain true backgrounds.
+        z: 0
 
         Behavior on x {
             enabled: root.animationEnabled

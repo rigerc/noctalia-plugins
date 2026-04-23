@@ -89,8 +89,8 @@
         "desc": "Control which windows appear in the track and how transitions animate."
       },
       "labels": {
-        "label": "Window Labels & Focus Line",
-        "desc": "Adjust segment content, typography, spacing, and the active focus indicator."
+        "label": "Window Labels, Focus Line & Backgrounds",
+        "desc": "Adjust segment content, typography, state background fills, and the moving focus indicator."
       },
       "colors": {
         "label": "Colors",
@@ -348,8 +348,8 @@
         "desc": "Theme-aware color for the track line."
       },
       "focusColors": {
-        "label": "Focus Colors",
-        "desc": "Focused, hover, and default colors used by the focus system."
+        "label": "Segment Background Colors",
+        "desc": "Focused, hover, and inactive background fills for window segments, separate from the moving focus line."
       },
       "windowColors": {
         "label": "Window Colors",
@@ -413,27 +413,27 @@
       "colors": {
         "focused": {
           "enabled": {
-            "label": "Enable Focused Color",
-            "desc": "Show a background fill for the active segment."
+            "label": "Enable Focused Segment Background",
+            "desc": "Show a background fill behind the active segment's content."
           },
-          "label": "Focused Color",
-          "desc": "Theme key or hex color for the active segment."
+          "label": "Focused Segment Background",
+          "desc": "Theme key or hex color for the active segment background."
         },
         "hover": {
           "enabled": {
-            "label": "Enable Hover Color",
-            "desc": "Show a background fill when hovering a segment."
+            "label": "Enable Hover Segment Background",
+            "desc": "Show a background fill behind a hovered segment's content."
           },
-          "label": "Hover Color",
-          "desc": "Theme key or hex color for hovered segments."
+          "label": "Hover Segment Background",
+          "desc": "Theme key or hex color for the hovered segment background."
         },
         "default": {
           "enabled": {
-            "label": "Enable Default Color",
-            "desc": "Show a background fill for resting segments."
+            "label": "Enable Inactive Segment Background",
+            "desc": "Show a background fill behind inactive segment content."
           },
-          "label": "Default Color",
-          "desc": "Theme key or hex color for resting segments."
+          "label": "Inactive Segment Background",
+          "desc": "Theme key or hex color for the inactive segment background."
         }
       }
     },
