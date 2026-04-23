@@ -7,6 +7,8 @@ import Quickshell.Widgets
 import qs.Commons
 import qs.Services.UI
 import qs.Widgets
+import "../Utils.js" as Utils
+import "windowbar"
 
 Item {
     id: root
@@ -83,29 +85,11 @@ Item {
     }
 
     function settingValue(groupKey, nestedKey, fallbackValue) {
-        const configGroup = currentSettings ? currentSettings[groupKey] : undefined;
-        const nestedConfig = configGroup ? configGroup[nestedKey] : undefined;
-        if (nestedConfig !== undefined)
-            return nestedConfig;
-
-        const defaultsGroup = defaults ? defaults[groupKey] : undefined;
-        const nestedDefault = defaultsGroup ? defaultsGroup[nestedKey] : undefined;
-        if (nestedDefault !== undefined)
-            return nestedDefault;
-
-        return fallbackValue;
+        return Utils.settingValue(currentSettings, defaults, groupKey, nestedKey, fallbackValue);
     }
 
     function objectSettingValue(groupKey, objectKey, nestedKey, fallbackValue) {
-        const configValue = currentSettings?.[groupKey]?.[objectKey]?.[nestedKey];
-        if (configValue !== undefined)
-            return configValue;
-
-        const defaultValue = defaults?.[groupKey]?.[objectKey]?.[nestedKey];
-        if (defaultValue !== undefined)
-            return defaultValue;
-
-        return fallbackValue;
+        return Utils.objectSettingValue(currentSettings, defaults, groupKey, objectKey, nestedKey, fallbackValue);
     }
 
     function nestedStateColor(groupKey, stateKey, fallbackValue) {
@@ -151,12 +135,7 @@ Item {
     }
 
     function normalizeOpacityValue(value, fallbackValue) {
-        const numericValue = Number(value);
-        if (isNaN(numericValue))
-            return fallbackValue;
-        if (numericValue > 1)
-            return Math.max(0, Math.min(1, numericValue / 100));
-        return Math.max(0, Math.min(1, numericValue));
+        return Utils.normalizeOpacityValue(value, fallbackValue);
     }
 
     function colorWithOpacity(colorValue, opacityValue) {
@@ -244,60 +223,23 @@ Item {
     }
 
     function normalizeStyleRuleMatchField(matchField) {
-        switch (String(matchField || "")) {
-        case "title":
-        case "tag":
-        case "floating":
-        case "urgent":
-        case "grouped":
-        case "sharedAppId":
-        case "sharedTitle":
-            return String(matchField);
-        default:
-            return "appId";
-        }
+        return Utils.normalizeStyleRuleMatchField(matchField);
     }
 
     function normalizeBadgeTarget(target) {
-        switch (String(target || "")) {
-        case "title":
-        case "segment":
-            return String(target);
-        default:
-            return "icon";
-        }
+        return Utils.normalizeBadgeTarget(target);
     }
 
     function normalizeBadgePosition(position) {
-        switch (String(position || "")) {
-        case "top-left":
-            return "top-left";
-        default:
-            return "top-right";
-        }
+        return Utils.normalizeBadgePosition(position);
     }
 
     function normalizePrefixTarget(target) {
-        switch (String(target || "")) {
-        case "title":
-            return "title";
-        default:
-            return "icon";
-        }
+        return Utils.normalizePrefixTarget(target);
     }
 
     function styleRuleAllowsEmptyPattern(matchField) {
-        switch (normalizeStyleRuleMatchField(matchField)) {
-        case "tag":
-        case "floating":
-        case "urgent":
-        case "grouped":
-        case "sharedAppId":
-        case "sharedTitle":
-            return true;
-        default:
-            return false;
-        }
+        return Utils.styleRuleAllowsEmptyPattern(matchField);
     }
 
     function styleRuleItems() {
@@ -1614,218 +1556,14 @@ Item {
         }
     }
 
-    Item {
+    WorkspaceIndicatorContainer {
         id: workspaceContainer
-        visible: root.showWorkspaceIndicator
-        x: {
-            if (root.workspaceIndicatorPosition === "left")
-                return (root.pinnedSegmentCount > 0 && root.pinnedAppsPosition === "left" ? root.pinnedAreaWidth : 0) + root.workspaceIndicatorMarginLeft;
-            return root.leftAccessoryWidth + root.actualTrackWidth + root.workspaceIndicatorMarginLeft;
-        }
-        y: root.workspaceIndicatorAlignedY()
-        width: workspaceBackground.width
-        height: workspaceBackground.height
-        z: 30
-
-        Rectangle {
-            id: workspaceBackground
-            width: Math.max(incomingIndicator.implicitWidth, outgoingIndicator.implicitWidth) + root.workspaceIndicatorPaddingX * 2
-            height: Math.max(incomingIndicator.implicitHeight, outgoingIndicator.implicitHeight) + root.workspaceIndicatorPaddingY * 2
-            radius: Math.min(root.workspaceIndicatorBorderRadius, Math.min(width, height) / 2)
-            color: Qt.alpha(root.workspaceIndicatorBackgroundColor, root.workspaceIndicatorBackgroundOpacity)
-
-            Item {
-                anchors.fill: parent
-                clip: true
-
-                RowLayout {
-                    id: outgoingIndicator
-                    anchors.centerIn: parent
-                    spacing: Math.max(4, Math.round(4 * Style.uiScaleRatio))
-                    visible: root.outgoingWorkspaceText !== "" && root.workspaceIndicatorTransitionProgress < 1
-                    opacity: 1 - root.workspaceIndicatorTransitionProgress
-                    x: root.workspaceIndicatorAnimationAxis === "horizontal" ? Math.round((-root.workspaceIndicatorPaddingX * 1.5) * root.workspaceIndicatorTransitionProgress) : 0
-                    y: root.workspaceIndicatorAnimationAxis === "vertical" ? Math.round((-root.workspaceIndicatorPaddingY * 2) * root.workspaceIndicatorTransitionProgress) : 0
-
-                    NText {
-                        text: root.outgoingWorkspaceText
-                        color: Qt.alpha(root.workspaceIndicatorTextColor, root.workspaceIndicatorTextOpacity)
-                        font.family: root.workspaceIndicatorFontFamily || Qt.application.font.family
-                        font.weight: root.fontWeightValue(root.workspaceIndicatorFontWeightKey, Style.fontWeightMedium)
-                        pointSize: root.workspaceIndicatorFontSize
-                    }
-
-                    Rectangle {
-                        visible: root.workspaceIndicatorBadgeEnabled
-                        radius: Math.min(height / 2, Math.round(999 * Style.uiScaleRatio))
-                        color: Qt.alpha(root.workspaceIndicatorBadgeBackgroundColor, root.workspaceIndicatorBadgeBackgroundOpacity)
-                        implicitWidth: badgeOutgoingText.implicitWidth + root.workspaceIndicatorPaddingX
-                        implicitHeight: badgeOutgoingText.implicitHeight + root.workspaceIndicatorPaddingY
-
-                        NText {
-                            id: badgeOutgoingText
-                            anchors.centerIn: parent
-                            text: String(root.outgoingWorkspaceBadgeCount)
-                            color: Qt.alpha(root.workspaceIndicatorBadgeTextColor, root.workspaceIndicatorBadgeTextOpacity)
-                            font.family: root.workspaceIndicatorBadgeFontFamily || Qt.application.font.family
-                            font.weight: root.fontWeightValue(root.workspaceIndicatorBadgeFontWeightKey, Style.fontWeightSemiBold)
-                            pointSize: root.workspaceIndicatorBadgeFontSize
-                        }
-                    }
-                }
-
-                RowLayout {
-                    id: incomingIndicator
-                    anchors.centerIn: parent
-                    spacing: Math.max(4, Math.round(4 * Style.uiScaleRatio))
-                    opacity: root.workspaceIndicatorAnimationEnabled ? root.workspaceIndicatorTransitionProgress : 1
-                    x: root.workspaceIndicatorAnimationAxis === "horizontal" ? Math.round((1 - root.workspaceIndicatorTransitionProgress) * root.workspaceIndicatorPaddingX * 1.5) : 0
-                    y: root.workspaceIndicatorAnimationAxis === "vertical" ? Math.round((1 - root.workspaceIndicatorTransitionProgress) * root.workspaceIndicatorPaddingY * 2) : 0
-
-                    NText {
-                        text: root.displayedWorkspaceText
-                        color: Qt.alpha(root.workspaceIndicatorTextColor, root.workspaceIndicatorTextOpacity)
-                        font.family: root.workspaceIndicatorFontFamily || Qt.application.font.family
-                        font.weight: root.fontWeightValue(root.workspaceIndicatorFontWeightKey, Style.fontWeightMedium)
-                        pointSize: root.workspaceIndicatorFontSize
-                    }
-
-                    Rectangle {
-                        visible: root.workspaceIndicatorBadgeEnabled
-                        radius: Math.min(height / 2, Math.round(999 * Style.uiScaleRatio))
-                        color: Qt.alpha(root.workspaceIndicatorBadgeBackgroundColor, root.workspaceIndicatorBadgeBackgroundOpacity)
-                        implicitWidth: badgeIncomingText.implicitWidth + root.workspaceIndicatorPaddingX
-                        implicitHeight: badgeIncomingText.implicitHeight + root.workspaceIndicatorPaddingY
-
-                        NText {
-                            id: badgeIncomingText
-                            anchors.centerIn: parent
-                            text: String(root.displayedWorkspaceBadgeCount)
-                            color: Qt.alpha(root.workspaceIndicatorBadgeTextColor, root.workspaceIndicatorBadgeTextOpacity)
-                            font.family: root.workspaceIndicatorBadgeFontFamily || Qt.application.font.family
-                            font.weight: root.fontWeightValue(root.workspaceIndicatorBadgeFontWeightKey, Style.fontWeightSemiBold)
-                            pointSize: root.workspaceIndicatorBadgeFontSize
-                        }
-                    }
-                }
-            }
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            acceptedButtons: Qt.NoButton
-            visible: root.workspaceScrollSwitchEnabled
-            onWheel: wheel => {
-                const offset = wheel.angleDelta.y > 0 ? -1 : 1;
-                root.mainInstance?.switchWorkspaceByOffset(root.screenName, offset);
-                wheel.accepted = true;
-            }
-        }
+        view: root
     }
 
-    Item {
+    PinnedAppsContainer {
         id: pinnedAppsContainer
-        visible: root.pinnedSegmentCount > 0
-        x: {
-            if (root.pinnedAppsPosition === "left")
-                return root.pinnedAppsMarginLeft;
-            return root.leftAccessoryWidth + root.actualTrackWidth + (root.showWorkspaceIndicator && root.workspaceIndicatorPosition === "right" ? root.totalIndicatorWidth : 0) + root.pinnedAppsMarginLeft;
-        }
-        y: root.pinnedAppsAlignedY()
-        width: root.pinnedAreaContentWidth
-        height: root.pinnedSegmentCount > 0 ? root.pinnedSlotSize : 0
-        z: 25
-
-        Row {
-            anchors.fill: parent
-            spacing: root.segmentSpacing
-
-            Repeater {
-                model: root.pinnedEntries
-
-                delegate: Item {
-                    id: pinnedItem
-
-                    required property var modelData
-
-                    readonly property string appId: modelData?.appId ?? ""
-                    readonly property string title: modelData?.name ?? appId
-
-                    width: root.pinnedSlotSize
-                    height: root.pinnedSlotSize
-
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: Math.min(root.windowBorderRadius, Math.min(width, height) / 2)
-                        color: root.pinnedSlotBackgroundColor(pinnedItem.appId)
-
-                        Behavior on color {
-                            enabled: root.animationEnabled
-                            ColorAnimation {
-                                duration: root.animationSpeed
-                            }
-                        }
-                    }
-
-                    IconImage {
-                        id: pinnedCustomIcon
-                        anchors.centerIn: parent
-                        width: root.computedIconSize
-                        height: root.computedIconSize
-                        source: root.pinnedAppIconSource(pinnedItem.modelData)
-                        smooth: true
-                        asynchronous: true
-                        visible: status === Image.Ready
-
-                        layer.enabled: visible && root.pinnedAppsIconColorKey !== "none"
-                        layer.effect: ShaderEffect {
-                            property color targetColor: root.pinnedAppsIconColor
-                            property real colorizeMode: 0.0
-
-                            fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/appicon_colorize.frag.qsb")
-                        }
-                    }
-
-                    NText {
-                        anchors.centerIn: parent
-                        visible: !pinnedCustomIcon.visible
-                        text: pinnedItem.title.length > 0 ? pinnedItem.title.charAt(0).toUpperCase() : "?"
-                        pointSize: Math.max(Style.fontSizeXS, root.titleFontSize * root.titleScale * 0.95)
-                        font.weight: Style.fontWeightBold
-                        color: root.pinnedAppsIconColorKey === "none" ? Color.mOnSurface : root.pinnedAppsIconColor
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        acceptedButtons: Qt.LeftButton | Qt.RightButton
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        preventStealing: true
-
-                        onEntered: {
-                            root.hoveredPinnedAppId = pinnedItem.appId;
-                            if (pinnedItem.title)
-                                TooltipService.show(pinnedItem, pinnedItem.title, BarService.getTooltipDirection(root.screen?.name));
-                        }
-
-                        onExited: {
-                            if (root.hoveredPinnedAppId === pinnedItem.appId)
-                                root.hoveredPinnedAppId = "";
-                            TooltipService.hide();
-                        }
-
-                        onReleased: mouse => {
-                            if (mouse.button === Qt.RightButton) {
-                                TooltipService.hide();
-                                root.openContextMenu(pinnedItem, null, pinnedItem.modelData);
-                            } else if (mouse.button === Qt.LeftButton) {
-                                root.activatePinnedApp(pinnedItem.appId);
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        view: root
     }
 
     Row {
@@ -2552,287 +2290,23 @@ Item {
         }
     }
 
-    Rectangle {
+    SpecialWorkspaceOverlay {
         id: specialWorkspaceOverlay
         parent: trackContentLayer
-        visible: root.showSpecialWorkspaceOverlay
-        x: Math.round((trackContentLayer.width - width) / 2)
-        y: root.specialWorkspaceOverlayY()
-        width: root.specialWorkspaceOverlayWidth
-        height: root.specialWorkspaceOverlayHeight
-        radius: Math.min(root.specialWorkspaceOverlayBorderRadius, Math.min(width, height) / 2)
-        color: Qt.alpha(root.specialWorkspaceOverlayBackgroundColor, root.specialWorkspaceOverlayBackgroundOpacity)
-        z: 22
-        opacity: root.showSpecialWorkspaceOverlay ? 1 : 0
-        scale: root.showSpecialWorkspaceOverlay ? 1 : 0.92
-
-        Behavior on opacity {
-            enabled: root.specialWorkspaceOverlayAnimationEnabled
-            NumberAnimation {
-                duration: root.specialWorkspaceOverlayAnimationSpeed
-                easing.type: root.specialWorkspaceOverlayEasingType()
-                easing.overshoot: root.specialWorkspaceOverlayOvershoot()
-            }
-        }
-
-        Behavior on scale {
-            enabled: root.specialWorkspaceOverlayAnimationEnabled
-            NumberAnimation {
-                duration: root.specialWorkspaceOverlayAnimationSpeed
-                easing.type: root.specialWorkspaceOverlayEasingType()
-                easing.overshoot: root.specialWorkspaceOverlayOvershoot()
-            }
-        }
-
-        Item {
-            anchors.fill: parent
-            clip: true
-
-            Row {
-                anchors.centerIn: parent
-                spacing: (root.outgoingSpecialWorkspaceText !== "" && root.outgoingSpecialWorkspaceIcons.length > 0) ? root.specialWorkspaceOverlayIconGap : 0
-                visible: root.outgoingSpecialWorkspaceText !== "" && root.specialWorkspaceOverlayTransitionProgress < 1
-                opacity: 1 - root.specialWorkspaceOverlayTransitionProgress
-                x: root.specialWorkspaceOverlayAnimationAxis === "horizontal" ? Math.round(-root.specialWorkspaceOverlayTransitionOffset() * root.specialWorkspaceOverlayTransitionProgress) : 0
-                y: root.specialWorkspaceOverlayAnimationAxis === "vertical" ? Math.round(-root.specialWorkspaceOverlayTransitionOffset() * root.specialWorkspaceOverlayTransitionProgress) : 0
-
-                NText {
-                    readonly property real iconsWidth: root.outgoingSpecialWorkspaceIcons.length > 0 ? (root.outgoingSpecialWorkspaceIcons.length * root.specialWorkspaceOverlayIconSize) + ((root.outgoingSpecialWorkspaceIcons.length - 1) * root.specialWorkspaceOverlayIconGap) : 0
-                    readonly property real maxTextWidth: Math.max(0, specialWorkspaceOverlay.width - (root.specialWorkspaceOverlayContentPadding * 2) - iconsWidth - (root.outgoingSpecialWorkspaceIcons.length > 0 ? root.specialWorkspaceOverlayIconGap : 0))
-                    width: Math.min(implicitWidth, maxTextWidth)
-                    text: root.outgoingSpecialWorkspaceText
-                    horizontalAlignment: Text.AlignHCenter
-                    elide: Text.ElideRight
-                    color: Qt.alpha(root.specialWorkspaceOverlayTextColor, root.specialWorkspaceOverlayTextOpacity)
-                    font.family: root.specialWorkspaceOverlayFontFamily || Qt.application.font.family
-                    font.weight: root.fontWeightValue(root.specialWorkspaceOverlayFontWeightKey, Style.fontWeightMedium)
-                    pointSize: root.specialWorkspaceOverlayFontSize
-                }
-
-                Repeater {
-                    model: root.outgoingSpecialWorkspaceIcons
-
-                    delegate: IconImage {
-                        required property var modelData
-
-                        width: root.specialWorkspaceOverlayIconSize
-                        height: width
-                        anchors.verticalCenter: parent ? parent.verticalCenter : undefined
-                        source: ThemeIcons.iconForAppId(String(modelData || ""))
-                        smooth: true
-                        asynchronous: true
-                    }
-                }
-            }
-
-            Row {
-                anchors.centerIn: parent
-                spacing: (root.displayedSpecialWorkspaceText !== "" && root.displayedSpecialWorkspaceIcons.length > 0) ? root.specialWorkspaceOverlayIconGap : 0
-                opacity: root.specialWorkspaceOverlayAnimationEnabled ? root.specialWorkspaceOverlayTransitionProgress : 1
-                x: root.specialWorkspaceOverlayAnimationEnabled && root.specialWorkspaceOverlayAnimationAxis === "horizontal" ? Math.round((1 - root.specialWorkspaceOverlayTransitionProgress) * root.specialWorkspaceOverlayTransitionOffset()) : 0
-                y: root.specialWorkspaceOverlayAnimationEnabled && root.specialWorkspaceOverlayAnimationAxis === "vertical" ? Math.round((1 - root.specialWorkspaceOverlayTransitionProgress) * root.specialWorkspaceOverlayTransitionOffset()) : 0
-
-                NText {
-                    readonly property real iconsWidth: root.displayedSpecialWorkspaceIcons.length > 0 ? (root.displayedSpecialWorkspaceIcons.length * root.specialWorkspaceOverlayIconSize) + ((root.displayedSpecialWorkspaceIcons.length - 1) * root.specialWorkspaceOverlayIconGap) : 0
-                    readonly property real maxTextWidth: Math.max(0, specialWorkspaceOverlay.width - (root.specialWorkspaceOverlayContentPadding * 2) - iconsWidth - (root.displayedSpecialWorkspaceIcons.length > 0 ? root.specialWorkspaceOverlayIconGap : 0))
-                    width: Math.min(implicitWidth, maxTextWidth)
-                    text: root.displayedSpecialWorkspaceText
-                    horizontalAlignment: Text.AlignHCenter
-                    elide: Text.ElideRight
-                    color: Qt.alpha(root.specialWorkspaceOverlayTextColor, root.specialWorkspaceOverlayTextOpacity)
-                    font.family: root.specialWorkspaceOverlayFontFamily || Qt.application.font.family
-                    font.weight: root.fontWeightValue(root.specialWorkspaceOverlayFontWeightKey, Style.fontWeightMedium)
-                    pointSize: root.specialWorkspaceOverlayFontSize
-                }
-
-                Repeater {
-                    model: root.displayedSpecialWorkspaceIcons
-
-                    delegate: IconImage {
-                        required property var modelData
-
-                        width: root.specialWorkspaceOverlayIconSize
-                        height: width
-                        anchors.verticalCenter: parent ? parent.verticalCenter : undefined
-                        source: ThemeIcons.iconForAppId(String(modelData || ""))
-                        smooth: true
-                        asynchronous: true
-                    }
-                }
-            }
-        }
+        view: root
     }
 
-    Item {
+    ClosingSegmentsLayer {
         id: closingSegmentsLayer
         parent: trackContentLayer
-        x: 0
-        y: 0
-        width: root.effectiveTrackWidth
-        height: root.availableContainerHeight
-        z: 19
-        visible: (root.closingEntries || []).length > 0
-
-        Repeater {
-            model: root.closingEntries
-
-            delegate: Item {
-                id: closingSegment
-
-                required property var modelData
-
-                readonly property int closeUid: modelData?.uid ?? -1
-                readonly property string appId: String(modelData?.appId ?? "")
-                readonly property string title: String(modelData?.title ?? "")
-                readonly property bool showLabel: modelData?.showLabel !== false
-
-                x: modelData?.x ?? 0
-                y: modelData?.y ?? 0
-                width: modelData?.width ?? 0
-                height: modelData?.height ?? 0
-                clip: true
-                opacity: 1
-                scale: 1
-                transformOrigin: Item.Center
-
-                Rectangle {
-                    anchors.fill: parent
-                    anchors.margins: root.windowMargin
-                    radius: Math.min(Math.max(0, root.windowBorderRadius), Math.max(0, Math.min(width, height) / 2))
-                    color: modelData?.backgroundColor ?? "transparent"
-                }
-
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.margins: root.windowMargin
-                    anchors.leftMargin: root.windowMargin + root.windowPaddingLeft
-                    anchors.rightMargin: root.windowMargin + root.windowPaddingRight
-                    anchors.topMargin: root.windowMargin + root.windowPaddingTop
-                    anchors.bottomMargin: root.windowMargin + root.windowPaddingBottom
-                    spacing: root.labelGap
-                    visible: root.showIcon || root.showTitle
-
-                    Item {
-                        Layout.preferredWidth: root.showIcon ? (root.showTitle ? root.computedIconSize : Math.max(root.computedIconSize, closingSegment.width - (root.windowMargin * 2) - root.windowPaddingLeft - root.windowPaddingRight)) : 0
-                        Layout.preferredHeight: root.showIcon ? root.computedIconSize : 0
-                        Layout.alignment: Qt.AlignVCenter
-                        visible: root.showIcon
-                        opacity: closingSegment.showLabel ? 1 : 0
-
-                        IconImage {
-                            id: closingAppIcon
-                            width: root.computedIconSize
-                            height: root.computedIconSize
-                            anchors.centerIn: parent
-                            source: ThemeIcons.iconForAppId(closingSegment.appId)
-                            smooth: true
-                            asynchronous: true
-                            visible: status === Image.Ready && closingCustomIcon.visible === false
-                        }
-
-                        NIcon {
-                            id: closingCustomIcon
-                            width: root.computedIconSize
-                            height: root.computedIconSize
-                            anchors.centerIn: parent
-                            icon: String(modelData?.customIcon ?? "")
-                            pointSize: root.computedIconSize
-                            visible: icon !== ""
-                            color: modelData?.iconColor ?? root.titleColorDefault
-                        }
-
-                        NText {
-                            width: root.computedIconSize
-                            anchors.centerIn: parent
-                            horizontalAlignment: root.horizontalAlignment(root.iconAlign)
-                            visible: !closingAppIcon.visible && !closingCustomIcon.visible
-                            text: closingSegment.title.length > 0 ? closingSegment.title.charAt(0).toUpperCase() : "?"
-                            pointSize: Math.max(Style.fontSizeXS, root.titleFontSize * root.titleScale * 0.95)
-                            font.weight: Style.fontWeightBold
-                            color: modelData?.iconColor ?? root.titleColorDefault
-                        }
-                    }
-
-                    Item {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: closingTitle.implicitHeight
-                        Layout.alignment: Qt.AlignVCenter
-                        visible: root.showTitle
-
-                        NText {
-                            id: closingTitle
-                            anchors.fill: parent
-                            text: closingSegment.title
-                            elide: Text.ElideRight
-                            maximumLineCount: 1
-                            opacity: closingSegment.showLabel ? 1 : 0
-                            color: modelData?.titleColor ?? root.titleColorDefault
-                            horizontalAlignment: root.horizontalAlignment(root.titleAlign)
-                            font.family: root.titleFontFamily || Qt.application.font.family
-                            pointSize: root.titleFontSize * root.titleScale
-                            font.weight: modelData?.titleWeight ?? Style.fontWeightMedium
-                        }
-                    }
-                }
-
-                ParallelAnimation {
-                    id: closeAnimation
-                    running: root.windowCloseAnimationActive
-
-                    NumberAnimation {
-                        target: closingSegment
-                        property: "opacity"
-                        from: 1
-                        to: 0
-                        duration: root.windowAnimationSpeed
-                        easing.type: root.windowAnimationEasingType()
-                        easing.overshoot: root.windowAnimationOvershoot()
-                    }
-
-                    NumberAnimation {
-                        target: closingSegment
-                        property: "scale"
-                        from: 1
-                        to: 0.86
-                        duration: root.windowAnimationSpeed
-                        easing.type: root.windowAnimationEasingType()
-                        easing.overshoot: root.windowAnimationOvershoot()
-                    }
-
-                    onFinished: root.removeClosingEntry(closingSegment.closeUid)
-                }
-
-                Component.onCompleted: {
-                    if (!root.windowCloseAnimationActive)
-                        root.removeClosingEntry(closeUid);
-                }
-            }
-        }
+        view: root
     }
 
-    Item {
+    TrackSeparators {
         id: trackSeparators
         parent: trackContentLayer
-        x: 0
-        y: trackLine.y
-        width: root.effectiveTrackWidth
-        height: trackLine.height
-        visible: root.segmentCount > 1 && root.segmentSpacing > 0 && trackLine.visible
-        z: 11
-
-        Repeater {
-            model: Math.max(0, root.segmentCount - 1)
-
-            delegate: Rectangle {
-                required property int index
-
-                x: root.separatorOffset(index)
-                y: 0
-                width: root.segmentSpacing
-                height: trackSeparators.height
-                color: Qt.alpha(root.separatorColor, root.trackOpacity)
-            }
-        }
+        view: root
+        trackLine: trackLine
     }
 
     NDropShadow {
@@ -2843,52 +2317,10 @@ Item {
         z: 9
     }
 
-    Item {
+    FocusIndicator {
         id: focusIndicator
         parent: trackContentLayer
-        visible: effectiveFocusIndex >= 0 && availableContainerHeight > 0
-        x: indicatorOffset(effectiveFocusIndex)
-        y: 0
-        width: segmentWidth
-        height: availableContainerHeight
-        // Keep the moving focus strip below segment content so state fills remain true backgrounds.
-        z: 0
-
-        Behavior on x {
-            enabled: root.animationEnabled
-            NumberAnimation {
-                duration: root.animationSpeed
-                easing.type: root.focusLineEasingType()
-                easing.overshoot: root.focusLineOvershoot()
-            }
-        }
-
-        Behavior on width {
-            enabled: root.animationEnabled
-            NumberAnimation {
-                duration: root.animationSpeed
-                easing.type: root.focusLineEasingType()
-                easing.overshoot: root.focusLineOvershoot()
-            }
-        }
-
-        Rectangle {
-            id: focusLineFill
-            readonly property real computedWidth: Math.max(0, Math.round(parent.width * root.focusLineWidthPercent / 100))
-            x: Math.max(0, Math.round((parent.width - width) / 2))
-            y: root.indicatorY()
-            width: computedWidth
-            height: root.visibleFocusLineThickness
-            radius: root.focusLineRadius
-            color: root.dragPreviewActive ? root.colorWithOpacity(root.focusLineHoverColor, root.focusLineOpacity * Math.max(root.focusLineHoverOpacity, root.focusLineIndicatorOpacity)) : root.colorWithOpacity(root.focusLineIndicatorColor, root.focusLineOpacity * root.focusLineIndicatorOpacity)
-
-            Behavior on color {
-                enabled: root.animationEnabled
-                ColorAnimation {
-                    duration: root.animationSpeed
-                }
-            }
-        }
+        view: root
     }
 
     Item {

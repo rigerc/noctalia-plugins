@@ -5,6 +5,7 @@ import qs.Services.System
 import qs.Widgets
 import "./settings"
 import "Migrations.js" as Migrations
+import "./Utils.js" as Utils
 
 ColumnLayout {
     id: root
@@ -343,11 +344,7 @@ ColumnLayout {
     implicitWidth: preferredWidth
 
     function deepCopy(value) {
-        try {
-            return JSON.parse(JSON.stringify(value || ({})));
-        } catch (error) {
-            return ({});
-        }
+        return Utils.deepCopy(value);
     }
 
     function createSettingsSnapshot(primary, secondary) {
@@ -389,12 +386,8 @@ ColumnLayout {
     }
 
     function normalizeOpacityValue(value, fallbackValue) {
-        const numericValue = Number(value);
-        if (isNaN(numericValue))
-            return fallbackValue;
-        if (numericValue > 1)
-            return clampOpacity(numericValue / 100, fallbackValue);
-        return clampOpacity(numericValue, fallbackValue);
+        // Preserve Settings.qml behavior: apply optional percent support then clamp.
+        return clampOpacity(Utils.normalizeOpacityValue(value, fallbackValue), fallbackValue);
     }
 
     function normalizeColorSetting(settingValue, fallbackColor, fallbackOpacity) {
@@ -656,46 +649,19 @@ ColumnLayout {
     }
 
     function normalizeStyleRuleMatchField(matchField) {
-        switch (String(matchField || "")) {
-        case "title":
-        case "tag":
-        case "floating":
-        case "urgent":
-        case "grouped":
-        case "sharedAppId":
-        case "sharedTitle":
-            return String(matchField);
-        default:
-            return "appId";
-        }
+        return Utils.normalizeStyleRuleMatchField(matchField);
     }
 
     function normalizeBadgeTarget(target) {
-        switch (String(target || "")) {
-        case "title":
-        case "segment":
-            return String(target);
-        default:
-            return "icon";
-        }
+        return Utils.normalizeBadgeTarget(target);
     }
 
     function normalizeBadgePosition(position) {
-        switch (String(position || "")) {
-        case "top-left":
-            return "top-left";
-        default:
-            return "top-right";
-        }
+        return Utils.normalizeBadgePosition(position);
     }
 
     function normalizePrefixTarget(target) {
-        switch (String(target || "")) {
-        case "title":
-            return "title";
-        default:
-            return "icon";
-        }
+        return Utils.normalizePrefixTarget(target);
     }
 
     function suggestedPatternForMatchField(matchField) {
@@ -720,17 +686,7 @@ ColumnLayout {
     }
 
     function styleRuleAllowsEmptyPattern(matchField) {
-        switch (normalizeStyleRuleMatchField(matchField)) {
-        case "tag":
-        case "floating":
-        case "urgent":
-        case "grouped":
-        case "sharedAppId":
-        case "sharedTitle":
-            return true;
-        default:
-            return false;
-        }
+        return Utils.styleRuleAllowsEmptyPattern(matchField);
     }
 
     function settingValue(groupKey, nestedKey) {
@@ -1021,19 +977,36 @@ ColumnLayout {
         setStyleRuleItems(nextItems);
     }
 
-    function updateStyleRuleColorState(index, colorGroup, stateKey, nestedKey, value) {
-        if (index < 0 || index >= styleRuleItems().length)
+    function isStyleRuleIndexValid(index) {
+        return index >= 0 && index < styleRuleItems().length;
+    }
+
+    function ensureObjectPath(rootObject, keys) {
+        let current = rootObject;
+        for (let i = 0; i < keys.length; i++) {
+            const key = keys[i];
+            const value = current ? current[key] : undefined;
+            if (!value || typeof value !== "object" || Array.isArray(value))
+                current[key] = ({});
+            current = current[key];
+        }
+        return current;
+    }
+
+    function withMutableStyleRuleItems(index, fn) {
+        if (!isStyleRuleIndexValid(index))
             return;
 
         const nextItems = deepCopy(styleRuleItems());
-        if (!nextItems[index].colors)
-            nextItems[index].colors = ({});
-        if (!nextItems[index].colors[colorGroup])
-            nextItems[index].colors[colorGroup] = ({});
-        if (!nextItems[index].colors[colorGroup][stateKey])
-            nextItems[index].colors[colorGroup][stateKey] = ({});
-        nextItems[index].colors[colorGroup][stateKey][nestedKey] = value;
+        fn(nextItems, nextItems[index]);
         setStyleRuleItems(nextItems);
+    }
+
+    function updateStyleRuleColorState(index, colorGroup, stateKey, nestedKey, value) {
+        withMutableStyleRuleItems(index, function (items, item) {
+            const target = ensureObjectPath(item, ["colors", String(colorGroup), String(stateKey)]);
+            target[String(nestedKey)] = value;
+        });
     }
 
     function updateStyleRuleBlink(index, patch) {
@@ -1047,16 +1020,10 @@ ColumnLayout {
     }
 
     function updateStyleRuleBlinkColor(index, nestedKey, value) {
-        if (index < 0 || index >= styleRuleItems().length)
-            return;
-
-        const nextItems = deepCopy(styleRuleItems());
-        if (!nextItems[index].blink)
-            nextItems[index].blink = ({});
-        if (!nextItems[index].blink.color)
-            nextItems[index].blink.color = ({});
-        nextItems[index].blink.color[nestedKey] = value;
-        setStyleRuleItems(nextItems);
+        withMutableStyleRuleItems(index, function (_items, item) {
+            const target = ensureObjectPath(item, ["blink", "color"]);
+            target[String(nestedKey)] = value;
+        });
     }
 
     function updateStyleRuleBadge(index, patch) {
@@ -1070,16 +1037,10 @@ ColumnLayout {
     }
 
     function updateStyleRuleBadgeColor(index, nestedKey, value) {
-        if (index < 0 || index >= styleRuleItems().length)
-            return;
-
-        const nextItems = deepCopy(styleRuleItems());
-        if (!nextItems[index].badge)
-            nextItems[index].badge = ({});
-        if (!nextItems[index].badge.color)
-            nextItems[index].badge.color = ({});
-        nextItems[index].badge.color[nestedKey] = value;
-        setStyleRuleItems(nextItems);
+        withMutableStyleRuleItems(index, function (_items, item) {
+            const target = ensureObjectPath(item, ["badge", "color"]);
+            target[String(nestedKey)] = value;
+        });
     }
 
     function updateStyleRuleIconPrefix(index, patch) {
@@ -1093,16 +1054,10 @@ ColumnLayout {
     }
 
     function updateStyleRuleIconPrefixColor(index, nestedKey, value) {
-        if (index < 0 || index >= styleRuleItems().length)
-            return;
-
-        const nextItems = deepCopy(styleRuleItems());
-        if (!nextItems[index].iconPrefix)
-            nextItems[index].iconPrefix = ({});
-        if (!nextItems[index].iconPrefix.color)
-            nextItems[index].iconPrefix.color = ({});
-        nextItems[index].iconPrefix.color[nestedKey] = value;
-        setStyleRuleItems(nextItems);
+        withMutableStyleRuleItems(index, function (_items, item) {
+            const target = ensureObjectPath(item, ["iconPrefix", "color"]);
+            target[String(nestedKey)] = value;
+        });
     }
 
     function moveStyleRule(index, direction) {

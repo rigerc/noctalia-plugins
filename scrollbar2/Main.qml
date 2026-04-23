@@ -6,6 +6,7 @@ import Quickshell.Wayland
 import qs.Commons
 import qs.Services.Compositor
 import "./components"
+import "./Utils.js" as Utils
 
 Item {
     id: root
@@ -116,38 +117,15 @@ Item {
     }
 
     function settingValue(groupKey, nestedKey, fallbackValue) {
-        const configGroup = currentSettings ? currentSettings[groupKey] : undefined;
-        const nestedConfig = configGroup ? configGroup[nestedKey] : undefined;
-        if (nestedConfig !== undefined)
-            return nestedConfig;
-
-        const defaultsGroup = defaults ? defaults[groupKey] : undefined;
-        const nestedDefault = defaultsGroup ? defaultsGroup[nestedKey] : undefined;
-        if (nestedDefault !== undefined)
-            return nestedDefault;
-
-        return fallbackValue;
+        return Utils.settingValue(currentSettings, defaults, groupKey, nestedKey, fallbackValue);
     }
 
     function objectSettingValue(groupKey, objectKey, nestedKey, fallbackValue) {
-        const configValue = currentSettings?.[groupKey]?.[objectKey]?.[nestedKey];
-        if (configValue !== undefined)
-            return configValue;
-
-        const defaultValue = defaults?.[groupKey]?.[objectKey]?.[nestedKey];
-        if (defaultValue !== undefined)
-            return defaultValue;
-
-        return fallbackValue;
+        return Utils.objectSettingValue(currentSettings, defaults, groupKey, objectKey, nestedKey, fallbackValue);
     }
 
     function normalizeOpacityValue(value) {
-        const numericValue = Number(value);
-        if (isNaN(numericValue))
-            return 0;
-        if (numericValue > 1)
-            return Math.max(0, Math.min(1, numericValue / 100));
-        return Math.max(0, Math.min(1, numericValue));
+        return Utils.normalizeOpacityValue(value, 0);
     }
 
     function resolveThemeColor(key) {
@@ -203,11 +181,7 @@ Item {
     }
 
     function deepCopy(value) {
-        try {
-            return JSON.parse(JSON.stringify(value || ({})));
-        } catch (error) {
-            return ({});
-        }
+        return Utils.deepCopy(value);
     }
 
     function specialWorkspaceRecord(workspaceId, workspaceName) {
@@ -325,46 +299,19 @@ Item {
     }
 
     function normalizeStyleRuleMatchField(matchField) {
-        switch (String(matchField || "")) {
-        case "title":
-        case "tag":
-        case "floating":
-        case "urgent":
-        case "grouped":
-        case "sharedAppId":
-        case "sharedTitle":
-            return String(matchField);
-        default:
-            return "appId";
-        }
+        return Utils.normalizeStyleRuleMatchField(matchField);
     }
 
     function normalizeBadgeTarget(target) {
-        switch (String(target || "")) {
-        case "title":
-        case "segment":
-            return String(target);
-        default:
-            return "icon";
-        }
+        return Utils.normalizeBadgeTarget(target);
     }
 
     function normalizeBadgePosition(position) {
-        switch (String(position || "")) {
-        case "top-left":
-            return "top-left";
-        default:
-            return "top-right";
-        }
+        return Utils.normalizeBadgePosition(position);
     }
 
     function normalizePrefixTarget(target) {
-        switch (String(target || "")) {
-        case "title":
-            return "title";
-        default:
-            return "icon";
-        }
+        return Utils.normalizePrefixTarget(target);
     }
 
     function cloneStringArray(values) {
@@ -1977,285 +1924,10 @@ Item {
 
             active: root.displayMode === "floatingPanel"
 
-            sourceComponent: PanelWindow {
-                id: windowHost
-
-                screen: screenWindowLoader.modelData
-                focusable: false
-                color: "transparent"
-
-                readonly property bool anchorTop: root.trackPosition !== "bottom"
-                readonly property real effectiveOffsetH: Math.round(root.displayOffsetH * Style.uiScaleRatio)
-                readonly property real effectiveOffsetV: Math.round(root.displayOffsetV * Style.uiScaleRatio)
-                readonly property bool autoHideEnabled: root.objectSettingValue("display", "autoHide", "enabled", false) === true
-                readonly property string autoHideRevealMode: root.objectSettingValue("display", "autoHide", "revealMode", "edgeSliver")
-                readonly property int autoHideDelayMs: Math.max(0, Math.min(5000, Math.round(Number(root.objectSettingValue("display", "autoHide", "delayMs", 1000)))))
-                readonly property int autoHideDurationMs: Math.max(0, Math.min(1500, Math.round(Number(root.objectSettingValue("display", "autoHide", "durationMs", 200)))))
-                readonly property string autoHideEffect: root.objectSettingValue("display", "autoHide", "effect", "slideFade")
-                readonly property bool autoHideDynamicMargin: root.objectSettingValue("display", "autoHide", "dynamicMargin", false) === true
-                readonly property string autoHideSlideDirectionSetting: root.objectSettingValue("display", "autoHide", "slideDirection", "auto")
-                readonly property bool autoHideSlideEnabled: autoHideEffect === "slideFade" || autoHideEffect === "slide"
-                readonly property bool autoHideFadeEnabled: autoHideEffect === "slideFade" || autoHideEffect === "fade"
-                readonly property int autoHideEffectiveDurationMs: root.motionAnimationsEnabled && autoHideEffect !== "instant" ? autoHideDurationMs : 0
-                readonly property real autoHideCurrentMargin: autoHideEnabled && autoHideDynamicMargin ? Math.round(root.displayMargin * shownProgress) : root.displayMargin
-                readonly property real autoHideCurrentOffsetH: autoHideEnabled && autoHideDynamicMargin ? Math.round(effectiveOffsetH * shownProgress) : effectiveOffsetH
-                readonly property real autoHideCurrentOffsetV: autoHideEnabled && autoHideDynamicMargin ? Math.round(effectiveOffsetV * shownProgress) : effectiveOffsetV
-                readonly property real contentBaseWidth: Math.ceil(windowView.implicitWidth * root.displayScale) + autoHideCurrentMargin * 2
-                readonly property real contentBaseHeight: Math.ceil(windowView.implicitHeight * root.displayScale) + autoHideCurrentMargin * 2
-                readonly property real contentBaseY: anchorTop ? Math.max(0, autoHideCurrentOffsetV) : Math.max(0, -autoHideCurrentOffsetV)
-                readonly property string autoHideResolvedSlideDirection: {
-                    switch (autoHideSlideDirectionSetting) {
-                    case "up":
-                    case "down":
-                    case "left":
-                    case "right":
-                        return autoHideSlideDirectionSetting;
-                    default:
-                        return anchorTop ? "up" : "down";
-                    }
-                }
-                readonly property string autoHideEdgeSliverColorKey: root.objectSettingValue("display", "autoHide", "edgeSliverColor", "none")
-                readonly property real autoHideEdgeSliverOpacity: root.normalizeOpacityValue(root.objectSettingValue("display", "autoHide", "edgeSliverOpacity", 1))
-                readonly property real autoHideRevealThickness: Math.max(2, Math.round(Number(root.objectSettingValue("display", "autoHide", "edgeSliverSize", 8)) * Style.uiScaleRatio))
-                readonly property real autoHideRevealWidthRatio: Math.max(0.1, Math.min(1, Number(root.objectSettingValue("display", "autoHide", "edgeSliverWidth", 100)) / 100))
-                readonly property real autoHideRevealMargin: Math.max(0, Math.round(Number(root.objectSettingValue("display", "autoHide", "edgeSliverMargin", 0)) * Style.uiScaleRatio))
-                readonly property real autoHideRevealRadiusSetting: Math.max(0, Math.round(Number(root.objectSettingValue("display", "autoHide", "edgeSliverRadius", 0)) * Style.uiScaleRatio))
-                readonly property real autoHideHoverThickness: Math.max(autoHideRevealThickness, Math.round(14 * Style.uiScaleRatio))
-                readonly property real autoHideRevealUsableWidth: Math.max(autoHideRevealThickness, contentBaseWidth - autoHideRevealMargin * 2)
-                readonly property real autoHideRevealStripWidth: autoHideRevealMode === "edgeSliver" ? Math.max(autoHideRevealThickness, Math.round(autoHideRevealUsableWidth * autoHideRevealWidthRatio)) : contentBaseWidth
-                readonly property real autoHideRevealStripX: Style.pixelAlignCenter(windowHost.width, autoHideRevealStripWidth) + autoHideCurrentOffsetH
-                readonly property real autoHideRevealStripY: anchorTop ? autoHideRevealMargin : Math.max(0, windowHost.height - autoHideRevealMargin - autoHideRevealThickness)
-                readonly property real autoHideRevealStripRadius: {
-                    const autoRadius = Math.min(root.effectiveDisplayRadius, autoHideRevealThickness / 2, autoHideRevealStripWidth / 2);
-                    if (autoHideRevealRadiusSetting <= 0)
-                        return autoRadius;
-                    return Math.min(autoHideRevealRadiusSetting, autoHideRevealThickness / 2, autoHideRevealStripWidth / 2);
-                }
-                readonly property real autoHideSlideDistance: {
-                    switch (autoHideResolvedSlideDirection) {
-                    case "left":
-                    case "right":
-                        return contentBaseWidth;
-                    case "up":
-                        return contentBaseHeight + contentBaseY;
-                    default:
-                        return contentBaseHeight;
-                    }
-                }
-                readonly property bool autoHideInteractionHold: windowView.dragSessionActive || windowView.contextMenuOpen
-                readonly property color autoHideRevealFallbackColor: root.displayBackgroundEnabled ? root.displayBackgroundResolvedColor : Qt.alpha(Color.mSurfaceVariant, 0.82)
-                readonly property color autoHideRevealColor: {
-                    if (autoHideEdgeSliverColorKey === "none")
-                        return autoHideRevealFallbackColor;
-                    return Qt.alpha(root.resolveSettingColor(autoHideEdgeSliverColorKey, Color.mSurfaceVariant), autoHideEdgeSliverOpacity);
-                }
-                readonly property real autoHideVisualOpacity: (autoHideFadeEnabled || autoHideEffect === "instant") ? shownProgress : 1
-                readonly property real autoHideVisualOffsetX: {
-                    if (!autoHideSlideEnabled)
-                        return 0;
-                    switch (autoHideResolvedSlideDirection) {
-                    case "left":
-                        return Math.round(-autoHideSlideDistance * (1 - shownProgress));
-                    case "right":
-                        return Math.round(autoHideSlideDistance * (1 - shownProgress));
-                    default:
-                        return 0;
-                    }
-                }
-                readonly property real autoHideVisualOffsetY: {
-                    if (!autoHideSlideEnabled)
-                        return 0;
-                    switch (autoHideResolvedSlideDirection) {
-                    case "up":
-                        return Math.round(-autoHideSlideDistance * (1 - shownProgress));
-                    case "down":
-                        return Math.round(autoHideSlideDistance * (1 - shownProgress));
-                    default:
-                        return 0;
-                    }
-                }
-                readonly property bool autoHideContentVisible: !autoHideEnabled || shownProgress > 0 || autoHideSlideEnabled
-                readonly property real autoHideRevealStripOpacity: {
-                    if (!autoHideEnabled || autoHideRevealMode !== "edgeSliver")
-                        return 0;
-                    if (autoHideEffectiveDurationMs <= 0)
-                        return autoHideTargetHidden ? 1 : 0;
-                    return Math.max(0, 1 - shownProgress * 1.4);
-                }
-                property bool autoHideTargetHidden: false
-                property real shownProgress: autoHideTargetHidden ? 0 : 1
-
-                function updateAutoHideState() {
-                    if (!autoHideEnabled || autoHideInteractionHold) {
-                        autoHideDelayTimer.stop();
-                        autoHideTargetHidden = false;
-                        return;
-                    }
-
-                    if (panelHoverHandler.hovered || revealZoneHover.hovered) {
-                        autoHideDelayTimer.stop();
-                        autoHideTargetHidden = false;
-                        return;
-                    }
-
-                    if (autoHideTargetHidden)
-                        return;
-
-                    if (autoHideDelayMs <= 0) {
-                        autoHideTargetHidden = true;
-                        return;
-                    }
-
-                    autoHideDelayTimer.interval = autoHideDelayMs;
-                    autoHideDelayTimer.restart();
-                }
-
-                anchors.top: anchorTop
-                anchors.bottom: !anchorTop
-                anchors.left: true
-                anchors.right: true
-
-                implicitWidth: Math.round(screen?.width || contentBaseWidth)
-                implicitHeight: contentBaseHeight + Math.abs(autoHideCurrentOffsetV)
-
-                WlrLayershell.namespace: "scrollbar2-window-" + (screen?.name || "unknown")
-                WlrLayershell.layer: WlrLayer.Top
-                WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
-                WlrLayershell.exclusionMode: ExclusionMode.Auto
-
-                visible: contentBaseWidth > 0 && contentBaseHeight > 0
-                mask: Region {
-                    item: maskItem
-                }
-
-                onAutoHideEnabledChanged: updateAutoHideState()
-                onAutoHideDelayMsChanged: updateAutoHideState()
-                onAutoHideInteractionHoldChanged: updateAutoHideState()
-
-                Component.onCompleted: updateAutoHideState()
-
-                Behavior on shownProgress {
-                    NumberAnimation {
-                        duration: windowHost.autoHideEffectiveDurationMs
-                        easing.type: Easing.InOutQuad
-                    }
-                }
-
-                Timer {
-                    id: autoHideDelayTimer
-                    interval: windowHost.autoHideDelayMs
-                    repeat: false
-                    onTriggered: {
-                        if (!windowHost.autoHideEnabled || windowHost.autoHideInteractionHold)
-                            return;
-                        if (panelHoverHandler.hovered || revealZoneHover.hovered)
-                            return;
-                        windowHost.autoHideTargetHidden = true;
-                    }
-                }
-
-                Item {
-                    id: maskItem
-                    width: contentBaseWidth
-                    height: windowHost.autoHideEnabled ? parent.height : contentBaseHeight
-                    x: Style.pixelAlignCenter(parent.width, width) + windowHost.autoHideCurrentOffsetH
-                    y: windowHost.autoHideEnabled ? 0 : windowHost.contentBaseY
-                    opacity: 0
-                }
-
-                Item {
-                    id: revealZone
-                    width: windowHost.autoHideRevealMode === "edgeSliver" ? windowHost.autoHideRevealStripWidth : contentBaseWidth
-                    height: windowHost.autoHideEnabled ? windowHost.autoHideHoverThickness : 0
-                    x: windowHost.autoHideRevealMode === "edgeSliver" ? windowHost.autoHideRevealStripX : Style.pixelAlignCenter(parent.width, width) + windowHost.autoHideCurrentOffsetH
-                    y: windowHost.autoHideRevealMode === "edgeSliver" ? windowHost.autoHideRevealStripY : windowHost.anchorTop ? 0 : Math.max(0, parent.height - height)
-                    z: 10
-
-                    HoverHandler {
-                        id: revealZoneHover
-                        onHoveredChanged: windowHost.updateAutoHideState()
-                    }
-                }
-
-                Rectangle {
-                    id: revealStrip
-                    visible: windowHost.autoHideEnabled && windowHost.autoHideRevealMode === "edgeSliver" && windowHost.shownProgress < 1
-                    width: windowHost.autoHideRevealStripWidth
-                    height: windowHost.autoHideRevealThickness
-                    x: windowHost.autoHideRevealStripX
-                    y: windowHost.autoHideRevealStripY
-                    radius: windowHost.autoHideRevealStripRadius
-                    color: windowHost.autoHideRevealColor
-                    opacity: windowHost.autoHideRevealStripOpacity
-                    z: 5
-                }
-
-                Item {
-                    id: windowContent
-                    visible: windowHost.autoHideContentVisible
-                    width: contentBaseWidth
-                    height: contentBaseHeight
-                    x: Style.pixelAlignCenter(parent.width, width) + windowHost.autoHideCurrentOffsetH + windowHost.autoHideVisualOffsetX
-                    y: windowHost.contentBaseY + windowHost.autoHideVisualOffsetY
-                    opacity: windowHost.autoHideVisualOpacity
-                    z: 20
-
-                    HoverHandler {
-                        id: panelHoverHandler
-                        enabled: windowHost.autoHideContentVisible
-                        onHoveredChanged: windowHost.updateAutoHideState()
-                    }
-
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: root.effectiveDisplayRadius
-                        color: root.displayBackgroundResolvedColor
-                        visible: root.displayBackgroundEnabled || root.displayGradientActive
-
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: root.effectiveDisplayRadius
-                            visible: root.displayGradientActive
-                            color: "transparent"
-
-                            gradient: Gradient {
-                                orientation: root.displayGradientDirection === "horizontal" ? Gradient.Horizontal : Gradient.Vertical
-                                GradientStop {
-                                    position: 0.0
-                                    color: "transparent"
-                                }
-                                GradientStop {
-                                    position: 1.0
-                                    color: root.displayGradientResolvedColor
-                                }
-                            }
-                        }
-                    }
-
-                    Item {
-                        anchors.fill: parent
-                        anchors.margins: windowHost.autoHideCurrentMargin
-
-                        WindowBarView {
-                            id: windowView
-                            anchors.centerIn: parent
-                            width: implicitWidth
-                            height: implicitHeight
-                            enabled: !windowHost.autoHideEnabled || !windowHost.autoHideTargetHidden
-                            pluginApi: root.pluginApi
-                            screen: windowHost.screen
-                            hostMode: "floatingPanel"
-                            visibleInCurrentMode: root.displayMode === "floatingPanel"
-
-                            transform: Scale {
-                                origin.x: windowView.width / 2
-                                origin.y: windowView.height / 2
-                                xScale: root.displayScale
-                                yScale: root.displayScale
-                            }
-                        }
-                    }
-                }
+            sourceComponent: FloatingPanelHost {
+                main: root
+                pluginApi: root.pluginApi
+                hostScreen: screenWindowLoader.modelData
             }
         }
     }

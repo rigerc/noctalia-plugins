@@ -38,41 +38,8 @@ ColumnLayout {
     spacing: Style.marginL
 
     function previewIconColor(colorKey) {
-        const key = String(colorKey || "");
-        switch (key) {
-        case "primary":
-            return Color.mPrimary;
-        case "on-primary":
-            return Color.mOnPrimary;
-        case "secondary":
-            return Color.mSecondary;
-        case "on-secondary":
-            return Color.mOnSecondary;
-        case "tertiary":
-            return Color.mTertiary;
-        case "on-tertiary":
-            return Color.mOnTertiary;
-        case "error":
-            return Color.mError;
-        case "on-error":
-            return Color.mOnError;
-        case "surface":
-            return Color.mSurface;
-        case "on-surface":
-            return Color.mOnSurface;
-        case "surface-variant":
-            return Color.mSurfaceVariant;
-        case "on-surface-variant":
-            return Color.mOnSurfaceVariant;
-        case "outline":
-            return Color.mOutline;
-        case "hover":
-            return Color.mHover;
-        case "on-hover":
-            return Color.mOnHover;
-        default:
-            return Color.mOnSurfaceVariant;
-        }
+        const resolved = root.mainInstance?.resolveSettingColor?.(String(colorKey || ""), undefined);
+        return resolved !== undefined ? resolved : Color.mOnSurfaceVariant;
     }
 
     NBox {

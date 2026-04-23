@@ -28,6 +28,7 @@ ColumnLayout {
     readonly property string indicatorTooltip: defaultSummary()
     readonly property int diameter: Math.round(Style.baseWidgetSize * 0.9 * Style.uiScaleRatio)
     readonly property bool customSelected: isCustomColor(currentColor)
+    readonly property var mainInstance: pluginApi?.mainInstance ?? null
     readonly property color customPreviewColor: resolveColor(customSelected ? currentColor : "surface", Color.mSurface)
     property bool _localOpacityExpanded: opacityExpanded
     readonly property bool effectiveOpacityExpanded: opacityExpandedControlled ? opacityExpanded : _localOpacityExpanded
@@ -151,6 +152,13 @@ ColumnLayout {
     }
 
     function resolveThemeColor(key) {
+        // Prefer canonical resolution from the plugin's main instance when available.
+        if (mainInstance?.resolveSettingColor) {
+            const resolved = mainInstance.resolveSettingColor(String(key || ""), undefined);
+            if (resolved !== undefined)
+                return resolved;
+        }
+
         switch (key) {
         case "none":
             return "transparent";
