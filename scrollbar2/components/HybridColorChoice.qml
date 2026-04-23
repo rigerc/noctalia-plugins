@@ -16,6 +16,7 @@ ColumnLayout {
     property real currentOpacity: 1
     property var defaultOpacity: undefined
     property bool showOpacityControl: false
+    property bool opacityExpandedControlled: false
     property bool opacityExpanded: false
     property real opacityFrom: 0
     property real opacityTo: 1
@@ -28,6 +29,8 @@ ColumnLayout {
     readonly property int diameter: Math.round(Style.baseWidgetSize * 0.9 * Style.uiScaleRatio)
     readonly property bool customSelected: isCustomColor(currentColor)
     readonly property color customPreviewColor: resolveColor(customSelected ? currentColor : "surface", Color.mSurface)
+    property bool _localOpacityExpanded: opacityExpanded
+    readonly property bool effectiveOpacityExpanded: opacityExpandedControlled ? opacityExpanded : _localOpacityExpanded
     readonly property var preferredColorOptions: [
         {
             "key": "none",
@@ -422,7 +425,7 @@ ColumnLayout {
             Layout.preferredWidth: 200 * Style.uiScaleRatio
             spacing: 0
 
-            property bool expanded: root.opacityExpanded
+            property bool expanded: root.effectiveOpacityExpanded
             property bool _userInteracted: false
 
             Rectangle {
@@ -459,7 +462,11 @@ ColumnLayout {
 
                     onClicked: {
                         opacityCollapsible._userInteracted = true;
-                        root.opacityExpandedToggled(!opacityCollapsible.expanded);
+                        const nextExpanded = !opacityCollapsible.expanded;
+                        if (root.opacityExpandedControlled)
+                            root.opacityExpandedToggled(nextExpanded);
+                        else
+                            root._localOpacityExpanded = nextExpanded;
                     }
 
                     Rectangle {

@@ -265,6 +265,7 @@ ColumnLayout {
                         HybridColorChoice {
                             pluginApi: rootSettings?.pluginApi
                             Layout.fillWidth: true
+                            opacityExpandedControlled: true
                             opacityExpanded: rootSettings?.isStyleRuleColorStatePanelExpanded(index, "segment", "focused") ?? false
                             onOpacityExpandedToggled: expanded => rootSettings?.setStyleRuleColorStatePanelExpanded(index, "segment", "focused", expanded)
                             enabled: modelData?.colors?.segment?.focused?.enabled === true
@@ -291,6 +292,7 @@ ColumnLayout {
                         HybridColorChoice {
                             pluginApi: rootSettings?.pluginApi
                             Layout.fillWidth: true
+                            opacityExpandedControlled: true
                             opacityExpanded: rootSettings?.isStyleRuleColorStatePanelExpanded(index, "segment", "hover") ?? false
                             onOpacityExpandedToggled: expanded => rootSettings?.setStyleRuleColorStatePanelExpanded(index, "segment", "hover", expanded)
                             enabled: modelData?.colors?.segment?.hover?.enabled === true
@@ -317,6 +319,7 @@ ColumnLayout {
                         HybridColorChoice {
                             pluginApi: rootSettings?.pluginApi
                             Layout.fillWidth: true
+                            opacityExpandedControlled: true
                             opacityExpanded: rootSettings?.isStyleRuleColorStatePanelExpanded(index, "segment", "default") ?? false
                             onOpacityExpandedToggled: expanded => rootSettings?.setStyleRuleColorStatePanelExpanded(index, "segment", "default", expanded)
                             enabled: modelData?.colors?.segment?.default?.enabled === true
@@ -349,6 +352,7 @@ ColumnLayout {
                         HybridColorChoice {
                             pluginApi: rootSettings?.pluginApi
                             Layout.fillWidth: true
+                            opacityExpandedControlled: true
                             opacityExpanded: rootSettings?.isStyleRuleColorStatePanelExpanded(index, "icon", "focused") ?? false
                             onOpacityExpandedToggled: expanded => rootSettings?.setStyleRuleColorStatePanelExpanded(index, "icon", "focused", expanded)
                             enabled: modelData?.colors?.icon?.focused?.enabled === true
@@ -375,6 +379,7 @@ ColumnLayout {
                         HybridColorChoice {
                             pluginApi: rootSettings?.pluginApi
                             Layout.fillWidth: true
+                            opacityExpandedControlled: true
                             opacityExpanded: rootSettings?.isStyleRuleColorStatePanelExpanded(index, "icon", "hover") ?? false
                             onOpacityExpandedToggled: expanded => rootSettings?.setStyleRuleColorStatePanelExpanded(index, "icon", "hover", expanded)
                             enabled: modelData?.colors?.icon?.hover?.enabled === true
@@ -401,6 +406,7 @@ ColumnLayout {
                         HybridColorChoice {
                             pluginApi: rootSettings?.pluginApi
                             Layout.fillWidth: true
+                            opacityExpandedControlled: true
                             opacityExpanded: rootSettings?.isStyleRuleColorStatePanelExpanded(index, "icon", "default") ?? false
                             onOpacityExpandedToggled: expanded => rootSettings?.setStyleRuleColorStatePanelExpanded(index, "icon", "default", expanded)
                             enabled: modelData?.colors?.icon?.default?.enabled === true
@@ -433,6 +439,7 @@ ColumnLayout {
                         HybridColorChoice {
                             pluginApi: rootSettings?.pluginApi
                             Layout.fillWidth: true
+                            opacityExpandedControlled: true
                             opacityExpanded: rootSettings?.isStyleRuleColorStatePanelExpanded(index, "title", "focused") ?? false
                             onOpacityExpandedToggled: expanded => rootSettings?.setStyleRuleColorStatePanelExpanded(index, "title", "focused", expanded)
                             enabled: modelData?.colors?.title?.focused?.enabled === true
@@ -459,6 +466,7 @@ ColumnLayout {
                         HybridColorChoice {
                             pluginApi: rootSettings?.pluginApi
                             Layout.fillWidth: true
+                            opacityExpandedControlled: true
                             opacityExpanded: rootSettings?.isStyleRuleColorStatePanelExpanded(index, "title", "hover") ?? false
                             onOpacityExpandedToggled: expanded => rootSettings?.setStyleRuleColorStatePanelExpanded(index, "title", "hover", expanded)
                             enabled: modelData?.colors?.title?.hover?.enabled === true
@@ -485,6 +493,7 @@ ColumnLayout {
                         HybridColorChoice {
                             pluginApi: rootSettings?.pluginApi
                             Layout.fillWidth: true
+                            opacityExpandedControlled: true
                             opacityExpanded: rootSettings?.isStyleRuleColorStatePanelExpanded(index, "title", "default") ?? false
                             onOpacityExpandedToggled: expanded => rootSettings?.setStyleRuleColorStatePanelExpanded(index, "title", "default", expanded)
                             enabled: modelData?.colors?.title?.default?.enabled === true
