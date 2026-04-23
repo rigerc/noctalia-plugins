@@ -72,11 +72,13 @@ ColumnLayout {
 
     NDivider {
         Layout.fillWidth: true
+        Layout.bottomMargin: Style.marginM
     }
 
     Flow {
         visible: root._resolvedSections().length > 0
         Layout.fillWidth: true
+        Layout.bottomMargin: Style.marginL
         spacing: Style.marginS
 
         Repeater {

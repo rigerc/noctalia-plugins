@@ -133,6 +133,22 @@ Item {
         return label;
     }
 
+    function lastRefreshedTooltipLine() {
+        if (!mainInstance?.lastUpdated)
+            return "";
+
+        var _ = Time.now;
+        var refreshedAt = new Date(mainInstance.lastUpdated);
+        if (isNaN(refreshedAt.getTime()))
+            return "";
+
+        var relative = Time.formatRelativeTime(refreshedAt);
+        if (relative === "")
+            return "";
+
+        return pluginApi?.tr("widget.lastRefreshed") + " " + relative;
+    }
+
     function toggleShowOnHover() {
         if (!pluginApi)
             return;
@@ -355,6 +371,9 @@ Item {
         }
         if (status && root.formatStatusText(status) !== "")
             lines.push("Status: " + root.formatStatusText(status));
+        var refreshedLine = root.lastRefreshedTooltipLine();
+        if (refreshedLine !== "")
+            lines.push(refreshedLine);
         return lines.join("\n");
     }
 

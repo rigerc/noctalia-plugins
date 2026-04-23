@@ -4,37 +4,28 @@ import qs.Commons
 import qs.Services.System
 import qs.Widgets
 import "../components"
+import "../../components"
 
 ColumnLayout {
     id: root
 
     property var rootSettings: null
-    property alias specialWorkspaceSectionTarget: content
-    property alias animationSectionTarget: animationContent
+    property alias specialWorkspaceSectionTarget: specialWorkspaceCard.sectionTarget
+    property alias animationSectionTarget: animationCard.sectionTarget
     readonly property bool specialWorkspaceSettingsActive: rootSettings?.isVisibleByConditions(["specialWorkspaceOverlayEnabled"]) ?? false
     readonly property bool specialWorkspaceCustomSettingsActive: rootSettings?.isVisibleByConditions(["specialWorkspaceOverlayEnabled", "specialWorkspaceOverlayCustomMode"]) ?? false
     readonly property bool specialWorkspaceAnimationSettingsActive: specialWorkspaceSettingsActive
         && (rootSettings?.isVisibleByConditions(["specialWorkspaceOverlayAnimationEnabled"]) ?? true)
 
     Layout.fillWidth: true
-    spacing: Style.marginL
+    spacing: Style.marginXL
 
-    NBox {
-        Layout.fillWidth: true
-        Layout.preferredHeight: content.implicitHeight + Style.marginL * 2
+    SettingsSectionCard {
+        id: specialWorkspaceCard
+        title: rootSettings?.pluginApi?.tr("settings.section.specialWorkspaceOverlay.label")
+        description: rootSettings?.pluginApi?.tr("settings.section.specialWorkspaceOverlay.desc")
 
-        ColumnLayout {
-            id: content
-            anchors.fill: parent
-            anchors.margins: Style.marginL
-            spacing: Style.marginM
-
-            NHeader {
-                Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.section.specialWorkspaceOverlay.label")
-                description: rootSettings?.pluginApi?.tr("settings.section.specialWorkspaceOverlay.desc")
-            }
-
+        SettingsSubCard {
             NToggle {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.enabled.label")
@@ -192,25 +183,16 @@ ColumnLayout {
                 onColorSelected: value => rootSettings?.setStateSetting("specialWorkspaceOverlay", "font", "color", "color", value)
                 onOpacitySelected: value => rootSettings?.setStateSetting("specialWorkspaceOverlay", "font", "color", "opacity", value)
             }
+        
         }
     }
 
-    NBox {
-        Layout.fillWidth: true
-        Layout.preferredHeight: animationContent.implicitHeight + Style.marginL * 2
+    SettingsSectionCard {
+        id: animationCard
+        title: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.animation.sectionLabel")
+        description: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.animation.sectionDesc")
 
-        ColumnLayout {
-            id: animationContent
-            anchors.fill: parent
-            anchors.margins: Style.marginL
-            spacing: Style.marginM
-
-            NHeader {
-                Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.animation.sectionLabel")
-                description: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.animation.sectionDesc")
-            }
-
+        SettingsSubCard {
             NToggle {
                 Layout.fillWidth: true
                 enabled: root.specialWorkspaceSettingsActive
@@ -266,6 +248,7 @@ ColumnLayout {
                 showReset: true
                 onMoved: sliderValue => rootSettings?.setNestedSetting("specialWorkspaceOverlay", "animation", "speed", Math.round(sliderValue))
             }
+        
         }
     }
 }

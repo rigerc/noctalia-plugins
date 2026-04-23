@@ -3,35 +3,27 @@ import QtQuick.Layouts
 import qs.Commons
 import qs.Widgets
 import "../components"
+import "../../components"
 
 ColumnLayout {
     id: root
 
     property var rootSettings: null
-    property alias displaySectionTarget: displayContent
-    property alias trackSectionTarget: trackContent
+    property alias displaySectionTarget: displayCard.sectionTarget
+    property alias trackSectionTarget: trackCard.sectionTarget
     readonly property bool floatingPanelSettingsActive: rootSettings?.isVisibleByConditions(["floatingPanelMode"]) ?? true
     readonly property bool displayGradientSettingsActive: rootSettings?.isVisibleByConditions(["floatingPanelMode", "displayGradientEnabled"]) ?? false
 
     Layout.fillWidth: true
-    spacing: Style.marginL
+    spacing: Style.marginXL
 
-    NBox {
-        Layout.fillWidth: true
-        Layout.preferredHeight: displayContent.implicitHeight + Style.marginL * 2
+    SettingsSectionCard {
+        id: displayCard
 
-        ColumnLayout {
-            id: displayContent
-            anchors.fill: parent
-            anchors.margins: Style.marginL
-            spacing: Style.marginM
+        title: rootSettings?.pluginApi?.tr("settings.section.display.label")
+        description: rootSettings?.pluginApi?.tr("settings.section.display.desc")
 
-            NHeader {
-                Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.section.display.label")
-                description: rootSettings?.pluginApi?.tr("settings.section.display.desc")
-            }
-
+        SettingsSubCard {
             NComboBox {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.display.mode.label")
@@ -53,7 +45,9 @@ ColumnLayout {
                 defaultValue: rootSettings?.defaultValue("track", "position") ?? "bottom"
                 onSelected: key => rootSettings?.setSetting("track", "position", key)
             }
+        }
 
+        SettingsSubCard {
             NValueSlider {
                 enabled: root.floatingPanelSettingsActive
                 opacity: root.floatingPanelSettingsActive ? 1.0 : 0.45
@@ -128,7 +122,9 @@ ColumnLayout {
                 showReset: true
                 onMoved: sliderValue => rootSettings?.setSetting("display", "radiusScale", Math.round(sliderValue * 100) / 100)
             }
+        }
 
+        SettingsSubCard {
             HybridColorChoice {
                 pluginApi: rootSettings?.pluginApi
                 Layout.fillWidth: true
@@ -183,26 +179,16 @@ ColumnLayout {
                 defaultValue: rootSettings?.defaultValue("display", "gradientDirection") ?? "vertical"
                 onSelected: key => rootSettings?.setSetting("display", "gradientDirection", key)
             }
-
         }
     }
 
-    NBox {
-        Layout.fillWidth: true
-        Layout.preferredHeight: trackContent.implicitHeight + Style.marginL * 2
+    SettingsSectionCard {
+        id: trackCard
 
-        ColumnLayout {
-            id: trackContent
-            anchors.fill: parent
-            anchors.margins: Style.marginL
-            spacing: Style.marginM
+        title: rootSettings?.pluginApi?.tr("settings.section.track.label")
+        description: rootSettings?.pluginApi?.tr("settings.section.track.desc")
 
-            NHeader {
-                Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.section.track.label")
-                description: rootSettings?.pluginApi?.tr("settings.section.track.desc")
-            }
-
+        SettingsSubCard {
             NValueSlider {
                 label: rootSettings?.pluginApi?.tr("settings.track.width.label")
                 description: rootSettings?.pluginApi?.tr("settings.track.width.desc")
@@ -241,7 +227,9 @@ ColumnLayout {
                 showReset: true
                 onMoved: sliderValue => rootSettings?.setSetting("focusLine", "thickness", Math.round(sliderValue))
             }
+        }
 
+        SettingsSubCard {
             NComboBox {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.track.verticalAlign.label")
@@ -261,7 +249,9 @@ ColumnLayout {
                 defaultValue: rootSettings?.defaultValue("focusLine", "verticalAlign") ?? "bottom"
                 onSelected: key => rootSettings?.setSetting("focusLine", "verticalAlign", key)
             }
+        }
 
+        SettingsSubCard {
             NValueSlider {
                 label: rootSettings?.pluginApi?.tr("settings.track.segmentSpacing.label")
                 description: rootSettings?.pluginApi?.tr("settings.track.segmentSpacing.desc")

@@ -2,6 +2,8 @@ import QtQuick
 import QtQuick.Layouts
 import qs.Commons
 import qs.Widgets
+import "../components"
+import "../sections"
 
 SettingsTabPage {
     id: root
@@ -38,30 +40,10 @@ SettingsTabPage {
         }
     ]
 
-    NLabel {
-        Layout.fillWidth: true
-        label: rootSettings?.pluginApi?.tr("settings.pageGroups.labels.label")
-        description: rootSettings?.pluginApi?.tr("settings.pageGroups.labels.desc")
-        icon: "device-desktop"
-        iconColor: Color.mOnSurfaceVariant
-    }
-
     WindowSettingsSection {
         id: windowSection
         Layout.fillWidth: true
         rootSettings: root.rootSettings
-    }
-
-    NDivider {
-        Layout.fillWidth: true
-    }
-
-    NLabel {
-        Layout.fillWidth: true
-        label: rootSettings?.pluginApi?.tr("settings.pageGroups.colors.label")
-        description: rootSettings?.pluginApi?.tr("settings.pageGroups.colors.desc")
-        icon: "paint"
-        iconColor: Color.mOnSurfaceVariant
     }
 
     ColorSettingsSection {

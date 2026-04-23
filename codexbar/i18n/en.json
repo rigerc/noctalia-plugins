@@ -5,7 +5,8 @@
     "error": "Error",
     "providerError": "Provider error",
     "refreshing": "...",
-    "resetsIn": "resets in"
+    "resetsIn": "resets in",
+    "lastRefreshed": "Last refreshed"
   },
   "menu": {
     "refresh": "Refresh",

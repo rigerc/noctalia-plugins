@@ -2,6 +2,8 @@ import QtQuick
 import QtQuick.Layouts
 import qs.Commons
 import qs.Widgets
+import "../components"
+import "../sections"
 
 SettingsTabPage {
     id: root
@@ -25,14 +27,6 @@ SettingsTabPage {
             "target": displaySection.trackSectionTarget
         }
     ]
-
-    NLabel {
-        Layout.fillWidth: true
-        label: rootSettings?.pluginApi?.tr("settings.pageGroups.layoutCore.label")
-        description: rootSettings?.pluginApi?.tr("settings.pageGroups.layoutCore.desc")
-        icon: "device-desktop"
-        iconColor: Color.mOnSurfaceVariant
-    }
 
     DisplaySettingsSection {
         id: displaySection

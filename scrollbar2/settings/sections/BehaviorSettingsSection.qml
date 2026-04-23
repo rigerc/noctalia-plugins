@@ -2,39 +2,30 @@ import QtQuick
 import QtQuick.Layouts
 import qs.Commons
 import qs.Widgets
+import "../components"
 
 ColumnLayout {
     id: root
 
     property var rootSettings: null
-    property alias filteringSectionTarget: filteringContent
-    property alias animationSectionTarget: animationContent
-    property alias windowAnimationSectionTarget: windowAnimationContent
-    property alias mouseInteractionSectionTarget: mouseInteractionContent
-    property alias debugSectionTarget: debugContent
+    property alias filteringSectionTarget: filteringCard.sectionTarget
+    property alias animationSectionTarget: animationCard.sectionTarget
+    property alias windowAnimationSectionTarget: windowAnimationCard.sectionTarget
+    property alias mouseInteractionSectionTarget: mouseInteractionCard.sectionTarget
+    property alias debugSectionTarget: debugCard.sectionTarget
     readonly property bool globalAnimationSettingsActive: rootSettings?.settingValue("animation", "enabled") ?? true
     readonly property bool windowAnimationSettingsActive: rootSettings?.isVisibleByConditions(["windowAnimationEnabled"]) ?? true
     readonly property bool workspaceScrollSettingsActive: rootSettings?.isVisibleByConditions(["workspaceIndicatorEnabled"]) ?? false
 
     Layout.fillWidth: true
-    spacing: Style.marginL
+    spacing: Style.marginXL
 
-    NBox {
-        Layout.fillWidth: true
-        Layout.preferredHeight: filteringContent.implicitHeight + Style.marginL * 2
+    SettingsSectionCard {
+        id: filteringCard
+        title: rootSettings?.pluginApi?.tr("settings.section.filtering.label")
+        description: rootSettings?.pluginApi?.tr("settings.section.filtering.desc")
 
-        ColumnLayout {
-            id: filteringContent
-            anchors.fill: parent
-            anchors.margins: Style.marginL
-            spacing: Style.marginM
-
-            NHeader {
-                Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.section.filtering.label")
-                description: rootSettings?.pluginApi?.tr("settings.section.filtering.desc")
-            }
-
+        SettingsSubCard {
             NToggle {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.filtering.sameOutput.label")
@@ -55,22 +46,12 @@ ColumnLayout {
         }
     }
 
-    NBox {
-        Layout.fillWidth: true
-        Layout.preferredHeight: animationContent.implicitHeight + Style.marginL * 2
+    SettingsSectionCard {
+        id: animationCard
+        title: rootSettings?.pluginApi?.tr("settings.section.animation.label")
+        description: rootSettings?.pluginApi?.tr("settings.section.animation.desc")
 
-        ColumnLayout {
-            id: animationContent
-            anchors.fill: parent
-            anchors.margins: Style.marginL
-            spacing: Style.marginM
-
-            NHeader {
-                Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.section.animation.label")
-                description: rootSettings?.pluginApi?.tr("settings.section.animation.desc")
-            }
-
+        SettingsSubCard {
             NToggle {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.animation.enabled.label")
@@ -109,22 +90,12 @@ ColumnLayout {
         }
     }
 
-    NBox {
-        Layout.fillWidth: true
-        Layout.preferredHeight: windowAnimationContent.implicitHeight + Style.marginL * 2
+    SettingsSectionCard {
+        id: windowAnimationCard
+        title: rootSettings?.pluginApi?.tr("settings.window.animation.sectionLabel")
+        description: rootSettings?.pluginApi?.tr("settings.window.animation.sectionDesc")
 
-        ColumnLayout {
-            id: windowAnimationContent
-            anchors.fill: parent
-            anchors.margins: Style.marginL
-            spacing: Style.marginM
-
-            NHeader {
-                Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.window.animation.sectionLabel")
-                description: rootSettings?.pluginApi?.tr("settings.window.animation.sectionDesc")
-            }
-
+        SettingsSubCard {
             NToggle {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.window.animation.enabled.label")
@@ -191,22 +162,12 @@ ColumnLayout {
         }
     }
 
-    NBox {
-        Layout.fillWidth: true
-        Layout.preferredHeight: mouseInteractionContent.implicitHeight + Style.marginL * 2
+    SettingsSectionCard {
+        id: mouseInteractionCard
+        title: rootSettings?.pluginApi?.tr("settings.section.mouseInteraction.label")
+        description: rootSettings?.pluginApi?.tr("settings.section.mouseInteraction.desc")
 
-        ColumnLayout {
-            id: mouseInteractionContent
-            anchors.fill: parent
-            anchors.margins: Style.marginL
-            spacing: Style.marginM
-
-            NHeader {
-                Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.section.mouseInteraction.label")
-                description: rootSettings?.pluginApi?.tr("settings.section.mouseInteraction.desc")
-            }
-
+        SettingsSubCard {
             NToggle {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.mouseInteraction.scrollWheelFocus.label")
@@ -238,22 +199,12 @@ ColumnLayout {
         }
     }
 
-    NBox {
-        Layout.fillWidth: true
-        Layout.preferredHeight: debugContent.implicitHeight + Style.marginL * 2
+    SettingsSectionCard {
+        id: debugCard
+        title: rootSettings?.pluginApi?.tr("settings.section.debug.label")
+        description: rootSettings?.pluginApi?.tr("settings.section.debug.desc")
 
-        ColumnLayout {
-            id: debugContent
-            anchors.fill: parent
-            anchors.margins: Style.marginL
-            spacing: Style.marginM
-
-            NHeader {
-                Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.section.debug.label")
-                description: rootSettings?.pluginApi?.tr("settings.section.debug.desc")
-            }
-
+        SettingsSubCard {
             NToggle {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.debug.logging.label")

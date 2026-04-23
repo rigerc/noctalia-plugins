@@ -3,12 +3,13 @@ import QtQuick.Layouts
 import qs.Commons
 import qs.Widgets
 import "../components"
+import "../../components"
 
 ColumnLayout {
     id: root
 
     property var rootSettings: null
-    property alias autoHideSectionTarget: autoHideContent
+    property alias autoHideSectionTarget: autoHideCard.sectionTarget
     readonly property bool floatingPanelSettingsActive: rootSettings?.isVisibleByConditions(["floatingPanelMode"]) ?? true
     readonly property bool autoHideSettingsActive: rootSettings?.isVisibleByConditions(["floatingPanelMode", "autoHideEnabled"]) ?? false
     readonly property bool autoHideAnimatedSettingsActive: rootSettings?.isVisibleByConditions(["floatingPanelMode", "autoHideEnabled", "autoHideAnimatedEffect"]) ?? false
@@ -16,24 +17,15 @@ ColumnLayout {
     readonly property bool autoHideEdgeSliverSettingsActive: rootSettings?.isVisibleByConditions(["floatingPanelMode", "autoHideEnabled", "autoHideEdgeSliverMode"]) ?? false
 
     Layout.fillWidth: true
-    spacing: Style.marginL
+    spacing: Style.marginXL
 
-    NBox {
-        Layout.fillWidth: true
-        Layout.preferredHeight: autoHideContent.implicitHeight + Style.marginL * 2
+    SettingsSectionCard {
+        id: autoHideCard
 
-        ColumnLayout {
-            id: autoHideContent
-            anchors.fill: parent
-            anchors.margins: Style.marginL
-            spacing: Style.marginM
+        title: rootSettings?.pluginApi?.tr("settings.display.autoHide.sectionLabel")
+        description: rootSettings?.pluginApi?.tr("settings.display.autoHide.sectionDesc")
 
-            NHeader {
-                Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.display.autoHide.sectionLabel")
-                description: rootSettings?.pluginApi?.tr("settings.display.autoHide.sectionDesc")
-            }
-
+        SettingsSubCard {
             NToggle {
                 Layout.fillWidth: true
                 enabled: root.floatingPanelSettingsActive
@@ -56,7 +48,9 @@ ColumnLayout {
                 defaultValue: rootSettings?.defaultNestedValue("display", "autoHide", "revealMode") ?? "edgeSliver"
                 onSelected: key => rootSettings?.setNestedSetting("display", "autoHide", "revealMode", key)
             }
+        }
 
+        SettingsSubCard {
             NValueSlider {
                 enabled: root.autoHideSettingsActive
                 opacity: root.autoHideSettingsActive ? 1.0 : 0.45
@@ -121,7 +115,9 @@ ColumnLayout {
                 defaultValue: rootSettings?.defaultNestedValue("display", "autoHide", "slideDirection") ?? "auto"
                 onSelected: key => rootSettings?.setNestedSetting("display", "autoHide", "slideDirection", key)
             }
+        }
 
+        SettingsSubCard {
             NValueSlider {
                 enabled: root.autoHideEdgeSliverSettingsActive
                 opacity: root.autoHideEdgeSliverSettingsActive ? 1.0 : 0.45

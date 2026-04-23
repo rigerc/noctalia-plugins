@@ -3,38 +3,29 @@ import QtQuick.Layouts
 import qs.Commons
 import qs.Widgets
 import "../components"
+import "../../components"
 
 ColumnLayout {
     id: root
 
     property var rootSettings: null
-    property alias trackColorsSectionTarget: trackColorsContent
-    property alias focusColorsSectionTarget: focusColorsContent
-    property alias windowColorsSectionTarget: windowColorsContent
+    property alias trackColorsSectionTarget: trackColorsCard.sectionTarget
+    property alias focusColorsSectionTarget: focusColorsCard.sectionTarget
+    property alias windowColorsSectionTarget: windowColorsCard.sectionTarget
     readonly property bool trackEdgeFadeSettingsActive: (rootSettings?.nestedSettingValue("track", "edgeFade", "leftEnabled") ?? false)
         || (rootSettings?.nestedSettingValue("track", "edgeFade", "rightEnabled") ?? false)
     readonly property bool iconSettingsActive: rootSettings?.isVisibleByConditions(["showIcons"]) ?? true
     readonly property bool titleSettingsActive: rootSettings?.isVisibleByConditions(["showTitle"]) ?? true
 
     Layout.fillWidth: true
-    spacing: Style.marginL
+    spacing: Style.marginXL
 
-    NBox {
-        Layout.fillWidth: true
-        Layout.preferredHeight: trackColorsContent.implicitHeight + Style.marginL * 2
+    SettingsSectionCard {
+        id: trackColorsCard
+        title: rootSettings?.pluginApi?.tr("settings.section.trackColors.label")
+        description: rootSettings?.pluginApi?.tr("settings.section.trackColors.desc")
 
-        ColumnLayout {
-            id: trackColorsContent
-            anchors.fill: parent
-            anchors.margins: Style.marginL
-            spacing: Style.marginM
-
-            NHeader {
-                Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.section.trackColors.label")
-                description: rootSettings?.pluginApi?.tr("settings.section.trackColors.desc")
-            }
-
+        SettingsSubCard {
             HybridColorChoice {
                 pluginApi: rootSettings?.pluginApi
                 Layout.fillWidth: true
@@ -118,25 +109,16 @@ ColumnLayout {
                 showReset: true
                 onMoved: sliderValue => rootSettings?.setNestedSetting("track", "edgeFade", "width", Math.round(sliderValue))
             }
+        
         }
     }
 
-    NBox {
-        Layout.fillWidth: true
-        Layout.preferredHeight: focusColorsContent.implicitHeight + Style.marginL * 2
+    SettingsSectionCard {
+        id: focusColorsCard
+        title: rootSettings?.pluginApi?.tr("settings.section.focusColors.label")
+        description: rootSettings?.pluginApi?.tr("settings.section.focusColors.desc")
 
-        ColumnLayout {
-            id: focusColorsContent
-            anchors.fill: parent
-            anchors.margins: Style.marginL
-            spacing: Style.marginM
-
-            NHeader {
-                Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.section.focusColors.label")
-                description: rootSettings?.pluginApi?.tr("settings.section.focusColors.desc")
-            }
-
+        SettingsSubCard {
             NToggle {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.focusLine.colors.focused.enabled.label")
@@ -211,25 +193,16 @@ ColumnLayout {
                 onColorSelected: value => rootSettings?.setStateSetting("focusLine", "colors", "default", "color", value)
                 onOpacitySelected: value => rootSettings?.setStateSetting("focusLine", "colors", "default", "opacity", value)
             }
+        
         }
     }
 
-    NBox {
-        Layout.fillWidth: true
-        Layout.preferredHeight: windowColorsContent.implicitHeight + Style.marginL * 2
+    SettingsSectionCard {
+        id: windowColorsCard
+        title: rootSettings?.pluginApi?.tr("settings.section.windowColors.label")
+        description: rootSettings?.pluginApi?.tr("settings.section.windowColors.desc")
 
-        ColumnLayout {
-            id: windowColorsContent
-            anchors.fill: parent
-            anchors.margins: Style.marginL
-            spacing: Style.marginM
-
-            NHeader {
-                Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.section.windowColors.label")
-                description: rootSettings?.pluginApi?.tr("settings.section.windowColors.desc")
-            }
-
+        SettingsSubCard {
             HybridColorChoice {
                 pluginApi: rootSettings?.pluginApi
                 Layout.fillWidth: true
@@ -325,6 +298,7 @@ ColumnLayout {
                 onColorSelected: value => rootSettings?.setStateSetting("window", "titleColors", "default", "color", value)
                 onOpacitySelected: value => rootSettings?.setStateSetting("window", "titleColors", "default", "opacity", value)
             }
+        
         }
     }
 }

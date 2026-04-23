@@ -5,7 +5,8 @@ import Quickshell
 import Quickshell.Io
 import qs.Commons
 import qs.Widgets
-import "../Migrations.js" as Migrations
+import "../../Migrations.js" as Migrations
+import "../components"
 
 ColumnLayout {
     id: root

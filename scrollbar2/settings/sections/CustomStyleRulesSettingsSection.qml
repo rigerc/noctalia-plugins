@@ -3,12 +3,13 @@ import QtQuick.Layouts
 import qs.Commons
 import qs.Widgets
 import "../components"
+import "../../components"
 
 ColumnLayout {
     id: root
 
     property var rootSettings: null
-    property alias rulesSectionTarget: sectionContent
+    property alias rulesSectionTarget: rulesCard.sectionTarget
     readonly property var mainInstance: rootSettings?.mainInstance ?? null
 
     property var _cachedRules: []
@@ -42,22 +43,12 @@ ColumnLayout {
         return resolved !== undefined ? resolved : Color.mOnSurfaceVariant;
     }
 
-    NBox {
-        Layout.fillWidth: true
-        Layout.preferredHeight: sectionContent.implicitHeight + Style.marginL * 2
+    SettingsSectionCard {
+        id: rulesCard
+        title: rootSettings?.pluginApi?.tr("settings.section.customStyleRules.label")
+        description: rootSettings?.pluginApi?.tr("settings.section.customStyleRules.desc")
 
-        ColumnLayout {
-            id: sectionContent
-            anchors.fill: parent
-            anchors.margins: Style.marginL
-            spacing: Style.marginM
-
-            NHeader {
-                Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.section.customStyleRules.label")
-                description: rootSettings?.pluginApi?.tr("settings.section.customStyleRules.desc")
-            }
-
+        SettingsSubCard {
             NText {
                 Layout.fillWidth: true
                 text: rootSettings?.pluginApi?.tr("settings.customStyleRules.regexHelp")
@@ -682,6 +673,7 @@ ColumnLayout {
                     }
                 }
             }
+        
         }
     }
 

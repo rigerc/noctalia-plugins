@@ -5,33 +5,24 @@ import qs.Commons
 import qs.Services.System
 import qs.Widgets
 import "../components"
+import "../../components"
 
 ColumnLayout {
     id: root
 
     property var rootSettings: null
-    property alias behaviorSectionTarget: content
-    property alias itemsSectionTarget: pinnedList
+    property alias behaviorSectionTarget: pinnedBehaviorCard.sectionTarget
+    property alias itemsSectionTarget: pinnedItemsCard.sectionTarget
 
     Layout.fillWidth: true
-    spacing: Style.marginL
+    spacing: Style.marginXL
 
-    NBox {
-        Layout.fillWidth: true
-        Layout.preferredHeight: content.implicitHeight + Style.marginL * 2
+    SettingsSectionCard {
+        id: pinnedBehaviorCard
+        title: rootSettings?.pluginApi?.tr("settings.section.pinnedApps.label")
+        description: rootSettings?.pluginApi?.tr("settings.section.pinnedApps.desc")
 
-        ColumnLayout {
-            id: content
-            anchors.fill: parent
-            anchors.margins: Style.marginL
-            spacing: Style.marginM
-
-            NHeader {
-                Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.section.pinnedApps.label")
-                description: rootSettings?.pluginApi?.tr("settings.section.pinnedApps.desc")
-            }
-
+        SettingsSubCard {
             NComboBox {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.pinnedApps.position.label")
@@ -99,25 +90,16 @@ ColumnLayout {
                 defaultValue: rootSettings?.defaultValue("pinnedApps", "activateRunningBehavior") ?? "focusCycle"
                 onSelected: key => rootSettings?.setSetting("pinnedApps", "activateRunningBehavior", key)
             }
+        
         }
     }
 
-    NBox {
-        Layout.fillWidth: true
-        Layout.preferredHeight: pinnedList.implicitHeight + Style.marginL * 2
+    SettingsSectionCard {
+        id: pinnedItemsCard
+        title: rootSettings?.pluginApi?.tr("settings.pinnedApps.items.label")
+        description: rootSettings?.pluginApi?.tr("settings.pinnedApps.items.desc")
 
-        ColumnLayout {
-            id: pinnedList
-            anchors.fill: parent
-            anchors.margins: Style.marginL
-            spacing: Style.marginM
-
-            NHeader {
-                Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.pinnedApps.items.label")
-                description: rootSettings?.pluginApi?.tr("settings.pinnedApps.items.desc")
-            }
-
+        SettingsSubCard {
             NText {
                 visible: (rootSettings?.pinnedAppItems().length ?? 0) === 0
                 Layout.fillWidth: true
@@ -206,6 +188,7 @@ ColumnLayout {
                     }
                 }
             }
+        
         }
     }
 }

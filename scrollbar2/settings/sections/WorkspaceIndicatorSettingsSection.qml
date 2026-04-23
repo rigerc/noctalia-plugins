@@ -4,14 +4,15 @@ import qs.Commons
 import qs.Services.System
 import qs.Widgets
 import "../components"
+import "../../components"
 
 ColumnLayout {
     id: root
 
     property var rootSettings: null
-    property alias indicatorSectionTarget: indicatorContent
-    property alias badgeSectionTarget: badgeContent
-    property alias animationSectionTarget: animationContent
+    property alias indicatorSectionTarget: indicatorCard.sectionTarget
+    property alias badgeSectionTarget: badgeCard.sectionTarget
+    property alias animationSectionTarget: animationCard.sectionTarget
     readonly property bool workspaceIndicatorSettingsActive: rootSettings?.isVisibleByConditions(["workspaceIndicatorEnabled"]) ?? false
     readonly property bool workspaceIndicatorBadgeSettingsActive: workspaceIndicatorSettingsActive
         && (rootSettings?.isVisibleByConditions(["workspaceIndicatorBadgeEnabled"]) ?? false)
@@ -19,24 +20,14 @@ ColumnLayout {
         && (rootSettings?.isVisibleByConditions(["workspaceIndicatorAnimationEnabled"]) ?? true)
 
     Layout.fillWidth: true
-    spacing: Style.marginL
+    spacing: Style.marginXL
 
-    NBox {
-        Layout.fillWidth: true
-        Layout.preferredHeight: indicatorContent.implicitHeight + Style.marginL * 2
+    SettingsSectionCard {
+        id: indicatorCard
+        title: rootSettings?.pluginApi?.tr("settings.section.workspaceIndicator.label")
+        description: rootSettings?.pluginApi?.tr("settings.section.workspaceIndicator.desc")
 
-        ColumnLayout {
-            id: indicatorContent
-            anchors.fill: parent
-            anchors.margins: Style.marginL
-            spacing: Style.marginM
-
-            NHeader {
-                Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.section.workspaceIndicator.label")
-                description: rootSettings?.pluginApi?.tr("settings.section.workspaceIndicator.desc")
-            }
-
+        SettingsSubCard {
             NToggle {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.enabled.label")
@@ -237,25 +228,16 @@ ColumnLayout {
                 onColorSelected: value => rootSettings?.setStateSetting("workspaceIndicator", "font", "color", "color", value)
                 onOpacitySelected: value => rootSettings?.setStateSetting("workspaceIndicator", "font", "color", "opacity", value)
             }
+        
         }
     }
 
-    NBox {
-        Layout.fillWidth: true
-        Layout.preferredHeight: badgeContent.implicitHeight + Style.marginL * 2
+    SettingsSectionCard {
+        id: badgeCard
+        title: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.badge.sectionLabel")
+        description: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.badge.sectionDesc")
 
-        ColumnLayout {
-            id: badgeContent
-            anchors.fill: parent
-            anchors.margins: Style.marginL
-            spacing: Style.marginM
-
-            NHeader {
-                Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.badge.sectionLabel")
-                description: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.badge.sectionDesc")
-            }
-
+        SettingsSubCard {
             NToggle {
                 Layout.fillWidth: true
                 enabled: root.workspaceIndicatorSettingsActive
@@ -377,25 +359,16 @@ ColumnLayout {
                     });
                 }
             }
+        
         }
     }
 
-    NBox {
-        Layout.fillWidth: true
-        Layout.preferredHeight: animationContent.implicitHeight + Style.marginL * 2
+    SettingsSectionCard {
+        id: animationCard
+        title: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.animation.sectionLabel")
+        description: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.animation.sectionDesc")
 
-        ColumnLayout {
-            id: animationContent
-            anchors.fill: parent
-            anchors.margins: Style.marginL
-            spacing: Style.marginM
-
-            NHeader {
-                Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.animation.sectionLabel")
-                description: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.animation.sectionDesc")
-            }
-
+        SettingsSubCard {
             NToggle {
                 Layout.fillWidth: true
                 enabled: root.workspaceIndicatorSettingsActive
@@ -445,6 +418,7 @@ ColumnLayout {
                 showReset: true
                 onMoved: sliderValue => rootSettings?.setNestedSetting("workspaceIndicator", "animation", "speed", Math.round(sliderValue))
             }
+        
         }
     }
 }

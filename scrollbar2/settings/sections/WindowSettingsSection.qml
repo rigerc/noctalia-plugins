@@ -9,30 +9,20 @@ ColumnLayout {
     id: root
 
     property var rootSettings: null
-    property alias windowSectionTarget: windowContent
+    property alias windowSectionTarget: windowCard.sectionTarget
     readonly property bool focusedOnlySettingsActive: rootSettings?.isVisibleByConditions(["focusedOnly"]) ?? false
     readonly property bool iconSettingsActive: rootSettings?.isVisibleByConditions(["showIcons"]) ?? true
     readonly property bool titleSettingsActive: rootSettings?.isVisibleByConditions(["showTitle"]) ?? true
 
     Layout.fillWidth: true
-    spacing: Style.marginL
+    spacing: Style.marginXL
 
-    NBox {
-        Layout.fillWidth: true
-        Layout.preferredHeight: windowContent.implicitHeight + Style.marginL * 2
+    SettingsSectionCard {
+        id: windowCard
+        title: rootSettings?.pluginApi?.tr("settings.section.window.label")
+        description: rootSettings?.pluginApi?.tr("settings.section.window.desc")
 
-        ColumnLayout {
-            id: windowContent
-            anchors.fill: parent
-            anchors.margins: Style.marginL
-            spacing: Style.marginM
-
-            NHeader {
-                Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.section.window.label")
-                description: rootSettings?.pluginApi?.tr("settings.section.window.desc")
-            }
-
+        SettingsSubCard {
             NToggle {
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.window.showIcon.label")
@@ -275,6 +265,7 @@ ColumnLayout {
                 showReset: true
                 onMoved: sliderValue => rootSettings?.setSetting("window", "titleScale", Math.round(sliderValue * 100) / 100)
             }
+        
         }
     }
 }

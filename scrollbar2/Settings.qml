@@ -3,7 +3,7 @@ import QtQuick.Layouts
 import qs.Commons
 import qs.Services.System
 import qs.Widgets
-import "./settings"
+import "./settings/tabs"
 import "Migrations.js" as Migrations
 import "./Utils.js" as Utils
 
