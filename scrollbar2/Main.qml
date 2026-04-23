@@ -1998,9 +1998,11 @@ Item {
                 readonly property bool autoHideFadeEnabled: autoHideEffect === "slideFade" || autoHideEffect === "fade"
                 readonly property int autoHideEffectiveDurationMs: root.motionAnimationsEnabled && autoHideEffect !== "instant" ? autoHideDurationMs : 0
                 readonly property real autoHideCurrentMargin: autoHideEnabled && autoHideDynamicMargin ? Math.round(root.displayMargin * shownProgress) : root.displayMargin
+                readonly property real autoHideCurrentOffsetH: autoHideEnabled && autoHideDynamicMargin ? Math.round(effectiveOffsetH * shownProgress) : effectiveOffsetH
+                readonly property real autoHideCurrentOffsetV: autoHideEnabled && autoHideDynamicMargin ? Math.round(effectiveOffsetV * shownProgress) : effectiveOffsetV
                 readonly property real contentBaseWidth: Math.ceil(windowView.implicitWidth * root.displayScale) + autoHideCurrentMargin * 2
                 readonly property real contentBaseHeight: Math.ceil(windowView.implicitHeight * root.displayScale) + autoHideCurrentMargin * 2
-                readonly property real contentBaseY: anchorTop ? Math.max(0, effectiveOffsetV) : Math.max(0, -effectiveOffsetV)
+                readonly property real contentBaseY: anchorTop ? Math.max(0, autoHideCurrentOffsetV) : Math.max(0, -autoHideCurrentOffsetV)
                 readonly property string autoHideResolvedSlideDirection: {
                     switch (autoHideSlideDirectionSetting) {
                     case "up":
@@ -2021,7 +2023,7 @@ Item {
                 readonly property real autoHideHoverThickness: Math.max(autoHideRevealThickness, Math.round(14 * Style.uiScaleRatio))
                 readonly property real autoHideRevealUsableWidth: Math.max(autoHideRevealThickness, contentBaseWidth - autoHideRevealMargin * 2)
                 readonly property real autoHideRevealStripWidth: autoHideRevealMode === "edgeSliver" ? Math.max(autoHideRevealThickness, Math.round(autoHideRevealUsableWidth * autoHideRevealWidthRatio)) : contentBaseWidth
-                readonly property real autoHideRevealStripX: Style.pixelAlignCenter(windowHost.width, autoHideRevealStripWidth) + effectiveOffsetH
+                readonly property real autoHideRevealStripX: Style.pixelAlignCenter(windowHost.width, autoHideRevealStripWidth) + autoHideCurrentOffsetH
                 readonly property real autoHideRevealStripY: anchorTop ? autoHideRevealMargin : Math.max(0, windowHost.height - autoHideRevealMargin - autoHideRevealThickness)
                 readonly property real autoHideRevealStripRadius: {
                     const autoRadius = Math.min(root.effectiveDisplayRadius, autoHideRevealThickness / 2, autoHideRevealStripWidth / 2);
@@ -2114,7 +2116,7 @@ Item {
                 anchors.right: true
 
                 implicitWidth: Math.round(screen?.width || contentBaseWidth)
-                implicitHeight: contentBaseHeight + Math.abs(effectiveOffsetV)
+                implicitHeight: contentBaseHeight + Math.abs(autoHideCurrentOffsetV)
 
                 WlrLayershell.namespace: "scrollbar2-window-" + (screen?.name || "unknown")
                 WlrLayershell.layer: WlrLayer.Top
@@ -2156,7 +2158,7 @@ Item {
                     id: maskItem
                     width: contentBaseWidth
                     height: windowHost.autoHideEnabled ? parent.height : contentBaseHeight
-                    x: Style.pixelAlignCenter(parent.width, width) + effectiveOffsetH
+                    x: Style.pixelAlignCenter(parent.width, width) + windowHost.autoHideCurrentOffsetH
                     y: windowHost.autoHideEnabled ? 0 : windowHost.contentBaseY
                     opacity: 0
                 }
@@ -2165,7 +2167,7 @@ Item {
                     id: revealZone
                     width: windowHost.autoHideRevealMode === "edgeSliver" ? windowHost.autoHideRevealStripWidth : contentBaseWidth
                     height: windowHost.autoHideEnabled ? windowHost.autoHideHoverThickness : 0
-                    x: windowHost.autoHideRevealMode === "edgeSliver" ? windowHost.autoHideRevealStripX : Style.pixelAlignCenter(parent.width, width) + effectiveOffsetH
+                    x: windowHost.autoHideRevealMode === "edgeSliver" ? windowHost.autoHideRevealStripX : Style.pixelAlignCenter(parent.width, width) + windowHost.autoHideCurrentOffsetH
                     y: windowHost.autoHideRevealMode === "edgeSliver" ? windowHost.autoHideRevealStripY : windowHost.anchorTop ? 0 : Math.max(0, parent.height - height)
                     z: 10
 
@@ -2193,7 +2195,7 @@ Item {
                     visible: windowHost.autoHideContentVisible
                     width: contentBaseWidth
                     height: contentBaseHeight
-                    x: Style.pixelAlignCenter(parent.width, width) + effectiveOffsetH + windowHost.autoHideVisualOffsetX
+                    x: Style.pixelAlignCenter(parent.width, width) + windowHost.autoHideCurrentOffsetH + windowHost.autoHideVisualOffsetX
                     y: windowHost.contentBaseY + windowHost.autoHideVisualOffsetY
                     opacity: windowHost.autoHideVisualOpacity
                     z: 20

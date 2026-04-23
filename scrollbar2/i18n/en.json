@@ -208,7 +208,7 @@
         },
         "dynamicMargin": {
           "label": "Dynamically Adjust Margin",
-          "desc": "Shrink the floating panel margin along with the auto-hide progress so the hidden state sits tighter to the bar content."
+          "desc": "Shrink the floating panel margin and both display offsets along with the auto-hide progress so the hidden state sits tighter to the bar content."
         },
         "slideDirection": {
           "label": "Slide Direction",
