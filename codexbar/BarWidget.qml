@@ -133,6 +133,16 @@ Item {
         return label;
     }
 
+    function toggleShowOnHover() {
+        if (!pluginApi)
+            return;
+        if (!pluginApi.pluginSettings)
+            pluginApi.pluginSettings = {};
+
+        pluginApi.pluginSettings.barTextShowOnHover = !root.barTextShowOnHover;
+        pluginApi.saveSettings();
+    }
+
     function barTextJoiner() {
         var padding = "";
         for (var index = 0; index < root.barTextSeparatorSpacing; index++)
@@ -379,6 +389,11 @@ Item {
                 "icon": "refresh"
             },
             {
+                "label": root.barTextShowOnHover ? pluginApi?.tr("menu.disableShowOnHover") : pluginApi?.tr("menu.enableShowOnHover"),
+                "action": "toggle-show-on-hover",
+                "icon": root.barTextShowOnHover ? "eye-off" : "eye"
+            },
+            {
                 "label": pluginApi?.tr("menu.settings"),
                 "action": "settings",
                 "icon": "settings"
@@ -390,6 +405,8 @@ Item {
             if (action === "refresh") {
                 if (mainInstance)
                     mainInstance.refresh();
+            } else if (action === "toggle-show-on-hover") {
+                root.toggleShowOnHover();
             } else if (action === "settings") {
                 BarService.openPluginSettings(screen, pluginApi.manifest);
             }
