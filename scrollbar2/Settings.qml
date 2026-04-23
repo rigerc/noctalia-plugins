@@ -26,8 +26,16 @@ ColumnLayout {
             "icon": "layout-grid"
         },
         {
+            "label": pluginApi?.tr("settings.navTabs.behavior"),
+            "icon": "settings-2"
+        },
+        {
             "label": pluginApi?.tr("settings.navTabs.appearance"),
             "icon": "palette"
+        },
+        {
+            "label": pluginApi?.tr("settings.navTabs.workspaces"),
+            "icon": "layers-union"
         },
         {
             "label": pluginApi?.tr("settings.navTabs.pinnedApps"),
@@ -774,6 +782,8 @@ ColumnLayout {
         switch (key) {
         case "floatingPanelMode":
             return (settingValue("display", "mode") ?? "floatingPanel") === "floatingPanel";
+        case "barMode":
+            return (settingValue("display", "mode") ?? "floatingPanel") === "bar";
         case "autoHideEnabled":
             return nestedSettingValue("display", "autoHide", "enabled") ?? false;
         case "autoHideSlideEffect": {
@@ -831,6 +841,53 @@ ColumnLayout {
         }
 
         return true;
+    }
+
+    function isDisabledByConditions(conditions) {
+        if (!conditions || conditions.length === 0)
+            return false;
+
+        for (let i = 0; i < conditions.length; i++) {
+            if (!conditionValue(conditions[i]))
+                return true;
+        }
+
+        return false;
+    }
+
+    function resolvePath(source, path) {
+        const keys = String(path || "").split(".");
+        let current = source;
+        for (let i = 0; i < keys.length; i++) {
+            if (!current || typeof current !== "object" || Array.isArray(current))
+                return undefined;
+            current = current[keys[i]];
+        }
+        return current;
+    }
+
+    function getPath(path) {
+        return resolvePath(editSettings, path);
+    }
+
+    function getDefault(path) {
+        return resolvePath(defaultSettings, path);
+    }
+
+    function setPath(path, value) {
+        const keys = String(path || "").split(".");
+        if (keys.length === 0)
+            return;
+        const next = deepCopy(editSettings);
+        let current = next;
+        for (let i = 0; i < keys.length - 1; i++) {
+            if (!current[keys[i]] || typeof current[keys[i]] !== "object" || Array.isArray(current[keys[i]]))
+                current[keys[i]] = ({});
+            current = current[keys[i]];
+        }
+        current[keys[keys.length - 1]] = value;
+        editSettings = next;
+        _activePresetId = "";
     }
 
     function applyPreset(settingsObj, presetId) {
@@ -1145,7 +1202,15 @@ ColumnLayout {
             rootSettings: root
         }
 
+        BehaviorSettingsTab {
+            rootSettings: root
+        }
+
         AppearanceSettingsTab {
+            rootSettings: root
+        }
+
+        WorkspacesSettingsTab {
             rootSettings: root
         }
 

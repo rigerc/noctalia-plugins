@@ -1,3 +1,5 @@
+.envrc
+.env
 docs/
 .codex/
 .agents/

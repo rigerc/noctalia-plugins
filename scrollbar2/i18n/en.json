@@ -67,14 +67,18 @@
     "summary": "Configure `scrollbar2` as a compact bar widget or a reserve-space floating panel. Theme-aware colors use Noctalia color pickers and also allow custom hex values.",
     "navTabs": {
       "layout": "Layout",
+      "behavior": "Behavior",
       "appearance": "Appearance",
+      "workspaces": "Workspaces",
       "pinnedApps": "Pinned Apps",
       "styleRules": "Style Rules",
       "presets": "Save & Load"
     },
     "pages": {
-      "layout": "Placement, floating panel sizing, track geometry, and motion settings for the bar itself.",
+      "layout": "Placement, floating panel sizing, and track geometry.",
+      "behavior": "Window filtering, global and per-window animations, mouse interactions, and debug options.",
       "appearance": "Window labels, focus line styling, theme-aware colors, and workspace-related overlays.",
+      "workspaces": "Workspace indicator, badge, and special workspace overlay settings.",
       "pinnedApps": "Manage launcher behavior, spacing, colors, and the pinned app list beside the track.",
       "styleRules": "Match windows by app ID, title, tags, or derived window state and override their icons, segment colors, and text styling.",
       "presets": "Save and load presets, full backups, and separate custom style-rule exports."
@@ -267,6 +271,7 @@
       }
     },
     "track": {
+      "disabledHint": "Track settings are only available in Bar mode.",
       "position": {
         "label": "Track Position",
         "desc": "For Floating Panel mode, pin the track to the top or bottom edge."

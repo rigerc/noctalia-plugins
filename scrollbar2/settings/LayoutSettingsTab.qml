@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.Commons
 import qs.Widgets
+import "../components"
 
 SettingsTabPage {
     id: root
@@ -22,35 +23,9 @@ SettingsTabPage {
             "id": "track",
             "label": rootSettings?.pluginApi?.tr("settings.section.track.label"),
             "icon": "line",
-            "target": displaySection.trackSectionTarget
-        },
-        {
-            "id": "filtering",
-            "label": rootSettings?.pluginApi?.tr("settings.section.filtering.label"),
-            "icon": "filter",
-            "target": behaviorSection.filteringSectionTarget
-        },
-        {
-            "id": "animation",
-            "label": rootSettings?.pluginApi?.tr("settings.section.animation.label"),
-            "icon": "transition-right",
-            "target": behaviorSection.animationSectionTarget
-        },
-        {
-            "id": "debug",
-            "label": rootSettings?.pluginApi?.tr("settings.section.debug.label"),
-            "icon": "bug",
-            "target": behaviorSection.debugSectionTarget
+            "target": trackBox.sectionTarget
         }
     ]
-
-    NLabel {
-        Layout.fillWidth: true
-        label: rootSettings?.pluginApi?.tr("settings.pageGroups.layoutCore.label")
-        description: rootSettings?.pluginApi?.tr("settings.pageGroups.layoutCore.desc")
-        icon: "device-desktop"
-        iconColor: Color.mOnSurfaceVariant
-    }
 
     DisplaySettingsSection {
         id: displaySection
@@ -58,21 +33,66 @@ SettingsTabPage {
         rootSettings: root.rootSettings
     }
 
-    NDivider {
-        Layout.fillWidth: true
-    }
+    ConditionalSection {
+        id: trackSection
+        condition: (rootSettings?.getPath("display.mode") ?? "floatingPanel") === "bar"
+        disabledHint: rootSettings?.pluginApi?.tr("settings.track.disabledHint") ?? ""
 
-    NLabel {
-        Layout.fillWidth: true
-        label: rootSettings?.pluginApi?.tr("settings.pageGroups.motion.label")
-        description: rootSettings?.pluginApi?.tr("settings.pageGroups.motion.desc")
-        icon: "transition-right"
-        iconColor: Color.mOnSurfaceVariant
-    }
+        SettingsSectionBox {
+            id: trackBox
+            title: rootSettings?.pluginApi?.tr("settings.section.track.label") ?? ""
+            description: rootSettings?.pluginApi?.tr("settings.section.track.desc") ?? ""
 
-    BehaviorSettingsSection {
-        id: behaviorSection
-        Layout.fillWidth: true
-        rootSettings: root.rootSettings
+            SettingsSlider {
+                settingPath: "track.width"
+                rootSettings: root.rootSettings
+                from: 5; to: 100; stepSize: 1
+                unit: "%"
+                label: rootSettings?.pluginApi?.tr("settings.track.width.label")
+                description: rootSettings?.pluginApi?.tr("settings.track.width.desc")
+            }
+
+            SettingsSlider {
+                settingPath: "track.thickness"
+                rootSettings: root.rootSettings
+                from: 1; to: 40; stepSize: 1
+                unit: "px"
+                label: rootSettings?.pluginApi?.tr("settings.track.thickness.label")
+                description: rootSettings?.pluginApi?.tr("settings.track.thickness.desc")
+            }
+
+            SettingsComboBox {
+                settingPath: "track.verticalAlign"
+                rootSettings: root.rootSettings
+                modelSource: rootSettings?.focusVerticalModel
+                label: rootSettings?.pluginApi?.tr("settings.track.verticalAlign.label")
+                description: rootSettings?.pluginApi?.tr("settings.track.verticalAlign.desc")
+            }
+
+            SettingsSlider {
+                settingPath: "track.segmentSpacing"
+                rootSettings: root.rootSettings
+                from: 0; to: 20; stepSize: 1
+                unit: "px"
+                label: rootSettings?.pluginApi?.tr("settings.track.segmentSpacing.label")
+                description: rootSettings?.pluginApi?.tr("settings.track.segmentSpacing.desc")
+            }
+
+            SettingsSlider {
+                settingPath: "track.borderRadius"
+                rootSettings: root.rootSettings
+                from: 0; to: 24; stepSize: 1
+                unit: "px"
+                label: rootSettings?.pluginApi?.tr("settings.track.borderRadius.label")
+                description: rootSettings?.pluginApi?.tr("settings.track.borderRadius.desc")
+            }
+
+            SettingsToggle {
+                settingPath: "track.shadowEnabled"
+                rootSettings: root.rootSettings
+                label: rootSettings?.pluginApi?.tr("settings.track.shadowEnabled.label")
+                description: rootSettings?.pluginApi?.tr("settings.track.shadowEnabled.desc")
+            }
+        }
     }
 }
