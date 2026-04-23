@@ -9,8 +9,12 @@ ColumnLayout {
     property var rootSettings: null
     property alias filteringSectionTarget: filteringContent
     property alias animationSectionTarget: animationContent
+    property alias windowAnimationSectionTarget: windowAnimationContent
     property alias mouseInteractionSectionTarget: mouseInteractionContent
     property alias debugSectionTarget: debugContent
+    readonly property bool globalAnimationSettingsActive: rootSettings?.settingValue("animation", "enabled") ?? true
+    readonly property bool windowAnimationSettingsActive: rootSettings?.isVisibleByConditions(["windowAnimationEnabled"]) ?? true
+    readonly property bool workspaceScrollSettingsActive: rootSettings?.isVisibleByConditions(["workspaceIndicatorEnabled"]) ?? false
 
     Layout.fillWidth: true
     spacing: Style.marginL
@@ -78,6 +82,8 @@ ColumnLayout {
 
             NComboBox {
                 Layout.fillWidth: true
+                enabled: root.globalAnimationSettingsActive
+                opacity: root.globalAnimationSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.animation.type.label")
                 description: rootSettings?.pluginApi?.tr("settings.animation.type.desc")
                 model: rootSettings?.animationTypeModel
@@ -87,6 +93,8 @@ ColumnLayout {
             }
 
             NValueSlider {
+                enabled: root.globalAnimationSettingsActive
+                opacity: root.globalAnimationSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.animation.speed.label")
                 description: rootSettings?.pluginApi?.tr("settings.animation.speed.desc")
                 from: 50
@@ -129,8 +137,9 @@ ColumnLayout {
             }
 
             NToggle {
-                visible: rootSettings?.isVisibleByConditions(["windowAnimationEnabled"]) ?? true
                 Layout.fillWidth: true
+                enabled: root.windowAnimationSettingsActive
+                opacity: root.windowAnimationSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.window.animation.openEnabled.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.animation.openEnabled.desc")
                 checked: rootSettings?.nestedSettingValue("window", "animation", "openEnabled") ?? true
@@ -139,8 +148,9 @@ ColumnLayout {
             }
 
             NToggle {
-                visible: rootSettings?.isVisibleByConditions(["windowAnimationEnabled"]) ?? true
                 Layout.fillWidth: true
+                enabled: root.windowAnimationSettingsActive
+                opacity: root.windowAnimationSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.window.animation.closeEnabled.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.animation.closeEnabled.desc")
                 checked: rootSettings?.nestedSettingValue("window", "animation", "closeEnabled") ?? true
@@ -149,8 +159,9 @@ ColumnLayout {
             }
 
             NComboBox {
-                visible: rootSettings?.isVisibleByConditions(["windowAnimationEnabled"]) ?? true
                 Layout.fillWidth: true
+                enabled: root.windowAnimationSettingsActive
+                opacity: root.windowAnimationSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.window.animation.type.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.animation.type.desc")
                 model: rootSettings?.animationTypeModel
@@ -162,7 +173,8 @@ ColumnLayout {
             }
 
             NValueSlider {
-                visible: rootSettings?.isVisibleByConditions(["windowAnimationEnabled"]) ?? true
+                enabled: root.windowAnimationSettingsActive
+                opacity: root.windowAnimationSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.window.animation.speed.label")
                 description: rootSettings?.pluginApi?.tr("settings.window.animation.speed.desc")
                 from: 50
@@ -215,6 +227,8 @@ ColumnLayout {
 
             NToggle {
                 Layout.fillWidth: true
+                enabled: root.workspaceScrollSettingsActive
+                opacity: root.workspaceScrollSettingsActive ? 1.0 : 0.45
                 label: rootSettings?.pluginApi?.tr("settings.mouseInteraction.workspaceScrollSwitch.label")
                 description: rootSettings?.pluginApi?.tr("settings.mouseInteraction.workspaceScrollSwitch.desc")
                 checked: rootSettings?.settingValue("mouseInteraction", "workspaceScrollSwitch") ?? false

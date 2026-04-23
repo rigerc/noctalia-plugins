@@ -68,37 +68,41 @@
     "navTabs": {
       "layout": "Layout",
       "appearance": "Appearance",
+      "behavior": "Behavior",
+      "workspaces": "Workspaces",
       "pinnedApps": "Pinned Apps",
       "styleRules": "Style Rules",
       "presets": "Save & Load"
     },
     "pages": {
-      "layout": "Placement, floating panel sizing, track geometry, and motion settings for the bar itself.",
-      "appearance": "Window labels, focus line styling, theme-aware colors, and workspace-related overlays.",
+      "layout": "Placement, floating panel sizing, and the shared track and focus-line geometry.",
+      "appearance": "Window label styling, track colors, segment backgrounds, and focus indicator colors.",
+      "behavior": "Filtering, mouse controls, animation, auto-hide, and diagnostics.",
+      "workspaces": "Workspace indicator and Hyprland special workspace overlay controls.",
       "pinnedApps": "Manage launcher behavior, spacing, colors, and the pinned app list beside the track.",
       "styleRules": "Match windows by app ID, title, tags, or derived window state and override their icons, segment colors, and text styling.",
       "presets": "Save and load presets, full backups, and separate custom style-rule exports."
     },
     "pageGroups": {
       "layoutCore": {
-        "label": "Placement & Track",
-        "desc": "Mirror the structure from the design reference with panel controls first and core track geometry immediately after."
+        "label": "Placement & Geometry",
+        "desc": "Place the widget, size the floating panel, and tune the shared track and focus-line system."
       },
       "motion": {
-        "label": "Filtering & Motion",
-        "desc": "Control which windows appear in the track and how transitions animate."
+        "label": "Behavior",
+        "desc": "Control which windows appear, how mouse input behaves, and how transitions animate."
       },
       "labels": {
-        "label": "Window Labels, Focus Line & Backgrounds",
-        "desc": "Adjust segment content, typography, state background fills, and the moving focus indicator."
+        "label": "Window Labels",
+        "desc": "Adjust segment content, typography, spacing, and icon/title presentation."
       },
       "colors": {
-        "label": "Colors",
-        "desc": "Theme-aware track, segment, icon, and title colors, with support for custom hex values."
+        "label": "Track, Focus & Window Colors",
+        "desc": "Theme-aware track, focus indicator, segment, icon, and title colors, with support for custom hex values."
       },
       "workspaces": {
         "label": "Workspace Extras",
-        "desc": "Optional workspace indicator and special workspace overlay controls grouped under appearance."
+        "desc": "Optional workspace indicator and special workspace overlay controls."
       }
     },
     "colorPicker": {
@@ -269,11 +273,11 @@
     "track": {
       "position": {
         "label": "Track Position",
-        "desc": "For Floating Panel mode, pin the track to the top or bottom edge."
+        "desc": "For Floating Panel mode, pin the bar/panel area to the top or bottom edge."
       },
       "width": {
-        "label": "Track Width",
-        "desc": "Width of the track as a percentage of the screen width."
+        "label": "Bar / Panel Width",
+        "desc": "Base width of the whole scrollbar2 bar or floating panel area as a percentage of the screen width. The visible track fills this area."
       },
       "thickness": {
         "label": "Track Thickness",
@@ -332,8 +336,8 @@
         "desc": "Configure mouse-based behaviors for window segments."
       },
       "track": {
-        "label": "Track Geometry",
-        "desc": "Width, spacing, sizing, and alignment controls for the track line."
+        "label": "Track & Focus Geometry",
+        "desc": "Width, spacing, sizing, and alignment controls for the shared track and moving focus-line system."
       },
       "window": {
         "label": "Window Labels",
@@ -344,8 +348,8 @@
         "desc": "Animation strip geometry and behavior."
       },
       "trackColors": {
-        "label": "Track Color",
-        "desc": "Theme-aware color for the track line."
+        "label": "Track & Focus Colors",
+        "desc": "Theme-aware colors for the track line, separators, edge fades, moving focus indicator, and segment backgrounds."
       },
       "focusColors": {
         "label": "Segment Background Colors",
@@ -799,8 +803,8 @@
         "desc": "Choose whether clicking a visible pinned app focuses and cycles its visible windows or starts a new instance."
       },
       "items": {
-        "label": "Pinned App Overrides",
-        "desc": "Manage pinned apps added from the context menu and set custom icons for each one.",
+        "label": "Pinned Apps",
+        "desc": "Manage apps pinned from the window context menu and set custom icon overrides for each one.",
         "empty": "No pinned apps yet. Right-click a window segment and choose Pin to bar.",
         "remove": "Remove"
       },
