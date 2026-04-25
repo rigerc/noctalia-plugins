@@ -2476,6 +2476,7 @@ Item {
         }
 
         function onEntryStateRevisionChanged() {
+            root.refreshEntriesCache();
             root.refreshPinnedEntriesCache();
         }
 

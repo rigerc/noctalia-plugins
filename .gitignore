@@ -2,6 +2,8 @@ docs/
 .codex/
 .agents/
 .claude/
+.backlog/
+.qmlls.ini
 CLAUDE.md
 */settings.json
 .notes/
