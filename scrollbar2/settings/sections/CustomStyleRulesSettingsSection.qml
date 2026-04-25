@@ -13,6 +13,7 @@ ColumnLayout {
     readonly property var mainInstance: rootSettings?.mainInstance ?? null
 
     property var _cachedRules: []
+    property var _collapsedRuleStates: ({})
     property int _targetRevision: 0
 
     Timer {
@@ -21,6 +22,7 @@ ColumnLayout {
         repeat: false
         onTriggered: {
             root._cachedRules = rootSettings?.styleRuleItems() ?? [];
+            root.syncRuleCollapsedStates();
         }
     }
 
@@ -33,6 +35,7 @@ ColumnLayout {
 
     Component.onCompleted: {
         root._cachedRules = rootSettings?.styleRuleItems() ?? [];
+        root.syncRuleCollapsedStates();
     }
 
     Layout.fillWidth: true
@@ -43,25 +46,124 @@ ColumnLayout {
         return resolved !== undefined ? resolved : Color.mOnSurfaceVariant;
     }
 
+    function syncRuleCollapsedStates() {
+        const next = ({});
+        const defaultCollapsed = _cachedRules.length > 1;
+        for (let i = 0; i < _cachedRules.length; i++) {
+            const key = String(i);
+            if (_collapsedRuleStates[key] !== undefined)
+                next[key] = _collapsedRuleStates[key] === true;
+            else
+                next[key] = defaultCollapsed;
+        }
+        _collapsedRuleStates = next;
+    }
+
+    function isRuleCollapsed(index) {
+        const key = String(index);
+        if (_collapsedRuleStates[key] !== undefined)
+            return _collapsedRuleStates[key] === true;
+        return _cachedRules.length > 1;
+    }
+
+    function setRuleCollapsed(index, collapsed) {
+        const next = Object.assign({}, _collapsedRuleStates);
+        next[String(index)] = collapsed === true;
+        _collapsedRuleStates = next;
+    }
+
+    function ruleMatchFieldLabel(matchField) {
+        const model = rootSettings?.styleRuleMatchFieldModel ?? [];
+        const normalizedKey = rootSettings?.normalizeStyleRuleMatchField(matchField) ?? "appId";
+        for (let i = 0; i < model.length; i++) {
+            if (String(model[i]?.key || "") === normalizedKey)
+                return String(model[i]?.name || normalizedKey);
+        }
+        return normalizedKey;
+    }
+
+    function rulePatternSummary(rule) {
+        const pattern = String(rule?.pattern || "").trim();
+        if (pattern !== "")
+            return pattern;
+        return rootSettings?.pluginApi?.tr("settings.customStyleRules.summary.anyPattern") ?? "";
+    }
+
+    function countEnabledStateOverrides(group) {
+        let count = 0;
+        const states = group || ({});
+        ["focused", "hover", "default"].forEach(function(stateKey) {
+            if (states?.[stateKey]?.enabled === true)
+                count += 1;
+        });
+        return count;
+    }
+
+    function ruleFeatureCount(rule) {
+        let count = 0;
+        if (String(rule?.customIcon || "") !== "")
+            count += 1;
+        count += countEnabledStateOverrides(rule?.colors?.segment);
+        count += countEnabledStateOverrides(rule?.colors?.icon);
+        count += countEnabledStateOverrides(rule?.colors?.title);
+        if (rule?.blink?.enabled === true)
+            count += 1;
+        if (rule?.badge?.enabled === true)
+            count += 1;
+        if (rule?.iconPrefix?.enabled === true)
+            count += 1;
+        return count;
+    }
+
+    function ruleStatusSummary(rule) {
+        const parts = [];
+        parts.push(rule?.enabled === false
+            ? (rootSettings?.pluginApi?.tr("settings.customStyleRules.summary.disabled") ?? "")
+            : (rootSettings?.pluginApi?.tr("settings.customStyleRules.summary.enabled") ?? ""));
+
+        const featureCount = ruleFeatureCount(rule);
+        if (featureCount > 0) {
+            parts.push((rootSettings?.pluginApi?.tr("settings.customStyleRules.summary.features") ?? "").replace("{count}", featureCount));
+        } else {
+            parts.push(rootSettings?.pluginApi?.tr("settings.customStyleRules.summary.noOverrides") ?? "");
+        }
+
+        return parts.join(" | ");
+    }
+
+    NHeader {
+        Layout.fillWidth: true
+        label: rootSettings?.pluginApi?.tr("settings.section.customStyleRules.label") ?? ""
+        description: rootSettings?.pluginApi?.tr("settings.section.customStyleRules.desc") ?? ""
+    }
+
     SettingsSectionCard {
         id: rulesCard
-        sectionKey: "customStyleRules"
-        rootSettings: root.rootSettings
-        title: rootSettings?.pluginApi?.tr("settings.section.customStyleRules.label")
-        description: rootSettings?.pluginApi?.tr("settings.section.customStyleRules.desc")
+        collapsible: false
 
         SettingsSubCard {
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: Style.marginM
+
+                NHeader {
+                    Layout.fillWidth: true
+                    label: rootSettings?.pluginApi?.tr("settings.customStyleRules.manager.label")
+                    description: (rootSettings?.pluginApi?.tr("settings.customStyleRules.manager.desc") ?? "").replace("{count}", _cachedRules.length)
+                }
+
+                NButton {
+                    text: rootSettings?.pluginApi?.tr("settings.customStyleRules.actions.add")
+                    icon: "plus"
+                    onClicked: rootSettings?.addStyleRule()
+                }
+            }
+
             NText {
                 Layout.fillWidth: true
                 text: rootSettings?.pluginApi?.tr("settings.customStyleRules.regexHelp")
                 color: Color.mOnSurfaceVariant
                 wrapMode: Text.WordWrap
-            }
-
-            NButton {
-                text: rootSettings?.pluginApi?.tr("settings.customStyleRules.actions.add")
-                icon: "plus"
-                onClicked: rootSettings?.addStyleRule()
             }
 
             NText {
@@ -88,6 +190,7 @@ ColumnLayout {
                     readonly property bool editTarget: (root.mainInstance?.requestedStyleRuleRevision ?? 0) > 0
                         && String(root.mainInstance?.requestedStyleRuleMatchField || "") === String(modelData?.matchField || "appId")
                         && String(root.mainInstance?.requestedStyleRulePattern || "") === String(modelData?.pattern || "").trim()
+                    property bool collapsed: root.isRuleCollapsed(index)
 
                     ColumnLayout {
                         id: ruleContent
@@ -99,23 +202,49 @@ ColumnLayout {
                             Layout.fillWidth: true
                             spacing: Style.marginS
 
-                            NText {
-                                text: rootSettings?.pluginApi?.tr("settings.customStyleRules.ruleTitle", {
-                                    "index": index + 1
-                                })
-                                font.weight: Style.fontWeightSemiBold
-                                color: Color.mOnSurface
-                            }
-
-                            NText {
-                                visible: ruleCard.editTarget
-                                text: rootSettings?.pluginApi?.tr("settings.customStyleRules.editing")
-                                color: Color.mPrimary
-                                font.weight: Style.fontWeightSemiBold
-                            }
-
                             Item {
                                 Layout.fillWidth: true
+                                implicitHeight: summaryLabel.implicitHeight + (summaryStatus.visible ? summaryStatus.implicitHeight + Style.marginXXS : 0)
+
+                                NLabel {
+                                    id: summaryLabel
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    anchors.top: parent.top
+                                    label: rootSettings?.pluginApi?.tr("settings.customStyleRules.ruleTitle", {
+                                        "index": index + 1
+                                    })
+                                    description: root.ruleMatchFieldLabel(modelData?.matchField) + ": " + root.rulePatternSummary(modelData)
+                                }
+
+                                NText {
+                                    id: summaryStatus
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    anchors.top: summaryLabel.bottom
+                                    anchors.topMargin: Style.marginXXS
+                                    visible: text !== ""
+                                    text: ruleCard.editTarget
+                                        ? rootSettings?.pluginApi?.tr("settings.customStyleRules.editing") + " | " + root.ruleStatusSummary(modelData)
+                                        : root.ruleStatusSummary(modelData)
+                                    color: ruleCard.editTarget ? Color.mPrimary : Color.mOnSurfaceVariant
+                                    wrapMode: Text.WordWrap
+                                }
+
+                                TapHandler {
+                                    cursorShape: Qt.PointingHandCursor
+                                    onTapped: {
+                                        ruleCard.collapsed = !ruleCard.collapsed;
+                                        root.setRuleCollapsed(index, ruleCard.collapsed);
+                                    }
+                                }
+                            }
+
+                            NIcon {
+                                icon: String(modelData?.customIcon || "")
+                                pointSize: Style.fontSizeL
+                                visible: icon !== ""
+                                color: root.previewIconColor(String(modelData?.colors?.icon?.default?.color ?? "on-surface-variant"))
                             }
 
                             NButton {
@@ -137,40 +266,28 @@ ColumnLayout {
                                 icon: "trash"
                                 onClicked: rootSettings?.removeStyleRule(index)
                             }
-                        }
 
-                        NToggle {
-                            Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.enabled.label")
-                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.enabled.desc")
-                            checked: modelData?.enabled !== false
-                            onToggled: checked => rootSettings?.updateStyleRule(index, {
-                                    "enabled": checked
-                                })
-                            defaultValue: true
-                        }
+                            NIcon {
+                                icon: "chevron-right"
+                                pointSize: Style.fontSizeM
+                                color: Color.mOnSurfaceVariant
+                                rotation: ruleCard.collapsed ? 0 : 90
 
-                        NComboBox {
-                            Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.matchField.label")
-                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.matchField.desc")
-                            model: rootSettings?.styleRuleMatchFieldModel ?? []
-                            currentKey: modelData?.matchField ?? "appId"
-                            defaultValue: "appId"
-                            onSelected: key => rootSettings?.updateStyleRule(index, {
-                                    "matchField": rootSettings?.normalizeStyleRuleMatchField(key) ?? "appId"
-                                })
-                        }
+                                Behavior on rotation {
+                                    NumberAnimation {
+                                        duration: Style.animationFast
+                                        easing.type: Easing.OutCubic
+                                    }
+                                }
 
-                        NTextInput {
-                            Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.pattern.label")
-                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.pattern.desc")
-                            placeholderText: rootSettings?.styleRulePatternPlaceholder(modelData?.matchField ?? "appId") ?? ""
-                            text: modelData?.pattern ?? ""
-                            onTextChanged: rootSettings?.updateStyleRule(index, {
-                                    "pattern": text
-                                })
+                                TapHandler {
+                                    cursorShape: Qt.PointingHandCursor
+                                    onTapped: {
+                                        ruleCard.collapsed = !ruleCard.collapsed;
+                                        root.setRuleCollapsed(index, ruleCard.collapsed);
+                                    }
+                                }
+                            }
                         }
 
                         NText {
@@ -181,46 +298,85 @@ ColumnLayout {
                             wrapMode: Text.WordWrap
                         }
 
-                        RowLayout {
+                        ColumnLayout {
                             Layout.fillWidth: true
+                            visible: !ruleCard.collapsed
                             spacing: Style.marginM
 
-                            NLabel {
+                            NToggle {
                                 Layout.fillWidth: true
-                                label: rootSettings?.pluginApi?.tr("settings.customStyleRules.customIcon.label")
-                                description: rootSettings?.pluginApi?.tr("settings.customStyleRules.customIcon.desc")
+                                label: rootSettings?.pluginApi?.tr("settings.customStyleRules.enabled.label")
+                                description: rootSettings?.pluginApi?.tr("settings.customStyleRules.enabled.desc")
+                                checked: modelData?.enabled !== false
+                                onToggled: checked => rootSettings?.updateStyleRule(index, {
+                                        "enabled": checked
+                                    })
+                                defaultValue: true
                             }
 
-                            NIcon {
-                                icon: String(modelData?.customIcon || "")
-                                pointSize: Style.fontSizeXL
-                                visible: icon !== ""
-                                color: root.previewIconColor(String(modelData?.colors?.icon?.default?.color ?? "on-surface-variant"))
+                            NComboBox {
+                                Layout.fillWidth: true
+                                label: rootSettings?.pluginApi?.tr("settings.customStyleRules.matchField.label")
+                                description: rootSettings?.pluginApi?.tr("settings.customStyleRules.matchField.desc")
+                                model: rootSettings?.styleRuleMatchFieldModel ?? []
+                                currentKey: modelData?.matchField ?? "appId"
+                                defaultValue: "appId"
+                                onSelected: key => rootSettings?.updateStyleRule(index, {
+                                        "matchField": rootSettings?.normalizeStyleRuleMatchField(key) ?? "appId"
+                                    })
                             }
 
-                            NButton {
-                                text: rootSettings?.pluginApi?.tr("settings.customStyleRules.customIcon.pick")
-                                onClicked: {
-                                    iconPicker.activeIndex = index;
-                                    iconPicker.initialIcon = String(modelData?.customIcon || "");
-                                    iconPicker.open();
+                            NTextInput {
+                                Layout.fillWidth: true
+                                label: rootSettings?.pluginApi?.tr("settings.customStyleRules.pattern.label")
+                                description: rootSettings?.pluginApi?.tr("settings.customStyleRules.pattern.desc")
+                                placeholderText: rootSettings?.styleRulePatternPlaceholder(modelData?.matchField ?? "appId") ?? ""
+                                text: modelData?.pattern ?? ""
+                                onTextChanged: rootSettings?.updateStyleRule(index, {
+                                        "pattern": text
+                                    })
+                            }
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: Style.marginM
+
+                                NLabel {
+                                    Layout.fillWidth: true
+                                    label: rootSettings?.pluginApi?.tr("settings.customStyleRules.customIcon.label")
+                                    description: rootSettings?.pluginApi?.tr("settings.customStyleRules.customIcon.desc")
+                                }
+
+                                NIcon {
+                                    icon: String(modelData?.customIcon || "")
+                                    pointSize: Style.fontSizeXL
+                                    visible: icon !== ""
+                                    color: root.previewIconColor(String(modelData?.colors?.icon?.default?.color ?? "on-surface-variant"))
+                                }
+
+                                NButton {
+                                    text: rootSettings?.pluginApi?.tr("settings.customStyleRules.customIcon.pick")
+                                    onClicked: {
+                                        iconPicker.activeIndex = index;
+                                        iconPicker.initialIcon = String(modelData?.customIcon || "");
+                                        iconPicker.open();
+                                    }
+                                }
+
+                                NButton {
+                                    text: rootSettings?.pluginApi?.tr("settings.customStyleRules.customIcon.clear")
+                                    enabled: String(modelData?.customIcon || "") !== ""
+                                    onClicked: rootSettings?.updateStyleRule(index, {
+                                            "customIcon": ""
+                                        })
                                 }
                             }
 
-                            NButton {
-                                text: rootSettings?.pluginApi?.tr("settings.customStyleRules.customIcon.clear")
-                                enabled: String(modelData?.customIcon || "") !== ""
-                                onClicked: rootSettings?.updateStyleRule(index, {
-                                        "customIcon": ""
-                                    })
+                            NHeader {
+                                Layout.fillWidth: true
+                                label: rootSettings?.pluginApi?.tr("settings.customStyleRules.segmentColors.label")
+                                description: rootSettings?.pluginApi?.tr("settings.customStyleRules.segmentColors.desc")
                             }
-                        }
-
-                        NHeader {
-                            Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.segmentColors.label")
-                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.segmentColors.desc")
-                        }
 
                         HybridColorChoice {
                             pluginApi: rootSettings?.pluginApi
@@ -672,6 +828,7 @@ ColumnLayout {
                             onColorSelected: value => rootSettings?.updateStyleRuleIconPrefixColor(index, "color", value)
                             onOpacitySelected: value => rootSettings?.updateStyleRuleIconPrefixColor(index, "opacity", value)
                         }
+                    }
                     }
                 }
             }

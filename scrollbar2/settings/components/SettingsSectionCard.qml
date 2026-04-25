@@ -16,9 +16,11 @@ NBox {
     property bool collapsible: true
     property bool collapsed: false
     property bool showLock: sectionKey !== ""
-    property string lockTooltip: isLocked ? "Locked — protected from presets" : "Unlocked — presets can overwrite"
     property var rootSettings: null
     readonly property bool isLocked: showLock && rootSettings ? rootSettings.isSectionLocked(sectionKey) : false
+    readonly property string lockTooltip: isLocked
+        ? (rootSettings?.pluginApi?.tr("settings.sectionCard.lockedTooltip") ?? "")
+        : (rootSettings?.pluginApi?.tr("settings.sectionCard.unlockedTooltip") ?? "")
     default property alias content: contentColumn.data
 
     Layout.fillWidth: true
@@ -31,45 +33,73 @@ NBox {
         anchors.margins: root.contentMargins
         spacing: 0
 
-        RowLayout {
+        Item {
             id: headerRow
             Layout.fillWidth: true
-            spacing: Style.marginS
+            implicitHeight: Math.max(headerHitArea.implicitHeight, lockIcon.implicitHeight, chevronIcon.implicitHeight)
 
-            NHeader {
-                Layout.fillWidth: true
-                label: root.title
-                description: root.description
+            Item {
+                id: headerHitArea
+                anchors.left: parent.left
+                anchors.right: root.showLock ? lockIcon.left : chevronIcon.left
+                anchors.rightMargin: Style.marginS
+                anchors.verticalCenter: parent.verticalCenter
+                implicitHeight: sectionHeader.implicitHeight
                 visible: root.title !== "" || root.description !== ""
+
+                NHeader {
+                    id: sectionHeader
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.top: parent.top
+                    label: root.title
+                    description: root.description
+                }
+
+                TapHandler {
+                    enabled: root.collapsible
+                    cursorShape: root.collapsible ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    onTapped: root.collapsed = !root.collapsed
+                }
             }
 
             NIcon {
+                id: lockIcon
                 visible: root.showLock
+                anchors.right: chevronIcon.left
+                anchors.rightMargin: Style.marginS
+                anchors.verticalCenter: parent.verticalCenter
                 icon: root.isLocked ? "lock" : "lock-open"
                 pointSize: Style.fontSizeM
                 color: root.isLocked ? Color.mPrimary : Color.mOnSurfaceVariant
-                Layout.alignment: Qt.AlignVCenter
 
-                MouseArea {
-                    anchors.fill: parent
+                TapHandler {
                     cursorShape: Qt.PointingHandCursor
-                    hoverEnabled: true
-                    onClicked: {
+                    onTapped: {
                         if (root.rootSettings && root.sectionKey !== "")
                             root.rootSettings.toggleSectionLock(root.sectionKey);
                     }
-                    onEntered: TooltipService.show(parent, root.lockTooltip, "top")
-                    onExited: TooltipService.hide()
+                }
+
+                HoverHandler {
+                    cursorShape: Qt.PointingHandCursor
+                    onHoveredChanged: {
+                        if (hovered)
+                            TooltipService.show(parent, root.lockTooltip, "top");
+                        else
+                            TooltipService.hide();
+                    }
                 }
             }
 
             NIcon {
                 id: chevronIcon
                 visible: root.collapsible
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
                 icon: "chevron-down"
                 pointSize: Style.fontSizeM
                 color: Color.mOnSurfaceVariant
-                Layout.alignment: Qt.AlignVCenter
                 rotation: root.collapsed ? 0 : 180
 
                 Behavior on rotation {
@@ -80,19 +110,10 @@ NBox {
                     }
                 }
 
-                MouseArea {
-                    anchors.fill: parent
+                TapHandler {
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: root.collapsed = !root.collapsed
+                    onTapped: root.collapsed = !root.collapsed
                 }
-            }
-
-            MouseArea {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                enabled: root.collapsible
-                onClicked: root.collapsed = !root.collapsed
-                cursorShape: root.collapsible ? Qt.PointingHandCursor : Qt.ArrowCursor
             }
         }
 
@@ -120,4 +141,3 @@ NBox {
         }
     }
 }
-

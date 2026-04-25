@@ -844,7 +844,7 @@ ColumnLayout {
         return true;
     }
 
-    readonly property var defaultLockedSections: ["customStyleRules", "specialWorkspaceOverlay", "pinnedApps"]
+    readonly property var defaultLockedSections: ["specialWorkspaceOverlay", "pinnedApps"]
 
     function lockedSections() {
         const stored = editSettings?._lockedSections;

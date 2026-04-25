@@ -138,6 +138,10 @@
       "onHover": "On Hover",
       "custom": "Custom color"
     },
+    "sectionCard": {
+      "lockedTooltip": "Locked - protected from presets",
+      "unlockedTooltip": "Unlocked - presets can overwrite"
+    },
     "display": {
       "mode": {
         "label": "Placement",
@@ -816,10 +820,22 @@
       }
     },
     "customStyleRules": {
+      "manager": {
+        "label": "Rule Editor",
+        "desc": "Manage {count} rule(s), reorder match priority, and expand a rule when you need its full override controls."
+      },
+      "count": "{count} rule(s)",
       "empty": "No custom style rules yet. Add one here or create one from a segment context menu.",
       "regexHelp": "Patterns use raw JavaScript regex when you need them. Examples: `^firefox$` for an exact app ID match, `YouTube` for a title substring regex, or `code` for a Hyprland tag match. Floating, urgent, grouped, tagged, and duplicate-state rules also work with an empty pattern. Rules are checked top to bottom and the first match wins.",
       "ruleTitle": "Rule {index}",
       "editing": "Editing target",
+      "summary": {
+        "anyPattern": "Any value",
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "noOverrides": "No overrides",
+        "features": "{count} active features"
+      },
       "enabled": {
         "label": "Enabled",
         "desc": "Disable this rule without removing it."
