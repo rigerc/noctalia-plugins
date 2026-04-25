@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import qs.Commons
+import qs.Services.UI
 import qs.Widgets
 
 NBox {
@@ -15,6 +16,7 @@ NBox {
     property bool collapsible: true
     property bool collapsed: false
     property bool showLock: sectionKey !== ""
+    property string lockTooltip: isLocked ? "Locked — protected from presets" : "Unlocked — presets can overwrite"
     property var rootSettings: null
     readonly property bool isLocked: showLock && rootSettings ? rootSettings.isSectionLocked(sectionKey) : false
     default property alias content: contentColumn.data
@@ -51,10 +53,13 @@ NBox {
                 MouseArea {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
+                    hoverEnabled: true
                     onClicked: {
                         if (root.rootSettings && root.sectionKey !== "")
                             root.rootSettings.toggleSectionLock(root.sectionKey);
                     }
+                    onEntered: TooltipService.show(parent, root.lockTooltip, "top")
+                    onExited: TooltipService.hide()
                 }
             }
 
