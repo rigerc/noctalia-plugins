@@ -22,6 +22,8 @@ ColumnLayout {
 
     SettingsSectionCard {
         id: specialWorkspaceCard
+        sectionKey: "specialWorkspaceOverlay"
+        rootSettings: root.rootSettings
         title: rootSettings?.pluginApi?.tr("settings.section.specialWorkspaceOverlay.label")
         description: rootSettings?.pluginApi?.tr("settings.section.specialWorkspaceOverlay.desc")
 
@@ -189,6 +191,8 @@ ColumnLayout {
 
     SettingsSectionCard {
         id: animationCard
+        sectionKey: "specialWorkspaceOverlay"
+        rootSettings: root.rootSettings
         title: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.animation.sectionLabel")
         description: rootSettings?.pluginApi?.tr("settings.specialWorkspaceOverlay.animation.sectionDesc")
 

@@ -22,6 +22,8 @@ ColumnLayout {
 
     SettingsSectionCard {
         id: filteringCard
+        sectionKey: "filtering"
+        rootSettings: root.rootSettings
         title: rootSettings?.pluginApi?.tr("settings.section.filtering.label")
         description: rootSettings?.pluginApi?.tr("settings.section.filtering.desc")
 
@@ -48,6 +50,8 @@ ColumnLayout {
 
     SettingsSectionCard {
         id: animationCard
+        sectionKey: "animation"
+        rootSettings: root.rootSettings
         title: rootSettings?.pluginApi?.tr("settings.section.animation.label")
         description: rootSettings?.pluginApi?.tr("settings.section.animation.desc")
 
@@ -92,6 +96,8 @@ ColumnLayout {
 
     SettingsSectionCard {
         id: windowAnimationCard
+        sectionKey: "window"
+        rootSettings: root.rootSettings
         title: rootSettings?.pluginApi?.tr("settings.window.animation.sectionLabel")
         description: rootSettings?.pluginApi?.tr("settings.window.animation.sectionDesc")
 
@@ -164,6 +170,8 @@ ColumnLayout {
 
     SettingsSectionCard {
         id: mouseInteractionCard
+        sectionKey: "mouseInteraction"
+        rootSettings: root.rootSettings
         title: rootSettings?.pluginApi?.tr("settings.section.mouseInteraction.label")
         description: rootSettings?.pluginApi?.tr("settings.section.mouseInteraction.desc")
 
@@ -201,6 +209,8 @@ ColumnLayout {
 
     SettingsSectionCard {
         id: debugCard
+        sectionKey: "debug"
+        rootSettings: root.rootSettings
         title: rootSettings?.pluginApi?.tr("settings.section.debug.label")
         description: rootSettings?.pluginApi?.tr("settings.section.debug.desc")
 

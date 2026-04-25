@@ -21,6 +21,8 @@ ColumnLayout {
 
     SettingsSectionCard {
         id: autoHideCard
+        sectionKey: "display"
+        rootSettings: root.rootSettings
 
         title: rootSettings?.pluginApi?.tr("settings.display.autoHide.sectionLabel")
         description: rootSettings?.pluginApi?.tr("settings.display.autoHide.sectionDesc")

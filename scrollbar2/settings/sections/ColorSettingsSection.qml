@@ -22,6 +22,8 @@ ColumnLayout {
 
     SettingsSectionCard {
         id: trackColorsCard
+        sectionKey: "track"
+        rootSettings: root.rootSettings
         title: rootSettings?.pluginApi?.tr("settings.section.trackColors.label")
         description: rootSettings?.pluginApi?.tr("settings.section.trackColors.desc")
 
@@ -115,6 +117,8 @@ ColumnLayout {
 
     SettingsSectionCard {
         id: focusColorsCard
+        sectionKey: "focusLine"
+        rootSettings: root.rootSettings
         title: rootSettings?.pluginApi?.tr("settings.section.focusColors.label")
         description: rootSettings?.pluginApi?.tr("settings.section.focusColors.desc")
 
@@ -199,6 +203,8 @@ ColumnLayout {
 
     SettingsSectionCard {
         id: windowColorsCard
+        sectionKey: "window"
+        rootSettings: root.rootSettings
         title: rootSettings?.pluginApi?.tr("settings.section.windowColors.label")
         description: rootSettings?.pluginApi?.tr("settings.section.windowColors.desc")
 

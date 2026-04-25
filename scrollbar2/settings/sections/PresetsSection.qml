@@ -700,7 +700,22 @@ ColumnLayout {
             return;
 
         if (result.type === "backup") {
-            rootSettings.editSettings = rootSettings.createSettingsSnapshot(result.settings, rootSettings.defaults);
+            var currentLocked = rootSettings.lockedSections();
+            var preservedSections = {};
+            currentLocked.forEach(function(key) {
+                if (rootSettings.editSettings[key] !== undefined)
+                    preservedSections[key] = rootSettings.deepCopy(rootSettings.editSettings[key]);
+            });
+
+            var nextSettings = rootSettings.createSettingsSnapshot(result.settings, rootSettings.defaults);
+
+            currentLocked.forEach(function(key) {
+                if (preservedSections[key] !== undefined)
+                    nextSettings[key] = preservedSections[key];
+            });
+
+            nextSettings._lockedSections = currentLocked;
+            rootSettings.editSettings = nextSettings;
             rootSettings.styleRulesRevision += 1;
             var api = pluginApi;
             if (api) {

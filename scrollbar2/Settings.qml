@@ -383,6 +383,7 @@ ColumnLayout {
     function presetSettingsSnapshot(settings) {
         const next = normalizeSettingsSnapshot(deepCopy(settings || ({})));
         delete next.customStyleRules;
+        delete next._lockedSections;
         return next;
     }
 
@@ -652,6 +653,8 @@ ColumnLayout {
             return item.appId !== "";
         }) : [];
         next.customStyleRules = Array.isArray(next.customStyleRules) ? next.customStyleRules.map(normalizeCustomStyleRule) : [];
+        if (!Array.isArray(next._lockedSections))
+            delete next._lockedSections;
 
         return next;
     }
@@ -841,9 +844,52 @@ ColumnLayout {
         return true;
     }
 
+    readonly property var defaultLockedSections: ["customStyleRules", "specialWorkspaceOverlay", "pinnedApps"]
+
+    function lockedSections() {
+        const stored = editSettings?._lockedSections;
+        if (Array.isArray(stored))
+            return stored;
+        return defaultLockedSections.slice();
+    }
+
+    function isSectionLocked(sectionKey) {
+        if (!sectionKey)
+            return false;
+        return lockedSections().indexOf(sectionKey) >= 0;
+    }
+
+    function toggleSectionLock(sectionKey) {
+        if (!sectionKey)
+            return;
+        const current = lockedSections().slice();
+        const index = current.indexOf(sectionKey);
+        if (index >= 0)
+            current.splice(index, 1);
+        else
+            current.push(sectionKey);
+        const next = deepCopy(editSettings);
+        next._lockedSections = current;
+        editSettings = next;
+    }
+
     function applyPreset(settingsObj, presetId) {
+        const currentLocked = lockedSections();
+        const preservedSections = ({});
+        currentLocked.forEach(function(key) {
+            if (editSettings[key] !== undefined)
+                preservedSections[key] = deepCopy(editSettings[key]);
+        });
+
         const nextSettings = createSettingsSnapshot(settingsObj, defaults);
+
+        currentLocked.forEach(function(key) {
+            if (preservedSections[key] !== undefined)
+                nextSettings[key] = preservedSections[key];
+        });
+
         nextSettings.customStyleRules = styleRuleItems().map(normalizeCustomStyleRule);
+        nextSettings._lockedSections = currentLocked;
         editSettings = nextSettings;
         styleRulesRevision += 1;
         _activePresetId = presetId || "";
@@ -957,8 +1003,7 @@ ColumnLayout {
         return normalizeCustomStyleRule({
             "enabled": true,
             "matchField": "appId",
-            "pattern": "",
-            "colors": currentGlobalStyleRuleColors()
+            "pattern": ""
         });
     }
 

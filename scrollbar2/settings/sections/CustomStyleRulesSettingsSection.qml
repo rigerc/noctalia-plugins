@@ -45,6 +45,8 @@ ColumnLayout {
 
     SettingsSectionCard {
         id: rulesCard
+        sectionKey: "customStyleRules"
+        rootSettings: root.rootSettings
         title: rootSettings?.pluginApi?.tr("settings.section.customStyleRules.label")
         description: rootSettings?.pluginApi?.tr("settings.section.customStyleRules.desc")
 
