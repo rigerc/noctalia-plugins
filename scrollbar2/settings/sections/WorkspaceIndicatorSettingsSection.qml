@@ -24,6 +24,8 @@ ColumnLayout {
 
     SettingsSectionCard {
         id: indicatorCard
+        sectionKey: "workspaceIndicator"
+        rootSettings: root.rootSettings
         title: rootSettings?.pluginApi?.tr("settings.section.workspaceIndicator.label")
         description: rootSettings?.pluginApi?.tr("settings.section.workspaceIndicator.desc")
 
@@ -234,6 +236,8 @@ ColumnLayout {
 
     SettingsSectionCard {
         id: badgeCard
+        sectionKey: "workspaceIndicator"
+        rootSettings: root.rootSettings
         title: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.badge.sectionLabel")
         description: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.badge.sectionDesc")
 
@@ -365,6 +369,8 @@ ColumnLayout {
 
     SettingsSectionCard {
         id: animationCard
+        sectionKey: "workspaceIndicator"
+        rootSettings: root.rootSettings
         title: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.animation.sectionLabel")
         description: rootSettings?.pluginApi?.tr("settings.workspaceIndicator.animation.sectionDesc")
 

@@ -19,6 +19,8 @@ ColumnLayout {
 
     SettingsSectionCard {
         id: windowCard
+        sectionKey: "window"
+        rootSettings: root.rootSettings
         title: rootSettings?.pluginApi?.tr("settings.section.window.label")
         description: rootSettings?.pluginApi?.tr("settings.section.window.desc")
 

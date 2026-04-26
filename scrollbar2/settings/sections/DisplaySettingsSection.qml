@@ -19,6 +19,8 @@ ColumnLayout {
 
     SettingsSectionCard {
         id: displayCard
+        sectionKey: "display"
+        rootSettings: root.rootSettings
 
         title: rootSettings?.pluginApi?.tr("settings.section.display.label")
         description: rootSettings?.pluginApi?.tr("settings.section.display.desc")
@@ -184,6 +186,8 @@ ColumnLayout {
 
     SettingsSectionCard {
         id: trackCard
+        sectionKey: "track"
+        rootSettings: root.rootSettings
 
         title: rootSettings?.pluginApi?.tr("settings.section.track.label")
         description: rootSettings?.pluginApi?.tr("settings.section.track.desc")

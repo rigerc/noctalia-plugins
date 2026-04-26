@@ -19,6 +19,8 @@ ColumnLayout {
 
     SettingsSectionCard {
         id: pinnedBehaviorCard
+        sectionKey: "pinnedApps"
+        rootSettings: root.rootSettings
         title: rootSettings?.pluginApi?.tr("settings.section.pinnedApps.label")
         description: rootSettings?.pluginApi?.tr("settings.section.pinnedApps.desc")
 
@@ -96,6 +98,8 @@ ColumnLayout {
 
     SettingsSectionCard {
         id: pinnedItemsCard
+        sectionKey: "pinnedApps"
+        rootSettings: root.rootSettings
         title: rootSettings?.pluginApi?.tr("settings.pinnedApps.items.label")
         description: rootSettings?.pluginApi?.tr("settings.pinnedApps.items.desc")
 

@@ -121,6 +121,11 @@
       "sourceType": "github",
       "computedHash": "5ea13a6d9f0d4bb694405d79acd00cadec0d21bb138c4dd10fcf3c500cb835c2"
     },
+    "td-task-management": {
+      "source": "marcus/td",
+      "sourceType": "github",
+      "computedHash": "76c6645ffd01d2ffaad414eb98b71071a03e276c0b5d085a86cc28a234d74b72"
+    },
     "typeset": {
       "source": "pbakaus/impeccable",
       "sourceType": "github",
