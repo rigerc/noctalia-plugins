@@ -129,6 +129,40 @@ Item {
         return String(entry?.provider || "") === "cli" && !!entry?.error;
     }
 
+    function _extractFirstJSONArray(text) {
+        var trimmed = String(text || "").trim();
+        if (!trimmed || trimmed.charAt(0) !== "[")
+            return null;
+        var depth = 0;
+        var inStr = false;
+        var esc = false;
+        for (var i = 0; i < trimmed.length; i++) {
+            var c = trimmed.charAt(i);
+            if (esc) {
+                esc = false;
+                continue;
+            }
+            if (c === "\\" && inStr) {
+                esc = true;
+                continue;
+            }
+            if (c === "\"") {
+                inStr = !inStr;
+                continue;
+            }
+            if (inStr)
+                continue;
+            if (c === "[")
+                depth++;
+            else if (c === "]") {
+                depth--;
+                if (depth === 0)
+                    return trimmed.substring(0, i + 1);
+            }
+        }
+        return null;
+    }
+
     function refresh() {
         if (root.isRefreshing)
             return;
@@ -281,38 +315,61 @@ Item {
                 return;
             }
 
-            if (exitCode === 0 && root.rawJsonBuffer.length > 0) {
-                try {
-                    var payload = JSON.parse(root.rawJsonBuffer);
-                    var list = Array.isArray(payload) ? payload : [payload];
-                    root.normalizeProvidersPayload(list);
+            var jsonParsed = false;
 
-                    var first = list.length > 0 ? list[0] : null;
-                    if (first && first.error && !first.usage && !root.lastError) {
-                        root.lastError = first.error.message || "Failed to fetch usage from provider.";
+            if (root.rawJsonBuffer.length > 0) {
+                var firstJson = root._extractFirstJSONArray(root.rawJsonBuffer);
+                if (firstJson) {
+                    try {
+                        var payload = JSON.parse(firstJson);
+                        var list = Array.isArray(payload) ? payload : [payload];
+                        root.normalizeProvidersPayload(list);
+                        jsonParsed = true;
+
+                        var remaining = root.rawJsonBuffer.substring(firstJson.length).trim();
+                        if (remaining.length > 0 && !root.lastError) {
+                            var secondJson = root._extractFirstJSONArray(remaining);
+                            if (secondJson) {
+                                try {
+                                    var cliPayload = JSON.parse(secondJson);
+                                    var cliList = Array.isArray(cliPayload) ? cliPayload : [cliPayload];
+                                    for (var ci = 0; ci < cliList.length; ci++) {
+                                        if (cliList[ci].provider === "cli" && cliList[ci].error) {
+                                            root.lastError = String(cliList[ci].error.message || "").trim();
+                                            break;
+                                        }
+                                    }
+                                } catch (_cliParseErr) {}
+                            }
+                        }
+                    } catch (parseError) {
+                        Logger.e("CodexBar", "JSON parse error: " + parseError);
                     }
-                } catch (parseError) {
+                }
+            }
+
+            if (!jsonParsed) {
+                if (exitCode !== 0) {
+                    var stderrText = root.rawStderrBuffer;
+                    if (root._looksLikeMissingCli(exitCode, stderrText)) {
+                        root.lastError = pluginApi?.tr("errors.cliMissing");
+                        if (!root._cliMissingNotified) {
+                            root._cliMissingNotified = true;
+                            ToastService.showNotice(
+                                pluginApi?.tr("errors.cliMissingTitle"),
+                                pluginApi?.tr("errors.cliMissingBody"),
+                                "external-link"
+                            );
+                        }
+                    } else if (!root.lastError) {
+                        root.lastError = stderrText.length > 0 ? stderrText : "Exit code " + exitCode;
+                    }
+                    Logger.w("CodexBar", "codexbar exited with code " + exitCode);
+                } else if (!root.lastError) {
                     root.lastError = root.rawStderrBuffer.length > 0
                         ? root.rawStderrBuffer
                         : pluginApi?.tr("errors.cliParseFailed") || "Failed to parse CodexBar output.";
-                    Logger.e("CodexBar", "JSON parse error: " + parseError);
                 }
-            } else if (exitCode !== 0) {
-                var stderrText = root.rawStderrBuffer;
-                if (root._looksLikeMissingCli(exitCode, stderrText)) {
-                    root.lastError = pluginApi?.tr("errors.cliMissing");
-                    if (!root._cliMissingNotified) {
-                        root._cliMissingNotified = true;
-                        ToastService.showNotice(
-                            pluginApi?.tr("errors.cliMissingTitle"),
-                            pluginApi?.tr("errors.cliMissingBody"),
-                            "external-link"
-                        );
-                    }
-                } else if (!root.lastError) {
-                    root.lastError = stderrText.length > 0 ? stderrText : "Exit code " + exitCode;
-                }
-                Logger.w("CodexBar", "codexbar exited with code " + exitCode);
             } else {
                 root._cliMissingNotified = false;
             }
