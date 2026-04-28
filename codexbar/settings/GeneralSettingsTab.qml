@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.Commons
 import qs.Widgets
+import "../components"
 
 SettingsTabPage {
     id: tab
@@ -29,6 +30,23 @@ SettingsTabPage {
 
     function providerIcon(providerId) {
         return rootSettings?.effectiveProviderIcon(providerId) || "cpu";
+    }
+
+    function providerVisual(providerId) {
+        return rootSettings?.effectiveProviderVisual(providerId) || ({
+            "source": "icon",
+            "icon": tab.providerIcon(providerId),
+            "asset": "",
+            "assetUrl": ""
+        });
+    }
+
+    function providerVisualSourceOptions(providerId) {
+        if (!rootSettings)
+            return [];
+        if (rootSettings.providerSupportsBundledVisual(providerId))
+            return rootSettings.providerVisualSourceOptions || [];
+        return rootSettings.providerVisualSourceOptions && rootSettings.providerVisualSourceOptions.length > 0 ? [rootSettings.providerVisualSourceOptions[0]] : [];
     }
 
     function syncAvailableProviderChoices() {
@@ -152,47 +170,68 @@ SettingsTabPage {
                 }
 
                 NText {
-                    Layout.fillWidth: true
                     text: tab.providerDisplayName(modelData)
                     pointSize: Style.fontSizeM
                     color: Color.mOnSurface
                 }
 
-                NIcon {
-                    icon: tab.providerIcon(modelData)
+                ProviderVisual {
+                    visualData: tab.providerVisual(modelData)
                     color: Color.mOnSurfaceVariant
                     pointSize: Style.fontSizeL
                     Layout.alignment: Qt.AlignVCenter
                 }
 
-                NButton {
-                    text: rootSettings?.pluginApi?.tr("settings.general.providers.icon.browse")
-                    icon: "pencil"
-                    outlined: true
-                    onClicked: {
-                        tab.iconPickerProviderId = String(modelData || "");
-                        providerIconPicker.initialIcon = tab.providerIcon(modelData);
-                        providerIconPicker.open();
-                    }
-                }
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: Style.marginS
 
-                NButton {
-                    icon: "restore"
-                    outlined: true
-                    enabled: !!(rootSettings?.editBarProviderIcons || ({}))[String(modelData || "")]
-                    tooltipText: rootSettings?.pluginApi?.tr("settings.general.providers.icon.reset")
-                    onClicked: {
-                        if (rootSettings)
-                            rootSettings.clearBarProviderIcon(modelData);
+                    NComboBox {
+                        Layout.fillWidth: true
+                        label: rootSettings?.pluginApi?.tr("settings.general.providers.visual.source.label")
+                        model: tab.providerVisualSourceOptions(modelData)
+                        currentKey: rootSettings?.providerVisualSource(modelData) ?? "icon"
+                        onSelected: key => {
+                            if (rootSettings)
+                                rootSettings.setProviderVisualSource(modelData, key);
+                        }
                     }
-                }
 
-                NButton {
-                    icon: "trash"
-                    outlined: true
-                    onClicked: {
-                        if (rootSettings)
-                            rootSettings.removeBarProvider(index);
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: Style.marginS
+
+                        NButton {
+                            visible: (rootSettings?.providerVisualSource(modelData) ?? "icon") === "icon"
+                            text: rootSettings?.pluginApi?.tr("settings.general.providers.icon.browse")
+                            icon: "pencil"
+                            outlined: true
+                            onClicked: {
+                                tab.iconPickerProviderId = String(modelData || "");
+                                providerIconPicker.initialIcon = tab.providerIcon(modelData);
+                                providerIconPicker.open();
+                            }
+                        }
+
+                        NButton {
+                            icon: "restore"
+                            outlined: true
+                            enabled: !!(rootSettings?.editProviderVisuals || ({}))[String(modelData || "")] || !!(rootSettings?.editBarProviderIcons || ({}))[String(modelData || "")]
+                            tooltipText: rootSettings?.pluginApi?.tr("settings.general.providers.icon.reset")
+                            onClicked: {
+                                if (rootSettings)
+                                    rootSettings.resetProviderVisual(modelData);
+                            }
+                        }
+
+                        NButton {
+                            icon: "trash"
+                            outlined: true
+                            onClicked: {
+                                if (rootSettings)
+                                    rootSettings.removeBarProvider(index);
+                            }
+                        }
                     }
                 }
             }

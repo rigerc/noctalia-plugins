@@ -4,6 +4,7 @@ import Quickshell
 import qs.Commons
 import qs.Services.UI
 import qs.Widgets
+import "./components"
 
 Item {
     id: root
@@ -414,6 +415,7 @@ Item {
     readonly property string barIconColor: cfg.barIconColor ?? defaults.barIconColor ?? "on-surface"
     readonly property var barProviderIds: normalizeProviderIds(cfg.barProviderIds ?? defaults.barProviderIds ?? [])
     readonly property var barProviderIcons: normalizeBarProviderIcons(cfg.barProviderIcons ?? defaults.barProviderIcons ?? ({}))
+    readonly property var providerVisuals: mainInstance?.normalizeProviderVisuals(cfg.providerVisuals ?? defaults.providerVisuals ?? ({})) || ({})
     readonly property string barProviderLabelMode: normalizeProviderLabelMode(cfg.barProviderLabelMode ?? defaults.barProviderLabelMode ?? "icon")
     readonly property string barProviderSeparator: String(cfg.barProviderSeparator ?? defaults.barProviderSeparator ?? "|")
     readonly property int barProviderSeparatorSpacing: Math.max(0, Math.min(4, Number(cfg.barProviderSeparatorSpacing ?? defaults.barProviderSeparatorSpacing ?? 1)))
@@ -504,13 +506,19 @@ Item {
             var label = root.barProviderLabelMode === "prefix" ? (mainInstance?.providerDisplayName(providerId) || providerId) : "";
             var showIcon = root.barProviderLabelMode === "icon";
             var segmentText = root.providerContentText(provider, hideNonCountdown);
+            var visual = mainInstance?.providerVisual(providerId, root.providerVisuals, root.barProviderIcons) || ({
+                "source": "icon",
+                "icon": root.barProviderIcons[providerId] || mainInstance?.providerIcon(providerId) || "cpu",
+                "asset": "",
+                "assetUrl": ""
+            });
             segments.push({
                 "provider": providerId,
                 "showIcon": showIcon,
-                "icon": root.barProviderIcons[providerId] || mainInstance?.providerIcon(providerId) || "cpu",
+                "visual": visual,
                 "label": label,
                 "text": segmentText,
-                "signature": providerId + "|" + label + "|" + segmentText
+                "signature": providerId + "|" + label + "|" + segmentText + "|" + String(visual.source || "icon") + "|" + String(visual.icon || "") + "|" + String(visual.asset || "")
             });
         }
         return segments;
@@ -751,9 +759,9 @@ Item {
                                 applyUiScale: false
                             }
 
-                            NIcon {
+                            ProviderVisual {
                                 visible: modelData.showIcon
-                                icon: modelData.icon || "cpu"
+                                visualData: modelData.visual || ({})
                                 color: mouseArea.containsMouse ? Color.mOnHover : root.resolvedBarTextColor
                                 pointSize: Math.max(12, root.barFontSize)
                                 applyUiScale: false

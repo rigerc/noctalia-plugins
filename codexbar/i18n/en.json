@@ -132,6 +132,13 @@
           "browse": "Set Icon",
           "reset": "Reset provider icon"
         },
+        "visual": {
+          "source": {
+            "label": "Provider Visual",
+            "icon": "Tabler Icon",
+            "asset": "Provider Logo"
+          }
+        },
         "separator": {
           "label": "Provider Separator",
           "desc": "Text inserted between provider segments"

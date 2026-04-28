@@ -180,6 +180,54 @@ ColumnLayout {
         return normalized;
     }
 
+    function normalizeProviderVisualSource(source, providerId) {
+        var normalized = String(source || "").trim();
+        if (normalized === "asset" && root.providerSupportsBundledVisual(providerId))
+            return "asset";
+        return "icon";
+    }
+
+    function normalizeProviderVisuals(providerVisuals) {
+        var source = (providerVisuals && typeof providerVisuals === "object" && !Array.isArray(providerVisuals)) ? providerVisuals : ({});
+        var normalized = ({});
+        var keys = Object.keys(source);
+
+        for (var index = 0; index < keys.length; index++) {
+            var providerId = String(keys[index] || "").trim();
+            if (providerId === "")
+                continue;
+
+            var visual = source[providerId];
+            if (!visual || typeof visual !== "object" || Array.isArray(visual))
+                continue;
+
+            var assetPath = String(visual.asset || root.mainInstance?.providerBundledAsset(providerId) || "");
+            if (assetPath !== "" && root.providerSupportsBundledVisual(providerId) && assetPath.indexOf("assets/provider-icons/") === 0 && assetPath.slice(-4) === ".svg")
+                assetPath = String(root.mainInstance?.providerBundledAsset(providerId) || "");
+
+            normalized[providerId] = {
+                "source": normalizeProviderVisualSource(visual.source, providerId),
+                "icon": normalizeIconName(visual.icon || root.mainInstance?.providerIcon(providerId) || "cpu"),
+                "asset": assetPath
+            };
+        }
+
+        return normalized;
+    }
+
+    function providerSupportsBundledVisual(providerId) {
+        return !!root.mainInstance?.providerSupportsBundledAsset(providerId);
+    }
+
+    function effectiveProviderVisual(providerId) {
+        return root.mainInstance?.providerVisual(providerId, root.editProviderVisuals, root.editBarProviderIcons) || ({
+            "source": "icon",
+            "icon": root.effectiveProviderIcon(providerId),
+            "asset": "",
+            "assetUrl": ""
+        });
+    }
+
     function effectiveProviderIcon(providerId) {
         var key = String(providerId || "").trim();
         if (key === "")
@@ -192,6 +240,10 @@ ColumnLayout {
         return root.mainInstance?.providerIcon(key) || "cpu";
     }
 
+    function providerVisualSource(providerId) {
+        return String(root.effectiveProviderVisual(providerId).source || "icon");
+    }
+
     function setBarProviderIcon(providerId, iconName) {
         var key = String(providerId || "").trim();
         if (key === "")
@@ -200,6 +252,7 @@ ColumnLayout {
         var next = Object.assign({}, root.editBarProviderIcons || ({}));
         next[key] = root.normalizeIconName(iconName);
         root.editBarProviderIcons = root.normalizeBarProviderIcons(next);
+        root.setProviderVisualSource(key, "icon");
     }
 
     function loadConfigProvidersModelFromText(configText) {
@@ -231,6 +284,32 @@ ColumnLayout {
         var next = Object.assign({}, root.editBarProviderIcons || ({}));
         delete next[key];
         root.editBarProviderIcons = root.normalizeBarProviderIcons(next);
+    }
+
+    function setProviderVisualSource(providerId, sourceKey) {
+        var key = String(providerId || "").trim();
+        if (key === "")
+            return;
+
+        var next = Object.assign({}, root.editProviderVisuals || ({}));
+        var current = root.effectiveProviderVisual(key);
+        next[key] = {
+            "source": normalizeProviderVisualSource(sourceKey, key),
+            "icon": normalizeIconName(current.icon || root.mainInstance?.providerIcon(key) || "cpu"),
+            "asset": String(root.mainInstance?.providerBundledAsset(key) || current.asset || "")
+        };
+        root.editProviderVisuals = normalizeProviderVisuals(next);
+    }
+
+    function resetProviderVisual(providerId) {
+        var key = String(providerId || "").trim();
+        if (key === "")
+            return;
+
+        var next = Object.assign({}, root.editProviderVisuals || ({}));
+        delete next[key];
+        root.editProviderVisuals = normalizeProviderVisuals(next);
+        root.clearBarProviderIcon(key);
     }
 
     function availableWidgetProviders() {
@@ -411,6 +490,7 @@ ColumnLayout {
     property string editBarIconColor: cfg.barIconColor ?? defaults.barIconColor ?? "on-surface"
     property var editBarProviderIds: normalizeBarProviderIds(cfg.barProviderIds ?? defaults.barProviderIds ?? [])
     property var editBarProviderIcons: normalizeBarProviderIcons(cfg.barProviderIcons ?? defaults.barProviderIcons ?? ({}))
+    property var editProviderVisuals: normalizeProviderVisuals(cfg.providerVisuals ?? defaults.providerVisuals ?? ({}))
     property string editWidgetProviderToAdd: ""
     property string editBarProviderLabelMode: normalizeBarProviderLabelMode(cfg.barProviderLabelMode ?? defaults.barProviderLabelMode ?? "icon")
     property string editBarProviderSeparator: String(cfg.barProviderSeparator ?? defaults.barProviderSeparator ?? "|")
@@ -446,7 +526,16 @@ ColumnLayout {
             "name": pluginApi?.tr("settings.general.providers.labelMode.prefix")
         }
     ]
-
+    readonly property var providerVisualSourceOptions: [
+        {
+            "key": "icon",
+            "name": pluginApi?.tr("settings.general.providers.visual.source.icon")
+        },
+        {
+            "key": "asset",
+            "name": pluginApi?.tr("settings.general.providers.visual.source.asset")
+        }
+    ]
     spacing: Style.marginL
     implicitWidth: preferredWidth
 
@@ -569,6 +658,7 @@ ColumnLayout {
             root.editBarIconColor = cfg.barIconColor ?? defaults.barIconColor ?? "on-surface";
             root.editBarProviderIds = root.normalizeBarProviderIds(cfg.barProviderIds ?? defaults.barProviderIds ?? []);
             root.editBarProviderIcons = root.normalizeBarProviderIcons(cfg.barProviderIcons ?? defaults.barProviderIcons ?? ({}));
+            root.editProviderVisuals = root.normalizeProviderVisuals(cfg.providerVisuals ?? defaults.providerVisuals ?? ({}));
             root.editBarProviderLabelMode = root.normalizeBarProviderLabelMode(cfg.barProviderLabelMode ?? defaults.barProviderLabelMode ?? "icon");
             root.editBarProviderSeparator = String(cfg.barProviderSeparator ?? defaults.barProviderSeparator ?? "|");
             root.editBarProviderSeparatorSpacing = Math.max(0, Math.min(4, Number(cfg.barProviderSeparatorSpacing ?? defaults.barProviderSeparatorSpacing ?? 1)));
@@ -674,7 +764,17 @@ ColumnLayout {
         delete pluginApi.pluginSettings.barIconPath;
         pluginApi.pluginSettings.barIconColor = editBarIconColor;
         pluginApi.pluginSettings.barProviderIds = normalizeBarProviderIds(editBarProviderIds);
-        pluginApi.pluginSettings.barProviderIcons = normalizeBarProviderIcons(editBarProviderIcons);
+        pluginApi.pluginSettings.providerVisuals = normalizeProviderVisuals(editProviderVisuals);
+
+        var compatibilityProviderIcons = ({});
+        var selectedProviderIds = pluginApi.pluginSettings.barProviderIds;
+        for (var providerIndex = 0; providerIndex < selectedProviderIds.length; providerIndex++) {
+            var providerId = selectedProviderIds[providerIndex];
+            var effectiveVisual = root.mainInstance?.providerVisual(providerId, pluginApi.pluginSettings.providerVisuals, editBarProviderIcons) || root.effectiveProviderVisual(providerId);
+            if (String(effectiveVisual.source || "icon") === "icon")
+                compatibilityProviderIcons[providerId] = normalizeIconName(effectiveVisual.icon || root.mainInstance?.providerIcon(providerId) || "cpu");
+        }
+        pluginApi.pluginSettings.barProviderIcons = normalizeBarProviderIcons(compatibilityProviderIcons);
         pluginApi.pluginSettings.barProviderLabelMode = normalizeBarProviderLabelMode(editBarProviderLabelMode);
         pluginApi.pluginSettings.barProviderSeparator = editBarProviderSeparator;
         pluginApi.pluginSettings.barProviderSeparatorSpacing = Math.max(0, Math.min(4, Number(editBarProviderSeparatorSpacing)));

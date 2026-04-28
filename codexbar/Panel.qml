@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import qs.Commons
 import qs.Services.UI
 import qs.Widgets
+import "./components"
 
 Item {
     id: root
@@ -16,6 +17,9 @@ Item {
     readonly property bool allowAttach: true
 
     readonly property var mainInstance: pluginApi?.mainInstance
+    readonly property var cfg: pluginApi?.pluginSettings || ({})
+    readonly property var defaults: pluginApi?.manifest?.metadata?.defaultSettings || ({})
+    readonly property var providerVisuals: mainInstance?.normalizeProviderVisuals(cfg.providerVisuals ?? defaults.providerVisuals ?? ({})) || ({})
 
     function windowRoleLabel(provider, role) {
         if (provider && provider._windowLabels && provider._windowLabels[role])
@@ -109,10 +113,15 @@ Item {
                                 RowLayout {
                                     Layout.fillWidth: true
 
-                                    NIcon {
+                                    ProviderVisual {
                                         Layout.preferredWidth: Style.fontSizeL
                                         Layout.preferredHeight: Style.fontSizeL
-                                        icon: mainInstance?.providerIcon(provider.provider) || "cpu"
+                                        visualData: mainInstance?.providerVisual(provider.provider, root.providerVisuals, ({})) || ({
+                                            "source": "icon",
+                                            "icon": mainInstance?.providerIcon(provider.provider) || "cpu",
+                                            "asset": "",
+                                            "assetUrl": ""
+                                        })
                                         color: Color.mPrimary
                                     }
 

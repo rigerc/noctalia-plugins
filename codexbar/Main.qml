@@ -49,6 +49,34 @@ Item {
     readonly property bool notifyOnReset: cfg.notifyOnReset ?? defaults.notifyOnReset ?? true
     readonly property bool notifyOnLowUsage: cfg.notifyOnLowUsage ?? defaults.notifyOnLowUsage ?? true
     readonly property int lowUsageThreshold: Math.max(5, Math.min(50, Number(cfg.lowUsageThreshold ?? defaults.lowUsageThreshold ?? 20)))
+    readonly property var providerCatalog: ({
+        "codex": { "name": "Codex", "icon": "cpu", "asset": "assets/provider-icons/codex.svg" },
+        "zai": { "name": "z.ai", "icon": "brand-openai", "asset": "assets/provider-icons/zai.svg" },
+        "claude": { "name": "Claude", "icon": "sparkles", "asset": "assets/provider-icons/claude.svg" },
+        "cursor": { "name": "Cursor", "icon": "cursor-text", "asset": "assets/provider-icons/cursor.svg" },
+        "opencode": { "name": "OpenCode", "icon": "braces", "asset": "assets/provider-icons/opencode.svg" },
+        "opencodego": { "name": "OpenCode Go", "icon": "braces" },
+        "alibaba": { "name": "Alibaba Coding Plan", "icon": "building-skyscraper", "asset": "assets/provider-icons/alibaba.svg" },
+        "factory": { "name": "Factory", "icon": "building-factory" },
+        "gemini": { "name": "Gemini", "icon": "stars", "asset": "assets/provider-icons/gemini.svg" },
+        "antigravity": { "name": "Antigravity", "icon": "atom-2", "asset": "assets/provider-icons/antigravity.svg" },
+        "copilot": { "name": "Copilot", "icon": "brand-github-copilot", "asset": "assets/provider-icons/copilot.svg" },
+        "minimax": { "name": "MiniMax", "icon": "building-castle", "asset": "assets/provider-icons/minimax.svg" },
+        "kimi": { "name": "Kimi", "icon": "letter-k", "asset": "assets/provider-icons/kimi.svg" },
+        "kilo": { "name": "Kilo", "icon": "bolt" },
+        "kiro": { "name": "Kiro", "icon": "letter-k" },
+        "vertexai": { "name": "Vertex AI", "icon": "triangle", "asset": "assets/provider-icons/vertexai.svg" },
+        "augment": { "name": "Augment", "icon": "plus" },
+        "jetbrains": { "name": "JetBrains AI", "icon": "brand-jetbrains" },
+        "kimik2": { "name": "Kimi K2", "icon": "letter-k" },
+        "amp": { "name": "Amp", "icon": "bolt-filled", "asset": "assets/provider-icons/amp.svg" },
+        "ollama": { "name": "Ollama", "icon": "robot", "asset": "assets/provider-icons/ollama.svg" },
+        "synthetic": { "name": "Synthetic", "icon": "flask-2" },
+        "warp": { "name": "Warp", "icon": "sparkles" },
+        "openrouter": { "name": "OpenRouter", "icon": "route", "asset": "assets/provider-icons/openrouter.svg" },
+        "perplexity": { "name": "Perplexity", "icon": "brand-stackshare", "asset": "assets/provider-icons/perplexity.svg" },
+        "abacus": { "name": "Abacus AI", "icon": "abacus" }
+    })
 
     function normalizeBarTextFields(fields) {
         var allowed = ["primary", "secondary", "tertiary", "status"];
@@ -86,38 +114,101 @@ Item {
         return best;
     }
 
+    function providerMeta(providerId) {
+        var key = String(providerId || "").trim();
+        if (key === "")
+            return ({});
+        return root.providerCatalog[key] || ({
+            "name": key,
+            "icon": "cpu",
+            "asset": ""
+        });
+    }
+
     function providerIcon(providerId) {
-        switch (String(providerId || "")) {
-        case "codex":
-            return "cpu";
-        case "claude":
-            return "sparkles";
-        case "kilo":
-            return "bolt";
-        case "gemini":
-            return "stars";
-        case "copilot":
-            return "cpu";
-        default:
-            return "cpu";
-        }
+        return String(root.providerMeta(providerId).icon || "cpu");
     }
 
     function providerDisplayName(providerId) {
-        switch (String(providerId || "")) {
-        case "codex":
-            return "Codex";
-        case "claude":
-            return "Claude";
-        case "kilo":
-            return "Kilo";
-        case "gemini":
-            return "Gemini";
-        case "copilot":
-            return "Copilot";
-        default:
-            return String(providerId || "Unknown");
+        return String(root.providerMeta(providerId).name || providerId || "Unknown");
+    }
+
+    function providerBundledAsset(providerId) {
+        return String(root.providerMeta(providerId).asset || "");
+    }
+
+    function providerSupportsBundledAsset(providerId) {
+        return root.providerBundledAsset(providerId) !== "";
+    }
+
+    function providerAssetUrl(providerId, assetPath) {
+        var resolvedPath = String(assetPath || "").trim();
+        if (resolvedPath === "" && root.providerSupportsBundledAsset(providerId))
+            resolvedPath = root.providerBundledAsset(providerId);
+        if (resolvedPath === "" || !pluginApi?.pluginDir)
+            return "";
+        return Qt.resolvedUrl(pluginApi.pluginDir + "/" + resolvedPath);
+    }
+
+    function normalizeProviderVisualSource(source, providerId) {
+        var normalized = String(source || "").trim();
+        if (normalized === "asset" && root.providerSupportsBundledAsset(providerId))
+            return "asset";
+        return "icon";
+    }
+
+    function normalizeProviderVisuals(providerVisuals) {
+        var source = (providerVisuals && typeof providerVisuals === "object" && !Array.isArray(providerVisuals)) ? providerVisuals : ({});
+        var normalized = ({});
+        var keys = Object.keys(source);
+
+        for (var index = 0; index < keys.length; index++) {
+            var providerId = String(keys[index] || "").trim();
+            if (providerId === "")
+                continue;
+            var visual = source[providerId];
+            if (!visual || typeof visual !== "object" || Array.isArray(visual))
+                continue;
+
+            var assetPath = String(visual.asset || "").trim();
+            if (assetPath !== "" && root.providerSupportsBundledAsset(providerId) && assetPath.indexOf("assets/provider-icons/") === 0 && assetPath.slice(-4) === ".svg")
+                assetPath = root.providerBundledAsset(providerId);
+            var normalizedSource = root.normalizeProviderVisualSource(visual.source, providerId);
+            normalized[providerId] = {
+                "source": normalizedSource,
+                "icon": root.providerIcon(providerId),
+                "asset": assetPath !== "" ? assetPath : root.providerBundledAsset(providerId)
+            };
+
+            if (typeof visual.icon === "string" && String(visual.icon).trim() !== "")
+                normalized[providerId].icon = String(visual.icon).trim();
         }
+
+        return normalized;
+    }
+
+    function providerVisual(providerId, providerVisuals, legacyProviderIcons) {
+        var key = String(providerId || "").trim();
+        var meta = root.providerMeta(key);
+        var normalizedVisuals = root.normalizeProviderVisuals(providerVisuals);
+        var normalizedLegacyIcons = (legacyProviderIcons && typeof legacyProviderIcons === "object" && !Array.isArray(legacyProviderIcons)) ? legacyProviderIcons : ({});
+
+        var visual = normalizedVisuals[key];
+        if (visual)
+            return {
+                "source": visual.source,
+                "icon": visual.icon || meta.icon || "cpu",
+                "asset": visual.asset || root.providerBundledAsset(key),
+                "assetUrl": root.providerAssetUrl(key, visual.asset)
+            };
+
+        var legacyIcon = String(normalizedLegacyIcons[key] || "").trim();
+        return {
+            "source": "icon",
+            "icon": legacyIcon !== "" ? legacyIcon : String(meta.icon || "cpu"),
+            "asset": root.providerBundledAsset(key),
+            "assetUrl": root.providerAssetUrl(key, root.providerBundledAsset(key))
+        };
     }
 
     function durationLabel(windowMinutes) {
