@@ -12,6 +12,7 @@ ColumnLayout {
     property var defaults: pluginApi?.manifest?.metadata?.defaultSettings || ({})
     property real preferredWidth: 720 * Style.uiScaleRatio
     property int selectedTab: 0
+    property var configProvidersModel: []
 
     function allowedBarTextFieldKeys() {
         return ["primary", "secondary", "tertiary", "status"];
@@ -139,6 +140,120 @@ ColumnLayout {
         return normalized;
     }
 
+    function normalizeBarProviderIds(providerIds) {
+        var normalized = [];
+        var source = Array.isArray(providerIds) ? providerIds : [providerIds];
+        for (var index = 0; index < source.length; index++) {
+            var providerId = String(source[index] || "").trim();
+            if (providerId === "" || normalized.indexOf(providerId) >= 0)
+                continue;
+            normalized.push(providerId);
+            if (normalized.length >= 3)
+                break;
+        }
+        return normalized;
+    }
+
+    function normalizeBarProviderLabelMode(mode) {
+        var normalized = String(mode || "").trim();
+        return normalized === "prefix" ? "prefix" : "icon";
+    }
+
+    function availableWidgetProviders() {
+        var items = [];
+        var seen = {};
+        var configProviders = Array.isArray(root.configProvidersModel) ? root.configProvidersModel : [];
+
+        for (var index = 0; index < configProviders.length; index++) {
+            var provider = configProviders[index];
+            var providerId = String(provider?.id || "").trim();
+            if (providerId === "" || provider?.enabled === false || seen[providerId])
+                continue;
+            seen[providerId] = true;
+            items.push({
+                "key": providerId,
+                "name": root.mainInstance?.providerDisplayName(providerId) || providerId
+            });
+        }
+
+        if (items.length > 0)
+            return items;
+
+        var runtimeProviders = root.mainInstance?.providerData || [];
+        for (var runtimeIndex = 0; runtimeIndex < runtimeProviders.length; runtimeIndex++) {
+            var runtimeId = String(runtimeProviders[runtimeIndex]?.provider || "").trim();
+            if (runtimeId === "" || seen[runtimeId])
+                continue;
+            seen[runtimeId] = true;
+            items.push({
+                "key": runtimeId,
+                "name": root.mainInstance?.providerDisplayName(runtimeId) || runtimeId
+            });
+        }
+
+        return items;
+    }
+
+    function providerOptionName(providerId) {
+        var key = String(providerId || "").trim();
+        if (key === "")
+            return "";
+
+        var options = Array.isArray(root.widgetProviderOptions) ? root.widgetProviderOptions : [];
+        for (var index = 0; index < options.length; index++) {
+            if (options[index].key === key)
+                return options[index].name;
+        }
+
+        return root.mainInstance?.providerDisplayName(key) || key;
+    }
+
+    function syncSelectedWidgetProviders() {
+        var availableIds = {};
+        var options = Array.isArray(root.widgetProviderOptions) ? root.widgetProviderOptions : [];
+        for (var index = 0; index < options.length; index++)
+            availableIds[options[index].key] = true;
+
+        var currentSelection = root.normalizeBarProviderIds(root.editBarProviderIds);
+        var filtered = [];
+        for (var selectedIndex = 0; selectedIndex < currentSelection.length; selectedIndex++) {
+            var selectedId = currentSelection[selectedIndex];
+            if (availableIds[selectedId])
+                filtered.push(selectedId);
+        }
+        root.editBarProviderIds = filtered;
+    }
+
+    function addBarProvider(providerId) {
+        var key = String(providerId || "").trim();
+        if (key === "" || root.editBarProviderIds.indexOf(key) >= 0 || root.editBarProviderIds.length >= 3)
+            return;
+        root.editBarProviderIds = root.normalizeBarProviderIds(root.editBarProviderIds.concat([key]));
+    }
+
+    function removeBarProvider(index) {
+        if (!Array.isArray(root.editBarProviderIds) || index < 0 || index >= root.editBarProviderIds.length)
+            return;
+        var next = root.editBarProviderIds.slice();
+        next.splice(index, 1);
+        root.editBarProviderIds = root.normalizeBarProviderIds(next);
+    }
+
+    function moveBarProvider(fromIndex, toIndex) {
+        if (!Array.isArray(root.editBarProviderIds))
+            return;
+        if (fromIndex < 0 || fromIndex >= root.editBarProviderIds.length)
+            return;
+        if (toIndex < 0 || toIndex >= root.editBarProviderIds.length || fromIndex === toIndex)
+            return;
+
+        var next = root.editBarProviderIds.slice();
+        var moved = next[fromIndex];
+        next.splice(fromIndex, 1);
+        next.splice(toIndex, 0, moved);
+        root.editBarProviderIds = root.normalizeBarProviderIds(next);
+    }
+
     function firstAvailableBarTextField(currentFields) {
         var fields = Array.isArray(currentFields) ? currentFields : [];
         var allowed = root.allowedBarTextFieldKeys();
@@ -191,6 +306,10 @@ ColumnLayout {
 
     property string editBarIcon: normalizeIconName(cfg.barIcon ?? defaults.barIcon ?? "sparkles")
     property string editBarIconColor: cfg.barIconColor ?? defaults.barIconColor ?? "on-surface"
+    property var editBarProviderIds: normalizeBarProviderIds(cfg.barProviderIds ?? defaults.barProviderIds ?? [])
+    property string editBarProviderLabelMode: normalizeBarProviderLabelMode(cfg.barProviderLabelMode ?? defaults.barProviderLabelMode ?? "icon")
+    property string editBarProviderSeparator: String(cfg.barProviderSeparator ?? defaults.barProviderSeparator ?? "|")
+    property int editBarProviderSeparatorSpacing: Math.max(0, Math.min(4, Number(cfg.barProviderSeparatorSpacing ?? defaults.barProviderSeparatorSpacing ?? 1)))
     property var editBarTextFields: normalizeBarTextFields(cfg.barTextFields ?? defaults.barTextFields ?? ["primary"])
     property string editBarTextSeparator: String(cfg.barTextSeparator ?? defaults.barTextSeparator ?? "·")
     property int editBarTextSeparatorSpacing: Math.max(0, Math.min(4, Number(cfg.barTextSeparatorSpacing ?? defaults.barTextSeparatorSpacing ?? 1)))
@@ -212,6 +331,24 @@ ColumnLayout {
     property int editLowUsageThreshold: Math.max(5, Math.min(50, Number(cfg.lowUsageThreshold ?? defaults.lowUsageThreshold ?? 20)))
 
     readonly property var mainInstance: pluginApi?.mainInstance
+    readonly property var widgetProviderOptions: availableWidgetProviders()
+    readonly property var availableWidgetProviderOptions: {
+        var selected = root.editBarProviderIds || [];
+        var options = Array.isArray(root.widgetProviderOptions) ? root.widgetProviderOptions : [];
+        return options.filter(function (option) {
+            return selected.indexOf(option.key) < 0;
+        });
+    }
+    readonly property var providerLabelModeOptions: [
+        {
+            "key": "icon",
+            "name": pluginApi?.tr("settings.general.providers.labelMode.icon")
+        },
+        {
+            "key": "prefix",
+            "name": pluginApi?.tr("settings.general.providers.labelMode.prefix")
+        }
+    ]
 
     spacing: Style.marginL
     implicitWidth: preferredWidth
@@ -333,6 +470,10 @@ ColumnLayout {
         function onPluginSettingsChanged() {
             root.editBarIcon = root.normalizeIconName(cfg.barIcon ?? defaults.barIcon ?? "sparkles");
             root.editBarIconColor = cfg.barIconColor ?? defaults.barIconColor ?? "on-surface";
+            root.editBarProviderIds = root.normalizeBarProviderIds(cfg.barProviderIds ?? defaults.barProviderIds ?? []);
+            root.editBarProviderLabelMode = root.normalizeBarProviderLabelMode(cfg.barProviderLabelMode ?? defaults.barProviderLabelMode ?? "icon");
+            root.editBarProviderSeparator = String(cfg.barProviderSeparator ?? defaults.barProviderSeparator ?? "|");
+            root.editBarProviderSeparatorSpacing = Math.max(0, Math.min(4, Number(cfg.barProviderSeparatorSpacing ?? defaults.barProviderSeparatorSpacing ?? 1)));
             root.editBarTextFields = root.normalizeBarTextFields(cfg.barTextFields ?? defaults.barTextFields ?? ["primary"]);
             root.editBarTextSeparator = String(cfg.barTextSeparator ?? defaults.barTextSeparator ?? "·");
             root.editBarTextSeparatorSpacing = Math.max(0, Math.min(4, Number(cfg.barTextSeparatorSpacing ?? defaults.barTextSeparatorSpacing ?? 1)));
@@ -350,10 +491,13 @@ ColumnLayout {
             root.editNotifyOnReset = cfg.notifyOnReset ?? defaults.notifyOnReset ?? true;
             root.editNotifyOnLowUsage = cfg.notifyOnLowUsage ?? defaults.notifyOnLowUsage ?? true;
             root.editLowUsageThreshold = Math.max(5, Math.min(50, Number(cfg.lowUsageThreshold ?? defaults.lowUsageThreshold ?? 20)));
+            root.syncSelectedWidgetProviders();
             root.syncBarTextFieldToAdd();
             root.syncCountdownWindowToAdd();
         }
     }
+
+    onConfigProvidersModelChanged: syncSelectedWidgetProviders()
 
     NTabBar {
         currentIndex: selectedTab
@@ -400,6 +544,10 @@ ColumnLayout {
         pluginApi.pluginSettings.barIcon = normalizeIconName(editBarIcon);
         delete pluginApi.pluginSettings.barIconPath;
         pluginApi.pluginSettings.barIconColor = editBarIconColor;
+        pluginApi.pluginSettings.barProviderIds = normalizeBarProviderIds(editBarProviderIds);
+        pluginApi.pluginSettings.barProviderLabelMode = normalizeBarProviderLabelMode(editBarProviderLabelMode);
+        pluginApi.pluginSettings.barProviderSeparator = editBarProviderSeparator;
+        pluginApi.pluginSettings.barProviderSeparatorSpacing = Math.max(0, Math.min(4, Number(editBarProviderSeparatorSpacing)));
         pluginApi.pluginSettings.barTextFields = normalizeBarTextFields(editBarTextFields);
         pluginApi.pluginSettings.barTextSeparator = editBarTextSeparator;
         pluginApi.pluginSettings.barTextSeparatorSpacing = editBarTextSeparatorSpacing;
@@ -413,7 +561,7 @@ ColumnLayout {
         pluginApi.pluginSettings.barCountdownOnEmpty = editBarCountdownOnEmpty;
         pluginApi.pluginSettings.barCountdownWindows = normalizeCountdownWindows(editBarCountdownWindows);
         pluginApi.pluginSettings.refreshInterval = normalizeRefreshInterval(editRefreshInterval);
-        pluginApi.pluginSettings.defaultProvider = editDefaultProvider;
+        pluginApi.pluginSettings.defaultProvider = pluginApi.pluginSettings.barProviderIds.length > 0 ? pluginApi.pluginSettings.barProviderIds[0] : editDefaultProvider;
         pluginApi.pluginSettings.notifyOnReset = editNotifyOnReset;
         pluginApi.pluginSettings.notifyOnLowUsage = editNotifyOnLowUsage;
         pluginApi.pluginSettings.lowUsageThreshold = editLowUsageThreshold;

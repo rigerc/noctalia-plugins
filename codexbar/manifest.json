@@ -21,6 +21,10 @@
     "defaultSettings": {
       "barIcon": "sparkles",
       "barIconColor": "on-surface",
+      "barProviderIds": [],
+      "barProviderLabelMode": "icon",
+      "barProviderSeparator": "|",
+      "barProviderSeparatorSpacing": 1,
       "barTextFields": ["primary"],
       "barTextSeparator": "·",
       "barTextSeparatorSpacing": 1,

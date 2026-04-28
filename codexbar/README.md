@@ -13,7 +13,7 @@ Upstream project: <https://github.com/steipete/CodexBar>
 ## Features
 
 - **Bar widget**
-  - Show remaining usage for one or more fields (primary / secondary / tertiary / status).
+  - Show up to three selected providers in one widget, with remaining usage for one or more fields (primary / secondary / tertiary / status).
   - Optional **Show on hover** (icon-only until hovered).
   - Optional low-usage icon alert for primary, secondary, or tertiary window.
   - Right-click menu: Refresh, Settings.
@@ -50,17 +50,18 @@ Upstream project: <https://github.com/steipete/CodexBar>
 
 Open the plugin settings to configure:
 
-- **Bar icon** and **text content** (choose which fields are shown and their order).
+- **Bar icon**, **widget providers**, and **text content** (choose which providers and fields are shown, plus their order).
 - **Show on hover** (when enabled, the bar widget shows icon-only until hovered).
 - **Low-usage icon alert** (choose primary, secondary, or tertiary; choose the tint color; 0% remaining forces full error red).
 - **Text styling** (color + opacity).
-- **Refresh interval** and **default provider**.
+- **Refresh interval** and provider selection display mode.
 - **Notifications** (reset / low usage).
 
 Notes:
 
 - Status display requires `codexbar --status` (CodexBar runs this automatically when you select the Status field).
-- The bar widget uses Noctalia’s `BarPill` for hover-reveal behavior, so it does not support custom font family/size/weight controls.
+- The bar widget keeps Noctalia-style hover reveal behavior and still does not expose custom font family/size/weight controls.
+- Existing installs keep the current single-provider behavior until you save a widget provider selection.
 
 ## Settings reference (plugin settings)
 
@@ -68,6 +69,10 @@ These values live in Noctalia’s plugin settings store (`pluginApi.pluginSettin
 
 - `barIcon` (string): Tabler icon name (e.g. `sparkles`).
 - `barIconColor` (string): Noctalia color key.
+- `barProviderIds` (array): Ordered provider IDs shown in the widget, max 3. Empty keeps legacy single-provider fallback.
+- `barProviderLabelMode` (string): `icon` or `prefix`.
+- `barProviderSeparator` (string): Separator between provider segments.
+- `barProviderSeparatorSpacing` (number): Spaces around the provider separator.
 - `barTextFields` (array): Any of `primary`, `secondary`, `tertiary`, `status`.
 - `barTextSeparator` (string): Separator between fields.
 - `barTextSeparatorSpacing` (number): Spaces around the separator.
@@ -80,7 +85,7 @@ These values live in Noctalia’s plugin settings store (`pluginApi.pluginSettin
 - `barLowUsageAlertWindow` (string): `primary`, `secondary`, or `tertiary`.
 - `barLowUsageAlertColor` (string): Noctalia color key used at 50% opacity while low.
 - `refreshInterval` (number seconds): Auto-refresh interval.
-- `defaultProvider` (string): Provider ID to prefer in the bar widget (empty = auto).
+- `defaultProvider` (string): Legacy fallback provider when `barProviderIds` is empty.
 - `notifyOnReset` (bool): Toast on detected reset.
 - `notifyOnLowUsage` (bool): Toast when remaining usage is low.
 - `lowUsageThreshold` (number 5–50): Remaining percentage used by low-usage toasts and the optional bar icon alert.

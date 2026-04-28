@@ -1,7 +1,7 @@
 import QtQuick
+import QtQuick.Layouts
 import Quickshell
 import qs.Commons
-import qs.Modules.Bar.Extras
 import qs.Services.UI
 import qs.Widgets
 
@@ -14,16 +14,18 @@ Item {
     property string section: ""
     property int sectionWidgetIndex: -1
     property int sectionWidgetsCount: 0
+    property bool temporarilyExpanded: false
+    property string previousStableContentSignature: ""
 
     readonly property var cfg: pluginApi?.pluginSettings || ({})
     readonly property var defaults: pluginApi?.manifest?.metadata?.defaultSettings || ({})
     readonly property var mainInstance: pluginApi?.mainInstance
-    property bool temporarilyExpanded: false
-    property string previousStableContentText: ""
 
-    readonly property string barPosition: Settings.getBarPositionForScreen(screen?.name)
+    readonly property string screenName: screen?.name ?? ""
+    readonly property string barPosition: Settings.getBarPositionForScreen(screenName)
     readonly property bool isVertical: barPosition === "left" || barPosition === "right"
-    readonly property real capsuleHeight: Style.getCapsuleHeightForScreen(screen?.name)
+    readonly property real capsuleHeight: Style.getCapsuleHeightForScreen(screenName)
+    readonly property real barFontSize: Style.getBarFontSizeForScreen(screenName)
 
     function normalizeIconName(iconName) {
         var normalized = String(iconName || "").trim();
@@ -37,7 +39,6 @@ Item {
             normalized = normalized.slice(7);
         switch (normalized) {
         case "robot-outline":
-            return "cpu";
         case "robot":
             return "cpu";
         case "lightning-bolt":
@@ -64,6 +65,24 @@ Item {
         if (normalized.length === 0)
             normalized.push("primary");
         return normalized;
+    }
+
+    function normalizeProviderIds(providerIds) {
+        var normalized = [];
+        var source = Array.isArray(providerIds) ? providerIds : [providerIds];
+        for (var index = 0; index < source.length; index++) {
+            var providerId = String(source[index] || "").trim();
+            if (providerId === "" || normalized.indexOf(providerId) >= 0)
+                continue;
+            normalized.push(providerId);
+            if (normalized.length >= 3)
+                break;
+        }
+        return normalized;
+    }
+
+    function normalizeProviderLabelMode(mode) {
+        return String(mode || "").trim() === "prefix" ? "prefix" : "icon";
     }
 
     function usageWindowLabel(windowMinutes, fallbackLabel) {
@@ -123,8 +142,7 @@ Item {
         return normalized;
     }
 
-    function windowLabelForCountdown(fieldKey) {
-        var provider = root.displayProvider;
+    function windowLabel(provider, fieldKey) {
         if (!provider)
             return "";
         var label = provider._windowLabels ? provider._windowLabels[fieldKey] : root.usageWindowLabel(provider.usage && provider.usage[fieldKey] ? provider.usage[fieldKey].windowMinutes : 0, fieldKey);
@@ -169,8 +187,17 @@ Item {
         return padding + root.barTextSeparator + padding;
     }
 
-    function fieldText(fieldKey) {
-        var provider = root.displayProvider;
+    function providerJoiner() {
+        var padding = "";
+        for (var index = 0; index < root.barProviderSeparatorSpacing; index++)
+            padding += " ";
+
+        if (root.barProviderSeparator === "")
+            return padding === "" ? " " : padding;
+        return padding + root.barProviderSeparator + padding;
+    }
+
+    function fieldText(provider, fieldKey) {
         if (!provider)
             return "";
 
@@ -190,14 +217,128 @@ Item {
         if (root.barTextFields.length === 1)
             return leftPercent + "%";
 
-        var label = provider._windowLabels ? provider._windowLabels[fieldKey] : root.usageWindowLabel(usage.windowMinutes, fieldKey);
-        if (!label)
-            label = fieldKey.charAt(0).toUpperCase() + fieldKey.slice(1);
+        var label = root.windowLabel(provider, fieldKey);
         return label + " " + leftPercent + "%";
+    }
+
+    function countdownEntriesForProvider(provider) {
+        if (!root.barCountdownOnEmpty || !provider?.usage)
+            return [];
+        var entries = [];
+        for (var index = 0; index < root.barCountdownWindows.length; index++) {
+            var fieldKey = root.barCountdownWindows[index];
+            var usage = provider.usage[fieldKey];
+            if (!usage || !usage.resetsAt)
+                continue;
+            if (root.usageLeftPercent(usage) !== 0)
+                continue;
+            entries.push(fieldKey);
+        }
+        return entries;
+    }
+
+    function providerContentText(provider, hideNonCountdown) {
+        if (!provider)
+            return "";
+        if (provider.error)
+            return pluginApi?.tr("widget.error");
+
+        var parts = [];
+        var countdownEntries = root.countdownEntriesForProvider(provider);
+        var countdownSet = {};
+        for (var index = 0; index < countdownEntries.length; index++)
+            countdownSet[countdownEntries[index]] = true;
+
+        for (var fieldIndex = 0; fieldIndex < root.barTextFields.length; fieldIndex++) {
+            var fieldKey = root.barTextFields[fieldIndex];
+            if (fieldKey === "status") {
+                if (!hideNonCountdown) {
+                    var statusPart = root.fieldText(provider, fieldKey);
+                    if (statusPart !== "")
+                        parts.push(statusPart);
+                }
+                continue;
+            }
+
+            if (countdownSet[fieldKey]) {
+                var usage = provider.usage ? provider.usage[fieldKey] : null;
+                if (!usage || !usage.resetsAt)
+                    continue;
+                parts.push(root.windowLabel(provider, fieldKey) + " " + pluginApi?.tr("widget.resetsIn") + " " + mainInstance.formatResetsCountdown(usage.resetsAt));
+                delete countdownSet[fieldKey];
+                continue;
+            }
+
+            if (hideNonCountdown)
+                continue;
+
+            var part = root.fieldText(provider, fieldKey);
+            if (part !== "")
+                parts.push(part);
+        }
+
+        var remainingCountdownKeys = Object.keys(countdownSet);
+        for (var countdownIndex = 0; countdownIndex < remainingCountdownKeys.length; countdownIndex++) {
+            var remainingKey = remainingCountdownKeys[countdownIndex];
+            var remainingUsage = provider.usage ? provider.usage[remainingKey] : null;
+            if (!remainingUsage || !remainingUsage.resetsAt)
+                continue;
+            parts.push(root.windowLabel(provider, remainingKey) + " " + pluginApi?.tr("widget.resetsIn") + " " + mainInstance.formatResetsCountdown(remainingUsage.resetsAt));
+        }
+
+        if (parts.length === 0)
+            return "—";
+
+        return parts.join(root.barTextJoiner());
+    }
+
+    function providerTooltipText(provider) {
+        var name = mainInstance?.providerDisplayName(provider.provider) || provider.provider;
+        var providerError = provider.error;
+        if (providerError) {
+            var message = String(providerError.message || "").trim();
+            if (message === "")
+                message = JSON.stringify(providerError);
+            return [name, pluginApi?.tr("widget.providerError"), message].join("\n");
+        }
+
+        var primary = provider?.usage?.primary;
+        var secondary = provider?.usage?.secondary;
+        var tertiary = provider?.usage?.tertiary;
+        var status = provider?.status;
+        var lines = [name];
+        if (primary) {
+            var pLine = root.windowLabel(provider, "primary") + ": " + (100 - primary.usedPercent) + "% left";
+            var pCountdown = mainInstance.formatResetsCountdown(primary.resetsAt);
+            if (pCountdown !== "")
+                pLine += " (" + pluginApi?.tr("panel.resetsIn") + " " + pCountdown + ")";
+            lines.push(pLine);
+        }
+        if (secondary) {
+            var sLine = root.windowLabel(provider, "secondary") + ": " + (100 - secondary.usedPercent) + "% left";
+            var sCountdown = mainInstance.formatResetsCountdown(secondary.resetsAt);
+            if (sCountdown !== "")
+                sLine += " (" + pluginApi?.tr("panel.resetsIn") + " " + sCountdown + ")";
+            lines.push(sLine);
+        }
+        if (tertiary) {
+            var tLine = root.windowLabel(provider, "tertiary") + ": " + (100 - tertiary.usedPercent) + "% left";
+            var tCountdown = mainInstance.formatResetsCountdown(tertiary.resetsAt);
+            if (tCountdown !== "")
+                tLine += " (" + pluginApi?.tr("panel.resetsIn") + " " + tCountdown + ")";
+            lines.push(tLine);
+        }
+        if (status && root.formatStatusText(status) !== "")
+            lines.push("Status: " + root.formatStatusText(status));
+        return lines.join("\n");
     }
 
     readonly property string barIcon: normalizeIconName(cfg.barIcon ?? defaults.barIcon ?? "sparkles")
     readonly property string barIconColor: cfg.barIconColor ?? defaults.barIconColor ?? "on-surface"
+    readonly property var barProviderIds: normalizeProviderIds(cfg.barProviderIds ?? defaults.barProviderIds ?? [])
+    readonly property string barProviderLabelMode: normalizeProviderLabelMode(cfg.barProviderLabelMode ?? defaults.barProviderLabelMode ?? "icon")
+    readonly property string barProviderSeparator: String(cfg.barProviderSeparator ?? defaults.barProviderSeparator ?? "|")
+    readonly property int barProviderSeparatorSpacing: Math.max(0, Math.min(4, Number(cfg.barProviderSeparatorSpacing ?? defaults.barProviderSeparatorSpacing ?? 1)))
     readonly property var barTextFields: normalizeBarTextFields(cfg.barTextFields ?? defaults.barTextFields ?? ["primary"])
     readonly property string barTextSeparator: String(cfg.barTextSeparator ?? defaults.barTextSeparator ?? "·")
     readonly property int barTextSeparatorSpacing: Math.max(0, Math.min(4, Number(cfg.barTextSeparatorSpacing ?? defaults.barTextSeparatorSpacing ?? 1)))
@@ -216,180 +357,142 @@ Item {
     readonly property color resolvedLowUsageAlertBaseColor: Color.resolveColorKey(root.barLowUsageAlertColorKey)
     readonly property color resolvedBarTextBaseColor: Color.resolveColorKey(root.barTextColorKey)
     readonly property color resolvedBarTextColor: Qt.alpha(root.resolvedBarTextBaseColor, root.barTextOpacity)
+    readonly property bool usingExplicitProviderSelection: root.barProviderIds.length > 0
 
-    readonly property var displayProvider: {
+    readonly property var displayProviders: {
         if (!mainInstance || !Array.isArray(mainInstance.providerData) || mainInstance.providerData.length === 0)
-            return null;
-
-        if (defaultProvider) {
-            for (var i = 0; i < mainInstance.providerData.length; i++) {
-                if (mainInstance.providerData[i].provider === defaultProvider)
-                    return mainInstance.providerData[i];
-            }
-        }
-        return mainInstance.providerData[0] || null;
-    }
-
-    readonly property var lowUsageAlertUsage: root.displayProvider?.usage ? root.displayProvider.usage[root.barLowUsageAlertWindow] : null
-    readonly property int lowUsageAlertRemainingPercent: root.usageLeftPercent(root.lowUsageAlertUsage)
-    readonly property bool lowUsageAlertCritical: root.barLowUsageAlertEnabled && root.lowUsageAlertRemainingPercent === 0
-    readonly property bool lowUsageAlertActive: root.barLowUsageAlertEnabled && root.lowUsageAlertRemainingPercent > 0 && root.lowUsageAlertRemainingPercent <= root.lowUsageThreshold
-    readonly property var countdownEntries: {
-        if (!root.barCountdownOnEmpty || !root.displayProvider?.usage)
             return [];
-        var entries = [];
-        for (var i = 0; i < root.barCountdownWindows.length; i++) {
-            var winKey = root.barCountdownWindows[i];
-            var usage = root.displayProvider.usage[winKey];
-            if (!usage || !usage.resetsAt)
+
+        var ordered = [];
+        var dataById = {};
+        for (var dataIndex = 0; dataIndex < mainInstance.providerData.length; dataIndex++) {
+            var entry = mainInstance.providerData[dataIndex];
+            var providerId = String(entry?.provider || "").trim();
+            if (providerId === "")
                 continue;
-            var leftPercent = root.usageLeftPercent(usage);
-            if (leftPercent !== 0)
-                continue;
-            entries.push(winKey);
+            dataById[providerId] = entry;
         }
-        return entries;
-    }
-    readonly property bool countdownActive: root.countdownEntries.length > 0
-    readonly property string countdownProviderName: root.countdownActive && root.displayProvider ? (root.mainInstance?.providerDisplayName(root.displayProvider.provider) || root.displayProvider.provider) : ""
-    readonly property color resolvedBarIconColor: {
-        if (root.lowUsageAlertCritical)
-            return Color.mError;
-        if (root.lowUsageAlertActive)
-            return Qt.alpha(root.resolvedLowUsageAlertBaseColor, 0.5);
-        return root.resolvedBaseBarIconColor;
+
+        if (root.usingExplicitProviderSelection) {
+            for (var selectedIndex = 0; selectedIndex < root.barProviderIds.length; selectedIndex++) {
+                var selectedId = root.barProviderIds[selectedIndex];
+                if (dataById[selectedId])
+                    ordered.push(dataById[selectedId]);
+            }
+            return ordered;
+        }
+
+        if (root.defaultProvider && dataById[root.defaultProvider])
+            return [dataById[root.defaultProvider]];
+
+        return mainInstance.providerData[0] ? [mainInstance.providerData[0]] : [];
     }
 
-    readonly property bool hasData: {
-        if (!displayProvider)
-            return false;
-        if (displayProvider.error)
-            return true;
-        for (var index = 0; index < root.barTextFields.length; index++) {
-            if (root.fieldText(root.barTextFields[index]) !== "")
+    readonly property bool countdownActive: {
+        for (var index = 0; index < root.displayProviders.length; index++) {
+            if (root.countdownEntriesForProvider(root.displayProviders[index]).length > 0)
                 return true;
         }
         return false;
     }
 
-    readonly property string contentText: {
-        if (!mainInstance || mainInstance.isRefreshing)
-            return "...";
-        if (!displayProvider)
-            return "—";
-        if (displayProvider.error)
-            return pluginApi?.tr("widget.error");
+    readonly property bool revealText: !root.barTextShowOnHover || root.temporarilyExpanded || root.countdownActive || mouseArea.containsMouse
 
-        var parts = [];
-        var countdownSet = {};
-        for (var ci = 0; ci < root.countdownEntries.length; ci++)
-            countdownSet[root.countdownEntries[ci]] = true;
+    readonly property var providerSegments: {
+        if (!mainInstance || mainInstance.isRefreshing)
+            return [{
+                    "provider": "",
+                    "showIcon": false,
+                    "label": "",
+                    "text": "...",
+                    "signature": "refreshing"
+                }];
+        if (root.displayProviders.length === 0)
+            return [{
+                    "provider": "",
+                    "showIcon": false,
+                    "label": "",
+                    "text": "—",
+                    "signature": "empty"
+                }];
 
         var hideNonCountdown = root.barTextShowOnHover && root.countdownActive;
-
-        for (var index = 0; index < root.barTextFields.length; index++) {
-            var fieldKey = root.barTextFields[index];
-            if (fieldKey === "status") {
-                if (!hideNonCountdown) {
-                    var statusPart = root.fieldText("status");
-                    if (statusPart !== "")
-                        parts.push(statusPart);
-                }
-                continue;
-            }
-            if (countdownSet[fieldKey]) {
-                var cLabel = root.windowLabelForCountdown(fieldKey);
-                var cTime = mainInstance.formatResetsCountdown(root.displayProvider.usage[fieldKey].resetsAt);
-                parts.push(root.countdownProviderName + " " + cLabel + " " + pluginApi?.tr("widget.resetsIn") + " " + cTime);
-                delete countdownSet[fieldKey];
-                continue;
-            }
-            if (hideNonCountdown)
-                continue;
-            var part = root.fieldText(fieldKey);
-            if (part !== "")
-                parts.push(part);
+        var segments = [];
+        for (var index = 0; index < root.displayProviders.length; index++) {
+            var provider = root.displayProviders[index];
+            var providerId = String(provider.provider || "");
+            var label = root.barProviderLabelMode === "prefix" ? (mainInstance?.providerDisplayName(providerId) || providerId) : "";
+            var showIcon = root.barProviderLabelMode === "icon";
+            var segmentText = root.providerContentText(provider, hideNonCountdown);
+            segments.push({
+                "provider": providerId,
+                "showIcon": showIcon,
+                "icon": mainInstance?.providerIcon(providerId) || "cpu",
+                "label": label,
+                "text": segmentText,
+                "signature": providerId + "|" + label + "|" + segmentText
+            });
         }
-
-        var remainingKeys = Object.keys(countdownSet);
-        for (var ri = 0; ri < remainingKeys.length; ri++) {
-            var rk = remainingKeys[ri];
-            var usage = root.displayProvider.usage ? root.displayProvider.usage[rk] : null;
-            if (!usage || !usage.resetsAt)
-                continue;
-            var rl = root.windowLabelForCountdown(rk);
-            var rt = mainInstance.formatResetsCountdown(usage.resetsAt);
-            parts.push(root.countdownProviderName + " " + rl + " " + pluginApi?.tr("widget.resetsIn") + " " + rt);
-        }
-
-        if (parts.length === 0)
-            return "—";
-        return parts.join(root.barTextJoiner());
+        return segments;
     }
+
+    readonly property string stableContentSignature: root.providerSegments.map(function (segment) {
+        return segment.signature;
+    }).join("||")
 
     readonly property var tooltipText: {
-        if (!hasData)
+        if (root.displayProviders.length === 0)
             return pluginApi?.tr("widget.noData");
 
-        if (!displayProvider)
-            return "";
-
-        var name = mainInstance?.providerDisplayName(displayProvider.provider) || displayProvider.provider;
-        var providerError = displayProvider.error;
-        if (providerError) {
-            var message = String(providerError.message || "").trim();
-            if (message === "")
-                message = JSON.stringify(providerError);
-            return [name, pluginApi?.tr("widget.providerError"), message].join("\n");
-        }
-
-        var primary = displayProvider?.usage?.primary;
-        var secondary = displayProvider?.usage?.secondary;
-        var tertiary = displayProvider?.usage?.tertiary;
-        var status = displayProvider?.status;
-        var lines = [name];
-        if (primary) {
-            var pLine = (displayProvider._windowLabels ? displayProvider._windowLabels.primary : "Primary") + ": " + (100 - primary.usedPercent) + "% left";
-            var pCountdown = mainInstance.formatResetsCountdown(primary.resetsAt);
-            if (pCountdown !== "")
-                pLine += " (" + pluginApi?.tr("panel.resetsIn") + " " + pCountdown + ")";
-            lines.push(pLine);
-        }
-        if (secondary) {
-            var sLine = (displayProvider._windowLabels ? displayProvider._windowLabels.secondary : "Secondary") + ": " + (100 - secondary.usedPercent) + "% left";
-            var sCountdown = mainInstance.formatResetsCountdown(secondary.resetsAt);
-            if (sCountdown !== "")
-                sLine += " (" + pluginApi?.tr("panel.resetsIn") + " " + sCountdown + ")";
-            lines.push(sLine);
-        }
-        if (tertiary) {
-            var tLine = (displayProvider._windowLabels ? displayProvider._windowLabels.tertiary : "Tertiary") + ": " + (100 - tertiary.usedPercent) + "% left";
-            var tCountdown = mainInstance.formatResetsCountdown(tertiary.resetsAt);
-            if (tCountdown !== "")
-                tLine += " (" + pluginApi?.tr("panel.resetsIn") + " " + tCountdown + ")";
-            lines.push(tLine);
-        }
-        if (status && root.formatStatusText(status) !== "")
-            lines.push("Status: " + root.formatStatusText(status));
+        var blocks = [];
+        for (var index = 0; index < root.displayProviders.length; index++)
+            blocks.push(root.providerTooltipText(root.displayProviders[index]));
         var refreshedLine = root.lastRefreshedTooltipLine();
         if (refreshedLine !== "")
-            lines.push(refreshedLine);
-        return lines.join("\n");
+            blocks.push(refreshedLine);
+        return blocks.join("\n\n");
     }
 
-    implicitWidth: pill.implicitWidth
-    implicitHeight: pill.implicitHeight
+    readonly property color resolvedBarIconColor: {
+        var hasCritical = false;
+        var hasLow = false;
 
-    onContentTextChanged: {
+        for (var index = 0; index < root.displayProviders.length; index++) {
+            var provider = root.displayProviders[index];
+            var usage = provider?.usage ? provider.usage[root.barLowUsageAlertWindow] : null;
+            var remainingPercent = root.usageLeftPercent(usage);
+
+            if (!root.barLowUsageAlertEnabled || remainingPercent < 0)
+                continue;
+            if (remainingPercent === 0)
+                hasCritical = true;
+            else if (remainingPercent <= root.lowUsageThreshold)
+                hasLow = true;
+        }
+
+        if (hasCritical)
+            return Color.mError;
+        if (hasLow)
+            return Qt.alpha(root.resolvedLowUsageAlertBaseColor, 0.5);
+        return root.resolvedBaseBarIconColor;
+    }
+
+    readonly property real contentWidth: root.revealText ? capsuleRow.implicitWidth + Style.marginM * 2 : root.capsuleHeight
+    readonly property real contentHeight: root.capsuleHeight
+
+    implicitWidth: root.contentWidth
+    implicitHeight: root.contentHeight
+
+    onStableContentSignatureChanged: {
         if (mainInstance?.isRefreshing)
             return;
 
-        if (previousStableContentText !== "" && contentText !== previousStableContentText && barTextShowOnHover && barTextExpandOnChange) {
+        if (previousStableContentSignature !== "" && stableContentSignature !== previousStableContentSignature && barTextShowOnHover && barTextExpandOnChange) {
             temporarilyExpanded = true;
             expandTimer.restart();
         }
 
-        previousStableContentText = contentText;
+        previousStableContentSignature = stableContentSignature;
     }
 
     Timer {
@@ -432,26 +535,100 @@ Item {
         }
     }
 
-    BarPill {
-        id: pill
+    Rectangle {
+        id: visualCapsule
+        x: Style.pixelAlignCenter(parent.width, width)
+        y: Style.pixelAlignCenter(parent.height, height)
+        width: root.contentWidth
+        height: root.contentHeight
+        radius: Style.radiusL
+        color: mouseArea.containsMouse ? Color.mHover : Style.capsuleColor
+        border.color: Style.capsuleBorderColor
+        border.width: Style.capsuleBorderWidth
 
-        screen: root.screen
-        oppositeDirection: BarService.getPillDirection(root)
-        icon: mainInstance?.isRefreshing ? "refresh" : root.barIcon
-        text: root.barTextOpacity > 0 ? root.contentText : ""
-        tooltipText: root.tooltipText
-        autoHide: false
-        forceOpen: !root.barTextShowOnHover || root.temporarilyExpanded || root.countdownActive
-        customIconColor: root.resolvedBarIconColor
-        customTextColor: root.barTextOpacity > 0 ? root.resolvedBarTextColor : "transparent"
+        RowLayout {
+            id: capsuleRow
+            anchors.centerIn: parent
+            spacing: Style.marginS
 
-        onClicked: {
-            if (pluginApi)
-                pluginApi.togglePanel(root.screen, pill);
+            NIcon {
+                icon: root.barIcon
+                color: mouseArea.containsMouse ? Color.mOnHover : root.resolvedBarIconColor
+                pointSize: Style.toOdd(root.capsuleHeight * 0.48)
+                applyUiScale: false
+                Layout.alignment: Qt.AlignVCenter
+            }
+
+            RowLayout {
+                visible: root.revealText && root.barTextOpacity > 0
+                spacing: Style.marginS
+                Layout.alignment: Qt.AlignVCenter
+                Layout.preferredWidth: visible ? implicitWidth : 0
+
+                Repeater {
+                    model: root.providerSegments
+
+                    delegate: RowLayout {
+                        required property int index
+                        required property var modelData
+
+                        spacing: Style.marginXS
+                        Layout.alignment: Qt.AlignVCenter
+
+                        NText {
+                            visible: index > 0
+                            text: root.providerJoiner()
+                            color: mouseArea.containsMouse ? Color.mOnHover : root.resolvedBarTextColor
+                            pointSize: root.barFontSize
+                            applyUiScale: false
+                        }
+
+                        NIcon {
+                            visible: modelData.showIcon
+                            icon: modelData.icon
+                            color: mouseArea.containsMouse ? Color.mOnHover : root.resolvedBarTextColor
+                            pointSize: Math.max(12, root.barFontSize)
+                            applyUiScale: false
+                            Layout.alignment: Qt.AlignVCenter
+                        }
+
+                        NText {
+                            visible: modelData.label !== ""
+                            text: modelData.label
+                            color: mouseArea.containsMouse ? Color.mOnHover : root.resolvedBarTextColor
+                            pointSize: root.barFontSize
+                            applyUiScale: false
+                        }
+
+                        NText {
+                            text: modelData.text
+                            color: mouseArea.containsMouse ? Color.mOnHover : root.resolvedBarTextColor
+                            pointSize: root.barFontSize
+                            applyUiScale: false
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    MouseArea {
+        id: mouseArea
+        anchors.fill: parent
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+
+        onClicked: mouse => {
+            if (mouse.button === Qt.LeftButton) {
+                if (pluginApi)
+                    pluginApi.togglePanel(root.screen, root);
+            } else if (mouse.button === Qt.RightButton) {
+                PanelService.showContextMenu(contextMenu, root, screen);
+            }
         }
 
-        onRightClicked: {
-            PanelService.showContextMenu(contextMenu, pill, screen);
-        }
+        onEntered: TooltipService.show(root, root.tooltipText, BarService.getTooltipDirection(root.screenName))
+        onExited: TooltipService.hide()
     }
 }

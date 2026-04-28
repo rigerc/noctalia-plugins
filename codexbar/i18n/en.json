@@ -44,7 +44,7 @@
       },
       "behavior": {
         "title": "Behavior",
-        "description": "Choose which provider is shown and how often CodexBar refreshes.",
+        "description": "Choose which providers appear in the widget and how often CodexBar refreshes.",
         "showOnHover": {
           "label": "Show on hover",
           "desc": "When enabled, the bar widget only shows the icon until you hover it."
@@ -115,6 +115,28 @@
           "desc": "Spaces added on each side of the separator"
         }
       },
+      "providers": {
+        "title": "Widget Providers",
+        "description": "Pick up to three enabled providers to show in the widget, then drag to reorder them.",
+        "available": "Available Providers",
+        "selected": "Shown In Widget",
+        "empty": "No widget-specific provider selection yet. The widget will keep the legacy single-provider fallback until you add one.",
+        "noneAvailable": "No enabled providers available from the CodexBar config or current runtime data.",
+        "add": "Add Provider",
+        "labelMode": {
+          "label": "Provider Label Style",
+          "icon": "Icon",
+          "prefix": "Prefix"
+        },
+        "separator": {
+          "label": "Provider Separator",
+          "desc": "Text inserted between provider segments"
+        },
+        "separatorSpacing": {
+          "label": "Provider Separator Spacing",
+          "desc": "Spaces added on each side of the provider separator"
+        }
+      },
       "text": {
         "title": "Text",
         "description": "Customize the bar widget text style",
@@ -173,7 +195,7 @@
       },
       "defaultProvider": {
         "label": "Default Provider",
-        "desc": "Provider shown in the bar widget",
+        "desc": "Legacy fallback provider used only when no widget providers are selected",
         "auto": "Auto (first available)"
       }
     },

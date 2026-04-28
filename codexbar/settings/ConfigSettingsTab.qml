@@ -242,6 +242,8 @@ SettingsTabPage {
         });
 
         tab.syncProvidersCount();
+        if (rootSettings)
+            rootSettings.configProvidersModel = tab.providers.slice();
         tab.isDirty = false;
         tab.syncJsonFromModel();
         return true;
@@ -302,6 +304,8 @@ SettingsTabPage {
         });
         tab.providers = next;
         tab.syncProvidersCount();
+        if (rootSettings)
+            rootSettings.configProvidersModel = tab.providers.slice();
         tab.markDirty();
         tab.syncJsonFromModel();
         tab.setStatus(rootSettings?.pluginApi?.tr("settings.config.providerAdded"), false);
@@ -312,6 +316,8 @@ SettingsTabPage {
         next.splice(index, 1);
         tab.providers = next;
         tab.syncProvidersCount();
+        if (rootSettings)
+            rootSettings.configProvidersModel = tab.providers.slice();
         tab.markDirty();
         tab.syncJsonFromModel();
     }
@@ -326,6 +332,8 @@ SettingsTabPage {
         next[toIndex] = tmp;
         tab.providers = next;
         tab.syncProvidersCount();
+        if (rootSettings)
+            rootSettings.configProvidersModel = tab.providers.slice();
         tab.markDirty();
         tab.syncJsonFromModel();
     }
@@ -337,6 +345,8 @@ SettingsTabPage {
         updated[field] = value;
         next[index] = updated;
         tab.providers = next;
+        if (rootSettings)
+            rootSettings.configProvidersModel = tab.providers.slice();
         tab.markDirty();
         tab.syncJsonFromModel();
     }

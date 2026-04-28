@@ -22,6 +22,10 @@ SettingsTabPage {
         return items;
     }
 
+    function providerDisplayName(providerId) {
+        return rootSettings?.providerOptionName(providerId) || String(providerId || "");
+    }
+
     component SettingsCard: NBox {
         id: card
 
@@ -44,6 +48,98 @@ SettingsTabPage {
                 label: card.title
                 description: card.description
                 labelSize: Style.fontSizeL
+            }
+        }
+    }
+
+    component SelectedProviderDelegate: DropArea {
+        id: providerDropArea
+
+        required property int index
+        required property var modelData
+
+        Layout.fillWidth: true
+        implicitHeight: dragCard.implicitHeight
+
+        onEntered: drag => {
+            if (!drag.source || !rootSettings)
+                return;
+            if (drag.source.providerIndex === index)
+                return;
+            rootSettings.moveBarProvider(drag.source.providerIndex, index);
+            drag.source.providerIndex = index;
+        }
+
+        NBox {
+            id: dragCard
+
+            width: parent.width
+            implicitHeight: providerRow.implicitHeight + Style.marginM * 2
+
+            property int providerIndex: index
+            property bool dragging: dragMouseArea.drag.active
+
+            Drag.active: dragging
+            Drag.source: dragCard
+            Drag.hotSpot.x: width / 2
+            Drag.hotSpot.y: height / 2
+            Drag.keys: ["codexbar-provider"]
+            z: dragging ? 1000 : 0
+            scale: dragging ? 1.02 : 1.0
+            opacity: dragging ? 0.9 : 1.0
+
+            onDraggingChanged: {
+                if (!dragging) {
+                    x = 0;
+                    y = 0;
+                }
+            }
+
+            Behavior on scale {
+                NumberAnimation {
+                    duration: Style.animationFast
+                }
+            }
+
+            RowLayout {
+                id: providerRow
+                anchors.fill: parent
+                anchors.margins: Style.marginM
+                spacing: Style.marginM
+
+                Item {
+                    Layout.preferredWidth: Style.fontSizeL + Style.marginS * 2
+                    Layout.preferredHeight: Style.fontSizeL + Style.marginS * 2
+
+                    NIcon {
+                        anchors.centerIn: parent
+                        icon: "grip-vertical"
+                        color: Color.mOnSurfaceVariant
+                    }
+
+                    MouseArea {
+                        id: dragMouseArea
+                        anchors.fill: parent
+                        cursorShape: Qt.OpenHandCursor
+                        drag.target: dragCard
+                    }
+                }
+
+                NText {
+                    Layout.fillWidth: true
+                    text: tab.providerDisplayName(modelData)
+                    pointSize: Style.fontSizeM
+                    color: Color.mOnSurface
+                }
+
+                NButton {
+                    icon: "trash"
+                    outlined: true
+                    onClicked: {
+                        if (rootSettings)
+                            rootSettings.removeBarProvider(index);
+                    }
+                }
             }
         }
     }
@@ -103,6 +199,109 @@ SettingsTabPage {
             onSelected: key => {
                 if (rootSettings)
                     rootSettings.editBarIconColor = key;
+            }
+        }
+    }
+
+    SettingsCard {
+        title: rootSettings?.pluginApi?.tr("settings.general.providers.title")
+        description: rootSettings?.pluginApi?.tr("settings.general.providers.description")
+
+        NText {
+            Layout.fillWidth: true
+            visible: (rootSettings?.widgetProviderOptions?.length ?? 0) === 0
+            text: rootSettings?.pluginApi?.tr("settings.general.providers.noneAvailable")
+            color: Color.mOnSurfaceVariant
+            wrapMode: Text.Wrap
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            visible: (rootSettings?.availableWidgetProviderOptions?.length ?? 0) > 0 && (rootSettings?.editBarProviderIds?.length ?? 0) < 3
+            spacing: Style.marginL
+
+            NComboBox {
+                id: providerToAddCombo
+                Layout.fillWidth: true
+                label: rootSettings?.pluginApi?.tr("settings.general.providers.available")
+                model: rootSettings?.availableWidgetProviderOptions || []
+                currentKey: (rootSettings?.availableWidgetProviderOptions && rootSettings.availableWidgetProviderOptions.length > 0) ? rootSettings.availableWidgetProviderOptions[0].key : ""
+            }
+
+            NButton {
+                text: rootSettings?.pluginApi?.tr("settings.general.providers.add")
+                icon: "plus"
+                onClicked: {
+                    var key = (rootSettings?.availableWidgetProviderOptions && rootSettings.availableWidgetProviderOptions.length > 0) ? rootSettings.availableWidgetProviderOptions[0].key : "";
+                    var combo = providerToAddCombo.currentKey;
+                    if (combo !== undefined)
+                        key = combo;
+                    if (rootSettings)
+                        rootSettings.addBarProvider(key);
+                }
+            }
+        }
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: Style.marginM
+
+            NText {
+                text: rootSettings?.pluginApi?.tr("settings.general.providers.selected")
+                pointSize: Style.fontSizeS
+                color: Color.mOnSurface
+            }
+
+            NText {
+                Layout.fillWidth: true
+                visible: (rootSettings?.editBarProviderIds?.length ?? 0) === 0
+                text: rootSettings?.pluginApi?.tr("settings.general.providers.empty")
+                color: Color.mOnSurfaceVariant
+                wrapMode: Text.Wrap
+            }
+
+            Repeater {
+                model: rootSettings?.editBarProviderIds || []
+
+                delegate: SelectedProviderDelegate {
+                }
+            }
+        }
+
+        NComboBox {
+            Layout.fillWidth: true
+            label: rootSettings?.pluginApi?.tr("settings.general.providers.labelMode.label")
+            model: rootSettings?.providerLabelModeOptions || []
+            currentKey: rootSettings?.editBarProviderLabelMode ?? "icon"
+            onSelected: key => {
+                if (rootSettings)
+                    rootSettings.editBarProviderLabelMode = key;
+            }
+        }
+
+        NTextInput {
+            Layout.fillWidth: true
+            label: rootSettings?.pluginApi?.tr("settings.general.providers.separator.label")
+            description: rootSettings?.pluginApi?.tr("settings.general.providers.separator.desc")
+            text: rootSettings?.editBarProviderSeparator ?? "|"
+            onTextChanged: {
+                if (rootSettings)
+                    rootSettings.editBarProviderSeparator = text;
+            }
+        }
+
+        NSpinBox {
+            Layout.fillWidth: true
+            label: rootSettings?.pluginApi?.tr("settings.general.providers.separatorSpacing.label")
+            description: rootSettings?.pluginApi?.tr("settings.general.providers.separatorSpacing.desc")
+            from: 0
+            to: 4
+            stepSize: 1
+            value: rootSettings?.editBarProviderSeparatorSpacing ?? 1
+            suffix: "sp"
+            onValueChanged: {
+                if (rootSettings)
+                    rootSettings.editBarProviderSeparatorSpacing = value;
             }
         }
     }
@@ -412,46 +611,5 @@ SettingsTabPage {
             }
         }
 
-        ColumnLayout {
-            Layout.fillWidth: true
-            spacing: Style.marginXS
-
-            NText {
-                text: rootSettings?.pluginApi?.tr("settings.general.defaultProvider.label")
-                pointSize: Style.fontSizeS
-                color: Color.mOnSurface
-            }
-
-            NText {
-                text: rootSettings?.pluginApi?.tr("settings.general.defaultProvider.desc")
-                pointSize: Style.fontSizeXS
-                color: Color.mOnSurfaceVariant
-            }
-
-            NComboBox {
-                Layout.fillWidth: true
-                model: {
-                    var items = [{
-                        "key": "",
-                        "name": rootSettings?.pluginApi?.tr("settings.general.defaultProvider.auto")
-                    }];
-                    var providers = mainInstance?.providerData || [];
-                    for (var index = 0; index < providers.length; index++) {
-                        var providerId = String(providers[index].provider || "");
-                        var displayName = mainInstance?.providerDisplayName(providerId) || providerId;
-                        items.push({
-                            "key": providerId,
-                            "name": displayName
-                        });
-                    }
-                    return items;
-                }
-                currentKey: rootSettings?.editDefaultProvider ?? ""
-                onSelected: key => {
-                    if (rootSettings)
-                        rootSettings.editDefaultProvider = key;
-                }
-            }
-        }
     }
 }
