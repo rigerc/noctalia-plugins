@@ -7,6 +7,7 @@ SettingsTabPage {
     id: tab
 
     property var rootSettings: null
+    property var availableProviderChoices: []
     readonly property var mainInstance: rootSettings?.pluginApi?.mainInstance
     readonly property var availableBarTextFieldOptions: {
         var items = [];
@@ -25,6 +26,31 @@ SettingsTabPage {
     function providerDisplayName(providerId) {
         return rootSettings?.providerOptionName(providerId) || String(providerId || "");
     }
+
+    function providerIcon(providerId) {
+        return rootSettings?.effectiveProviderIcon(providerId) || "cpu";
+    }
+
+    function syncAvailableProviderChoices() {
+        availableProviderChoices = rootSettings ? (rootSettings.getAvailableWidgetProviderOptions() || []) : [];
+    }
+
+    property string iconPickerProviderId: ""
+
+    Connections {
+        target: rootSettings
+
+        function onEditBarProviderIdsChanged() {
+            tab.syncAvailableProviderChoices();
+        }
+
+        function onWidgetProviderOptionsChanged() {
+            tab.syncAvailableProviderChoices();
+        }
+    }
+
+    onRootSettingsChanged: syncAvailableProviderChoices()
+    Component.onCompleted: syncAvailableProviderChoices()
 
     component SettingsCard: NBox {
         id: card
@@ -132,6 +158,35 @@ SettingsTabPage {
                     color: Color.mOnSurface
                 }
 
+                NIcon {
+                    icon: tab.providerIcon(modelData)
+                    color: Color.mOnSurfaceVariant
+                    pointSize: Style.fontSizeL
+                    Layout.alignment: Qt.AlignVCenter
+                }
+
+                NButton {
+                    text: rootSettings?.pluginApi?.tr("settings.general.providers.icon.browse")
+                    icon: "pencil"
+                    outlined: true
+                    onClicked: {
+                        tab.iconPickerProviderId = String(modelData || "");
+                        providerIconPicker.initialIcon = tab.providerIcon(modelData);
+                        providerIconPicker.open();
+                    }
+                }
+
+                NButton {
+                    icon: "restore"
+                    outlined: true
+                    enabled: !!(rootSettings?.editBarProviderIcons || ({}))[String(modelData || "")]
+                    tooltipText: rootSettings?.pluginApi?.tr("settings.general.providers.icon.reset")
+                    onClicked: {
+                        if (rootSettings)
+                            rootSettings.clearBarProviderIcon(modelData);
+                    }
+                }
+
                 NButton {
                     icon: "trash"
                     outlined: true
@@ -217,25 +272,26 @@ SettingsTabPage {
 
         RowLayout {
             Layout.fillWidth: true
-            visible: (rootSettings?.availableWidgetProviderOptions?.length ?? 0) > 0 && (rootSettings?.editBarProviderIds?.length ?? 0) < 3
+            visible: (tab.availableProviderChoices?.length ?? 0) > 0 && (rootSettings?.editBarProviderIds?.length ?? 0) < 3
             spacing: Style.marginL
 
             NComboBox {
                 id: providerToAddCombo
                 Layout.fillWidth: true
                 label: rootSettings?.pluginApi?.tr("settings.general.providers.available")
-                model: rootSettings?.availableWidgetProviderOptions || []
-                currentKey: (rootSettings?.availableWidgetProviderOptions && rootSettings.availableWidgetProviderOptions.length > 0) ? rootSettings.availableWidgetProviderOptions[0].key : ""
+                model: tab.availableProviderChoices || []
+                currentKey: rootSettings?.editWidgetProviderToAdd ?? ""
+                onSelected: key => {
+                    if (rootSettings)
+                        rootSettings.editWidgetProviderToAdd = key;
+                }
             }
 
             NButton {
                 text: rootSettings?.pluginApi?.tr("settings.general.providers.add")
                 icon: "plus"
                 onClicked: {
-                    var key = (rootSettings?.availableWidgetProviderOptions && rootSettings.availableWidgetProviderOptions.length > 0) ? rootSettings.availableWidgetProviderOptions[0].key : "";
-                    var combo = providerToAddCombo.currentKey;
-                    if (combo !== undefined)
-                        key = combo;
+                    var key = rootSettings?.editWidgetProviderToAdd ?? "";
                     if (rootSettings)
                         rootSettings.addBarProvider(key);
                 }
@@ -265,6 +321,15 @@ SettingsTabPage {
 
                 delegate: SelectedProviderDelegate {
                 }
+            }
+        }
+
+        NIconPicker {
+            id: providerIconPicker
+            initialIcon: tab.iconPickerProviderId !== "" ? tab.providerIcon(tab.iconPickerProviderId) : "cpu"
+            onIconSelected: iconName => {
+                if (rootSettings && tab.iconPickerProviderId !== "")
+                    rootSettings.setBarProviderIcon(tab.iconPickerProviderId, iconName);
             }
         }
 

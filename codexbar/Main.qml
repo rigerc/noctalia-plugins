@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import Quickshell.Io
 import qs.Commons
 import qs.Services.UI
@@ -20,6 +21,11 @@ Item {
     property int _fetchRequestId: 0
     property int _timedOutRequestId: -1
     property int countdownTick: 0
+    property bool _refreshAfterConfigChange: false
+    readonly property string homeDir: Quickshell.env("HOME") || ""
+    readonly property string configDir: homeDir !== "" ? homeDir + "/.codexbar" : ""
+    readonly property string configPath: configDir !== "" ? configDir + "/config.json" : ""
+    property var configuredProviderIds: []
 
     function formatResetsCountdown(resetsAt) {
         if (!resetsAt)
@@ -163,6 +169,57 @@ Item {
         return null;
     }
 
+    function normalizedConfiguredProviderIdsFromText(configText) {
+        var configured = [];
+        var seen = ({});
+        var parsed = null;
+
+        try {
+            parsed = JSON.parse(String(configText || ""));
+        } catch (_parseError) {
+            return [];
+        }
+
+        var providers = Array.isArray(parsed?.providers) ? parsed.providers : [];
+        for (var index = 0; index < providers.length; index++) {
+            var provider = providers[index];
+            if (!provider || typeof provider !== "object" || Array.isArray(provider))
+                continue;
+
+            var providerId = String(provider.id || "").trim();
+            if (providerId === "" || provider.enabled === false || seen[providerId])
+                continue;
+
+            seen[providerId] = true;
+            configured.push(providerId);
+        }
+
+        return configured;
+    }
+
+    function arraysEqual(left, right) {
+        if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length)
+            return false;
+        for (var index = 0; index < left.length; index++) {
+            if (left[index] !== right[index])
+                return false;
+        }
+        return true;
+    }
+
+    function setConfiguredProviderIds(nextIds) {
+        var normalized = Array.isArray(nextIds) ? nextIds.slice() : [];
+        if (root.arraysEqual(root.configuredProviderIds, normalized))
+            return;
+
+        root.configuredProviderIds = normalized;
+        if (root.isRefreshing) {
+            root._refreshAfterConfigChange = true;
+        } else {
+            root.refresh();
+        }
+    }
+
     function refresh() {
         if (root.isRefreshing)
             return;
@@ -280,8 +337,31 @@ Item {
         id: fetchProcess
 
         property var _command: {
-            var script = "codexbar_path=$(command -v codexbar 2>/dev/null) || exit 127; exec \"$codexbar_path\" --format json --status";
-            return ["sh", "-c", script];
+            var script = ""
+                + "codexbar_path=$(command -v codexbar 2>/dev/null) || exit 127\n"
+                + "if [ \"$#\" -eq 0 ]; then\n"
+                + "  exec \"$codexbar_path\" --format json --status\n"
+                + "fi\n"
+                + "if [ \"$#\" -eq 1 ]; then\n"
+                + "  exec \"$codexbar_path\" --provider \"$1\" --format json --status\n"
+                + "fi\n"
+                + "printf '['\n"
+                + "first=1\n"
+                + "for provider in \"$@\"; do\n"
+                + "  out=\"$(\"$codexbar_path\" --provider \"$provider\" --format json --status)\"\n"
+                + "  first_array=$(printf '%s\\n' \"$out\" | sed -n '1p')\n"
+                + "  body=${first_array#\\[}\n"
+                + "  body=${body%\\]}\n"
+                + "  [ -z \"$body\" ] && continue\n"
+                + "  if [ \"$first\" -eq 0 ]; then\n"
+                + "    printf ','\n"
+                + "  fi\n"
+                + "  printf '%s' \"$body\"\n"
+                + "  first=0\n"
+                + "done\n"
+                + "printf ']'\n"
+                + "exit 0\n";
+            return ["sh", "-c", script, "codexbar-fetch"].concat(root.configuredProviderIds || []);
         }
         command: _command
 
@@ -376,6 +456,11 @@ Item {
 
             root.rawJsonBuffer = "";
             root.rawStderrBuffer = "";
+
+            if (root._refreshAfterConfigChange) {
+                root._refreshAfterConfigChange = false;
+                Qt.callLater(root.refresh);
+            }
         }
     }
 
@@ -425,6 +510,25 @@ Item {
 
         function refresh() {
             root.refresh();
+        }
+    }
+
+    FileView {
+        id: configFile
+        path: root.configPath !== "" ? root.configPath : undefined
+        printErrors: false
+        watchChanges: true
+
+        onFileChanged: reload()
+        onPathChanged: {
+            if (path !== undefined)
+                reload();
+        }
+        onLoaded: {
+            root.setConfiguredProviderIds(root.normalizedConfiguredProviderIdsFromText(text()));
+        }
+        onLoadFailed: function (_error) {
+            root.setConfiguredProviderIds([]);
         }
     }
 

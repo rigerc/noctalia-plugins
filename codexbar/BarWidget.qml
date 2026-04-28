@@ -16,6 +16,9 @@ Item {
     property int sectionWidgetsCount: 0
     property bool temporarilyExpanded: false
     property string previousStableContentSignature: ""
+    property bool hoverTextVisible: false
+    property real animatedTextWidth: 0
+    property real animatedTextOpacity: 0
 
     readonly property var cfg: pluginApi?.pluginSettings || ({})
     readonly property var defaults: pluginApi?.manifest?.metadata?.defaultSettings || ({})
@@ -83,6 +86,20 @@ Item {
 
     function normalizeProviderLabelMode(mode) {
         return String(mode || "").trim() === "prefix" ? "prefix" : "icon";
+    }
+
+    function normalizeBarProviderIcons(providerIcons) {
+        var source = (providerIcons && typeof providerIcons === "object" && !Array.isArray(providerIcons)) ? providerIcons : ({});
+        var normalized = ({});
+        var keys = Object.keys(source);
+        for (var index = 0; index < keys.length; index++) {
+            var providerId = String(keys[index] || "").trim();
+            var iconName = root.normalizeIconName(source[providerId]);
+            if (providerId === "" || iconName === "")
+                continue;
+            normalized[providerId] = iconName;
+        }
+        return normalized;
     }
 
     function usageWindowLabel(windowMinutes, fallbackLabel) {
@@ -165,6 +182,66 @@ Item {
             return "";
 
         return pluginApi?.tr("widget.lastRefreshed") + " " + relative;
+    }
+
+    function escapeTooltipHtml(text) {
+        return String(text || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function tooltipBlockHtml(lines) {
+        var escapedLines = [];
+        for (var index = 0; index < lines.length; index++)
+            escapedLines.push(root.escapeTooltipHtml(lines[index]));
+        return "<div style=\"text-align:center;\">" + escapedLines.join("<br/>") + "</div>";
+    }
+
+    function showTextNow() {
+        hoverRevealTimer.stop();
+        textHideAnim.stop();
+        textShowAnim.stop();
+        root.hoverTextVisible = true;
+        root.animatedTextWidth = root.textTargetWidth;
+        root.animatedTextOpacity = root.textTargetWidth > 0 ? 1 : 0;
+    }
+
+    function showTextDelayed() {
+        if (!root.barTextShowOnHover || root.forceRevealText || root.textTargetWidth <= 0)
+            return;
+        if (!root.hoverTextVisible)
+            hoverRevealTimer.restart();
+    }
+
+    function hideTextNow() {
+        hoverRevealTimer.stop();
+        textShowAnim.stop();
+        textHideAnim.stop();
+        root.hoverTextVisible = false;
+        root.animatedTextWidth = 0;
+        root.animatedTextOpacity = 0;
+    }
+
+    function hideTextAnimated() {
+        if (!root.barTextShowOnHover || root.forceRevealText)
+            return;
+        hoverRevealTimer.stop();
+        textShowAnim.stop();
+        if (root.animatedTextWidth <= 0) {
+            root.hideTextNow();
+            return;
+        }
+        textHideAnim.start();
+    }
+
+    function syncTextRevealState() {
+        if (root.forceRevealText || !root.barTextShowOnHover) {
+            root.showTextNow();
+            return;
+        }
+        if (mouseArea.containsMouse) {
+            root.showTextDelayed();
+            return;
+        }
+        root.hideTextNow();
     }
 
     function toggleShowOnHover() {
@@ -292,14 +369,14 @@ Item {
         return parts.join(root.barTextJoiner());
     }
 
-    function providerTooltipText(provider) {
+    function providerTooltipLines(provider) {
         var name = mainInstance?.providerDisplayName(provider.provider) || provider.provider;
         var providerError = provider.error;
         if (providerError) {
             var message = String(providerError.message || "").trim();
             if (message === "")
                 message = JSON.stringify(providerError);
-            return [name, pluginApi?.tr("widget.providerError"), message].join("\n");
+            return [name, pluginApi?.tr("widget.providerError"), message];
         }
 
         var primary = provider?.usage?.primary;
@@ -330,12 +407,13 @@ Item {
         }
         if (status && root.formatStatusText(status) !== "")
             lines.push("Status: " + root.formatStatusText(status));
-        return lines.join("\n");
+        return lines;
     }
 
     readonly property string barIcon: normalizeIconName(cfg.barIcon ?? defaults.barIcon ?? "sparkles")
     readonly property string barIconColor: cfg.barIconColor ?? defaults.barIconColor ?? "on-surface"
     readonly property var barProviderIds: normalizeProviderIds(cfg.barProviderIds ?? defaults.barProviderIds ?? [])
+    readonly property var barProviderIcons: normalizeBarProviderIcons(cfg.barProviderIcons ?? defaults.barProviderIcons ?? ({}))
     readonly property string barProviderLabelMode: normalizeProviderLabelMode(cfg.barProviderLabelMode ?? defaults.barProviderLabelMode ?? "icon")
     readonly property string barProviderSeparator: String(cfg.barProviderSeparator ?? defaults.barProviderSeparator ?? "|")
     readonly property int barProviderSeparatorSpacing: Math.max(0, Math.min(4, Number(cfg.barProviderSeparatorSpacing ?? defaults.barProviderSeparatorSpacing ?? 1)))
@@ -396,13 +474,14 @@ Item {
         return false;
     }
 
-    readonly property bool revealText: !root.barTextShowOnHover || root.temporarilyExpanded || root.countdownActive || mouseArea.containsMouse
+    readonly property bool forceRevealText: !root.barTextShowOnHover || root.temporarilyExpanded || root.countdownActive
 
     readonly property var providerSegments: {
         if (!mainInstance || mainInstance.isRefreshing)
             return [{
                     "provider": "",
                     "showIcon": false,
+                    "icon": "cpu",
                     "label": "",
                     "text": "...",
                     "signature": "refreshing"
@@ -411,6 +490,7 @@ Item {
             return [{
                     "provider": "",
                     "showIcon": false,
+                    "icon": "cpu",
                     "label": "",
                     "text": "—",
                     "signature": "empty"
@@ -427,7 +507,7 @@ Item {
             segments.push({
                 "provider": providerId,
                 "showIcon": showIcon,
-                "icon": mainInstance?.providerIcon(providerId) || "cpu",
+                "icon": root.barProviderIcons[providerId] || mainInstance?.providerIcon(providerId) || "cpu",
                 "label": label,
                 "text": segmentText,
                 "signature": providerId + "|" + label + "|" + segmentText
@@ -442,15 +522,15 @@ Item {
 
     readonly property var tooltipText: {
         if (root.displayProviders.length === 0)
-            return pluginApi?.tr("widget.noData");
+            return root.tooltipBlockHtml([pluginApi?.tr("widget.noData")]);
 
         var blocks = [];
         for (var index = 0; index < root.displayProviders.length; index++)
-            blocks.push(root.providerTooltipText(root.displayProviders[index]));
+            blocks.push(root.tooltipBlockHtml(root.providerTooltipLines(root.displayProviders[index])));
         var refreshedLine = root.lastRefreshedTooltipLine();
         if (refreshedLine !== "")
-            blocks.push(refreshedLine);
-        return blocks.join("\n\n");
+            blocks.push(root.tooltipBlockHtml([refreshedLine]));
+        return blocks.join("<br/><br/>");
     }
 
     readonly property color resolvedBarIconColor: {
@@ -477,11 +557,20 @@ Item {
         return root.resolvedBaseBarIconColor;
     }
 
-    readonly property real contentWidth: root.revealText ? capsuleRow.implicitWidth + Style.marginM * 2 : root.capsuleHeight
+    readonly property real textTargetWidth: root.barTextOpacity > 0 ? providerTextRow.implicitWidth : 0
+    readonly property real contentWidth: root.capsuleHeight + (root.animatedTextWidth > 0 ? Style.marginS + root.animatedTextWidth : 0) + Style.marginM * 2
     readonly property real contentHeight: root.capsuleHeight
 
     implicitWidth: root.contentWidth
     implicitHeight: root.contentHeight
+
+    onForceRevealTextChanged: root.syncTextRevealState()
+    onTextTargetWidthChanged: {
+        if (root.forceRevealText || root.hoverTextVisible) {
+            root.animatedTextWidth = root.textTargetWidth;
+            root.animatedTextOpacity = root.textTargetWidth > 0 ? 1 : 0;
+        }
+    }
 
     onStableContentSignatureChanged: {
         if (mainInstance?.isRefreshing)
@@ -500,6 +589,68 @@ Item {
         interval: 2500
         repeat: false
         onTriggered: root.temporarilyExpanded = false
+    }
+
+    Timer {
+        id: hoverRevealTimer
+        interval: Style.pillDelay
+        repeat: false
+        onTriggered: {
+            if (root.forceRevealText || !root.barTextShowOnHover || root.textTargetWidth <= 0)
+                return;
+            textHideAnim.stop();
+            textShowAnim.restart();
+        }
+    }
+
+    ParallelAnimation {
+        id: textShowAnim
+        running: false
+
+        NumberAnimation {
+            target: root
+            property: "animatedTextWidth"
+            from: 0
+            to: root.textTargetWidth
+            duration: Style.animationNormal
+            easing.type: Easing.OutCubic
+        }
+
+        NumberAnimation {
+            target: root
+            property: "animatedTextOpacity"
+            from: 0
+            to: 1
+            duration: Style.animationFast
+            easing.type: Easing.OutCubic
+        }
+
+        onStarted: root.hoverTextVisible = true
+    }
+
+    ParallelAnimation {
+        id: textHideAnim
+        running: false
+
+        NumberAnimation {
+            target: root
+            property: "animatedTextWidth"
+            from: root.animatedTextWidth
+            to: 0
+            duration: Style.animationNormal
+            easing.type: Easing.InCubic
+        }
+
+        NumberAnimation {
+            target: root
+            property: "animatedTextOpacity"
+            from: root.animatedTextOpacity
+            to: 0
+            duration: Style.animationFast
+            easing.type: Easing.InCubic
+        }
+
+        onStopped: root.hoverTextVisible = false
     }
 
     NPopupContextMenu {
@@ -546,6 +697,15 @@ Item {
         border.color: Style.capsuleBorderColor
         border.width: Style.capsuleBorderWidth
 
+        Behavior on width {
+            enabled: textShowAnim.running || textHideAnim.running
+
+            NumberAnimation {
+                duration: Style.animationNormal
+                easing.type: Easing.OutCubic
+            }
+        }
+
         RowLayout {
             id: capsuleRow
             anchors.centerIn: parent
@@ -559,52 +719,61 @@ Item {
                 Layout.alignment: Qt.AlignVCenter
             }
 
-            RowLayout {
-                visible: root.revealText && root.barTextOpacity > 0
-                spacing: Style.marginS
+            Item {
+                clip: true
+                visible: root.animatedTextWidth > 0 || root.forceRevealText
+                opacity: root.animatedTextOpacity
+                Layout.preferredWidth: root.animatedTextWidth
+                Layout.preferredHeight: providerTextRow.implicitHeight
                 Layout.alignment: Qt.AlignVCenter
-                Layout.preferredWidth: visible ? implicitWidth : 0
 
-                Repeater {
-                    model: root.providerSegments
+                RowLayout {
+                    id: providerTextRow
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: Style.marginS
 
-                    delegate: RowLayout {
-                        required property int index
-                        required property var modelData
+                    Repeater {
+                        model: root.providerSegments
 
-                        spacing: Style.marginXS
-                        Layout.alignment: Qt.AlignVCenter
+                        delegate: RowLayout {
+                            required property int index
+                            required property var modelData
 
-                        NText {
-                            visible: index > 0
-                            text: root.providerJoiner()
-                            color: mouseArea.containsMouse ? Color.mOnHover : root.resolvedBarTextColor
-                            pointSize: root.barFontSize
-                            applyUiScale: false
-                        }
-
-                        NIcon {
-                            visible: modelData.showIcon
-                            icon: modelData.icon
-                            color: mouseArea.containsMouse ? Color.mOnHover : root.resolvedBarTextColor
-                            pointSize: Math.max(12, root.barFontSize)
-                            applyUiScale: false
+                            spacing: Style.marginXS
                             Layout.alignment: Qt.AlignVCenter
-                        }
 
-                        NText {
-                            visible: modelData.label !== ""
-                            text: modelData.label
-                            color: mouseArea.containsMouse ? Color.mOnHover : root.resolvedBarTextColor
-                            pointSize: root.barFontSize
-                            applyUiScale: false
-                        }
+                            NText {
+                                visible: index > 0
+                                text: root.providerJoiner()
+                                color: mouseArea.containsMouse ? Color.mOnHover : root.resolvedBarTextColor
+                                pointSize: root.barFontSize
+                                applyUiScale: false
+                            }
 
-                        NText {
-                            text: modelData.text
-                            color: mouseArea.containsMouse ? Color.mOnHover : root.resolvedBarTextColor
-                            pointSize: root.barFontSize
-                            applyUiScale: false
+                            NIcon {
+                                visible: modelData.showIcon
+                                icon: modelData.icon || "cpu"
+                                color: mouseArea.containsMouse ? Color.mOnHover : root.resolvedBarTextColor
+                                pointSize: Math.max(12, root.barFontSize)
+                                applyUiScale: false
+                                Layout.alignment: Qt.AlignVCenter
+                            }
+
+                            NText {
+                                visible: modelData.label !== ""
+                                text: modelData.label
+                                color: mouseArea.containsMouse ? Color.mOnHover : root.resolvedBarTextColor
+                                pointSize: root.barFontSize
+                                applyUiScale: false
+                            }
+
+                            NText {
+                                text: modelData.text
+                                color: mouseArea.containsMouse ? Color.mOnHover : root.resolvedBarTextColor
+                                pointSize: root.barFontSize
+                                applyUiScale: false
+                            }
                         }
                     }
                 }
@@ -628,7 +797,15 @@ Item {
             }
         }
 
-        onEntered: TooltipService.show(root, root.tooltipText, BarService.getTooltipDirection(root.screenName))
-        onExited: TooltipService.hide()
+        onEntered: {
+            TooltipService.show(visualCapsule, root.tooltipText, BarService.getTooltipDirection(root.screenName));
+            root.showTextDelayed();
+        }
+        onExited: {
+            root.hideTextAnimated();
+            TooltipService.hide();
+        }
     }
+
+    Component.onCompleted: root.syncTextRevealState()
 }

@@ -22,6 +22,7 @@
       "barIcon": "sparkles",
       "barIconColor": "on-surface",
       "barProviderIds": [],
+      "barProviderIcons": {},
       "barProviderLabelMode": "icon",
       "barProviderSeparator": "|",
       "barProviderSeparatorSpacing": 1,

@@ -1,5 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
+import Quickshell.Io
 import qs.Commons
 import qs.Widgets
 import "./settings"
@@ -13,6 +15,9 @@ ColumnLayout {
     property real preferredWidth: 720 * Style.uiScaleRatio
     property int selectedTab: 0
     property var configProvidersModel: []
+    property var widgetProviderOptions: []
+    readonly property string homeDir: Quickshell.env("HOME") || ""
+    readonly property string configPath: homeDir !== "" ? homeDir + "/.codexbar/config.json" : ""
 
     function allowedBarTextFieldKeys() {
         return ["primary", "secondary", "tertiary", "status"];
@@ -159,6 +164,75 @@ ColumnLayout {
         return normalized === "prefix" ? "prefix" : "icon";
     }
 
+    function normalizeBarProviderIcons(providerIcons) {
+        var source = (providerIcons && typeof providerIcons === "object" && !Array.isArray(providerIcons)) ? providerIcons : ({});
+        var normalized = ({});
+        var keys = Object.keys(source);
+
+        for (var index = 0; index < keys.length; index++) {
+            var providerId = String(keys[index] || "").trim();
+            var iconName = root.normalizeIconName(source[providerId]);
+            if (providerId === "" || iconName === "")
+                continue;
+            normalized[providerId] = iconName;
+        }
+
+        return normalized;
+    }
+
+    function effectiveProviderIcon(providerId) {
+        var key = String(providerId || "").trim();
+        if (key === "")
+            return "cpu";
+
+        var customIcons = root.editBarProviderIcons || ({});
+        if (customIcons[key])
+            return root.normalizeIconName(customIcons[key]);
+
+        return root.mainInstance?.providerIcon(key) || "cpu";
+    }
+
+    function setBarProviderIcon(providerId, iconName) {
+        var key = String(providerId || "").trim();
+        if (key === "")
+            return;
+
+        var next = Object.assign({}, root.editBarProviderIcons || ({}));
+        next[key] = root.normalizeIconName(iconName);
+        root.editBarProviderIcons = root.normalizeBarProviderIcons(next);
+    }
+
+    function loadConfigProvidersModelFromText(configText) {
+        var parsed = null;
+        try {
+            parsed = JSON.parse(String(configText || ""));
+        } catch (_parseError) {
+            return;
+        }
+
+        var providers = Array.isArray(parsed?.providers) ? parsed.providers : [];
+        var normalized = providers.map(function (provider) {
+            return {
+                "id": String(provider?.id || ""),
+                "enabled": provider?.enabled !== false
+            };
+        }).filter(function (provider) {
+            return provider.id !== "";
+        });
+
+        root.configProvidersModel = normalized;
+    }
+
+    function clearBarProviderIcon(providerId) {
+        var key = String(providerId || "").trim();
+        if (key === "")
+            return;
+
+        var next = Object.assign({}, root.editBarProviderIcons || ({}));
+        delete next[key];
+        root.editBarProviderIcons = root.normalizeBarProviderIcons(next);
+    }
+
     function availableWidgetProviders() {
         var items = [];
         var seen = {};
@@ -194,6 +268,10 @@ ColumnLayout {
         return items;
     }
 
+    function syncWidgetProviderOptions() {
+        root.widgetProviderOptions = root.availableWidgetProviders();
+    }
+
     function providerOptionName(providerId) {
         var key = String(providerId || "").trim();
         if (key === "")
@@ -222,6 +300,31 @@ ColumnLayout {
                 filtered.push(selectedId);
         }
         root.editBarProviderIds = filtered;
+        root.syncWidgetProviderToAdd();
+    }
+
+    function getAvailableWidgetProviderOptions() {
+        var selected = root.editBarProviderIds || [];
+        var options = Array.isArray(root.widgetProviderOptions) ? root.widgetProviderOptions : [];
+        return options.filter(function (option) {
+            return selected.indexOf(option.key) < 0;
+        });
+    }
+
+    function syncWidgetProviderToAdd() {
+        var options = root.getAvailableWidgetProviderOptions();
+        if (options.length === 0) {
+            root.editWidgetProviderToAdd = "";
+            return;
+        }
+
+        var current = String(root.editWidgetProviderToAdd || "").trim();
+        for (var index = 0; index < options.length; index++) {
+            if (options[index].key === current)
+                return;
+        }
+
+        root.editWidgetProviderToAdd = String(options[0].key || "");
     }
 
     function addBarProvider(providerId) {
@@ -307,6 +410,8 @@ ColumnLayout {
     property string editBarIcon: normalizeIconName(cfg.barIcon ?? defaults.barIcon ?? "sparkles")
     property string editBarIconColor: cfg.barIconColor ?? defaults.barIconColor ?? "on-surface"
     property var editBarProviderIds: normalizeBarProviderIds(cfg.barProviderIds ?? defaults.barProviderIds ?? [])
+    property var editBarProviderIcons: normalizeBarProviderIcons(cfg.barProviderIcons ?? defaults.barProviderIcons ?? ({}))
+    property string editWidgetProviderToAdd: ""
     property string editBarProviderLabelMode: normalizeBarProviderLabelMode(cfg.barProviderLabelMode ?? defaults.barProviderLabelMode ?? "icon")
     property string editBarProviderSeparator: String(cfg.barProviderSeparator ?? defaults.barProviderSeparator ?? "|")
     property int editBarProviderSeparatorSpacing: Math.max(0, Math.min(4, Number(cfg.barProviderSeparatorSpacing ?? defaults.barProviderSeparatorSpacing ?? 1)))
@@ -331,14 +436,6 @@ ColumnLayout {
     property int editLowUsageThreshold: Math.max(5, Math.min(50, Number(cfg.lowUsageThreshold ?? defaults.lowUsageThreshold ?? 20)))
 
     readonly property var mainInstance: pluginApi?.mainInstance
-    readonly property var widgetProviderOptions: availableWidgetProviders()
-    readonly property var availableWidgetProviderOptions: {
-        var selected = root.editBarProviderIds || [];
-        var options = Array.isArray(root.widgetProviderOptions) ? root.widgetProviderOptions : [];
-        return options.filter(function (option) {
-            return selected.indexOf(option.key) < 0;
-        });
-    }
     readonly property var providerLabelModeOptions: [
         {
             "key": "icon",
@@ -471,6 +568,7 @@ ColumnLayout {
             root.editBarIcon = root.normalizeIconName(cfg.barIcon ?? defaults.barIcon ?? "sparkles");
             root.editBarIconColor = cfg.barIconColor ?? defaults.barIconColor ?? "on-surface";
             root.editBarProviderIds = root.normalizeBarProviderIds(cfg.barProviderIds ?? defaults.barProviderIds ?? []);
+            root.editBarProviderIcons = root.normalizeBarProviderIcons(cfg.barProviderIcons ?? defaults.barProviderIcons ?? ({}));
             root.editBarProviderLabelMode = root.normalizeBarProviderLabelMode(cfg.barProviderLabelMode ?? defaults.barProviderLabelMode ?? "icon");
             root.editBarProviderSeparator = String(cfg.barProviderSeparator ?? defaults.barProviderSeparator ?? "|");
             root.editBarProviderSeparatorSpacing = Math.max(0, Math.min(4, Number(cfg.barProviderSeparatorSpacing ?? defaults.barProviderSeparatorSpacing ?? 1)));
@@ -492,12 +590,43 @@ ColumnLayout {
             root.editNotifyOnLowUsage = cfg.notifyOnLowUsage ?? defaults.notifyOnLowUsage ?? true;
             root.editLowUsageThreshold = Math.max(5, Math.min(50, Number(cfg.lowUsageThreshold ?? defaults.lowUsageThreshold ?? 20)));
             root.syncSelectedWidgetProviders();
+            root.syncWidgetProviderToAdd();
             root.syncBarTextFieldToAdd();
             root.syncCountdownWindowToAdd();
         }
     }
 
-    onConfigProvidersModelChanged: syncSelectedWidgetProviders()
+    Connections {
+        target: root.mainInstance
+
+        function onProviderDataChanged() {
+            root.syncWidgetProviderOptions();
+        }
+    }
+
+    onConfigProvidersModelChanged: {
+        root.syncWidgetProviderOptions();
+        root.syncSelectedWidgetProviders();
+    }
+
+    FileView {
+        id: settingsConfigFile
+        path: root.configPath !== "" ? root.configPath : undefined
+        watchChanges: true
+        printErrors: false
+
+        onFileChanged: reload()
+        onPathChanged: {
+            if (path !== undefined)
+                reload();
+        }
+        onLoaded: {
+            root.loadConfigProvidersModelFromText(text());
+            root.syncWidgetProviderOptions();
+        }
+    }
+
+    Component.onCompleted: root.syncWidgetProviderOptions()
 
     NTabBar {
         currentIndex: selectedTab
@@ -545,6 +674,7 @@ ColumnLayout {
         delete pluginApi.pluginSettings.barIconPath;
         pluginApi.pluginSettings.barIconColor = editBarIconColor;
         pluginApi.pluginSettings.barProviderIds = normalizeBarProviderIds(editBarProviderIds);
+        pluginApi.pluginSettings.barProviderIcons = normalizeBarProviderIcons(editBarProviderIcons);
         pluginApi.pluginSettings.barProviderLabelMode = normalizeBarProviderLabelMode(editBarProviderLabelMode);
         pluginApi.pluginSettings.barProviderSeparator = editBarProviderSeparator;
         pluginApi.pluginSettings.barProviderSeparatorSpacing = Math.max(0, Math.min(4, Number(editBarProviderSeparatorSpacing)));

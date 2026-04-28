@@ -128,6 +128,10 @@
           "icon": "Icon",
           "prefix": "Prefix"
         },
+        "icon": {
+          "browse": "Set Icon",
+          "reset": "Reset provider icon"
+        },
         "separator": {
           "label": "Provider Separator",
           "desc": "Text inserted between provider segments"
