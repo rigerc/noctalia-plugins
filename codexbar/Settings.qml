@@ -514,6 +514,8 @@ ColumnLayout {
     property bool editNotifyOnReset: cfg.notifyOnReset ?? defaults.notifyOnReset ?? true
     property bool editNotifyOnLowUsage: cfg.notifyOnLowUsage ?? defaults.notifyOnLowUsage ?? true
     property int editLowUsageThreshold: Math.max(5, Math.min(50, Number(cfg.lowUsageThreshold ?? defaults.lowUsageThreshold ?? 20)))
+    property bool editProviderIconColorize: cfg.providerIconColorize ?? defaults.providerIconColorize ?? true
+    property string editProviderIconColorizeColor: cfg.providerIconColorizeColor ?? defaults.providerIconColorizeColor ?? "on-surface"
 
     readonly property var mainInstance: pluginApi?.mainInstance
     readonly property var providerLabelModeOptions: [
@@ -795,6 +797,8 @@ ColumnLayout {
         pluginApi.pluginSettings.notifyOnReset = editNotifyOnReset;
         pluginApi.pluginSettings.notifyOnLowUsage = editNotifyOnLowUsage;
         pluginApi.pluginSettings.lowUsageThreshold = editLowUsageThreshold;
+        pluginApi.pluginSettings.providerIconColorize = editProviderIconColorize;
+        pluginApi.pluginSettings.providerIconColorizeColor = editProviderIconColorizeColor;
         pluginApi.saveSettings();
     }
 }

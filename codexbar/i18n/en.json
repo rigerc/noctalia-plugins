@@ -40,7 +40,14 @@
       "description": "Configure bar widget appearance and refresh behavior",
       "appearance": {
         "title": "Appearance",
-        "description": "Adjust the icon used by the bar widget."
+        "description": "Adjust the icon used by the bar widget.",
+        "providerIconColorize": {
+          "label": "Colorize provider icons",
+          "desc": "Adapt provider icons to the current dark/light theme. SVG logos and tabler icons are tinted to match your surface color."
+        },
+        "providerIconColorizeColor": {
+          "label": "Icon tint color"
+        }
       },
       "behavior": {
         "title": "Behavior",

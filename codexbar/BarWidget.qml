@@ -431,6 +431,9 @@ Item {
     readonly property string barLowUsageAlertColorKey: String(cfg.barLowUsageAlertColor ?? defaults.barLowUsageAlertColor ?? "error")
     readonly property bool barCountdownOnEmpty: cfg.barCountdownOnEmpty ?? defaults.barCountdownOnEmpty ?? false
     readonly property var barCountdownWindows: normalizeCountdownWindows(cfg.barCountdownWindows ?? defaults.barCountdownWindows ?? ["primary"])
+    readonly property bool providerIconColorize: cfg.providerIconColorize ?? defaults.providerIconColorize ?? true
+    readonly property string providerIconColorizeColorKey: cfg.providerIconColorizeColor ?? defaults.providerIconColorizeColor ?? "on-surface"
+    readonly property color resolvedProviderIconColorizeColor: Color.resolveColorKey(root.providerIconColorizeColorKey)
     readonly property string defaultProvider: cfg.defaultProvider ?? defaults.defaultProvider ?? ""
     readonly property int lowUsageThreshold: Math.max(5, Math.min(50, Number(cfg.lowUsageThreshold ?? defaults.lowUsageThreshold ?? 20)))
     readonly property color resolvedBaseBarIconColor: Color.resolveColorKey(root.barIconColor)
@@ -763,9 +766,12 @@ Item {
                                 visible: modelData.showIcon
                                 visualData: modelData.visual || ({})
                                 color: mouseArea.containsMouse ? Color.mOnHover : root.resolvedBarTextColor
+                                colorize: root.providerIconColorize
+                                colorizeColor: mouseArea.containsMouse ? Color.mOnHover : root.resolvedProviderIconColorizeColor
                                 pointSize: Math.max(12, root.barFontSize)
                                 applyUiScale: false
                                 Layout.alignment: Qt.AlignVCenter
+                                Layout.rightMargin: Style.marginS
                             }
 
                             NText {

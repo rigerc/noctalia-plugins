@@ -38,6 +38,8 @@
       "barLowUsageAlertEnabled": false,
       "barLowUsageAlertWindow": "primary",
       "barLowUsageAlertColor": "error",
+      "providerIconColorize": true,
+      "providerIconColorizeColor": "on-surface",
       "barCountdownOnEmpty": false,
       "barCountdownWindows": ["primary"],
       "refreshInterval": 120,

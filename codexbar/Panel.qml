@@ -20,6 +20,8 @@ Item {
     readonly property var cfg: pluginApi?.pluginSettings || ({})
     readonly property var defaults: pluginApi?.manifest?.metadata?.defaultSettings || ({})
     readonly property var providerVisuals: mainInstance?.normalizeProviderVisuals(cfg.providerVisuals ?? defaults.providerVisuals ?? ({})) || ({})
+    readonly property bool providerIconColorize: cfg.providerIconColorize ?? defaults.providerIconColorize ?? true
+    readonly property color resolvedProviderIconColorizeColor: Color.resolveColorKey(cfg.providerIconColorizeColor ?? defaults.providerIconColorizeColor ?? "on-surface")
 
     function windowRoleLabel(provider, role) {
         if (provider && provider._windowLabels && provider._windowLabels[role])
@@ -116,6 +118,7 @@ Item {
                                     ProviderVisual {
                                         Layout.preferredWidth: Style.fontSizeL
                                         Layout.preferredHeight: Style.fontSizeL
+                                        Layout.rightMargin: Style.marginS
                                         visualData: mainInstance?.providerVisual(provider.provider, root.providerVisuals, ({})) || ({
                                             "source": "icon",
                                             "icon": mainInstance?.providerIcon(provider.provider) || "cpu",
@@ -123,6 +126,8 @@ Item {
                                             "assetUrl": ""
                                         })
                                         color: Color.mPrimary
+                                        colorize: root.providerIconColorize
+                                        colorizeColor: root.resolvedProviderIconColorizeColor
                                     }
 
                                     NText {

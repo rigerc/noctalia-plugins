@@ -295,6 +295,28 @@ SettingsTabPage {
                     rootSettings.editBarIconColor = key;
             }
         }
+
+        NToggle {
+            Layout.fillWidth: true
+            label: rootSettings?.pluginApi?.tr("settings.general.appearance.providerIconColorize.label")
+            description: rootSettings?.pluginApi?.tr("settings.general.appearance.providerIconColorize.desc")
+            checked: rootSettings?.editProviderIconColorize ?? true
+            onToggled: checked => {
+                if (rootSettings)
+                    rootSettings.editProviderIconColorize = checked;
+            }
+        }
+
+        NColorChoice {
+            Layout.fillWidth: true
+            visible: rootSettings?.editProviderIconColorize ?? true
+            label: rootSettings?.pluginApi?.tr("settings.general.appearance.providerIconColorizeColor.label")
+            currentKey: rootSettings?.editProviderIconColorizeColor ?? "on-surface"
+            onSelected: key => {
+                if (rootSettings)
+                    rootSettings.editProviderIconColorizeColor = key;
+            }
+        }
     }
 
     SettingsCard {
