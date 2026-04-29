@@ -23,6 +23,7 @@
       "barIconColor": "on-surface",
       "barProviderIds": [],
       "barProviderIcons": {},
+      "barProviderFields": {},
       "providerVisuals": {},
       "barProviderLabelMode": "icon",
       "barProviderSeparator": "|",

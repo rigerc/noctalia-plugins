@@ -146,6 +146,11 @@
             "asset": "Provider Logo"
           }
         },
+        "fields": {
+          "label": "Content Fields",
+          "add": "Add Content Field",
+          "addButton": "Add"
+        },
         "separator": {
           "label": "Provider Separator",
           "desc": "Text inserted between provider segments"

@@ -128,6 +128,95 @@ ColumnLayout {
         }
     }
 
+    function normalizeBarProviderFields(providerFields) {
+        var source = (providerFields && typeof providerFields === "object" && !Array.isArray(providerFields)) ? providerFields : ({});
+        var normalized = ({});
+        var keys = Object.keys(source);
+        for (var index = 0; index < keys.length; index++) {
+            var providerId = String(keys[index] || "").trim();
+            if (providerId === "")
+                continue;
+            normalized[providerId] = root.normalizeBarTextFields(source[providerId]);
+        }
+        return normalized;
+    }
+
+    function getBarProviderFields(providerId) {
+        var id = String(providerId || "").trim();
+        var fields = root.editBarProviderFields;
+        if (fields && fields[id] && Array.isArray(fields[id]) && fields[id].length > 0)
+            return fields[id];
+        return root.editBarTextFields;
+    }
+
+    function getAvailableBarProviderFieldOptions(providerId) {
+        var current = root.getBarProviderFields(providerId);
+        var options = Array.isArray(root.barTextFieldOptions) ? root.barTextFieldOptions : [];
+        return options.filter(function (option) {
+            return current.indexOf(option.key) < 0;
+        });
+    }
+
+    function firstAvailableBarProviderField(providerId) {
+        var current = root.getBarProviderFields(providerId);
+        var allowed = root.allowedBarTextFieldKeys();
+        for (var index = 0; index < allowed.length; index++) {
+            if (current.indexOf(allowed[index]) < 0)
+                return allowed[index];
+        }
+        return allowed[0];
+    }
+
+    function addBarProviderField(providerId, fieldKey) {
+        var id = String(providerId || "").trim();
+        var key = String(fieldKey || "").trim();
+        if (id === "" || key === "")
+            return;
+        var current = root.getBarProviderFields(id);
+        if (current.indexOf(key) >= 0)
+            return;
+        var next = Object.assign({}, root.editBarProviderFields || ({}));
+        next[id] = current.concat([key]);
+        root.editBarProviderFields = root.normalizeBarProviderFields(next);
+    }
+
+    function removeBarProviderField(providerId, fieldIndex) {
+        var id = String(providerId || "").trim();
+        if (id === "")
+            return;
+        var current = root.getBarProviderFields(id);
+        if (!Array.isArray(current) || current.length <= 1)
+            return;
+        if (fieldIndex < 0 || fieldIndex >= current.length)
+            return;
+        var updated = current.slice();
+        updated.splice(fieldIndex, 1);
+        var next = Object.assign({}, root.editBarProviderFields || ({}));
+        next[id] = root.normalizeBarTextFields(updated);
+        root.editBarProviderFields = root.normalizeBarProviderFields(next);
+    }
+
+    function moveBarProviderField(providerId, fieldIndex, delta) {
+        var id = String(providerId || "").trim();
+        if (id === "")
+            return;
+        var current = root.getBarProviderFields(id);
+        if (!Array.isArray(current))
+            return;
+        var nextIndex = fieldIndex + delta;
+        if (fieldIndex < 0 || fieldIndex >= current.length)
+            return;
+        if (nextIndex < 0 || nextIndex >= current.length || fieldIndex === nextIndex)
+            return;
+        var updated = current.slice();
+        var moved = updated[fieldIndex];
+        updated.splice(fieldIndex, 1);
+        updated.splice(nextIndex, 0, moved);
+        var next = Object.assign({}, root.editBarProviderFields || ({}));
+        next[id] = updated;
+        root.editBarProviderFields = root.normalizeBarProviderFields(next);
+    }
+
     function normalizeBarTextFields(fields) {
         var allowed = root.allowedBarTextFieldKeys();
         var normalized = [];
@@ -496,6 +585,7 @@ ColumnLayout {
     property string editBarProviderSeparator: String(cfg.barProviderSeparator ?? defaults.barProviderSeparator ?? "|")
     property int editBarProviderSeparatorSpacing: Math.max(0, Math.min(4, Number(cfg.barProviderSeparatorSpacing ?? defaults.barProviderSeparatorSpacing ?? 1)))
     property var editBarTextFields: normalizeBarTextFields(cfg.barTextFields ?? defaults.barTextFields ?? ["primary"])
+    property var editBarProviderFields: normalizeBarProviderFields(cfg.barProviderFields ?? defaults.barProviderFields ?? ({}))
     property string editBarTextSeparator: String(cfg.barTextSeparator ?? defaults.barTextSeparator ?? "·")
     property int editBarTextSeparatorSpacing: Math.max(0, Math.min(4, Number(cfg.barTextSeparatorSpacing ?? defaults.barTextSeparatorSpacing ?? 1)))
     property string editBarTextColor: String(cfg.barTextColor ?? defaults.barTextColor ?? "on-surface")
@@ -665,6 +755,7 @@ ColumnLayout {
             root.editBarProviderSeparator = String(cfg.barProviderSeparator ?? defaults.barProviderSeparator ?? "|");
             root.editBarProviderSeparatorSpacing = Math.max(0, Math.min(4, Number(cfg.barProviderSeparatorSpacing ?? defaults.barProviderSeparatorSpacing ?? 1)));
             root.editBarTextFields = root.normalizeBarTextFields(cfg.barTextFields ?? defaults.barTextFields ?? ["primary"]);
+            root.editBarProviderFields = root.normalizeBarProviderFields(cfg.barProviderFields ?? defaults.barProviderFields ?? ({}));
             root.editBarTextSeparator = String(cfg.barTextSeparator ?? defaults.barTextSeparator ?? "·");
             root.editBarTextSeparatorSpacing = Math.max(0, Math.min(4, Number(cfg.barTextSeparatorSpacing ?? defaults.barTextSeparatorSpacing ?? 1)));
             root.editBarTextColor = String(cfg.barTextColor ?? defaults.barTextColor ?? "on-surface");
@@ -781,6 +872,7 @@ ColumnLayout {
         pluginApi.pluginSettings.barProviderSeparator = editBarProviderSeparator;
         pluginApi.pluginSettings.barProviderSeparatorSpacing = Math.max(0, Math.min(4, Number(editBarProviderSeparatorSpacing)));
         pluginApi.pluginSettings.barTextFields = normalizeBarTextFields(editBarTextFields);
+        pluginApi.pluginSettings.barProviderFields = normalizeBarProviderFields(editBarProviderFields);
         pluginApi.pluginSettings.barTextSeparator = editBarTextSeparator;
         pluginApi.pluginSettings.barTextSeparatorSpacing = editBarTextSeparatorSpacing;
         pluginApi.pluginSettings.barTextColor = editBarTextColor;

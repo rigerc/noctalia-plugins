@@ -10,19 +10,6 @@ SettingsTabPage {
     property var rootSettings: null
     property var availableProviderChoices: []
     readonly property var mainInstance: rootSettings?.pluginApi?.mainInstance
-    readonly property var availableBarTextFieldOptions: {
-        var items = [];
-        var selected = rootSettings?.editBarTextFields || [];
-        var options = rootSettings?.barTextFieldOptions || [];
-
-        for (var index = 0; index < options.length; index++) {
-            var option = options[index];
-            if (selected.indexOf(option.key) >= 0)
-                continue;
-            items.push(option);
-        }
-        return items;
-    }
 
     function providerDisplayName(providerId) {
         return rootSettings?.providerOptionName(providerId) || String(providerId || "");
@@ -118,10 +105,14 @@ SettingsTabPage {
             id: dragCard
 
             width: parent.width
-            implicitHeight: providerRow.implicitHeight + Style.marginM * 2
+            implicitHeight: cardContent.implicitHeight + Style.marginM * 2
 
             property int providerIndex: index
             property bool dragging: dragMouseArea.drag.active
+            property string localFieldToAdd: {
+                var _ = rootSettings?.editBarProviderFields;
+                return rootSettings?.firstAvailableBarProviderField(modelData) ?? "primary";
+            }
 
             Drag.active: dragging
             Drag.source: dragCard
@@ -145,91 +136,217 @@ SettingsTabPage {
                 }
             }
 
-            RowLayout {
-                id: providerRow
+            ColumnLayout {
+                id: cardContent
                 anchors.fill: parent
                 anchors.margins: Style.marginM
                 spacing: Style.marginM
 
-                Item {
-                    Layout.preferredWidth: Style.fontSizeL + Style.marginS * 2
-                    Layout.preferredHeight: Style.fontSizeL + Style.marginS * 2
+                RowLayout {
+                    id: providerRow
+                    Layout.fillWidth: true
+                    spacing: Style.marginM
 
-                    NIcon {
-                        anchors.centerIn: parent
-                        icon: "grip-vertical"
+                    Item {
+                        Layout.preferredWidth: Style.fontSizeL + Style.marginS * 2
+                        Layout.preferredHeight: Style.fontSizeL + Style.marginS * 2
+
+                        NIcon {
+                            anchors.centerIn: parent
+                            icon: "grip-vertical"
+                            color: Color.mOnSurfaceVariant
+                        }
+
+                        MouseArea {
+                            id: dragMouseArea
+                            anchors.fill: parent
+                            cursorShape: Qt.OpenHandCursor
+                            drag.target: dragCard
+                        }
+                    }
+
+                    NText {
+                        text: tab.providerDisplayName(modelData)
+                        pointSize: Style.fontSizeM
+                        color: Color.mOnSurface
+                    }
+
+                    ProviderVisual {
+                        visualData: tab.providerVisual(modelData)
                         color: Color.mOnSurfaceVariant
+                        pointSize: Style.fontSizeL
+                        Layout.alignment: Qt.AlignVCenter
                     }
 
-                    MouseArea {
-                        id: dragMouseArea
-                        anchors.fill: parent
-                        cursorShape: Qt.OpenHandCursor
-                        drag.target: dragCard
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: Style.marginS
+
+                        NComboBox {
+                            Layout.fillWidth: true
+                            label: rootSettings?.pluginApi?.tr("settings.general.providers.visual.source.label")
+                            model: tab.providerVisualSourceOptions(modelData)
+                            currentKey: rootSettings?.providerVisualSource(modelData) ?? "icon"
+                            onSelected: key => {
+                                if (rootSettings)
+                                    rootSettings.setProviderVisualSource(modelData, key);
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: Style.marginS
+
+                            NButton {
+                                visible: (rootSettings?.providerVisualSource(modelData) ?? "icon") === "icon"
+                                text: rootSettings?.pluginApi?.tr("settings.general.providers.icon.browse")
+                                icon: "pencil"
+                                outlined: true
+                                onClicked: {
+                                    tab.iconPickerProviderId = String(modelData || "");
+                                    providerIconPicker.initialIcon = tab.providerIcon(modelData);
+                                    providerIconPicker.open();
+                                }
+                            }
+
+                            NButton {
+                                icon: "restore"
+                                outlined: true
+                                enabled: !!(rootSettings?.editProviderVisuals || ({}))[String(modelData || "")] || !!(rootSettings?.editBarProviderIcons || ({}))[String(modelData || "")]
+                                tooltipText: rootSettings?.pluginApi?.tr("settings.general.providers.icon.reset")
+                                onClicked: {
+                                    if (rootSettings)
+                                        rootSettings.resetProviderVisual(modelData);
+                                }
+                            }
+
+                            NButton {
+                                icon: "trash"
+                                outlined: true
+                                onClicked: {
+                                    if (rootSettings)
+                                        rootSettings.removeBarProvider(index);
+                                }
+                            }
+                        }
                     }
-                }
-
-                NText {
-                    text: tab.providerDisplayName(modelData)
-                    pointSize: Style.fontSizeM
-                    color: Color.mOnSurface
-                }
-
-                ProviderVisual {
-                    visualData: tab.providerVisual(modelData)
-                    color: Color.mOnSurfaceVariant
-                    pointSize: Style.fontSizeL
-                    Layout.alignment: Qt.AlignVCenter
                 }
 
                 ColumnLayout {
                     Layout.fillWidth: true
+                    Layout.leftMargin: Style.fontSizeL + Style.marginS * 2 + Style.marginM
                     spacing: Style.marginS
 
-                    NComboBox {
-                        Layout.fillWidth: true
-                        label: rootSettings?.pluginApi?.tr("settings.general.providers.visual.source.label")
-                        model: tab.providerVisualSourceOptions(modelData)
-                        currentKey: rootSettings?.providerVisualSource(modelData) ?? "icon"
-                        onSelected: key => {
-                            if (rootSettings)
-                                rootSettings.setProviderVisualSource(modelData, key);
-                        }
+                    NText {
+                        text: rootSettings?.pluginApi?.tr("settings.general.providers.fields.label")
+                        pointSize: Style.fontSizeS
+                        color: Color.mOnSurfaceVariant
                     }
 
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: Style.marginS
 
-                        NButton {
-                            visible: (rootSettings?.providerVisualSource(modelData) ?? "icon") === "icon"
-                            text: rootSettings?.pluginApi?.tr("settings.general.providers.icon.browse")
-                            icon: "pencil"
-                            outlined: true
-                            onClicked: {
-                                tab.iconPickerProviderId = String(modelData || "");
-                                providerIconPicker.initialIcon = tab.providerIcon(modelData);
-                                providerIconPicker.open();
+                        readonly property var availableOptions: {
+                            var _ = rootSettings?.editBarProviderFields;
+                            return rootSettings?.getAvailableBarProviderFieldOptions(modelData) || [];
+                        }
+
+                        NComboBox {
+                            id: fieldToAddCombo
+                            Layout.fillWidth: true
+                            label: rootSettings?.pluginApi?.tr("settings.general.providers.fields.add")
+                            model: parent.availableOptions
+                            currentKey: dragCard.localFieldToAdd
+                            enabled: parent.availableOptions.length > 0
+                            onSelected: key => {
+                                dragCard.localFieldToAdd = key;
                             }
                         }
 
                         NButton {
-                            icon: "restore"
-                            outlined: true
-                            enabled: !!(rootSettings?.editProviderVisuals || ({}))[String(modelData || "")] || !!(rootSettings?.editBarProviderIcons || ({}))[String(modelData || "")]
-                            tooltipText: rootSettings?.pluginApi?.tr("settings.general.providers.icon.reset")
+                            text: rootSettings?.pluginApi?.tr("settings.general.providers.fields.addButton")
+                            icon: "plus"
+                            enabled: parent.availableOptions.length > 0
                             onClicked: {
-                                if (rootSettings)
-                                    rootSettings.resetProviderVisual(modelData);
+                                if (rootSettings) {
+                                    rootSettings.addBarProviderField(modelData, dragCard.localFieldToAdd);
+                                    dragCard.localFieldToAdd = rootSettings.firstAvailableBarProviderField(modelData);
+                                }
                             }
                         }
+                    }
 
-                        NButton {
-                            icon: "trash"
-                            outlined: true
-                            onClicked: {
-                                if (rootSettings)
-                                    rootSettings.removeBarProvider(index);
+                    Repeater {
+                        model: {
+                            var _ = rootSettings?.editBarProviderFields;
+                            return rootSettings?.getBarProviderFields(modelData) || [];
+                        }
+
+                        delegate: NBox {
+                            required property int index
+                            required property var modelData
+
+                            readonly property var outerModelData: providerDropArea.modelData
+
+                            Layout.fillWidth: true
+                            implicitHeight: fieldRow.implicitHeight + Style.marginS * 2
+
+                            RowLayout {
+                                id: fieldRow
+                                anchors.fill: parent
+                                anchors.margins: Style.marginS
+                                spacing: Style.marginS
+
+                                NText {
+                                    Layout.fillWidth: true
+                                    text: {
+                                        var options = rootSettings?.barTextFieldOptions || [];
+                                        for (var optionIndex = 0; optionIndex < options.length; optionIndex++) {
+                                            if (options[optionIndex].key === modelData)
+                                                return options[optionIndex].name;
+                                        }
+                                        return String(modelData || "");
+                                    }
+                                    pointSize: Style.fontSizeM
+                                    color: Color.mOnSurface
+                                }
+
+                                NButton {
+                                    icon: "arrow-up"
+                                    outlined: true
+                                    enabled: index > 0
+                                    onClicked: {
+                                        if (rootSettings)
+                                            rootSettings.moveBarProviderField(outerModelData, index, -1);
+                                    }
+                                }
+
+                                NButton {
+                                    icon: "arrow-down"
+                                    outlined: true
+                                    enabled: {
+                                        var _ = rootSettings?.editBarProviderFields;
+                                        return index < (rootSettings?.getBarProviderFields(outerModelData)?.length ?? 0) - 1;
+                                    }
+                                    onClicked: {
+                                        if (rootSettings)
+                                            rootSettings.moveBarProviderField(outerModelData, index, 1);
+                                    }
+                                }
+
+                                NButton {
+                                    icon: "trash"
+                                    outlined: true
+                                    enabled: {
+                                        var _ = rootSettings?.editBarProviderFields;
+                                        return (rootSettings?.getBarProviderFields(outerModelData)?.length ?? 0) > 1;
+                                    }
+                                    onClicked: {
+                                        if (rootSettings)
+                                            rootSettings.removeBarProviderField(outerModelData, index);
+                                    }
+                                }
                             }
                         }
                     }
@@ -433,101 +550,31 @@ SettingsTabPage {
     }
 
     SettingsCard {
-        title: rootSettings?.pluginApi?.tr("settings.general.textFields.title")
-        description: rootSettings?.pluginApi?.tr("settings.general.textFields.description")
+        title: rootSettings?.pluginApi?.tr("settings.general.textStyle.title")
+        description: rootSettings?.pluginApi?.tr("settings.general.textStyle.description")
 
-        RowLayout {
+        NColorChoice {
             Layout.fillWidth: true
-            spacing: Style.marginL
-
-            NComboBox {
-                Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.general.textFields.add")
-                model: tab.availableBarTextFieldOptions
-                currentKey: rootSettings?.editBarTextFieldToAdd ?? "primary"
-                enabled: tab.availableBarTextFieldOptions.length > 0
-                onSelected: key => {
-                    if (rootSettings)
-                        rootSettings.editBarTextFieldToAdd = key;
-                }
-            }
-
-            NButton {
-                text: rootSettings?.pluginApi?.tr("settings.general.textFields.addButton")
-                icon: "plus"
-                enabled: tab.availableBarTextFieldOptions.length > 0
-                onClicked: {
-                    if (rootSettings)
-                        rootSettings.addBarTextField(rootSettings.editBarTextFieldToAdd);
-                }
+            label: rootSettings?.pluginApi?.tr("settings.general.text.color.label")
+            currentKey: rootSettings?.editBarTextColor ?? "on-surface"
+            onSelected: key => {
+                if (rootSettings)
+                    rootSettings.editBarTextColor = key;
             }
         }
 
-        ColumnLayout {
+        NSpinBox {
             Layout.fillWidth: true
-            spacing: Style.marginM
-
-            Repeater {
-                model: rootSettings?.editBarTextFields || []
-
-                delegate: NBox {
-                    required property int index
-                    required property var modelData
-
-                    Layout.fillWidth: true
-                    implicitHeight: fieldRow.implicitHeight + Style.marginM * 2
-
-                    RowLayout {
-                        id: fieldRow
-                        anchors.fill: parent
-                        anchors.margins: Style.marginM
-                        spacing: Style.marginM
-
-                        NText {
-                            Layout.fillWidth: true
-                            text: {
-                                var options = rootSettings?.barTextFieldOptions || [];
-                                for (var optionIndex = 0; optionIndex < options.length; optionIndex++) {
-                                    if (options[optionIndex].key === modelData)
-                                        return options[optionIndex].name;
-                                }
-                                return String(modelData || "");
-                            }
-                            pointSize: Style.fontSizeM
-                            color: Color.mOnSurface
-                        }
-
-                        NButton {
-                            icon: "arrow-up"
-                            outlined: true
-                            enabled: index > 0
-                            onClicked: {
-                                if (rootSettings)
-                                    rootSettings.moveBarTextField(index, -1);
-                            }
-                        }
-
-                        NButton {
-                            icon: "arrow-down"
-                            outlined: true
-                            enabled: index < (rootSettings?.editBarTextFields?.length ?? 0) - 1
-                            onClicked: {
-                                if (rootSettings)
-                                    rootSettings.moveBarTextField(index, 1);
-                            }
-                        }
-
-                        NButton {
-                            icon: "trash"
-                            outlined: true
-                            enabled: (rootSettings?.editBarTextFields?.length ?? 0) > 1
-                            onClicked: {
-                                if (rootSettings)
-                                    rootSettings.removeBarTextField(index);
-                            }
-                        }
-                    }
-                }
+            label: rootSettings?.pluginApi?.tr("settings.general.text.opacity.label")
+            description: rootSettings?.pluginApi?.tr("settings.general.text.opacity.desc")
+            from: 0
+            to: 100
+            stepSize: 5
+            value: rootSettings?.editBarTextOpacityPercent ?? 100
+            suffix: "%"
+            onValueChanged: {
+                if (rootSettings)
+                    rootSettings.editBarTextOpacityPercent = value;
             }
         }
 
@@ -554,36 +601,6 @@ SettingsTabPage {
             onValueChanged: {
                 if (rootSettings)
                     rootSettings.editBarTextSeparatorSpacing = value;
-            }
-        }
-    }
-
-    SettingsCard {
-        title: rootSettings?.pluginApi?.tr("settings.general.textStyle.title")
-        description: rootSettings?.pluginApi?.tr("settings.general.textStyle.description")
-
-        NColorChoice {
-            Layout.fillWidth: true
-            label: rootSettings?.pluginApi?.tr("settings.general.text.color.label")
-            currentKey: rootSettings?.editBarTextColor ?? "on-surface"
-            onSelected: key => {
-                if (rootSettings)
-                    rootSettings.editBarTextColor = key;
-            }
-        }
-
-        NSpinBox {
-            Layout.fillWidth: true
-            label: rootSettings?.pluginApi?.tr("settings.general.text.opacity.label")
-            description: rootSettings?.pluginApi?.tr("settings.general.text.opacity.desc")
-            from: 0
-            to: 100
-            stepSize: 5
-            value: rootSettings?.editBarTextOpacityPercent ?? 100
-            suffix: "%"
-            onValueChanged: {
-                if (rootSettings)
-                    rootSettings.editBarTextOpacityPercent = value;
             }
         }
     }

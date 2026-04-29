@@ -576,7 +576,6 @@ Item {
         interval: root.refreshInterval * 1000
         repeat: true
         running: true
-        triggeredOnStart: true
 
         onTriggered: root.refresh()
         onIntervalChanged: {
@@ -625,5 +624,6 @@ Item {
 
     Component.onCompleted: {
         Logger.i("CodexBar", "Plugin loaded, refresh interval: " + root.refreshInterval + "s");
+        Qt.callLater(root.refresh);
     }
 }

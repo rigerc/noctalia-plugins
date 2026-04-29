@@ -71,6 +71,28 @@ Item {
         return normalized;
     }
 
+    function normalizeBarProviderFields(providerFields) {
+        var source = (providerFields && typeof providerFields === "object" && !Array.isArray(providerFields)) ? providerFields : ({});
+        var normalized = ({});
+        var keys = Object.keys(source);
+        for (var index = 0; index < keys.length; index++) {
+            var providerId = String(keys[index] || "").trim();
+            if (providerId === "")
+                continue;
+            var fieldArray = normalizeBarTextFields(source[providerId]);
+            normalized[providerId] = fieldArray;
+        }
+        return normalized;
+    }
+
+    function effectiveFieldsForProvider(providerId) {
+        var id = String(providerId || "");
+        var fields = root.barProviderFields;
+        if (fields && fields[id] && Array.isArray(fields[id]) && fields[id].length > 0)
+            return fields[id];
+        return root.barTextFields;
+    }
+
     function normalizeProviderIds(providerIds) {
         var normalized = [];
         var source = Array.isArray(providerIds) ? providerIds : [providerIds];
@@ -275,7 +297,7 @@ Item {
         return padding + root.barProviderSeparator + padding;
     }
 
-    function fieldText(provider, fieldKey) {
+    function fieldText(provider, fieldKey, providerFields) {
         if (!provider)
             return "";
 
@@ -292,7 +314,8 @@ Item {
         if (leftPercent < 0)
             return "";
 
-        if (root.barTextFields.length === 1)
+        var fields = Array.isArray(providerFields) ? providerFields : root.barTextFields;
+        if (fields.length === 1)
             return leftPercent + "%";
 
         var label = root.windowLabel(provider, fieldKey);
@@ -321,17 +344,19 @@ Item {
         if (provider.error)
             return pluginApi?.tr("widget.error");
 
+        var providerId = String(provider.provider || "");
+        var fields = root.effectiveFieldsForProvider(providerId);
         var parts = [];
         var countdownEntries = root.countdownEntriesForProvider(provider);
         var countdownSet = {};
         for (var index = 0; index < countdownEntries.length; index++)
             countdownSet[countdownEntries[index]] = true;
 
-        for (var fieldIndex = 0; fieldIndex < root.barTextFields.length; fieldIndex++) {
-            var fieldKey = root.barTextFields[fieldIndex];
+        for (var fieldIndex = 0; fieldIndex < fields.length; fieldIndex++) {
+            var fieldKey = fields[fieldIndex];
             if (fieldKey === "status") {
                 if (!hideNonCountdown) {
-                    var statusPart = root.fieldText(provider, fieldKey);
+                    var statusPart = root.fieldText(provider, fieldKey, fields);
                     if (statusPart !== "")
                         parts.push(statusPart);
                 }
@@ -350,7 +375,7 @@ Item {
             if (hideNonCountdown)
                 continue;
 
-            var part = root.fieldText(provider, fieldKey);
+            var part = root.fieldText(provider, fieldKey, fields);
             if (part !== "")
                 parts.push(part);
         }
@@ -420,6 +445,7 @@ Item {
     readonly property string barProviderSeparator: String(cfg.barProviderSeparator ?? defaults.barProviderSeparator ?? "|")
     readonly property int barProviderSeparatorSpacing: Math.max(0, Math.min(4, Number(cfg.barProviderSeparatorSpacing ?? defaults.barProviderSeparatorSpacing ?? 1)))
     readonly property var barTextFields: normalizeBarTextFields(cfg.barTextFields ?? defaults.barTextFields ?? ["primary"])
+    readonly property var barProviderFields: normalizeBarProviderFields(cfg.barProviderFields ?? defaults.barProviderFields ?? ({}))
     readonly property string barTextSeparator: String(cfg.barTextSeparator ?? defaults.barTextSeparator ?? "·")
     readonly property int barTextSeparatorSpacing: Math.max(0, Math.min(4, Number(cfg.barTextSeparatorSpacing ?? defaults.barTextSeparatorSpacing ?? 1)))
     readonly property string barTextColorKey: String(cfg.barTextColor ?? defaults.barTextColor ?? "on-surface")
