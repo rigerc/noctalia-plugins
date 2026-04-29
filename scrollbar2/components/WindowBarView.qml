@@ -1,3 +1,6 @@
+pragma ComponentBehavior: Bound
+// qmllint disable unqualified
+
 import QtQuick
 import QtQuick.Effects
 import QtQuick.Layouts
@@ -573,15 +576,15 @@ Item {
         return animationSpeed;
     }
     readonly property real specialWorkspaceOverlayBorderRadius: {
-        const configuredRadius = currentSettings?.specialWorkspaceOverlay?.borderRadius;
+        const configuredRadius = root.currentSettings?.specialWorkspaceOverlay?.borderRadius;
         if (configuredRadius !== undefined && configuredRadius !== null && configuredRadius !== "" && !isNaN(Number(configuredRadius)))
             return Math.max(0, Number(configuredRadius)) * Style.uiScaleRatio;
 
-        const defaultRadius = defaults?.specialWorkspaceOverlay?.borderRadius;
+        const defaultRadius = root.defaults?.specialWorkspaceOverlay?.borderRadius;
         if (defaultRadius !== undefined && defaultRadius !== null && defaultRadius !== "" && !isNaN(Number(defaultRadius)))
             return Math.max(0, Number(defaultRadius)) * Style.uiScaleRatio;
 
-        return trackBorderRadius;
+        return root.trackBorderRadius;
     }
     readonly property bool trackEdgeFadeLeftEnabled: currentSettings?.track?.edgeFade?.leftEnabled ?? defaults?.track?.edgeFade?.leftEnabled ?? false
     readonly property bool trackEdgeFadeRightEnabled: currentSettings?.track?.edgeFade?.rightEnabled ?? defaults?.track?.edgeFade?.rightEnabled ?? false
@@ -752,9 +755,9 @@ Item {
     readonly property int effectiveFocusIndex: previewFocusIndex >= 0 ? previewFocusIndex : focusedIndex
     readonly property bool contextMenuOpen: contextMenu.visible
 
-    implicitWidth: hostVisible && (segmentCount > 0 || showWorkspaceIndicator || pinnedSegmentCount > 0 || showSpecialWorkspaceOverlay) ? leftAccessoryWidth + effectiveTrackWidth + rightAccessoryWidth : 0
-    implicitHeight: hostVisible && (segmentCount > 0 || showWorkspaceIndicator || pinnedSegmentCount > 0 || showSpecialWorkspaceOverlay) ? Math.max(availableContainerHeight, workspaceContainer.height, pinnedAppsContainer.height, specialWorkspaceOverlay.height) : 0
-    visible: hostVisible && (segmentCount > 0 || showWorkspaceIndicator || pinnedSegmentCount > 0 || showSpecialWorkspaceOverlay)
+    implicitWidth: root.hostVisible && (root.segmentCount > 0 || root.showWorkspaceIndicator || root.pinnedSegmentCount > 0 || root.showSpecialWorkspaceOverlay) ? root.leftAccessoryWidth + root.effectiveTrackWidth + root.rightAccessoryWidth : 0
+    implicitHeight: root.hostVisible && (root.segmentCount > 0 || root.showWorkspaceIndicator || root.pinnedSegmentCount > 0 || root.showSpecialWorkspaceOverlay) ? Math.max(root.availableContainerHeight, workspaceContainer.height, pinnedAppsContainer.height, specialWorkspaceOverlay.height) : 0
+    visible: root.hostVisible && (root.segmentCount > 0 || root.showWorkspaceIndicator || root.pinnedSegmentCount > 0 || root.showSpecialWorkspaceOverlay)
 
     function workspaceIndicatorEasingType() {
         switch (workspaceIndicatorAnimationType) {
@@ -1200,23 +1203,23 @@ Item {
     }
 
     function trackLineY() {
-        return alignedY(trackVerticalAlign, visibleTrackThickness);
+        return root.alignedY(root.trackVerticalAlign, root.visibleTrackThickness);
     }
 
     function trackCenterY() {
-        return trackLineY() + visibleTrackThickness / 2;
+        return root.trackLineY() + root.visibleTrackThickness / 2;
     }
 
     function specialWorkspaceOverlayY() {
-        return Math.max(0, Math.round((implicitHeight - specialWorkspaceOverlayHeight) / 2));
+        return Math.max(0, Math.round((root.implicitHeight - root.specialWorkspaceOverlayHeight) / 2));
     }
 
     function indicatorY() {
-        return alignedY(focusLineVerticalAlign, visibleFocusLineThickness);
+        return root.alignedY(root.focusLineVerticalAlign, root.visibleFocusLineThickness);
     }
 
     function focusLineEasingType() {
-        switch (animationType) {
+        switch (root.animationType) {
         case "linear":
             return Easing.Linear;
         case "ease":
@@ -1229,19 +1232,19 @@ Item {
     }
 
     function focusLineOvershoot() {
-        return animationType === "spring" ? 1.15 : 0;
+        return root.animationType === "spring" ? 1.15 : 0;
     }
 
     function focusedEntry() {
-        if (focusedIndex < 0 || focusedIndex >= entries.length)
+        if (root.focusedIndex < 0 || root.focusedIndex >= root.entries.length)
             return null;
-        return entryRecord(entries[focusedIndex]);
+        return root.entryRecord(root.entries[root.focusedIndex]);
     }
 
     function focusedEntryKey() {
-        if (focusedIndex < 0 || focusedIndex >= entries.length)
+        if (root.focusedIndex < 0 || root.focusedIndex >= root.entries.length)
             return "";
-        return String(entries[focusedIndex] || "");
+        return String(root.entries[root.focusedIndex] || "");
     }
 
     function horizontalAlignment(alignKey) {
@@ -1284,34 +1287,34 @@ Item {
     }
 
     function currentTitle(entry) {
-        titleRev;
-        const entryKey = entryKeyOf(entry);
+        root.titleRev;
+        const entryKey = root.entryKeyOf(entry);
         if (!entryKey)
             return "";
-        return mainInstance?.getEntryTitle(entryKey) || "";
+        return root.mainInstance?.getEntryTitle(entryKey) || "";
     }
 
     function clearDragState() {
-        Logger.d("Scrollbar2", "Drag preview cleared: source=" + dragSourceEntryKey + " raw=" + dragInsertIndex + " reason=clear");
+        Logger.d("Scrollbar2", "Drag preview cleared: source=" + root.dragSourceEntryKey + " raw=" + root.dragInsertIndex + " reason=clear");
         dragCleanupTimer.stop();
-        dragDropHandled = false;
-        dragSourceIndex = -1;
-        dragInsertIndex = -1;
-        dragSourceEntryKey = "";
+        root.dragDropHandled = false;
+        root.dragSourceIndex = -1;
+        root.dragInsertIndex = -1;
+        root.dragSourceEntryKey = "";
     }
 
     function entryIndexByKey(entryKey) {
-        for (let i = 0; i < entries.length; i++) {
-            if (entries[i] === entryKey)
+        for (let i = 0; i < root.entries.length; i++) {
+            if (root.entries[i] === entryKey)
                 return i;
         }
         return -1;
     }
 
     function canDragEntry(entryKey) {
-        if (!dragReorderEnabled || isVerticalBar || mainInstance?.reorderInFlight)
+        if (!root.dragReorderEnabled || root.isVerticalBar || root.mainInstance?.reorderInFlight)
             return false;
-        return mainInstance?.canReorderEntry(entryKey, screenName, onlySameOutput, onlyActiveWorkspaces) === true;
+        return root.mainInstance?.canReorderEntry(entryKey, root.screenName, root.onlySameOutput, root.onlyActiveWorkspaces) === true;
     }
 
     function canDropOnEntry(sourceEntryKey, targetEntryKey) {
@@ -1569,11 +1572,11 @@ Item {
     Row {
         id: segmentsRow
         parent: trackContentLayer
-        x: horizontalPadding
+        x: root.horizontalPadding
         y: 0
-        width: Math.max(0, root.actualTrackWidth - horizontalPadding * 2)
+        width: Math.max(0, root.actualTrackWidth - root.horizontalPadding * 2)
         height: root.availableContainerHeight
-        spacing: segmentSpacing
+        spacing: root.segmentSpacing
         z: 1
 
         Repeater {
@@ -1602,7 +1605,18 @@ Item {
                     height: parent.height
 
                     readonly property bool isDragged: root.dragSourceIndex === index
-                    property real shiftOffset: 0
+                    property real shiftOffset: {
+                        if (root.dragSourceIndex !== -1 && root.dragInsertIndex !== -1 && root.dragPreviewActive && !draggableContent.isDragged) {
+                            if (root.dragSourceIndex < root.dragInsertIndex) {
+                                if (index > root.dragSourceIndex && index < root.dragInsertIndex)
+                                    return -(segmentItem.width + root.segmentSpacing);
+                            } else if (root.dragSourceIndex >= root.dragInsertIndex) {
+                                if (index >= root.dragInsertIndex && index < root.dragSourceIndex)
+                                    return segmentItem.width + root.segmentSpacing;
+                            }
+                        }
+                        return 0;
+                    }
                     property bool dragging: segmentMouseArea.drag.active
                     property real lifecycleOpacity: 1
                     property real lifecycleScale: 1
@@ -1640,21 +1654,6 @@ Item {
                     Binding on y {
                         when: !draggableContent.dragging
                         value: 0
-                    }
-
-                    Binding on shiftOffset {
-                        value: {
-                            if (root.dragSourceIndex !== -1 && root.dragInsertIndex !== -1 && root.dragPreviewActive && !draggableContent.isDragged) {
-                                if (root.dragSourceIndex < root.dragInsertIndex) {
-                                    if (index > root.dragSourceIndex && index < root.dragInsertIndex)
-                                        return -(segmentItem.width + root.segmentSpacing);
-                                } else if (root.dragSourceIndex >= root.dragInsertIndex) {
-                                    if (index >= root.dragInsertIndex && index < root.dragSourceIndex)
-                                        return segmentItem.width + root.segmentSpacing;
-                                }
-                            }
-                            return 0;
-                        }
                     }
 
                     transform: Translate {
@@ -2017,7 +2016,7 @@ Item {
                                 opacity: segmentItem.showLabel ? 1 : 0
                                 color: root.labelColor(segmentItem.entryKey, "title")
                                 horizontalAlignment: root.horizontalAlignment(root.titleAlign)
-                                font.family: root.titleFontFamily || Qt.application.font.family
+                                font.family: root.titleFontFamily || Qt.application.font.family // qmllint disable missing-property
                                 pointSize: root.titleFontSize * root.titleScale
                                 font.weight: root.titleWeight(segmentItem.entryKey)
 
@@ -2132,7 +2131,7 @@ Item {
             if (!drag.source || drag.source.objectName !== "scrollbar2WindowSegment")
                 return;
             root.dragInsertIndex = root.dragSourceIndex;
-            Logger.d("Scrollbar2", "Drag overlay entered: source=" + (drag.source.entryKey ?? "") + " sourceIndex=" + root.dragSourceIndex);
+            Logger.d("Scrollbar2", "Drag overlay entered: source=" + (drag.source.entryKey ?? "") + " sourceIndex=" + root.dragSourceIndex); // qmllint disable missing-property
         }
 
         onPositionChanged: drag => {
@@ -2148,7 +2147,7 @@ Item {
         }
 
         onDropped: drop => {
-            const sourceEntryKey = drop.source?.entryKey ?? "";
+            const sourceEntryKey = drop.source?.entryKey ?? ""; // qmllint disable missing-property
             Logger.d("Scrollbar2", "Drag drop signal: source=" + sourceEntryKey + " raw=" + root.dragInsertIndex);
             root.finalizeDragReorder(sourceEntryKey, "drop");
         }
@@ -2179,7 +2178,7 @@ Item {
                 onEntered: drag => {
                     if (!drag.source || drag.source.objectName !== "scrollbar2WindowSegment")
                         return;
-                    root.setDragInsertIndex(index, drag.source.entryKey ?? "", "slot-enter");
+                    root.setDragInsertIndex(index, drag.source.entryKey ?? "", "slot-enter"); // qmllint disable missing-property
                 }
 
                 onPositionChanged: drag => {
@@ -2261,11 +2260,11 @@ Item {
     Rectangle {
         id: trackLine
         x: root.leftAccessoryWidth
-        y: trackLineY()
+        y: root.trackLineY()
         width: root.effectiveTrackWidth
-        height: visibleTrackThickness
-        radius: Math.min(trackBorderRadius, height / 2)
-        color: Qt.alpha(trackColor, trackOpacity)
+        height: root.visibleTrackThickness
+        radius: Math.min(root.trackBorderRadius, height / 2)
+        color: Qt.alpha(root.trackColor, root.trackOpacity)
         visible: root.segmentCount > 0 || root.showSpecialWorkspaceOverlay
         z: 10
     }
@@ -2375,7 +2374,7 @@ Item {
                 elide: Text.ElideRight
                 maximumLineCount: 1
                 color: Qt.alpha(root.titleColorFocused, root.titleColorFocusedOpacity)
-                font.family: root.titleFontFamily || Qt.application.font.family
+                font.family: root.titleFontFamily || Qt.application.font.family // qmllint disable missing-property
                 pointSize: root.titleFontSize * root.titleScale
                 font.weight: root.fontWeightValue(root.titleWeightFocused, Style.fontWeightSemiBold)
             }

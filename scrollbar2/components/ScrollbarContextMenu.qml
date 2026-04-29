@@ -1,3 +1,7 @@
+pragma ComponentBehavior: Bound
+// qmllint disable unqualified
+// qmllint disable unresolved-type
+
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -17,7 +21,7 @@ PopupWindow {
   property int horizontalPolicy: ScrollBar.AsNeeded
 
   property var anchorItem: null
-  property ShellScreen screen: null
+  property ShellScreen menuScreen: null
   property real minWidth: 120
   property real calculatedWidth: 180
 
@@ -52,8 +56,8 @@ PopupWindow {
     return root._subMenuComponent;
   }
 
-  readonly property string barPosition: Settings.getBarPositionForScreen(screen?.name)
-  readonly property real barHeight: Style.getBarHeightForScreen(screen?.name)
+  readonly property string barPosition: Settings.getBarPositionForScreen(menuScreen?.name)
+  readonly property real barHeight: Style.getBarHeightForScreen(menuScreen?.name)
 
   signal triggered(string action, var item)
 
@@ -117,7 +121,7 @@ PopupWindow {
 
   // Positioning logic (same as NPopupContextMenu, with submenu support)
   anchor.rect.x: {
-    if (anchorItem && screen) {
+    if (anchorItem && menuScreen) {
       // For submenus, use direct anchorX offset
       if (isSubMenu) {
         return anchorX;
@@ -143,8 +147,8 @@ PopupWindow {
 
       const menuRight = menuScreenX + implicitWidth;
 
-      if (menuRight > screen.width - Style.marginM) {
-        const overflow = menuRight - (screen.width - Style.marginM);
+      if (menuRight > menuScreen.width - Style.marginM) {
+        const overflow = menuRight - (menuScreen.width - Style.marginM);
         return baseX - overflow;
       }
       if (menuScreenX < Style.marginM) {
@@ -156,7 +160,7 @@ PopupWindow {
   }
 
   anchor.rect.y: {
-    if (anchorItem && screen) {
+    if (anchorItem && menuScreen) {
       // For submenus, use direct anchorY offset (align top with parent)
       if (isSubMenu) {
         return anchorY;
@@ -168,7 +172,7 @@ PopupWindow {
         const anchorGlobalPos = anchorItem.mapToItem(null, 0, 0);
         const menuBottom = anchorGlobalPos.y + implicitHeight;
 
-        if (menuBottom > screen.height - Style.marginM) {
+        if (menuBottom > menuScreen.height - Style.marginM) {
           return -implicitHeight;
         }
         return 0;
@@ -192,7 +196,7 @@ PopupWindow {
       const menuBottom = menuScreenY + implicitHeight;
 
       const topLimit = Style.marginM;
-      const bottomLimit = root.barPosition === "bottom" ? screen.height - barHeight - Style.marginS : screen.height - Style.marginM;
+      const bottomLimit = root.barPosition === "bottom" ? menuScreen.height - barHeight - Style.marginS : menuScreen.height - Style.marginM;
 
       if (menuScreenY < topLimit && root.barPosition !== "bottom") {
         const adjustment = topLimit - menuScreenY;
@@ -301,7 +305,7 @@ PopupWindow {
 
             // Determine submenu opening direction
             let openLeft = false;
-            const barPosition = Settings.getBarPositionForScreen(root.screen?.name);
+            const barPosition = Settings.getBarPositionForScreen(root.menuScreen?.name);
 
             if (barPosition === "right") {
               openLeft = true;
@@ -310,7 +314,7 @@ PopupWindow {
             } else {
               // For top/bottom bars, open left if menu is on right side of screen
               const globalPos = menuItem.mapToItem(null, 0, 0);
-              openLeft = (globalPos.x > root.screen.width / 2);
+              openLeft = (globalPos.x > root.menuScreen.width / 2);
             }
 
             // Create and show submenu
@@ -322,7 +326,7 @@ PopupWindow {
               "model": modelData.children || [],
               "isSubMenu": true,
               "parentMenu": root,
-              "screen": root.screen,
+              "menuScreen": root.menuScreen,
               "anchorItem": menuItem
             });
 
@@ -477,7 +481,7 @@ PopupWindow {
     }
 
     anchorItem = item;
-    screen = itemScreen || null;
+    menuScreen = itemScreen || null;
 
     if (centerOnItem && centerOnItem !== item) {
       const relPos = centerOnItem.mapToItem(item, 0, 0);

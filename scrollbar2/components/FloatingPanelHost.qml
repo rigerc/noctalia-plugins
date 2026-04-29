@@ -1,9 +1,11 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import qs.Commons
 
-PanelWindow {
+PanelWindow { // qmllint disable uncreatable-type
     id: windowHost
 
     required property var main
@@ -186,8 +188,8 @@ PanelWindow {
 
     Item {
         id: maskItem
-        width: contentBaseWidth
-        height: windowHost.autoHideEnabled ? parent.height : contentBaseHeight
+        width: windowHost.contentBaseWidth
+        height: windowHost.autoHideEnabled ? parent.height : windowHost.contentBaseHeight
         x: Style.pixelAlignCenter(parent.width, width) + windowHost.autoHideCurrentOffsetH
         y: windowHost.autoHideEnabled ? 0 : windowHost.contentBaseY
         opacity: 0
@@ -195,7 +197,7 @@ PanelWindow {
 
     Item {
         id: revealZone
-        width: windowHost.autoHideRevealMode === "edgeSliver" ? windowHost.autoHideRevealStripWidth : contentBaseWidth
+        width: windowHost.autoHideRevealMode === "edgeSliver" ? windowHost.autoHideRevealStripWidth : windowHost.contentBaseWidth
         height: windowHost.autoHideEnabled ? windowHost.autoHideHoverThickness : 0
         x: windowHost.autoHideRevealMode === "edgeSliver" ? windowHost.autoHideRevealStripX : Style.pixelAlignCenter(parent.width, width) + windowHost.autoHideCurrentOffsetH
         y: windowHost.autoHideRevealMode === "edgeSliver" ? windowHost.autoHideRevealStripY : windowHost.anchorTop ? 0 : Math.max(0, parent.height - height)
@@ -223,8 +225,8 @@ PanelWindow {
     Item {
         id: windowContent
         visible: windowHost.autoHideContentVisible
-        width: contentBaseWidth
-        height: contentBaseHeight
+        width: windowHost.contentBaseWidth
+        height: windowHost.contentBaseHeight
         x: Style.pixelAlignCenter(parent.width, width) + windowHost.autoHideCurrentOffsetH + windowHost.autoHideVisualOffsetX
         y: windowHost.contentBaseY + windowHost.autoHideVisualOffsetY
         opacity: windowHost.autoHideVisualOpacity
@@ -238,25 +240,25 @@ PanelWindow {
 
         Rectangle {
             anchors.fill: parent
-            radius: main.effectiveDisplayRadius
-            color: main.displayBackgroundResolvedColor
-            visible: main.displayBackgroundEnabled || main.displayGradientActive
+            radius: windowHost.main.effectiveDisplayRadius
+            color: windowHost.main.displayBackgroundResolvedColor
+            visible: windowHost.main.displayBackgroundEnabled || windowHost.main.displayGradientActive
 
             Rectangle {
                 anchors.fill: parent
-                radius: main.effectiveDisplayRadius
-                visible: main.displayGradientActive
+                radius: windowHost.main.effectiveDisplayRadius
+                visible: windowHost.main.displayGradientActive
                 color: "transparent"
 
                 gradient: Gradient {
-                    orientation: main.displayGradientDirection === "horizontal" ? Gradient.Horizontal : Gradient.Vertical
+                    orientation: windowHost.main.displayGradientDirection === "horizontal" ? Gradient.Horizontal : Gradient.Vertical
                     GradientStop {
                         position: 0.0
                         color: "transparent"
                     }
                     GradientStop {
                         position: 1.0
-                        color: main.displayGradientResolvedColor
+                        color: windowHost.main.displayGradientResolvedColor
                     }
                 }
             }
@@ -275,16 +277,15 @@ PanelWindow {
                 pluginApi: windowHost.pluginApi
                 screen: windowHost.screen
                 hostMode: "floatingPanel"
-                visibleInCurrentMode: main.displayMode === "floatingPanel"
+                visibleInCurrentMode: windowHost.main.displayMode === "floatingPanel"
 
                 transform: Scale {
                     origin.x: windowView.width / 2
                     origin.y: windowView.height / 2
-                    xScale: main.displayScale
-                    yScale: main.displayScale
+                    xScale: windowHost.main.displayScale
+                    yScale: windowHost.main.displayScale
                 }
             }
         }
     }
 }
-

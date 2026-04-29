@@ -7,12 +7,15 @@ import qs.Commons
 import qs.Widgets
 import "../../Migrations.js" as Migrations
 import "../components"
+// qmllint disable unqualified
+// qmllint disable missing-property
+// qmllint disable Quick.layout-positioning
 
 ColumnLayout {
     id: root
 
     property var rootSettings: null
-    property var pluginApi: rootSettings?.pluginApi ?? null
+    property var pluginApi: root.rootSettings?.pluginApi ?? null
     property var builtInPresets: []
     property var customPresets: []
     property alias builtInSectionTarget: builtInHeader
@@ -28,7 +31,7 @@ ColumnLayout {
     }
 
     Connections {
-        target: rootSettings?.pluginApi ?? null
+        target: root.rootSettings?.pluginApi ?? null
 
         function onPluginSettingsChanged() {
             _refreshCustomPresets();
@@ -36,25 +39,25 @@ ColumnLayout {
     }
 
     function _refreshCustomPresets() {
-        var presets = rootSettings?.pluginApi?.pluginSettings?._presets || [];
+        var presets = root.pluginApi?.pluginSettings?._presets || [];
         if (!Array.isArray(presets))
             presets = [];
-        customPresets = rootSettings.deepCopy(presets);
+        customPresets = root.rootSettings.deepCopy(presets);
     }
 
     function _presetSettingsSnapshot(settings) {
-        return rootSettings?.presetSettingsSnapshot ? rootSettings.presetSettingsSnapshot(settings) : rootSettings.normalizeSettingsSnapshot(rootSettings.deepCopy(settings || ({})));
+        return root.rootSettings?.presetSettingsSnapshot ? root.rootSettings.presetSettingsSnapshot(settings) : root.rootSettings.normalizeSettingsSnapshot(root.rootSettings.deepCopy(settings || ({})));
     }
 
     function _customRuleSignature(rule) {
-        return JSON.stringify(rootSettings.normalizeCustomStyleRule(rule));
+        return JSON.stringify(root.rootSettings.normalizeCustomStyleRule(rule));
     }
 
     function _cloneImportReport(report) {
         return {
             appliedMigrations: Array.isArray(report?.appliedMigrations) ? report.appliedMigrations.slice() : [],
             unknownKeys: Array.isArray(report?.unknownKeys) ? report.unknownKeys.slice() : [],
-            details: Array.isArray(report?.details) ? rootSettings.deepCopy(report.details) : [],
+            details: Array.isArray(report?.details) ? root.rootSettings.deepCopy(report.details) : [],
             customRulesIgnored: Math.max(0, Number(report?.customRulesIgnored ?? 0)),
             addedRules: Math.max(0, Number(report?.addedRules ?? 0)),
             skippedDuplicateRules: Math.max(0, Number(report?.skippedDuplicateRules ?? 0))
@@ -81,7 +84,7 @@ ColumnLayout {
             if (!preset || typeof preset !== "object")
                 continue;
 
-            var presetResult = _makePresetSafeImport(Migrations.validateImport(preset.settings || ({}), rootSettings.defaultSettings));
+            var presetResult = _makePresetSafeImport(Migrations.validateImport(preset.settings || ({}), root.rootSettings.defaultSettings));
             var createdAt = Number(preset.createdAt);
             if (isNaN(createdAt))
                 createdAt = Date.now();
@@ -120,7 +123,7 @@ ColumnLayout {
     }
 
     function _prepareCustomRulesImport(rawRules) {
-        var existingRules = rootSettings.styleRuleItems();
+        var existingRules = root.rootSettings.styleRuleItems();
         var existingSignatures = ({});
         var nextRules = [];
         var skippedDuplicateRules = 0;
@@ -134,7 +137,7 @@ ColumnLayout {
             if (!rawRule || typeof rawRule !== "object")
                 continue;
 
-            var normalizedRule = rootSettings.normalizeCustomStyleRule(rawRule);
+            var normalizedRule = root.rootSettings.normalizeCustomStyleRule(rawRule);
             var signature = _customRuleSignature(normalizedRule);
             if (existingSignatures[signature]) {
                 skippedDuplicateRules++;
@@ -159,7 +162,7 @@ ColumnLayout {
     }
 
     function _deepMerge(base, overrides) {
-        var result = rootSettings.deepCopy(base);
+        var result = root.rootSettings.deepCopy(base);
         function merge(target, source) {
             for (var key in source) {
                 if (source[key] && typeof source[key] === "object" && !Array.isArray(source[key])) {
@@ -176,19 +179,19 @@ ColumnLayout {
     }
 
     function _buildBuiltinPresets() {
-        var d = rootSettings ? _presetSettingsSnapshot(rootSettings.defaultSettings) : ({});
+        var d = rootSettings ? _presetSettingsSnapshot(root.rootSettings.defaultSettings) : ({});
         return [
             {
                 id: "builtin:default",
-                name: pluginApi?.tr("settings.presets.builtinPresets.default.name"),
-                description: pluginApi?.tr("settings.presets.builtinPresets.default.desc"),
+                name: root.pluginApi?.tr("settings.presets.builtinPresets.default.name"),
+                description: root.pluginApi?.tr("settings.presets.builtinPresets.default.desc"),
                 builtIn: true,
                 settings: d
             },
             {
                 id: "builtin:minimal",
-                name: pluginApi?.tr("settings.presets.builtinPresets.minimal.name"),
-                description: pluginApi?.tr("settings.presets.builtinPresets.minimal.desc"),
+                name: root.pluginApi?.tr("settings.presets.builtinPresets.minimal.name"),
+                description: root.pluginApi?.tr("settings.presets.builtinPresets.minimal.desc"),
                 builtIn: true,
                 settings: _deepMerge(d, {
                     track: {
@@ -211,8 +214,8 @@ ColumnLayout {
             },
             {
                 id: "builtin:bordered",
-                name: pluginApi?.tr("settings.presets.builtinPresets.bordered.name"),
-                description: pluginApi?.tr("settings.presets.builtinPresets.bordered.desc"),
+                name: root.pluginApi?.tr("settings.presets.builtinPresets.bordered.name"),
+                description: root.pluginApi?.tr("settings.presets.builtinPresets.bordered.desc"),
                 builtIn: true,
                 settings: _deepMerge(d, {
                     track: {
@@ -237,8 +240,8 @@ ColumnLayout {
             },
             {
                 id: "builtin:floating",
-                name: pluginApi?.tr("settings.presets.builtinPresets.floating.name"),
-                description: pluginApi?.tr("settings.presets.builtinPresets.floating.desc"),
+                name: root.pluginApi?.tr("settings.presets.builtinPresets.floating.name"),
+                description: root.pluginApi?.tr("settings.presets.builtinPresets.floating.desc"),
                 builtIn: true,
                 settings: _deepMerge(d, {
                     display: {
@@ -263,8 +266,8 @@ ColumnLayout {
             },
             {
                 id: "builtin:compact",
-                name: pluginApi?.tr("settings.presets.builtinPresets.compact.name"),
-                description: pluginApi?.tr("settings.presets.builtinPresets.compact.desc"),
+                name: root.pluginApi?.tr("settings.presets.builtinPresets.compact.name"),
+                description: root.pluginApi?.tr("settings.presets.builtinPresets.compact.desc"),
                 builtIn: true,
                 settings: _deepMerge(d, {
                     track: {
@@ -291,8 +294,8 @@ ColumnLayout {
             },
             {
                 id: "builtin:indicator",
-                name: pluginApi?.tr("settings.presets.builtinPresets.indicator.name"),
-                description: pluginApi?.tr("settings.presets.builtinPresets.indicator.desc"),
+                name: root.pluginApi?.tr("settings.presets.builtinPresets.indicator.name"),
+                description: root.pluginApi?.tr("settings.presets.builtinPresets.indicator.desc"),
                 builtIn: true,
                 settings: _deepMerge(d, {
                     track: {
@@ -316,8 +319,8 @@ ColumnLayout {
             },
             {
                 id: "builtin:pill",
-                name: pluginApi?.tr("settings.presets.builtinPresets.pill.name"),
-                description: pluginApi?.tr("settings.presets.builtinPresets.pill.desc"),
+                name: root.pluginApi?.tr("settings.presets.builtinPresets.pill.name"),
+                description: root.pluginApi?.tr("settings.presets.builtinPresets.pill.desc"),
                 builtIn: true,
                 settings: _deepMerge(d, {
                     track: {
@@ -378,7 +381,7 @@ ColumnLayout {
         var preset = _presetById(presetId);
         if (!preset)
             return;
-        rootSettings.applyPreset(preset.settings, presetId);
+        root.rootSettings.applyPreset(preset.settings, presetId);
     }
 
     function _savePreset(name, description) {
@@ -395,10 +398,10 @@ ColumnLayout {
             description: description,
             createdAt: now,
             updatedAt: now,
-            settings: _presetSettingsSnapshot(rootSettings.editSettings),
+            settings: _presetSettingsSnapshot(root.rootSettings.editSettings),
             version: 1
         };
-        var presets = rootSettings.deepCopy(customPresets);
+        var presets = root.rootSettings.deepCopy(customPresets);
         presets.push(preset);
         var api = pluginApi;
         if (!api)
@@ -408,15 +411,15 @@ ColumnLayout {
     }
 
     function _deletePreset(id) {
-        var presets = rootSettings.deepCopy(customPresets).filter(function (p) {
+        var presets = root.rootSettings.deepCopy(customPresets).filter(function (p) {
             return p.id !== id;
         });
         var api = pluginApi;
         if (!api)
             return;
         api.pluginSettings._presets = presets;
-        if (rootSettings._activePresetId === id)
-            rootSettings._activePresetId = "";
+        if (root.rootSettings._activePresetId === id)
+            root.rootSettings._activePresetId = "";
         api.saveSettings();
     }
 
@@ -425,7 +428,7 @@ ColumnLayout {
         if (!api)
             return;
         api.pluginSettings._presets = [];
-        rootSettings._activePresetId = "";
+        root.rootSettings._activePresetId = "";
         api.saveSettings();
     }
 
@@ -435,7 +438,7 @@ ColumnLayout {
         newName = newName.trim().substring(0, 32);
         if (_findPresetByName(newName, id))
             return;
-        var presets = rootSettings.deepCopy(customPresets);
+        var presets = root.rootSettings.deepCopy(customPresets);
         for (var i = 0; i < presets.length; i++) {
             if (presets[i].id === id) {
                 presets[i].name = newName;
@@ -470,7 +473,7 @@ ColumnLayout {
             settings: _presetSettingsSnapshot(preset.settings),
             version: 1
         };
-        var presets = rootSettings.deepCopy(customPresets);
+        var presets = root.rootSettings.deepCopy(customPresets);
         presets.push(newPreset);
         var api = pluginApi;
         if (!api)
@@ -480,10 +483,10 @@ ColumnLayout {
     }
 
     function _updatePreset(id) {
-        var presets = rootSettings.deepCopy(customPresets);
+        var presets = root.rootSettings.deepCopy(customPresets);
         for (var i = 0; i < presets.length; i++) {
             if (presets[i].id === id) {
-                presets[i].settings = _presetSettingsSnapshot(rootSettings.editSettings);
+                presets[i].settings = _presetSettingsSnapshot(root.rootSettings.editSettings);
                 presets[i].updatedAt = Date.now();
                 break;
             }
@@ -500,9 +503,9 @@ ColumnLayout {
             scrollbar2Backup: true,
             version: 1,
             exportedAt: Date.now(),
-            settings: rootSettings.normalizeSettingsSnapshot(rootSettings.deepCopy(rootSettings.editSettings)),
-            presets: rootSettings.deepCopy(customPresets),
-            activePresetId: rootSettings._activePresetId || ""
+            settings: root.rootSettings.normalizeSettingsSnapshot(root.rootSettings.deepCopy(root.rootSettings.editSettings)),
+            presets: root.rootSettings.deepCopy(customPresets),
+            activePresetId: root.rootSettings._activePresetId || ""
         };
     }
 
@@ -514,7 +517,7 @@ ColumnLayout {
             preset: {
                 name: preset.name || "",
                 description: preset.description || "",
-                settings: rootSettings.deepCopy(preset.settings || ({}))
+                settings: root.rootSettings.deepCopy(preset.settings || ({}))
             }
         };
     }
@@ -524,7 +527,7 @@ ColumnLayout {
             scrollbar2Presets: true,
             version: 1,
             exportedAt: Date.now(),
-            presets: rootSettings.deepCopy(customPresets)
+            presets: root.rootSettings.deepCopy(customPresets)
         };
     }
 
@@ -533,7 +536,7 @@ ColumnLayout {
             scrollbar2CustomStyleRules: true,
             version: 1,
             exportedAt: Date.now(),
-            rules: rootSettings.deepCopy(rootSettings.styleRuleItems())
+            rules: root.rootSettings.deepCopy(root.rootSettings.styleRuleItems())
         };
     }
 
@@ -620,7 +623,7 @@ ColumnLayout {
     function _parseImportFile(jsonText) {
         if (!jsonText || jsonText.trim() === "")
             return {
-                error: pluginApi?.tr("settings.presets.import.errors.empty")
+                error: root.pluginApi?.tr("settings.presets.import.errors.empty")
             };
 
         var data;
@@ -628,17 +631,17 @@ ColumnLayout {
             data = JSON.parse(jsonText);
         } catch (e) {
             return {
-                error: pluginApi?.tr("settings.presets.import.errors.invalidJson")
+                error: root.pluginApi?.tr("settings.presets.import.errors.invalidJson")
             };
         }
 
         if (!data || typeof data !== "object" || Array.isArray(data))
             return {
-                error: pluginApi?.tr("settings.presets.import.errors.invalidFormat")
+                error: root.pluginApi?.tr("settings.presets.import.errors.invalidFormat")
             };
 
         if (data.scrollbar2Backup) {
-            var backupResult = Migrations.validateImport(data.settings || ({}), rootSettings.defaultSettings);
+            var backupResult = Migrations.validateImport(data.settings || ({}), root.rootSettings.defaultSettings);
             var importedPresets = _validatedImportedPresets(data.presets || []);
             var backupReport = _cloneImportReport(backupResult.report);
             backupReport.details = importedPresets.report.details;
@@ -654,7 +657,7 @@ ColumnLayout {
 
         if (data.scrollbar2Preset) {
             var presetObj = data.preset || ({});
-            var presetResult = _makePresetSafeImport(Migrations.validateImport(presetObj.settings || ({}), rootSettings.defaultSettings));
+            var presetResult = _makePresetSafeImport(Migrations.validateImport(presetObj.settings || ({}), root.rootSettings.defaultSettings));
             return {
                 type: "preset",
                 preset: {
@@ -691,7 +694,7 @@ ColumnLayout {
         }
 
         return {
-            error: pluginApi?.tr("settings.presets.import.errors.unrecognized")
+            error: root.pluginApi?.tr("settings.presets.import.errors.unrecognized")
         };
     }
 
@@ -700,14 +703,14 @@ ColumnLayout {
             return;
 
         if (result.type === "backup") {
-            var currentLocked = rootSettings.lockedSections();
+            var currentLocked = root.rootSettings.lockedSections();
             var preservedSections = {};
             currentLocked.forEach(function(key) {
-                if (rootSettings.editSettings[key] !== undefined)
-                    preservedSections[key] = rootSettings.deepCopy(rootSettings.editSettings[key]);
+                if (root.rootSettings.editSettings[key] !== undefined)
+                    preservedSections[key] = root.rootSettings.deepCopy(root.rootSettings.editSettings[key]);
             });
 
-            var nextSettings = rootSettings.createSettingsSnapshot(result.settings, rootSettings.defaults);
+            var nextSettings = root.rootSettings.createSettingsSnapshot(result.settings, root.rootSettings.defaults);
 
             currentLocked.forEach(function(key) {
                 if (preservedSections[key] !== undefined)
@@ -715,20 +718,20 @@ ColumnLayout {
             });
 
             nextSettings._lockedSections = currentLocked;
-            rootSettings.editSettings = nextSettings;
-            rootSettings.styleRulesRevision += 1;
+            root.rootSettings.editSettings = nextSettings;
+            root.rootSettings.styleRulesRevision += 1;
             var api = pluginApi;
             if (api) {
-                var existingPresets = rootSettings.deepCopy(api.pluginSettings._presets || []);
+                var existingPresets = root.rootSettings.deepCopy(api.pluginSettings._presets || []);
                 var mergedPresets = existingPresets.concat(result.presets);
                 api.pluginSettings._presets = mergedPresets;
-                rootSettings._activePresetId = result.activePresetId || "";
+                root.rootSettings._activePresetId = result.activePresetId || "";
             }
         }
 
         if (result.type === "preset") {
             var preset = result.preset;
-            var copyName = preset.name || (pluginApi?.tr("settings.presets.import.importedPreset"));
+            var copyName = preset.name || (root.pluginApi?.tr("settings.presets.import.importedPreset"));
             var suffix = 1;
             while (_findPresetByName(copyName)) {
                 suffix++;
@@ -744,7 +747,7 @@ ColumnLayout {
                 settings: preset.settings,
                 version: 1
             };
-            var presets = rootSettings.deepCopy(customPresets);
+            var presets = root.rootSettings.deepCopy(customPresets);
             presets.push(newPreset);
             var api2 = pluginApi;
             if (api2) {
@@ -757,10 +760,10 @@ ColumnLayout {
             var api3 = pluginApi;
             if (!api3)
                 return;
-            var existing = rootSettings.deepCopy(api3.pluginSettings._presets || []);
+            var existing = root.rootSettings.deepCopy(api3.pluginSettings._presets || []);
             for (var i = 0; i < result.presets.length; i++) {
                 var ip = result.presets[i];
-                var ipName = ip.name || (pluginApi?.tr("settings.presets.import.importedPreset"));
+                var ipName = ip.name || (root.pluginApi?.tr("settings.presets.import.importedPreset"));
                 var ipSuffix = 1;
                 while (_findPresetByName(ipName)) {
                     ipSuffix++;
@@ -782,8 +785,8 @@ ColumnLayout {
         }
 
         if (result.type === "customRules") {
-            var mergedRules = rootSettings.styleRuleItems().concat(result.rules || []);
-            rootSettings.setStyleRuleItems(mergedRules);
+            var mergedRules = root.rootSettings.styleRuleItems().concat(result.rules || []);
+            root.rootSettings.setStyleRuleItems(mergedRules);
         }
     }
 
@@ -792,23 +795,23 @@ ColumnLayout {
             return "";
         var lines = [];
         if (report.appliedMigrations && report.appliedMigrations.length > 0) {
-            var migLabel = pluginApi?.tr("settings.presets.import.report.migrated");
+            var migLabel = root.pluginApi?.tr("settings.presets.import.report.migrated");
             lines.push(migLabel.replace("{count}", report.appliedMigrations.length));
         }
         if (report.unknownKeys && report.unknownKeys.length > 0) {
-            var unkLabel = pluginApi?.tr("settings.presets.import.report.unknown");
+            var unkLabel = root.pluginApi?.tr("settings.presets.import.report.unknown");
             lines.push(unkLabel.replace("{count}", report.unknownKeys.length));
         }
         if ((report.customRulesIgnored || 0) > 0) {
-            var ignoredLabel = pluginApi?.tr("settings.presets.import.report.customRulesIgnored");
+            var ignoredLabel = root.pluginApi?.tr("settings.presets.import.report.customRulesIgnored");
             lines.push(ignoredLabel.replace("{count}", report.customRulesIgnored));
         }
         if ((report.addedRules || 0) > 0) {
-            var addedLabel = pluginApi?.tr("settings.presets.import.report.addedRules");
+            var addedLabel = root.pluginApi?.tr("settings.presets.import.report.addedRules");
             lines.push(addedLabel.replace("{count}", report.addedRules));
         }
         if ((report.skippedDuplicateRules || 0) > 0) {
-            var skippedLabel = pluginApi?.tr("settings.presets.import.report.skippedDuplicateRules");
+            var skippedLabel = root.pluginApi?.tr("settings.presets.import.report.skippedDuplicateRules");
             lines.push(skippedLabel.replace("{count}", report.skippedDuplicateRules));
         }
         if (report.details && report.details.length > 0) {
@@ -816,11 +819,11 @@ ColumnLayout {
                 var d = report.details[i];
                 lines.push(d.name + ":");
                 if (d.report.appliedMigrations.length > 0)
-                    lines.push("  " + (pluginApi?.tr("settings.presets.import.report.migrated")).replace("{count}", d.report.appliedMigrations.length));
+                    lines.push("  " + (root.pluginApi?.tr("settings.presets.import.report.migrated")).replace("{count}", d.report.appliedMigrations.length));
                 if (d.report.unknownKeys.length > 0)
-                    lines.push("  " + (pluginApi?.tr("settings.presets.import.report.unknown")).replace("{count}", d.report.unknownKeys.length));
+                    lines.push("  " + (root.pluginApi?.tr("settings.presets.import.report.unknown")).replace("{count}", d.report.unknownKeys.length));
                 if ((d.report.customRulesIgnored || 0) > 0)
-                    lines.push("  " + (pluginApi?.tr("settings.presets.import.report.customRulesIgnored")).replace("{count}", d.report.customRulesIgnored));
+                    lines.push("  " + (root.pluginApi?.tr("settings.presets.import.report.customRulesIgnored")).replace("{count}", d.report.customRulesIgnored));
             }
         }
         return lines.join("\n");
@@ -829,25 +832,25 @@ ColumnLayout {
     function _detailsSectionLabel(sectionKey) {
         switch (sectionKey) {
         case "display":
-            return pluginApi?.tr("settings.section.display.label");
+            return root.pluginApi?.tr("settings.section.display.label");
         case "track":
-            return pluginApi?.tr("settings.section.track.label");
+            return root.pluginApi?.tr("settings.section.track.label");
         case "filtering":
-            return pluginApi?.tr("settings.section.filtering.label");
+            return root.pluginApi?.tr("settings.section.filtering.label");
         case "animation":
-            return pluginApi?.tr("settings.section.animation.label");
+            return root.pluginApi?.tr("settings.section.animation.label");
         case "focusLine":
-            return pluginApi?.tr("settings.section.focusLine.label");
+            return root.pluginApi?.tr("settings.section.focusLine.label");
         case "window":
-            return pluginApi?.tr("settings.section.window.label");
+            return root.pluginApi?.tr("settings.section.window.label");
         case "workspaceIndicator":
-            return pluginApi?.tr("settings.section.workspaceIndicator.label");
+            return root.pluginApi?.tr("settings.section.workspaceIndicator.label");
         case "specialWorkspaceOverlay":
-            return pluginApi?.tr("settings.section.specialWorkspaceOverlay.label");
+            return root.pluginApi?.tr("settings.section.specialWorkspaceOverlay.label");
         case "pinnedApps":
-            return pluginApi?.tr("settings.section.pinnedApps.label");
+            return root.pluginApi?.tr("settings.section.pinnedApps.label");
         case "customStyleRules":
-            return pluginApi?.tr("settings.section.customStyleRules.label");
+            return root.pluginApi?.tr("settings.section.customStyleRules.label");
         default:
             return sectionKey;
         }
@@ -943,8 +946,8 @@ ColumnLayout {
 
     NLabel {
         id: backupHeader
-        label: pluginApi?.tr("settings.presets.backup.label")
-        description: pluginApi?.tr("settings.presets.backup.desc")
+        label: root.pluginApi?.tr("settings.presets.backup.label")
+        description: root.pluginApi?.tr("settings.presets.backup.desc")
         Layout.fillWidth: true
     }
 
@@ -953,14 +956,14 @@ ColumnLayout {
         spacing: Style.marginM
 
         NButton {
-            text: pluginApi?.tr("settings.presets.backup.export")
+            text: root.pluginApi?.tr("settings.presets.backup.export")
             icon: "download"
             fontSize: Style.fontSizeS
             onClicked: backupExportPicker.openFilePicker()
         }
 
         NButton {
-            text: pluginApi?.tr("settings.presets.backup.import")
+            text: root.pluginApi?.tr("settings.presets.backup.import")
             icon: "upload"
             fontSize: Style.fontSizeS
             onClicked: backupImportPicker.openFilePicker()
@@ -973,8 +976,8 @@ ColumnLayout {
 
     NLabel {
         id: customRulesHeader
-        label: pluginApi?.tr("settings.presets.customRules.label")
-        description: pluginApi?.tr("settings.presets.customRules.desc")
+        label: root.pluginApi?.tr("settings.presets.customRules.label")
+        description: root.pluginApi?.tr("settings.presets.customRules.desc")
         Layout.fillWidth: true
     }
 
@@ -983,14 +986,14 @@ ColumnLayout {
         spacing: Style.marginM
 
         NButton {
-            text: pluginApi?.tr("settings.presets.customRules.export")
+            text: root.pluginApi?.tr("settings.presets.customRules.export")
             icon: "download"
             fontSize: Style.fontSizeS
             onClicked: customRulesExportPicker.openFilePicker()
         }
 
         NButton {
-            text: pluginApi?.tr("settings.presets.customRules.import")
+            text: root.pluginApi?.tr("settings.presets.customRules.import")
             icon: "upload"
             fontSize: Style.fontSizeS
             onClicked: customRulesImportPicker.openFilePicker()
@@ -1003,8 +1006,8 @@ ColumnLayout {
 
     NLabel {
         id: builtInHeader
-        label: pluginApi?.tr("settings.presets.builtin.label")
-        description: pluginApi?.tr("settings.presets.builtin.desc")
+        label: root.pluginApi?.tr("settings.presets.builtin.label")
+        description: root.pluginApi?.tr("settings.presets.builtin.desc")
         Layout.fillWidth: true
     }
 
@@ -1020,7 +1023,7 @@ ColumnLayout {
                 presetName: modelData.name
                 presetDescription: modelData.description
                 isBuiltIn: true
-                isActive: rootSettings?._activePresetId === modelData.id
+                isActive: root.rootSettings?._activePresetId === modelData.id
                 pluginApi: root.pluginApi
                 onClicked: root._applyPreset(modelData.id)
                 onDetailsRequested: root._openDetails(modelData)
@@ -1042,20 +1045,20 @@ ColumnLayout {
         spacing: Style.marginM
 
         NLabel {
-            label: pluginApi?.tr("settings.presets.custom.label")
-            description: pluginApi?.tr("settings.presets.custom.desc")
+            label: root.pluginApi?.tr("settings.presets.custom.label")
+            description: root.pluginApi?.tr("settings.presets.custom.desc")
             Layout.fillWidth: true
         }
 
         NButton {
-            text: pluginApi?.tr("settings.presets.actions.save")
+            text: root.pluginApi?.tr("settings.presets.actions.save")
             icon: "device-floppy"
             fontSize: Style.fontSizeS
             onClicked: saveDialog.open()
         }
 
         NButton {
-            text: pluginApi?.tr("settings.presets.actions.importPreset")
+            text: root.pluginApi?.tr("settings.presets.actions.importPreset")
             icon: "upload"
             fontSize: Style.fontSizeS
             onClicked: presetImportPicker.openFilePicker()
@@ -1063,7 +1066,7 @@ ColumnLayout {
 
         NButton {
             visible: root.customPresets.length > 0
-            text: pluginApi?.tr("settings.presets.actions.exportAll")
+            text: root.pluginApi?.tr("settings.presets.actions.exportAll")
             icon: "download"
             fontSize: Style.fontSizeS
             onClicked: bulkExportPicker.openFilePicker()
@@ -1071,7 +1074,7 @@ ColumnLayout {
 
         NButton {
             visible: root.customPresets.length > 0
-            text: pluginApi?.tr("settings.presets.actions.deleteAll")
+            text: root.pluginApi?.tr("settings.presets.actions.deleteAll")
             icon: "trash"
             fontSize: Style.fontSizeS
             outlined: true
@@ -1093,7 +1096,7 @@ ColumnLayout {
                 presetName: modelData.name
                 presetDescription: modelData.description || ""
                 isBuiltIn: false
-                isActive: rootSettings?._activePresetId === modelData.id
+                isActive: root.rootSettings?._activePresetId === modelData.id
                 pluginApi: root.pluginApi
                 onClicked: root._applyPreset(modelData.id)
                 onDetailsRequested: root._openDetails(modelData)
@@ -1133,14 +1136,14 @@ ColumnLayout {
             anchors.margins: Style.marginL
 
             NText {
-                text: pluginApi?.tr("settings.presets.empty.label")
+                text: root.pluginApi?.tr("settings.presets.empty.label")
                 pointSize: Style.fontSizeM
                 color: Color.mOnSurfaceVariant
                 Layout.fillWidth: true
             }
 
             NText {
-                text: pluginApi?.tr("settings.presets.empty.desc")
+                text: root.pluginApi?.tr("settings.presets.empty.desc")
                 pointSize: Style.fontSizeS
                 color: Color.mOnSurfaceVariant
                 Layout.fillWidth: true
@@ -1170,7 +1173,7 @@ ColumnLayout {
         }
 
         contentItem: ColumnLayout {
-            width: detailsDialog.width - detailsDialog.padding * 2
+            Layout.fillWidth: true
             spacing: Style.marginL
 
             NHeader {
@@ -1314,7 +1317,7 @@ ColumnLayout {
         }
 
         contentItem: ColumnLayout {
-            width: saveDialog.width - saveDialog.padding * 2
+            Layout.fillWidth: true
             spacing: Style.marginL
 
             NHeader {
@@ -1415,7 +1418,7 @@ ColumnLayout {
         }
 
         contentItem: ColumnLayout {
-            width: deleteDialog.width - deleteDialog.padding * 2
+            Layout.fillWidth: true
             spacing: Style.marginL
 
             NHeader {
@@ -1468,7 +1471,7 @@ ColumnLayout {
         }
 
         contentItem: ColumnLayout {
-            width: deleteAllDialog.width - deleteAllDialog.padding * 2
+            Layout.fillWidth: true
             spacing: Style.marginL
 
             NHeader {
@@ -1525,7 +1528,7 @@ ColumnLayout {
         }
 
         contentItem: ColumnLayout {
-            width: renameDialog.width - renameDialog.padding * 2
+            Layout.fillWidth: true
             spacing: Style.marginL
 
             NHeader {
@@ -1607,7 +1610,7 @@ ColumnLayout {
         }
 
         contentItem: ColumnLayout {
-            width: updateDialog.width - updateDialog.padding * 2
+            Layout.fillWidth: true
             spacing: Style.marginL
 
             NHeader {
@@ -1659,7 +1662,7 @@ ColumnLayout {
         }
 
         onLoadFailed: {
-            importErrorDialog._errorMessage = pluginApi?.tr("settings.presets.import.errors.readFailed");
+            importErrorDialog._errorMessage = root.pluginApi?.tr("settings.presets.import.errors.readFailed");
             importErrorDialog.open();
         }
     }
@@ -1675,7 +1678,7 @@ ColumnLayout {
     NFilePicker {
         id: backupExportPicker
         selectionMode: "folders"
-        title: pluginApi?.tr("settings.presets.backup.export")
+        title: root.pluginApi?.tr("settings.presets.backup.export")
         initialPath: Quickshell.env("HOME") + "/Downloads"
 
         onAccepted: paths => {
@@ -1687,7 +1690,7 @@ ColumnLayout {
     NFilePicker {
         id: backupImportPicker
         selectionMode: "files"
-        title: pluginApi?.tr("settings.presets.backup.import")
+        title: root.pluginApi?.tr("settings.presets.backup.import")
         initialPath: Quickshell.env("HOME")
         nameFilters: ["*.json"]
 
@@ -1700,7 +1703,7 @@ ColumnLayout {
     NFilePicker {
         id: presetExportPicker
         selectionMode: "folders"
-        title: pluginApi?.tr("settings.presets.actions.export")
+        title: root.pluginApi?.tr("settings.presets.actions.export")
         initialPath: Quickshell.env("HOME") + "/Downloads"
 
         property var _targetPreset: null
@@ -1715,7 +1718,7 @@ ColumnLayout {
     NFilePicker {
         id: presetImportPicker
         selectionMode: "files"
-        title: pluginApi?.tr("settings.presets.actions.importPreset")
+        title: root.pluginApi?.tr("settings.presets.actions.importPreset")
         initialPath: Quickshell.env("HOME")
         nameFilters: ["*.json"]
 
@@ -1728,7 +1731,7 @@ ColumnLayout {
     NFilePicker {
         id: bulkExportPicker
         selectionMode: "folders"
-        title: pluginApi?.tr("settings.presets.actions.exportAll")
+        title: root.pluginApi?.tr("settings.presets.actions.exportAll")
         initialPath: Quickshell.env("HOME") + "/Downloads"
 
         onAccepted: paths => {
@@ -1740,7 +1743,7 @@ ColumnLayout {
     NFilePicker {
         id: customRulesExportPicker
         selectionMode: "folders"
-        title: pluginApi?.tr("settings.presets.customRules.export")
+        title: root.pluginApi?.tr("settings.presets.customRules.export")
         initialPath: Quickshell.env("HOME") + "/Downloads"
 
         onAccepted: paths => {
@@ -1752,7 +1755,7 @@ ColumnLayout {
     NFilePicker {
         id: customRulesImportPicker
         selectionMode: "files"
-        title: pluginApi?.tr("settings.presets.customRules.import")
+        title: root.pluginApi?.tr("settings.presets.customRules.import")
         initialPath: Quickshell.env("HOME")
         nameFilters: ["*.json"]
 
@@ -1783,7 +1786,7 @@ ColumnLayout {
         }
 
         contentItem: ColumnLayout {
-            width: importConfirmDialog.width - importConfirmDialog.padding * 2
+            Layout.fillWidth: true
             spacing: Style.marginL
 
             NHeader {
@@ -1887,7 +1890,7 @@ ColumnLayout {
         }
 
         contentItem: ColumnLayout {
-            width: importErrorDialog.width - importErrorDialog.padding * 2
+            Layout.fillWidth: true
             spacing: Style.marginL
 
             NHeader {

@@ -4,13 +4,14 @@ import qs.Commons
 import qs.Widgets
 import "../components"
 import "../../components"
+// qmllint disable unqualified
 
 ColumnLayout {
     id: root
 
     property var rootSettings: null
     property alias rulesSectionTarget: rulesCard.sectionTarget
-    readonly property var mainInstance: rootSettings?.mainInstance ?? null
+    readonly property var mainInstance: root.rootSettings?.mainInstance ?? null
 
     property var _cachedRules: []
     property var _collapsedRuleStates: ({})
@@ -21,20 +22,20 @@ ColumnLayout {
         interval: 0
         repeat: false
         onTriggered: {
-            root._cachedRules = rootSettings?.styleRuleItems() ?? [];
+            root._cachedRules = root.rootSettings?.styleRuleItems() ?? [];
             root.syncRuleCollapsedStates();
         }
     }
 
     Connections {
-        target: rootSettings
+        target: root.rootSettings
         function onStyleRulesRevisionChanged() {
             updateTimer.restart();
         }
     }
 
     Component.onCompleted: {
-        root._cachedRules = rootSettings?.styleRuleItems() ?? [];
+        root._cachedRules = root.rootSettings?.styleRuleItems() ?? [];
         root.syncRuleCollapsedStates();
     }
 
@@ -48,33 +49,33 @@ ColumnLayout {
 
     function syncRuleCollapsedStates() {
         const next = ({});
-        const defaultCollapsed = _cachedRules.length > 1;
-        for (let i = 0; i < _cachedRules.length; i++) {
+        const defaultCollapsed = root._cachedRules.length > 1;
+        for (let i = 0; i < root._cachedRules.length; i++) {
             const key = String(i);
-            if (_collapsedRuleStates[key] !== undefined)
-                next[key] = _collapsedRuleStates[key] === true;
+            if (root._collapsedRuleStates[key] !== undefined)
+                next[key] = root._collapsedRuleStates[key] === true;
             else
                 next[key] = defaultCollapsed;
         }
-        _collapsedRuleStates = next;
+        root._collapsedRuleStates = next;
     }
 
     function isRuleCollapsed(index) {
         const key = String(index);
-        if (_collapsedRuleStates[key] !== undefined)
-            return _collapsedRuleStates[key] === true;
-        return _cachedRules.length > 1;
+        if (root._collapsedRuleStates[key] !== undefined)
+            return root._collapsedRuleStates[key] === true;
+        return root._cachedRules.length > 1;
     }
 
     function setRuleCollapsed(index, collapsed) {
-        const next = Object.assign({}, _collapsedRuleStates);
+        const next = Object.assign({}, root._collapsedRuleStates);
         next[String(index)] = collapsed === true;
-        _collapsedRuleStates = next;
+        root._collapsedRuleStates = next;
     }
 
     function ruleMatchFieldLabel(matchField) {
-        const model = rootSettings?.styleRuleMatchFieldModel ?? [];
-        const normalizedKey = rootSettings?.normalizeStyleRuleMatchField(matchField) ?? "appId";
+        const model = root.rootSettings?.styleRuleMatchFieldModel ?? [];
+        const normalizedKey = root.rootSettings?.normalizeStyleRuleMatchField(matchField) ?? "appId";
         for (let i = 0; i < model.length; i++) {
             if (String(model[i]?.key || "") === normalizedKey)
                 return String(model[i]?.name || normalizedKey);
@@ -86,7 +87,7 @@ ColumnLayout {
         const pattern = String(rule?.pattern || "").trim();
         if (pattern !== "")
             return pattern;
-        return rootSettings?.pluginApi?.tr("settings.customStyleRules.summary.anyPattern") ?? "";
+        return root.rootSettings?.pluginApi?.tr("settings.customStyleRules.summary.anyPattern") ?? "";
     }
 
     function countEnabledStateOverrides(group) {
@@ -118,14 +119,14 @@ ColumnLayout {
     function ruleStatusSummary(rule) {
         const parts = [];
         parts.push(rule?.enabled === false
-            ? (rootSettings?.pluginApi?.tr("settings.customStyleRules.summary.disabled") ?? "")
-            : (rootSettings?.pluginApi?.tr("settings.customStyleRules.summary.enabled") ?? ""));
+            ? (root.rootSettings?.pluginApi?.tr("settings.customStyleRules.summary.disabled") ?? "")
+            : (root.rootSettings?.pluginApi?.tr("settings.customStyleRules.summary.enabled") ?? ""));
 
         const featureCount = ruleFeatureCount(rule);
         if (featureCount > 0) {
-            parts.push((rootSettings?.pluginApi?.tr("settings.customStyleRules.summary.features") ?? "").replace("{count}", featureCount));
+            parts.push((root.rootSettings?.pluginApi?.tr("settings.customStyleRules.summary.features") ?? "").replace("{count}", featureCount));
         } else {
-            parts.push(rootSettings?.pluginApi?.tr("settings.customStyleRules.summary.noOverrides") ?? "");
+            parts.push(root.rootSettings?.pluginApi?.tr("settings.customStyleRules.summary.noOverrides") ?? "");
         }
 
         return parts.join(" | ");
@@ -133,8 +134,8 @@ ColumnLayout {
 
     NHeader {
         Layout.fillWidth: true
-        label: rootSettings?.pluginApi?.tr("settings.section.customStyleRules.label") ?? ""
-        description: rootSettings?.pluginApi?.tr("settings.section.customStyleRules.desc") ?? ""
+        label: root.rootSettings?.pluginApi?.tr("settings.section.customStyleRules.label") ?? ""
+        description: root.rootSettings?.pluginApi?.tr("settings.section.customStyleRules.desc") ?? ""
     }
 
     SettingsSectionCard {
@@ -148,34 +149,34 @@ ColumnLayout {
 
                 NHeader {
                     Layout.fillWidth: true
-                    label: rootSettings?.pluginApi?.tr("settings.customStyleRules.manager.label")
-                    description: (rootSettings?.pluginApi?.tr("settings.customStyleRules.manager.desc") ?? "").replace("{count}", _cachedRules.length)
+                    label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.manager.label")
+                    description: (root.rootSettings?.pluginApi?.tr("settings.customStyleRules.manager.desc") ?? "").replace("{count}", root._cachedRules.length)
                 }
 
                 NButton {
-                    text: rootSettings?.pluginApi?.tr("settings.customStyleRules.actions.add")
+                    text: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.actions.add")
                     icon: "plus"
-                    onClicked: rootSettings?.addStyleRule()
+                    onClicked: root.rootSettings?.addStyleRule()
                 }
             }
 
             NText {
                 Layout.fillWidth: true
-                text: rootSettings?.pluginApi?.tr("settings.customStyleRules.regexHelp")
+                text: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.regexHelp")
                 color: Color.mOnSurfaceVariant
                 wrapMode: Text.WordWrap
             }
 
             NText {
-                visible: _cachedRules.length === 0
+                visible: root._cachedRules.length === 0
                 Layout.fillWidth: true
-                text: rootSettings?.pluginApi?.tr("settings.customStyleRules.empty")
+                text: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.empty")
                 color: Color.mOnSurfaceVariant
                 wrapMode: Text.WordWrap
             }
 
             Repeater {
-                model: _cachedRules
+                model: root._cachedRules
 
                 delegate: NBox {
                     id: ruleCard
@@ -186,7 +187,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     Layout.preferredHeight: ruleContent.implicitHeight + Style.marginM * 2
 
-                    readonly property bool regexValid: rootSettings?.isValidRegex(modelData?.pattern) ?? true
+                    readonly property bool regexValid: root.rootSettings?.isValidRegex(modelData?.pattern) ?? true
                     readonly property bool editTarget: (root.mainInstance?.requestedStyleRuleRevision ?? 0) > 0
                         && String(root.mainInstance?.requestedStyleRuleMatchField || "") === String(modelData?.matchField || "appId")
                         && String(root.mainInstance?.requestedStyleRulePattern || "") === String(modelData?.pattern || "").trim()
@@ -194,6 +195,9 @@ ColumnLayout {
 
                     ColumnLayout {
                         id: ruleContent
+                        readonly property int index: ruleCard.index
+                        readonly property var modelData: ruleCard.modelData
+                        readonly property bool regexValid: ruleCard.regexValid
                         anchors.fill: parent
                         anchors.margins: Style.marginM
                         spacing: Style.marginM
@@ -211,7 +215,7 @@ ColumnLayout {
                                     anchors.left: parent.left
                                     anchors.right: parent.right
                                     anchors.top: parent.top
-                                    label: rootSettings?.pluginApi?.tr("settings.customStyleRules.ruleTitle", {
+                                    label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.ruleTitle", {
                                         "index": index + 1
                                     })
                                     description: root.ruleMatchFieldLabel(modelData?.matchField) + ": " + root.rulePatternSummary(modelData)
@@ -225,7 +229,7 @@ ColumnLayout {
                                     anchors.topMargin: Style.marginXXS
                                     visible: text !== ""
                                     text: ruleCard.editTarget
-                                        ? rootSettings?.pluginApi?.tr("settings.customStyleRules.editing") + " | " + root.ruleStatusSummary(modelData)
+                                        ? root.rootSettings?.pluginApi?.tr("settings.customStyleRules.editing") + " | " + root.ruleStatusSummary(modelData)
                                         : root.ruleStatusSummary(modelData)
                                     color: ruleCard.editTarget ? Color.mPrimary : Color.mOnSurfaceVariant
                                     wrapMode: Text.WordWrap
@@ -248,23 +252,23 @@ ColumnLayout {
                             }
 
                             NButton {
-                                text: rootSettings?.pluginApi?.tr("settings.customStyleRules.actions.moveUp")
+                                text: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.actions.moveUp")
                                 icon: "chevron-up"
                                 enabled: index > 0
-                                onClicked: rootSettings?.moveStyleRule(index, -1)
+                                onClicked: root.rootSettings?.moveStyleRule(index, -1)
                             }
 
                             NButton {
-                                text: rootSettings?.pluginApi?.tr("settings.customStyleRules.actions.moveDown")
+                                text: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.actions.moveDown")
                                 icon: "chevron-down"
                                 enabled: index < (root._cachedRules.length - 1)
-                                onClicked: rootSettings?.moveStyleRule(index, 1)
+                                onClicked: root.rootSettings?.moveStyleRule(index, 1)
                             }
 
                             NButton {
-                                text: rootSettings?.pluginApi?.tr("settings.customStyleRules.actions.remove")
+                                text: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.actions.remove")
                                 icon: "trash"
-                                onClicked: rootSettings?.removeStyleRule(index)
+                                onClicked: root.rootSettings?.removeStyleRule(index)
                             }
 
                             NIcon {
@@ -293,7 +297,7 @@ ColumnLayout {
                         NText {
                             visible: !regexValid && String(modelData?.pattern || "").trim() !== ""
                             Layout.fillWidth: true
-                            text: rootSettings?.pluginApi?.tr("settings.customStyleRules.pattern.invalid")
+                            text: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.pattern.invalid")
                             color: Color.mError
                             wrapMode: Text.WordWrap
                         }
@@ -305,10 +309,10 @@ ColumnLayout {
 
                             NToggle {
                                 Layout.fillWidth: true
-                                label: rootSettings?.pluginApi?.tr("settings.customStyleRules.enabled.label")
-                                description: rootSettings?.pluginApi?.tr("settings.customStyleRules.enabled.desc")
+                                label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.enabled.label")
+                                description: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.enabled.desc")
                                 checked: modelData?.enabled !== false
-                                onToggled: checked => rootSettings?.updateStyleRule(index, {
+                                onToggled: checked => root.rootSettings?.updateStyleRule(index, {
                                         "enabled": checked
                                     })
                                 defaultValue: true
@@ -316,23 +320,23 @@ ColumnLayout {
 
                             NComboBox {
                                 Layout.fillWidth: true
-                                label: rootSettings?.pluginApi?.tr("settings.customStyleRules.matchField.label")
-                                description: rootSettings?.pluginApi?.tr("settings.customStyleRules.matchField.desc")
-                                model: rootSettings?.styleRuleMatchFieldModel ?? []
+                                label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.matchField.label")
+                                description: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.matchField.desc")
+                                model: root.rootSettings?.styleRuleMatchFieldModel ?? []
                                 currentKey: modelData?.matchField ?? "appId"
                                 defaultValue: "appId"
-                                onSelected: key => rootSettings?.updateStyleRule(index, {
-                                        "matchField": rootSettings?.normalizeStyleRuleMatchField(key) ?? "appId"
+                                onSelected: key => root.rootSettings?.updateStyleRule(index, {
+                                        "matchField": root.rootSettings?.normalizeStyleRuleMatchField(key) ?? "appId"
                                     })
                             }
 
                             NTextInput {
                                 Layout.fillWidth: true
-                                label: rootSettings?.pluginApi?.tr("settings.customStyleRules.pattern.label")
-                                description: rootSettings?.pluginApi?.tr("settings.customStyleRules.pattern.desc")
-                                placeholderText: rootSettings?.styleRulePatternPlaceholder(modelData?.matchField ?? "appId") ?? ""
+                                label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.pattern.label")
+                                description: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.pattern.desc")
+                                placeholderText: root.rootSettings?.styleRulePatternPlaceholder(modelData?.matchField ?? "appId") ?? ""
                                 text: modelData?.pattern ?? ""
-                                onTextChanged: rootSettings?.updateStyleRule(index, {
+                                onTextChanged: root.rootSettings?.updateStyleRule(index, {
                                         "pattern": text
                                     })
                             }
@@ -343,8 +347,8 @@ ColumnLayout {
 
                                 NLabel {
                                     Layout.fillWidth: true
-                                    label: rootSettings?.pluginApi?.tr("settings.customStyleRules.customIcon.label")
-                                    description: rootSettings?.pluginApi?.tr("settings.customStyleRules.customIcon.desc")
+                                    label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.customIcon.label")
+                                    description: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.customIcon.desc")
                                 }
 
                                 NIcon {
@@ -355,7 +359,7 @@ ColumnLayout {
                                 }
 
                                 NButton {
-                                    text: rootSettings?.pluginApi?.tr("settings.customStyleRules.customIcon.pick")
+                                    text: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.customIcon.pick")
                                     onClicked: {
                                         iconPicker.activeIndex = index;
                                         iconPicker.initialIcon = String(modelData?.customIcon || "");
@@ -364,9 +368,9 @@ ColumnLayout {
                                 }
 
                                 NButton {
-                                    text: rootSettings?.pluginApi?.tr("settings.customStyleRules.customIcon.clear")
+                                    text: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.customIcon.clear")
                                     enabled: String(modelData?.customIcon || "") !== ""
-                                    onClicked: rootSettings?.updateStyleRule(index, {
+                                    onClicked: root.rootSettings?.updateStyleRule(index, {
                                             "customIcon": ""
                                         })
                                 }
@@ -374,300 +378,300 @@ ColumnLayout {
 
                             NHeader {
                                 Layout.fillWidth: true
-                                label: rootSettings?.pluginApi?.tr("settings.customStyleRules.segmentColors.label")
-                                description: rootSettings?.pluginApi?.tr("settings.customStyleRules.segmentColors.desc")
+                                label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.segmentColors.label")
+                                description: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.segmentColors.desc")
                             }
 
                         HybridColorChoice {
-                            pluginApi: rootSettings?.pluginApi
+                            pluginApi: root.rootSettings?.pluginApi
                             Layout.fillWidth: true
                             opacityExpandedControlled: true
-                            opacityExpanded: rootSettings?.isStyleRuleColorStatePanelExpanded(index, "segment", "focused") ?? false
-                            onOpacityExpandedToggled: expanded => rootSettings?.setStyleRuleColorStatePanelExpanded(index, "segment", "focused", expanded)
+                            opacityExpanded: root.rootSettings?.isStyleRuleColorStatePanelExpanded(index, "segment", "focused") ?? false
+                            onOpacityExpandedToggled: expanded => root.rootSettings?.setStyleRuleColorStatePanelExpanded(index, "segment", "focused", expanded)
                             enabled: modelData?.colors?.segment?.focused?.enabled === true
-                            label: rootSettings?.pluginApi?.tr("settings.focusLine.colors.focused.label")
-                            description: rootSettings?.pluginApi?.tr("settings.focusLine.colors.focused.desc")
+                            label: root.rootSettings?.pluginApi?.tr("settings.focusLine.colors.focused.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.focusLine.colors.focused.desc")
                             currentColor: modelData?.colors?.segment?.focused?.color ?? "primary"
-                            defaultColor: rootSettings?.defaultStateValue("focusLine", "colors", "focused", "color") ?? "primary"
+                            defaultColor: root.rootSettings?.defaultStateValue("focusLine", "colors", "focused", "color") ?? "primary"
                             currentOpacity: modelData?.colors?.segment?.focused?.opacity ?? 1
-                            defaultOpacity: rootSettings?.defaultStateValue("focusLine", "colors", "focused", "opacity") ?? 1
+                            defaultOpacity: root.rootSettings?.defaultStateValue("focusLine", "colors", "focused", "opacity") ?? 1
                             showOpacityControl: true
-                            onColorSelected: value => rootSettings?.updateStyleRuleColorState(index, "segment", "focused", "color", value)
-                            onOpacitySelected: value => rootSettings?.updateStyleRuleColorState(index, "segment", "focused", "opacity", value)
+                            onColorSelected: value => root.rootSettings?.updateStyleRuleColorState(index, "segment", "focused", "color", value)
+                            onOpacitySelected: value => root.rootSettings?.updateStyleRuleColorState(index, "segment", "focused", "opacity", value)
                         }
 
                         NToggle {
                             Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.segmentColors.focused.enabled.label")
-                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.segmentColors.focused.enabled.desc")
+                            label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.segmentColors.focused.enabled.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.segmentColors.focused.enabled.desc")
                             checked: modelData?.colors?.segment?.focused?.enabled === true
-                            onToggled: checked => rootSettings?.updateStyleRuleColorState(index, "segment", "focused", "enabled", checked)
+                            onToggled: checked => root.rootSettings?.updateStyleRuleColorState(index, "segment", "focused", "enabled", checked)
                             defaultValue: false
                         }
 
                         HybridColorChoice {
-                            pluginApi: rootSettings?.pluginApi
+                            pluginApi: root.rootSettings?.pluginApi
                             Layout.fillWidth: true
                             opacityExpandedControlled: true
-                            opacityExpanded: rootSettings?.isStyleRuleColorStatePanelExpanded(index, "segment", "hover") ?? false
-                            onOpacityExpandedToggled: expanded => rootSettings?.setStyleRuleColorStatePanelExpanded(index, "segment", "hover", expanded)
+                            opacityExpanded: root.rootSettings?.isStyleRuleColorStatePanelExpanded(index, "segment", "hover") ?? false
+                            onOpacityExpandedToggled: expanded => root.rootSettings?.setStyleRuleColorStatePanelExpanded(index, "segment", "hover", expanded)
                             enabled: modelData?.colors?.segment?.hover?.enabled === true
-                            label: rootSettings?.pluginApi?.tr("settings.focusLine.colors.hover.label")
-                            description: rootSettings?.pluginApi?.tr("settings.focusLine.colors.hover.desc")
+                            label: root.rootSettings?.pluginApi?.tr("settings.focusLine.colors.hover.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.focusLine.colors.hover.desc")
                             currentColor: modelData?.colors?.segment?.hover?.color ?? "hover"
-                            defaultColor: rootSettings?.defaultStateValue("focusLine", "colors", "hover", "color") ?? "hover"
+                            defaultColor: root.rootSettings?.defaultStateValue("focusLine", "colors", "hover", "color") ?? "hover"
                             currentOpacity: modelData?.colors?.segment?.hover?.opacity ?? 1
-                            defaultOpacity: rootSettings?.defaultStateValue("focusLine", "colors", "hover", "opacity") ?? 1
+                            defaultOpacity: root.rootSettings?.defaultStateValue("focusLine", "colors", "hover", "opacity") ?? 1
                             showOpacityControl: true
-                            onColorSelected: value => rootSettings?.updateStyleRuleColorState(index, "segment", "hover", "color", value)
-                            onOpacitySelected: value => rootSettings?.updateStyleRuleColorState(index, "segment", "hover", "opacity", value)
+                            onColorSelected: value => root.rootSettings?.updateStyleRuleColorState(index, "segment", "hover", "color", value)
+                            onOpacitySelected: value => root.rootSettings?.updateStyleRuleColorState(index, "segment", "hover", "opacity", value)
                         }
 
                         NToggle {
                             Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.segmentColors.hover.enabled.label")
-                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.segmentColors.hover.enabled.desc")
+                            label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.segmentColors.hover.enabled.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.segmentColors.hover.enabled.desc")
                             checked: modelData?.colors?.segment?.hover?.enabled === true
-                            onToggled: checked => rootSettings?.updateStyleRuleColorState(index, "segment", "hover", "enabled", checked)
+                            onToggled: checked => root.rootSettings?.updateStyleRuleColorState(index, "segment", "hover", "enabled", checked)
                             defaultValue: false
                         }
 
                         HybridColorChoice {
-                            pluginApi: rootSettings?.pluginApi
+                            pluginApi: root.rootSettings?.pluginApi
                             Layout.fillWidth: true
                             opacityExpandedControlled: true
-                            opacityExpanded: rootSettings?.isStyleRuleColorStatePanelExpanded(index, "segment", "default") ?? false
-                            onOpacityExpandedToggled: expanded => rootSettings?.setStyleRuleColorStatePanelExpanded(index, "segment", "default", expanded)
+                            opacityExpanded: root.rootSettings?.isStyleRuleColorStatePanelExpanded(index, "segment", "default") ?? false
+                            onOpacityExpandedToggled: expanded => root.rootSettings?.setStyleRuleColorStatePanelExpanded(index, "segment", "default", expanded)
                             enabled: modelData?.colors?.segment?.default?.enabled === true
-                            label: rootSettings?.pluginApi?.tr("settings.focusLine.colors.default.label")
-                            description: rootSettings?.pluginApi?.tr("settings.focusLine.colors.default.desc")
+                            label: root.rootSettings?.pluginApi?.tr("settings.focusLine.colors.default.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.focusLine.colors.default.desc")
                             currentColor: modelData?.colors?.segment?.default?.color ?? "surface-variant"
-                            defaultColor: rootSettings?.defaultStateValue("focusLine", "colors", "default", "color") ?? "surface-variant"
+                            defaultColor: root.rootSettings?.defaultStateValue("focusLine", "colors", "default", "color") ?? "surface-variant"
                             currentOpacity: modelData?.colors?.segment?.default?.opacity ?? 1
-                            defaultOpacity: rootSettings?.defaultStateValue("focusLine", "colors", "default", "opacity") ?? 1
+                            defaultOpacity: root.rootSettings?.defaultStateValue("focusLine", "colors", "default", "opacity") ?? 1
                             showOpacityControl: true
-                            onColorSelected: value => rootSettings?.updateStyleRuleColorState(index, "segment", "default", "color", value)
-                            onOpacitySelected: value => rootSettings?.updateStyleRuleColorState(index, "segment", "default", "opacity", value)
+                            onColorSelected: value => root.rootSettings?.updateStyleRuleColorState(index, "segment", "default", "color", value)
+                            onOpacitySelected: value => root.rootSettings?.updateStyleRuleColorState(index, "segment", "default", "opacity", value)
                         }
 
                         NToggle {
                             Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.segmentColors.default.enabled.label")
-                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.segmentColors.default.enabled.desc")
+                            label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.segmentColors.default.enabled.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.segmentColors.default.enabled.desc")
                             checked: modelData?.colors?.segment?.default?.enabled === true
-                            onToggled: checked => rootSettings?.updateStyleRuleColorState(index, "segment", "default", "enabled", checked)
+                            onToggled: checked => root.rootSettings?.updateStyleRuleColorState(index, "segment", "default", "enabled", checked)
                             defaultValue: false
                         }
 
                         NHeader {
                             Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconColors.label")
-                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconColors.desc")
+                            label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.iconColors.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.iconColors.desc")
                         }
 
                         HybridColorChoice {
-                            pluginApi: rootSettings?.pluginApi
+                            pluginApi: root.rootSettings?.pluginApi
                             Layout.fillWidth: true
                             opacityExpandedControlled: true
-                            opacityExpanded: rootSettings?.isStyleRuleColorStatePanelExpanded(index, "icon", "focused") ?? false
-                            onOpacityExpandedToggled: expanded => rootSettings?.setStyleRuleColorStatePanelExpanded(index, "icon", "focused", expanded)
+                            opacityExpanded: root.rootSettings?.isStyleRuleColorStatePanelExpanded(index, "icon", "focused") ?? false
+                            onOpacityExpandedToggled: expanded => root.rootSettings?.setStyleRuleColorStatePanelExpanded(index, "icon", "focused", expanded)
                             enabled: modelData?.colors?.icon?.focused?.enabled === true
-                            label: rootSettings?.pluginApi?.tr("settings.window.iconColors.focused.label")
-                            description: rootSettings?.pluginApi?.tr("settings.window.iconColors.focused.desc")
+                            label: root.rootSettings?.pluginApi?.tr("settings.window.iconColors.focused.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.window.iconColors.focused.desc")
                             currentColor: modelData?.colors?.icon?.focused?.color ?? "on-surface"
-                            defaultColor: rootSettings?.defaultStateValue("window", "iconColors", "focused", "color") ?? "on-surface"
+                            defaultColor: root.rootSettings?.defaultStateValue("window", "iconColors", "focused", "color") ?? "on-surface"
                             currentOpacity: modelData?.colors?.icon?.focused?.opacity ?? 1
-                            defaultOpacity: rootSettings?.defaultStateValue("window", "iconColors", "focused", "opacity") ?? 1
+                            defaultOpacity: root.rootSettings?.defaultStateValue("window", "iconColors", "focused", "opacity") ?? 1
                             showOpacityControl: true
-                            onColorSelected: value => rootSettings?.updateStyleRuleColorState(index, "icon", "focused", "color", value)
-                            onOpacitySelected: value => rootSettings?.updateStyleRuleColorState(index, "icon", "focused", "opacity", value)
+                            onColorSelected: value => root.rootSettings?.updateStyleRuleColorState(index, "icon", "focused", "color", value)
+                            onOpacitySelected: value => root.rootSettings?.updateStyleRuleColorState(index, "icon", "focused", "opacity", value)
                         }
 
                         NToggle {
                             Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconColors.focused.enabled.label")
-                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconColors.focused.enabled.desc")
+                            label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.iconColors.focused.enabled.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.iconColors.focused.enabled.desc")
                             checked: modelData?.colors?.icon?.focused?.enabled === true
-                            onToggled: checked => rootSettings?.updateStyleRuleColorState(index, "icon", "focused", "enabled", checked)
+                            onToggled: checked => root.rootSettings?.updateStyleRuleColorState(index, "icon", "focused", "enabled", checked)
                             defaultValue: false
                         }
 
                         HybridColorChoice {
-                            pluginApi: rootSettings?.pluginApi
+                            pluginApi: root.rootSettings?.pluginApi
                             Layout.fillWidth: true
                             opacityExpandedControlled: true
-                            opacityExpanded: rootSettings?.isStyleRuleColorStatePanelExpanded(index, "icon", "hover") ?? false
-                            onOpacityExpandedToggled: expanded => rootSettings?.setStyleRuleColorStatePanelExpanded(index, "icon", "hover", expanded)
+                            opacityExpanded: root.rootSettings?.isStyleRuleColorStatePanelExpanded(index, "icon", "hover") ?? false
+                            onOpacityExpandedToggled: expanded => root.rootSettings?.setStyleRuleColorStatePanelExpanded(index, "icon", "hover", expanded)
                             enabled: modelData?.colors?.icon?.hover?.enabled === true
-                            label: rootSettings?.pluginApi?.tr("settings.window.iconColors.hover.label")
-                            description: rootSettings?.pluginApi?.tr("settings.window.iconColors.hover.desc")
+                            label: root.rootSettings?.pluginApi?.tr("settings.window.iconColors.hover.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.window.iconColors.hover.desc")
                             currentColor: modelData?.colors?.icon?.hover?.color ?? "on-hover"
-                            defaultColor: rootSettings?.defaultStateValue("window", "iconColors", "hover", "color") ?? "on-hover"
+                            defaultColor: root.rootSettings?.defaultStateValue("window", "iconColors", "hover", "color") ?? "on-hover"
                             currentOpacity: modelData?.colors?.icon?.hover?.opacity ?? 1
-                            defaultOpacity: rootSettings?.defaultStateValue("window", "iconColors", "hover", "opacity") ?? 1
+                            defaultOpacity: root.rootSettings?.defaultStateValue("window", "iconColors", "hover", "opacity") ?? 1
                             showOpacityControl: true
-                            onColorSelected: value => rootSettings?.updateStyleRuleColorState(index, "icon", "hover", "color", value)
-                            onOpacitySelected: value => rootSettings?.updateStyleRuleColorState(index, "icon", "hover", "opacity", value)
+                            onColorSelected: value => root.rootSettings?.updateStyleRuleColorState(index, "icon", "hover", "color", value)
+                            onOpacitySelected: value => root.rootSettings?.updateStyleRuleColorState(index, "icon", "hover", "opacity", value)
                         }
 
                         NToggle {
                             Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconColors.hover.enabled.label")
-                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconColors.hover.enabled.desc")
+                            label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.iconColors.hover.enabled.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.iconColors.hover.enabled.desc")
                             checked: modelData?.colors?.icon?.hover?.enabled === true
-                            onToggled: checked => rootSettings?.updateStyleRuleColorState(index, "icon", "hover", "enabled", checked)
+                            onToggled: checked => root.rootSettings?.updateStyleRuleColorState(index, "icon", "hover", "enabled", checked)
                             defaultValue: false
                         }
 
                         HybridColorChoice {
-                            pluginApi: rootSettings?.pluginApi
+                            pluginApi: root.rootSettings?.pluginApi
                             Layout.fillWidth: true
                             opacityExpandedControlled: true
-                            opacityExpanded: rootSettings?.isStyleRuleColorStatePanelExpanded(index, "icon", "default") ?? false
-                            onOpacityExpandedToggled: expanded => rootSettings?.setStyleRuleColorStatePanelExpanded(index, "icon", "default", expanded)
+                            opacityExpanded: root.rootSettings?.isStyleRuleColorStatePanelExpanded(index, "icon", "default") ?? false
+                            onOpacityExpandedToggled: expanded => root.rootSettings?.setStyleRuleColorStatePanelExpanded(index, "icon", "default", expanded)
                             enabled: modelData?.colors?.icon?.default?.enabled === true
-                            label: rootSettings?.pluginApi?.tr("settings.window.iconColors.default.label")
-                            description: rootSettings?.pluginApi?.tr("settings.window.iconColors.default.desc")
+                            label: root.rootSettings?.pluginApi?.tr("settings.window.iconColors.default.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.window.iconColors.default.desc")
                             currentColor: modelData?.colors?.icon?.default?.color ?? "on-surface-variant"
-                            defaultColor: rootSettings?.defaultStateValue("window", "iconColors", "default", "color") ?? "on-surface-variant"
+                            defaultColor: root.rootSettings?.defaultStateValue("window", "iconColors", "default", "color") ?? "on-surface-variant"
                             currentOpacity: modelData?.colors?.icon?.default?.opacity ?? 1
-                            defaultOpacity: rootSettings?.defaultStateValue("window", "iconColors", "default", "opacity") ?? 1
+                            defaultOpacity: root.rootSettings?.defaultStateValue("window", "iconColors", "default", "opacity") ?? 1
                             showOpacityControl: true
-                            onColorSelected: value => rootSettings?.updateStyleRuleColorState(index, "icon", "default", "color", value)
-                            onOpacitySelected: value => rootSettings?.updateStyleRuleColorState(index, "icon", "default", "opacity", value)
+                            onColorSelected: value => root.rootSettings?.updateStyleRuleColorState(index, "icon", "default", "color", value)
+                            onOpacitySelected: value => root.rootSettings?.updateStyleRuleColorState(index, "icon", "default", "opacity", value)
                         }
 
                         NToggle {
                             Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconColors.default.enabled.label")
-                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconColors.default.enabled.desc")
+                            label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.iconColors.default.enabled.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.iconColors.default.enabled.desc")
                             checked: modelData?.colors?.icon?.default?.enabled === true
-                            onToggled: checked => rootSettings?.updateStyleRuleColorState(index, "icon", "default", "enabled", checked)
+                            onToggled: checked => root.rootSettings?.updateStyleRuleColorState(index, "icon", "default", "enabled", checked)
                             defaultValue: false
                         }
 
                         NHeader {
                             Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.titleColors.label")
-                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.titleColors.desc")
+                            label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.titleColors.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.titleColors.desc")
                         }
 
                         HybridColorChoice {
-                            pluginApi: rootSettings?.pluginApi
+                            pluginApi: root.rootSettings?.pluginApi
                             Layout.fillWidth: true
                             opacityExpandedControlled: true
-                            opacityExpanded: rootSettings?.isStyleRuleColorStatePanelExpanded(index, "title", "focused") ?? false
-                            onOpacityExpandedToggled: expanded => rootSettings?.setStyleRuleColorStatePanelExpanded(index, "title", "focused", expanded)
+                            opacityExpanded: root.rootSettings?.isStyleRuleColorStatePanelExpanded(index, "title", "focused") ?? false
+                            onOpacityExpandedToggled: expanded => root.rootSettings?.setStyleRuleColorStatePanelExpanded(index, "title", "focused", expanded)
                             enabled: modelData?.colors?.title?.focused?.enabled === true
-                            label: rootSettings?.pluginApi?.tr("settings.window.titleColors.focused.label")
-                            description: rootSettings?.pluginApi?.tr("settings.window.titleColors.focused.desc")
+                            label: root.rootSettings?.pluginApi?.tr("settings.window.titleColors.focused.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.window.titleColors.focused.desc")
                             currentColor: modelData?.colors?.title?.focused?.color ?? "on-surface"
-                            defaultColor: rootSettings?.defaultStateValue("window", "titleColors", "focused", "color") ?? "on-surface"
+                            defaultColor: root.rootSettings?.defaultStateValue("window", "titleColors", "focused", "color") ?? "on-surface"
                             currentOpacity: modelData?.colors?.title?.focused?.opacity ?? 1
-                            defaultOpacity: rootSettings?.defaultStateValue("window", "titleColors", "focused", "opacity") ?? 1
+                            defaultOpacity: root.rootSettings?.defaultStateValue("window", "titleColors", "focused", "opacity") ?? 1
                             showOpacityControl: true
-                            onColorSelected: value => rootSettings?.updateStyleRuleColorState(index, "title", "focused", "color", value)
-                            onOpacitySelected: value => rootSettings?.updateStyleRuleColorState(index, "title", "focused", "opacity", value)
+                            onColorSelected: value => root.rootSettings?.updateStyleRuleColorState(index, "title", "focused", "color", value)
+                            onOpacitySelected: value => root.rootSettings?.updateStyleRuleColorState(index, "title", "focused", "opacity", value)
                         }
 
                         NToggle {
                             Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.titleColors.focused.enabled.label")
-                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.titleColors.focused.enabled.desc")
+                            label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.titleColors.focused.enabled.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.titleColors.focused.enabled.desc")
                             checked: modelData?.colors?.title?.focused?.enabled === true
-                            onToggled: checked => rootSettings?.updateStyleRuleColorState(index, "title", "focused", "enabled", checked)
+                            onToggled: checked => root.rootSettings?.updateStyleRuleColorState(index, "title", "focused", "enabled", checked)
                             defaultValue: false
                         }
 
                         HybridColorChoice {
-                            pluginApi: rootSettings?.pluginApi
+                            pluginApi: root.rootSettings?.pluginApi
                             Layout.fillWidth: true
                             opacityExpandedControlled: true
-                            opacityExpanded: rootSettings?.isStyleRuleColorStatePanelExpanded(index, "title", "hover") ?? false
-                            onOpacityExpandedToggled: expanded => rootSettings?.setStyleRuleColorStatePanelExpanded(index, "title", "hover", expanded)
+                            opacityExpanded: root.rootSettings?.isStyleRuleColorStatePanelExpanded(index, "title", "hover") ?? false
+                            onOpacityExpandedToggled: expanded => root.rootSettings?.setStyleRuleColorStatePanelExpanded(index, "title", "hover", expanded)
                             enabled: modelData?.colors?.title?.hover?.enabled === true
-                            label: rootSettings?.pluginApi?.tr("settings.window.titleColors.hover.label")
-                            description: rootSettings?.pluginApi?.tr("settings.window.titleColors.hover.desc")
+                            label: root.rootSettings?.pluginApi?.tr("settings.window.titleColors.hover.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.window.titleColors.hover.desc")
                             currentColor: modelData?.colors?.title?.hover?.color ?? "on-hover"
-                            defaultColor: rootSettings?.defaultStateValue("window", "titleColors", "hover", "color") ?? "on-hover"
+                            defaultColor: root.rootSettings?.defaultStateValue("window", "titleColors", "hover", "color") ?? "on-hover"
                             currentOpacity: modelData?.colors?.title?.hover?.opacity ?? 1
-                            defaultOpacity: rootSettings?.defaultStateValue("window", "titleColors", "hover", "opacity") ?? 1
+                            defaultOpacity: root.rootSettings?.defaultStateValue("window", "titleColors", "hover", "opacity") ?? 1
                             showOpacityControl: true
-                            onColorSelected: value => rootSettings?.updateStyleRuleColorState(index, "title", "hover", "color", value)
-                            onOpacitySelected: value => rootSettings?.updateStyleRuleColorState(index, "title", "hover", "opacity", value)
+                            onColorSelected: value => root.rootSettings?.updateStyleRuleColorState(index, "title", "hover", "color", value)
+                            onOpacitySelected: value => root.rootSettings?.updateStyleRuleColorState(index, "title", "hover", "opacity", value)
                         }
 
                         NToggle {
                             Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.titleColors.hover.enabled.label")
-                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.titleColors.hover.enabled.desc")
+                            label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.titleColors.hover.enabled.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.titleColors.hover.enabled.desc")
                             checked: modelData?.colors?.title?.hover?.enabled === true
-                            onToggled: checked => rootSettings?.updateStyleRuleColorState(index, "title", "hover", "enabled", checked)
+                            onToggled: checked => root.rootSettings?.updateStyleRuleColorState(index, "title", "hover", "enabled", checked)
                             defaultValue: false
                         }
 
                         HybridColorChoice {
-                            pluginApi: rootSettings?.pluginApi
+                            pluginApi: root.rootSettings?.pluginApi
                             Layout.fillWidth: true
                             opacityExpandedControlled: true
-                            opacityExpanded: rootSettings?.isStyleRuleColorStatePanelExpanded(index, "title", "default") ?? false
-                            onOpacityExpandedToggled: expanded => rootSettings?.setStyleRuleColorStatePanelExpanded(index, "title", "default", expanded)
+                            opacityExpanded: root.rootSettings?.isStyleRuleColorStatePanelExpanded(index, "title", "default") ?? false
+                            onOpacityExpandedToggled: expanded => root.rootSettings?.setStyleRuleColorStatePanelExpanded(index, "title", "default", expanded)
                             enabled: modelData?.colors?.title?.default?.enabled === true
-                            label: rootSettings?.pluginApi?.tr("settings.window.titleColors.default.label")
-                            description: rootSettings?.pluginApi?.tr("settings.window.titleColors.default.desc")
+                            label: root.rootSettings?.pluginApi?.tr("settings.window.titleColors.default.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.window.titleColors.default.desc")
                             currentColor: modelData?.colors?.title?.default?.color ?? "on-surface-variant"
-                            defaultColor: rootSettings?.defaultStateValue("window", "titleColors", "default", "color") ?? "on-surface-variant"
+                            defaultColor: root.rootSettings?.defaultStateValue("window", "titleColors", "default", "color") ?? "on-surface-variant"
                             currentOpacity: modelData?.colors?.title?.default?.opacity ?? 1
-                            defaultOpacity: rootSettings?.defaultStateValue("window", "titleColors", "default", "opacity") ?? 1
+                            defaultOpacity: root.rootSettings?.defaultStateValue("window", "titleColors", "default", "opacity") ?? 1
                             showOpacityControl: true
-                            onColorSelected: value => rootSettings?.updateStyleRuleColorState(index, "title", "default", "color", value)
-                            onOpacitySelected: value => rootSettings?.updateStyleRuleColorState(index, "title", "default", "opacity", value)
+                            onColorSelected: value => root.rootSettings?.updateStyleRuleColorState(index, "title", "default", "color", value)
+                            onOpacitySelected: value => root.rootSettings?.updateStyleRuleColorState(index, "title", "default", "opacity", value)
                         }
 
                         NToggle {
                             Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.titleColors.default.enabled.label")
-                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.titleColors.default.enabled.desc")
+                            label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.titleColors.default.enabled.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.titleColors.default.enabled.desc")
                             checked: modelData?.colors?.title?.default?.enabled === true
-                            onToggled: checked => rootSettings?.updateStyleRuleColorState(index, "title", "default", "enabled", checked)
+                            onToggled: checked => root.rootSettings?.updateStyleRuleColorState(index, "title", "default", "enabled", checked)
                             defaultValue: false
                         }
 
                         NHeader {
                             Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.blink.label")
-                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.blink.desc")
+                            label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.blink.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.blink.desc")
                         }
 
                         NToggle {
                             Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.blink.enabled.label")
-                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.blink.enabled.desc")
+                            label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.blink.enabled.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.blink.enabled.desc")
                             checked: modelData?.blink?.enabled ?? false
-                            onToggled: checked => rootSettings?.updateStyleRuleBlink(index, {
+                            onToggled: checked => root.rootSettings?.updateStyleRuleBlink(index, {
                                     "enabled": checked
                                 })
                             defaultValue: false
                         }
 
                         HybridColorChoice {
-                            pluginApi: rootSettings?.pluginApi
+                            pluginApi: root.rootSettings?.pluginApi
                             Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.blink.color.label")
-                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.blink.color.desc")
+                            label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.blink.color.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.blink.color.desc")
                             currentColor: modelData?.blink?.color?.color ?? "primary"
                             defaultColor: "primary"
                             currentOpacity: modelData?.blink?.color?.opacity ?? 1
                             defaultOpacity: 1
                             showOpacityControl: true
-                            onColorSelected: value => rootSettings?.updateStyleRuleBlinkColor(index, "color", value)
-                            onOpacitySelected: value => rootSettings?.updateStyleRuleBlinkColor(index, "opacity", value)
+                            onColorSelected: value => root.rootSettings?.updateStyleRuleBlinkColor(index, "color", value)
+                            onOpacitySelected: value => root.rootSettings?.updateStyleRuleBlinkColor(index, "opacity", value)
                         }
 
                         NValueSlider {
                             Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.blink.interval.label")
-                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.blink.interval.desc")
+                            label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.blink.interval.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.blink.interval.desc")
                             from: 200
                             to: 5000
                             stepSize: 50
@@ -675,70 +679,70 @@ ColumnLayout {
                             text: value + " ms"
                             defaultValue: 800
                             showReset: true
-                            onMoved: sliderValue => rootSettings?.updateStyleRuleBlink(index, {
+                            onMoved: sliderValue => root.rootSettings?.updateStyleRuleBlink(index, {
                                     "interval": Math.round(sliderValue)
                                 })
                         }
 
                         NHeader {
                             Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.label")
-                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.desc")
+                            label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.desc")
                         }
 
                         NToggle {
                             Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.enabled.label")
-                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.enabled.desc")
+                            label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.enabled.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.enabled.desc")
                             checked: modelData?.badge?.enabled ?? false
-                            onToggled: checked => rootSettings?.updateStyleRuleBadge(index, {
+                            onToggled: checked => root.rootSettings?.updateStyleRuleBadge(index, {
                                     "enabled": checked
                                 })
                             defaultValue: false
                         }
 
                         HybridColorChoice {
-                            pluginApi: rootSettings?.pluginApi
+                            pluginApi: root.rootSettings?.pluginApi
                             Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.color.label")
-                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.color.desc")
+                            label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.color.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.color.desc")
                             currentColor: modelData?.badge?.color?.color ?? "error"
                             defaultColor: "error"
                             currentOpacity: modelData?.badge?.color?.opacity ?? 1
                             defaultOpacity: 1
                             showOpacityControl: true
-                            onColorSelected: value => rootSettings?.updateStyleRuleBadgeColor(index, "color", value)
-                            onOpacitySelected: value => rootSettings?.updateStyleRuleBadgeColor(index, "opacity", value)
+                            onColorSelected: value => root.rootSettings?.updateStyleRuleBadgeColor(index, "color", value)
+                            onOpacitySelected: value => root.rootSettings?.updateStyleRuleBadgeColor(index, "opacity", value)
                         }
 
                         NComboBox {
                             Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.target.label")
-                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.target.desc")
-                            model: rootSettings?.styleRuleBadgeTargetModel ?? []
+                            label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.target.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.target.desc")
+                            model: root.rootSettings?.styleRuleBadgeTargetModel ?? []
                             currentKey: modelData?.badge?.target ?? "icon"
                             defaultValue: "icon"
-                            onSelected: key => rootSettings?.updateStyleRuleBadge(index, {
-                                    "target": rootSettings?.normalizeBadgeTarget(key) ?? "icon"
+                            onSelected: key => root.rootSettings?.updateStyleRuleBadge(index, {
+                                    "target": root.rootSettings?.normalizeBadgeTarget(key) ?? "icon"
                                 })
                         }
 
                         NComboBox {
                             Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.position.label")
-                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.position.desc")
-                            model: rootSettings?.styleRuleBadgePositionModel ?? []
+                            label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.position.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.position.desc")
+                            model: root.rootSettings?.styleRuleBadgePositionModel ?? []
                             currentKey: modelData?.badge?.position ?? "top-right"
                             defaultValue: "top-right"
-                            onSelected: key => rootSettings?.updateStyleRuleBadge(index, {
-                                    "position": rootSettings?.normalizeBadgePosition(key) ?? "top-right"
+                            onSelected: key => root.rootSettings?.updateStyleRuleBadge(index, {
+                                    "position": root.rootSettings?.normalizeBadgePosition(key) ?? "top-right"
                                 })
                         }
 
                         NValueSlider {
                             Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.size.label")
-                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.size.desc")
+                            label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.size.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.badge.size.desc")
                             from: 2
                             to: 16
                             stepSize: 1
@@ -746,23 +750,23 @@ ColumnLayout {
                             text: value + " px"
                             defaultValue: 6
                             showReset: true
-                            onMoved: sliderValue => rootSettings?.updateStyleRuleBadge(index, {
+                            onMoved: sliderValue => root.rootSettings?.updateStyleRuleBadge(index, {
                                     "size": Math.round(sliderValue)
                                 })
                         }
 
                         NHeader {
                             Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.label")
-                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.desc")
+                            label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.desc")
                         }
 
                         NToggle {
                             Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.enabled.label")
-                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.enabled.desc")
+                            label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.enabled.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.enabled.desc")
                             checked: modelData?.iconPrefix?.enabled ?? false
-                            onToggled: checked => rootSettings?.updateStyleRuleIconPrefix(index, {
+                            onToggled: checked => root.rootSettings?.updateStyleRuleIconPrefix(index, {
                                     "enabled": checked
                                 })
                             defaultValue: false
@@ -770,13 +774,13 @@ ColumnLayout {
 
                         NComboBox {
                             Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.target.label")
-                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.target.desc")
-                            model: rootSettings?.styleRulePrefixTargetModel ?? []
+                            label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.target.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.target.desc")
+                            model: root.rootSettings?.styleRulePrefixTargetModel ?? []
                             currentKey: modelData?.iconPrefix?.target ?? "icon"
                             defaultValue: "icon"
-                            onSelected: key => rootSettings?.updateStyleRuleIconPrefix(index, {
-                                    "target": rootSettings?.normalizePrefixTarget(key) ?? "icon"
+                            onSelected: key => root.rootSettings?.updateStyleRuleIconPrefix(index, {
+                                    "target": root.rootSettings?.normalizePrefixTarget(key) ?? "icon"
                                 })
                         }
 
@@ -786,8 +790,8 @@ ColumnLayout {
 
                             NLabel {
                                 Layout.fillWidth: true
-                                label: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.icon.label")
-                                description: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.icon.desc")
+                                label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.icon.label")
+                                description: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.icon.desc")
                             }
 
                             NIcon {
@@ -798,7 +802,7 @@ ColumnLayout {
                             }
 
                             NButton {
-                                text: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.icon.pick")
+                                text: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.icon.pick")
                                 onClicked: {
                                     prefixIconPicker.activeIndex = index;
                                     prefixIconPicker.initialIcon = String(modelData?.iconPrefix?.icon || "");
@@ -807,26 +811,26 @@ ColumnLayout {
                             }
 
                             NButton {
-                                text: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.icon.clear")
+                                text: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.icon.clear")
                                 enabled: String(modelData?.iconPrefix?.icon || "") !== ""
-                                onClicked: rootSettings?.updateStyleRuleIconPrefix(index, {
+                                onClicked: root.rootSettings?.updateStyleRuleIconPrefix(index, {
                                         "icon": ""
                                     })
                             }
                         }
 
                         HybridColorChoice {
-                            pluginApi: rootSettings?.pluginApi
+                            pluginApi: root.rootSettings?.pluginApi
                             Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.color.label")
-                            description: rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.color.desc")
+                            label: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.color.label")
+                            description: root.rootSettings?.pluginApi?.tr("settings.customStyleRules.iconPrefix.color.desc")
                             currentColor: modelData?.iconPrefix?.color?.color ?? "on-surface-variant"
                             defaultColor: "on-surface-variant"
                             currentOpacity: modelData?.iconPrefix?.color?.opacity ?? 1
                             defaultOpacity: 1
                             showOpacityControl: true
-                            onColorSelected: value => rootSettings?.updateStyleRuleIconPrefixColor(index, "color", value)
-                            onOpacitySelected: value => rootSettings?.updateStyleRuleIconPrefixColor(index, "opacity", value)
+                            onColorSelected: value => root.rootSettings?.updateStyleRuleIconPrefixColor(index, "color", value)
+                            onOpacitySelected: value => root.rootSettings?.updateStyleRuleIconPrefixColor(index, "opacity", value)
                         }
                     }
                     }
@@ -844,7 +848,7 @@ ColumnLayout {
         initialIcon: ""
         onIconSelected: iconName => {
             if (activeIndex >= 0)
-                rootSettings?.updateStyleRule(activeIndex, {
+                root.rootSettings?.updateStyleRule(activeIndex, {
                         "customIcon": iconName
                     });
         }
@@ -858,7 +862,7 @@ ColumnLayout {
         initialIcon: ""
         onIconSelected: iconName => {
             if (activeIndex >= 0)
-                rootSettings?.updateStyleRuleIconPrefix(activeIndex, {
+                root.rootSettings?.updateStyleRuleIconPrefix(activeIndex, {
                         "icon": iconName
                     });
         }

@@ -2,10 +2,10 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import qs.Commons
-import qs.Services.System
 import qs.Widgets
 import "../components"
 import "../../components"
+// qmllint disable unqualified
 
 ColumnLayout {
     id: root
@@ -21,76 +21,76 @@ ColumnLayout {
         id: pinnedBehaviorCard
         sectionKey: "pinnedApps"
         rootSettings: root.rootSettings
-        title: rootSettings?.pluginApi?.tr("settings.section.pinnedApps.label")
-        description: rootSettings?.pluginApi?.tr("settings.section.pinnedApps.desc")
+        title: root.rootSettings?.pluginApi?.tr("settings.section.pinnedApps.label")
+        description: root.rootSettings?.pluginApi?.tr("settings.section.pinnedApps.desc")
 
         SettingsSubCard {
             NComboBox {
                 Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.pinnedApps.position.label")
-                description: rootSettings?.pluginApi?.tr("settings.pinnedApps.position.desc")
-                model: rootSettings?.pinnedAppsPositionModel
-                currentKey: rootSettings?.settingValue("pinnedApps", "position") ?? "left"
-                defaultValue: rootSettings?.defaultValue("pinnedApps", "position") ?? "left"
-                onSelected: key => rootSettings?.setSetting("pinnedApps", "position", key)
+                label: root.rootSettings?.pluginApi?.tr("settings.pinnedApps.position.label")
+                description: root.rootSettings?.pluginApi?.tr("settings.pinnedApps.position.desc")
+                model: root.rootSettings?.pinnedAppsPositionModel
+                currentKey: root.rootSettings?.settingValue("pinnedApps", "position") ?? "left"
+                defaultValue: root.rootSettings?.defaultValue("pinnedApps", "position") ?? "left"
+                onSelected: key => root.rootSettings?.setSetting("pinnedApps", "position", key)
             }
 
             HybridColorChoice {
-                pluginApi: rootSettings?.pluginApi
+                pluginApi: root.rootSettings?.pluginApi
                 Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.pinnedApps.iconColor.label")
-                description: rootSettings?.pluginApi?.tr("settings.pinnedApps.iconColor.desc")
-                currentColor: rootSettings?.settingValue("pinnedApps", "iconColor") ?? "on-surface"
-                defaultColor: rootSettings?.defaultValue("pinnedApps", "iconColor") ?? "on-surface"
+                label: root.rootSettings?.pluginApi?.tr("settings.pinnedApps.iconColor.label")
+                description: root.rootSettings?.pluginApi?.tr("settings.pinnedApps.iconColor.desc")
+                currentColor: root.rootSettings?.settingValue("pinnedApps", "iconColor") ?? "on-surface"
+                defaultColor: root.rootSettings?.defaultValue("pinnedApps", "iconColor") ?? "on-surface"
                 currentOpacity: 1
                 defaultOpacity: 1
                 showOpacityControl: false
-                onColorSelected: value => rootSettings?.setSetting("pinnedApps", "iconColor", value)
+                onColorSelected: value => root.rootSettings?.setSetting("pinnedApps", "iconColor", value)
             }
 
             NValueSlider {
-                label: rootSettings?.pluginApi?.tr("settings.pinnedApps.marginLeft.label")
-                description: rootSettings?.pluginApi?.tr("settings.pinnedApps.marginLeft.desc")
+                label: root.rootSettings?.pluginApi?.tr("settings.pinnedApps.marginLeft.label")
+                description: root.rootSettings?.pluginApi?.tr("settings.pinnedApps.marginLeft.desc")
                 from: 0
                 to: 48
                 stepSize: 1
-                value: rootSettings?.settingValue("pinnedApps", "marginLeft") ?? 8
+                value: root.rootSettings?.settingValue("pinnedApps", "marginLeft") ?? 8
                 text: Math.round(value) + " px"
-                defaultValue: rootSettings?.defaultValue("pinnedApps", "marginLeft") ?? 8
+                defaultValue: root.rootSettings?.defaultValue("pinnedApps", "marginLeft") ?? 8
                 showReset: true
-                onMoved: sliderValue => rootSettings?.setSetting("pinnedApps", "marginLeft", Math.round(sliderValue))
+                onMoved: sliderValue => root.rootSettings?.setSetting("pinnedApps", "marginLeft", Math.round(sliderValue))
             }
 
             NValueSlider {
-                label: rootSettings?.pluginApi?.tr("settings.pinnedApps.marginRight.label")
-                description: rootSettings?.pluginApi?.tr("settings.pinnedApps.marginRight.desc")
+                label: root.rootSettings?.pluginApi?.tr("settings.pinnedApps.marginRight.label")
+                description: root.rootSettings?.pluginApi?.tr("settings.pinnedApps.marginRight.desc")
                 from: 0
                 to: 48
                 stepSize: 1
-                value: rootSettings?.settingValue("pinnedApps", "marginRight") ?? 8
+                value: root.rootSettings?.settingValue("pinnedApps", "marginRight") ?? 8
                 text: Math.round(value) + " px"
-                defaultValue: rootSettings?.defaultValue("pinnedApps", "marginRight") ?? 8
+                defaultValue: root.rootSettings?.defaultValue("pinnedApps", "marginRight") ?? 8
                 showReset: true
-                onMoved: sliderValue => rootSettings?.setSetting("pinnedApps", "marginRight", Math.round(sliderValue))
+                onMoved: sliderValue => root.rootSettings?.setSetting("pinnedApps", "marginRight", Math.round(sliderValue))
             }
 
             NToggle {
                 Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.pinnedApps.hideWhenActive.label")
-                description: rootSettings?.pluginApi?.tr("settings.pinnedApps.hideWhenActive.desc")
-                checked: rootSettings?.settingValue("pinnedApps", "hideWhenActive") ?? false
-                defaultValue: rootSettings?.defaultValue("pinnedApps", "hideWhenActive") ?? false
-                onToggled: checked => rootSettings?.setSetting("pinnedApps", "hideWhenActive", checked)
+                label: root.rootSettings?.pluginApi?.tr("settings.pinnedApps.hideWhenActive.label")
+                description: root.rootSettings?.pluginApi?.tr("settings.pinnedApps.hideWhenActive.desc")
+                checked: root.rootSettings?.settingValue("pinnedApps", "hideWhenActive") ?? false
+                defaultValue: root.rootSettings?.defaultValue("pinnedApps", "hideWhenActive") ?? false
+                onToggled: checked => root.rootSettings?.setSetting("pinnedApps", "hideWhenActive", checked)
             }
 
             NComboBox {
                 Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.pinnedApps.activateRunningBehavior.label")
-                description: rootSettings?.pluginApi?.tr("settings.pinnedApps.activateRunningBehavior.desc")
-                model: rootSettings?.pinnedAppsActivateBehaviorModel
-                currentKey: rootSettings?.settingValue("pinnedApps", "activateRunningBehavior") ?? "focusCycle"
-                defaultValue: rootSettings?.defaultValue("pinnedApps", "activateRunningBehavior") ?? "focusCycle"
-                onSelected: key => rootSettings?.setSetting("pinnedApps", "activateRunningBehavior", key)
+                label: root.rootSettings?.pluginApi?.tr("settings.pinnedApps.activateRunningBehavior.label")
+                description: root.rootSettings?.pluginApi?.tr("settings.pinnedApps.activateRunningBehavior.desc")
+                model: root.rootSettings?.pinnedAppsActivateBehaviorModel
+                currentKey: root.rootSettings?.settingValue("pinnedApps", "activateRunningBehavior") ?? "focusCycle"
+                defaultValue: root.rootSettings?.defaultValue("pinnedApps", "activateRunningBehavior") ?? "focusCycle"
+                onSelected: key => root.rootSettings?.setSetting("pinnedApps", "activateRunningBehavior", key)
             }
         
         }
@@ -100,20 +100,20 @@ ColumnLayout {
         id: pinnedItemsCard
         sectionKey: "pinnedApps"
         rootSettings: root.rootSettings
-        title: rootSettings?.pluginApi?.tr("settings.pinnedApps.items.label")
-        description: rootSettings?.pluginApi?.tr("settings.pinnedApps.items.desc")
+        title: root.rootSettings?.pluginApi?.tr("settings.pinnedApps.items.label")
+        description: root.rootSettings?.pluginApi?.tr("settings.pinnedApps.items.desc")
 
         SettingsSubCard {
             NText {
-                visible: (rootSettings?.pinnedAppItems().length ?? 0) === 0
+                visible: (root.rootSettings?.pinnedAppItems().length ?? 0) === 0
                 Layout.fillWidth: true
-                text: rootSettings?.pluginApi?.tr("settings.pinnedApps.items.empty")
+                text: root.rootSettings?.pluginApi?.tr("settings.pinnedApps.items.empty")
                 color: Color.mOnSurfaceVariant
                 wrapMode: Text.WordWrap
             }
 
             Repeater {
-                model: rootSettings?.pinnedAppItems() ?? []
+                model: root.rootSettings?.pinnedAppItems() ?? []
 
                 delegate: NBox {
                     required property var modelData
@@ -122,7 +122,7 @@ ColumnLayout {
                     Layout.preferredHeight: pinnedAppContent.implicitHeight + Style.marginM * 2
 
                     property string appId: String(modelData?.appId || "")
-                    property string appName: rootSettings?.pluginApi?.mainInstance?.getAppNameFromDesktopEntry(appId) || appId
+                    property string appName: root.rootSettings?.pluginApi?.mainInstance?.getAppNameFromDesktopEntry(appId) || appId
                     property string customIconPath: String(modelData?.customIcon || "")
 
                     ColumnLayout {
@@ -148,7 +148,7 @@ ColumnLayout {
 
                         NText {
                             Layout.fillWidth: true
-                            text: customIconPath !== "" ? customIconPath : rootSettings?.pluginApi?.tr("settings.pinnedApps.customIcon.none")
+                            text: customIconPath !== "" ? customIconPath : root.rootSettings?.pluginApi?.tr("settings.pinnedApps.customIcon.none")
                             color: Color.mOnSurfaceVariant
                             wrapMode: Text.WrapAnywhere
                         }
@@ -158,14 +158,14 @@ ColumnLayout {
                             spacing: Style.marginS
 
                             NButton {
-                                text: rootSettings?.pluginApi?.tr("settings.pinnedApps.customIcon.browse")
+                                text: root.rootSettings?.pluginApi?.tr("settings.pinnedApps.customIcon.browse")
                                 onClicked: filePicker.openFilePicker()
                             }
 
                             NButton {
                                 enabled: customIconPath !== ""
-                                text: rootSettings?.pluginApi?.tr("settings.pinnedApps.customIcon.clear")
-                                onClicked: rootSettings?.setPinnedAppCustomIcon(appId, "")
+                                text: root.rootSettings?.pluginApi?.tr("settings.pinnedApps.customIcon.clear")
+                                onClicked: root.rootSettings?.setPinnedAppCustomIcon(appId, "")
                             }
 
                             Item {
@@ -173,21 +173,21 @@ ColumnLayout {
                             }
 
                             NButton {
-                                text: rootSettings?.pluginApi?.tr("settings.pinnedApps.items.remove")
-                                onClicked: rootSettings?.removePinnedApp(appId)
+                                text: root.rootSettings?.pluginApi?.tr("settings.pinnedApps.items.remove")
+                                onClicked: root.rootSettings?.removePinnedApp(appId)
                             }
                         }
                     }
 
                     NFilePicker {
                         id: filePicker
-                        title: rootSettings?.pluginApi?.tr("settings.pinnedApps.customIcon.title")
+                        title: root.rootSettings?.pluginApi?.tr("settings.pinnedApps.customIcon.title")
                         selectionMode: "files"
                         nameFilters: ImageCacheService.basicImageFilters.concat(["*.svg"])
                         initialPath: Quickshell.env("HOME")
                         onAccepted: paths => {
                             if (paths.length > 0)
-                                rootSettings?.setPinnedAppCustomIcon(appId, paths[0]);
+                                root.rootSettings?.setPinnedAppCustomIcon(appId, paths[0]);
                         }
                     }
                 }

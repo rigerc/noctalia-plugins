@@ -38,7 +38,7 @@ Item {
     onPluginApiChanged: refreshSettingsSnapshot()
 
     Connections {
-        target: pluginApi
+        target: root.pluginApi
 
         function onPluginSettingsChanged() {
             root.refreshSettingsSnapshot();

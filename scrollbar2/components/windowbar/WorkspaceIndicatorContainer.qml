@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 import qs.Commons
-import qs.Services.UI
 import qs.Widgets
 
 Item {
@@ -9,23 +8,23 @@ Item {
 
     required property var view
 
-    visible: view.showWorkspaceIndicator
+    visible: container.view.showWorkspaceIndicator
     x: {
-        if (view.workspaceIndicatorPosition === "left")
-            return (view.pinnedSegmentCount > 0 && view.pinnedAppsPosition === "left" ? view.pinnedAreaWidth : 0) + view.workspaceIndicatorMarginLeft;
-        return view.leftAccessoryWidth + view.actualTrackWidth + view.workspaceIndicatorMarginLeft;
+        if (container.view.workspaceIndicatorPosition === "left")
+            return (container.view.pinnedSegmentCount > 0 && container.view.pinnedAppsPosition === "left" ? container.view.pinnedAreaWidth : 0) + container.view.workspaceIndicatorMarginLeft;
+        return container.view.leftAccessoryWidth + container.view.actualTrackWidth + container.view.workspaceIndicatorMarginLeft;
     }
-    y: view.workspaceIndicatorAlignedY()
+    y: container.view.workspaceIndicatorAlignedY()
     width: workspaceBackground.width
     height: workspaceBackground.height
     z: 30
 
     Rectangle {
         id: workspaceBackground
-        width: Math.max(incomingIndicator.implicitWidth, outgoingIndicator.implicitWidth) + view.workspaceIndicatorPaddingX * 2
-        height: Math.max(incomingIndicator.implicitHeight, outgoingIndicator.implicitHeight) + view.workspaceIndicatorPaddingY * 2
-        radius: Math.min(view.workspaceIndicatorBorderRadius, Math.min(width, height) / 2)
-        color: Qt.alpha(view.workspaceIndicatorBackgroundColor, view.workspaceIndicatorBackgroundOpacity)
+        width: Math.max(incomingIndicator.implicitWidth, outgoingIndicator.implicitWidth) + container.view.workspaceIndicatorPaddingX * 2
+        height: Math.max(incomingIndicator.implicitHeight, outgoingIndicator.implicitHeight) + container.view.workspaceIndicatorPaddingY * 2
+        radius: Math.min(container.view.workspaceIndicatorBorderRadius, Math.min(width, height) / 2)
+        color: Qt.alpha(container.view.workspaceIndicatorBackgroundColor, container.view.workspaceIndicatorBackgroundOpacity)
 
         Item {
             anchors.fill: parent
@@ -35,34 +34,34 @@ Item {
                 id: outgoingIndicator
                 anchors.centerIn: parent
                 spacing: Math.max(4, Math.round(4 * Style.uiScaleRatio))
-                visible: view.outgoingWorkspaceText !== "" && view.workspaceIndicatorTransitionProgress < 1
-                opacity: 1 - view.workspaceIndicatorTransitionProgress
-                x: view.workspaceIndicatorAnimationAxis === "horizontal" ? Math.round((-view.workspaceIndicatorPaddingX * 1.5) * view.workspaceIndicatorTransitionProgress) : 0
-                y: view.workspaceIndicatorAnimationAxis === "vertical" ? Math.round((-view.workspaceIndicatorPaddingY * 2) * view.workspaceIndicatorTransitionProgress) : 0
+                visible: container.view.outgoingWorkspaceText !== "" && container.view.workspaceIndicatorTransitionProgress < 1
+                opacity: 1 - container.view.workspaceIndicatorTransitionProgress
+                x: container.view.workspaceIndicatorAnimationAxis === "horizontal" ? Math.round((-container.view.workspaceIndicatorPaddingX * 1.5) * container.view.workspaceIndicatorTransitionProgress) : 0
+                y: container.view.workspaceIndicatorAnimationAxis === "vertical" ? Math.round((-container.view.workspaceIndicatorPaddingY * 2) * container.view.workspaceIndicatorTransitionProgress) : 0
 
                 NText {
-                    text: view.outgoingWorkspaceText
-                    color: Qt.alpha(view.workspaceIndicatorTextColor, view.workspaceIndicatorTextOpacity)
-                    font.family: view.workspaceIndicatorFontFamily || Qt.application.font.family
-                    font.weight: view.fontWeightValue(view.workspaceIndicatorFontWeightKey, Style.fontWeightMedium)
-                    pointSize: view.workspaceIndicatorFontSize
+                    text: container.view.outgoingWorkspaceText
+                    color: Qt.alpha(container.view.workspaceIndicatorTextColor, container.view.workspaceIndicatorTextOpacity)
+                    font.family: container.view.workspaceIndicatorFontFamily || Qt.application.font.family // qmllint disable missing-property
+                    font.weight: container.view.fontWeightValue(container.view.workspaceIndicatorFontWeightKey, Style.fontWeightMedium)
+                    pointSize: container.view.workspaceIndicatorFontSize
                 }
 
                 Rectangle {
-                    visible: view.workspaceIndicatorBadgeEnabled
+                    visible: container.view.workspaceIndicatorBadgeEnabled
                     radius: Math.min(height / 2, Math.round(999 * Style.uiScaleRatio))
-                    color: Qt.alpha(view.workspaceIndicatorBadgeBackgroundColor, view.workspaceIndicatorBadgeBackgroundOpacity)
-                    implicitWidth: badgeOutgoingText.implicitWidth + view.workspaceIndicatorPaddingX
-                    implicitHeight: badgeOutgoingText.implicitHeight + view.workspaceIndicatorPaddingY
+                    color: Qt.alpha(container.view.workspaceIndicatorBadgeBackgroundColor, container.view.workspaceIndicatorBadgeBackgroundOpacity)
+                    implicitWidth: badgeOutgoingText.implicitWidth + container.view.workspaceIndicatorPaddingX
+                    implicitHeight: badgeOutgoingText.implicitHeight + container.view.workspaceIndicatorPaddingY
 
                     NText {
                         id: badgeOutgoingText
                         anchors.centerIn: parent
-                        text: String(view.outgoingWorkspaceBadgeCount)
-                        color: Qt.alpha(view.workspaceIndicatorBadgeTextColor, view.workspaceIndicatorBadgeTextOpacity)
-                        font.family: view.workspaceIndicatorBadgeFontFamily || Qt.application.font.family
-                        font.weight: view.fontWeightValue(view.workspaceIndicatorBadgeFontWeightKey, Style.fontWeightSemiBold)
-                        pointSize: view.workspaceIndicatorBadgeFontSize
+                        text: String(container.view.outgoingWorkspaceBadgeCount)
+                        color: Qt.alpha(container.view.workspaceIndicatorBadgeTextColor, container.view.workspaceIndicatorBadgeTextOpacity)
+                        font.family: container.view.workspaceIndicatorBadgeFontFamily || Qt.application.font.family // qmllint disable missing-property
+                        font.weight: container.view.fontWeightValue(container.view.workspaceIndicatorBadgeFontWeightKey, Style.fontWeightSemiBold)
+                        pointSize: container.view.workspaceIndicatorBadgeFontSize
                     }
                 }
             }
@@ -71,33 +70,33 @@ Item {
                 id: incomingIndicator
                 anchors.centerIn: parent
                 spacing: Math.max(4, Math.round(4 * Style.uiScaleRatio))
-                opacity: view.workspaceIndicatorAnimationEnabled ? view.workspaceIndicatorTransitionProgress : 1
-                x: view.workspaceIndicatorAnimationAxis === "horizontal" ? Math.round((1 - view.workspaceIndicatorTransitionProgress) * view.workspaceIndicatorPaddingX * 1.5) : 0
-                y: view.workspaceIndicatorAnimationAxis === "vertical" ? Math.round((1 - view.workspaceIndicatorTransitionProgress) * view.workspaceIndicatorPaddingY * 2) : 0
+                opacity: container.view.workspaceIndicatorAnimationEnabled ? container.view.workspaceIndicatorTransitionProgress : 1
+                x: container.view.workspaceIndicatorAnimationAxis === "horizontal" ? Math.round((1 - container.view.workspaceIndicatorTransitionProgress) * container.view.workspaceIndicatorPaddingX * 1.5) : 0
+                y: container.view.workspaceIndicatorAnimationAxis === "vertical" ? Math.round((1 - container.view.workspaceIndicatorTransitionProgress) * container.view.workspaceIndicatorPaddingY * 2) : 0
 
                 NText {
-                    text: view.displayedWorkspaceText
-                    color: Qt.alpha(view.workspaceIndicatorTextColor, view.workspaceIndicatorTextOpacity)
-                    font.family: view.workspaceIndicatorFontFamily || Qt.application.font.family
-                    font.weight: view.fontWeightValue(view.workspaceIndicatorFontWeightKey, Style.fontWeightMedium)
-                    pointSize: view.workspaceIndicatorFontSize
+                    text: container.view.displayedWorkspaceText
+                    color: Qt.alpha(container.view.workspaceIndicatorTextColor, container.view.workspaceIndicatorTextOpacity)
+                    font.family: container.view.workspaceIndicatorFontFamily || Qt.application.font.family // qmllint disable missing-property
+                    font.weight: container.view.fontWeightValue(container.view.workspaceIndicatorFontWeightKey, Style.fontWeightMedium)
+                    pointSize: container.view.workspaceIndicatorFontSize
                 }
 
                 Rectangle {
-                    visible: view.workspaceIndicatorBadgeEnabled
+                    visible: container.view.workspaceIndicatorBadgeEnabled
                     radius: Math.min(height / 2, Math.round(999 * Style.uiScaleRatio))
-                    color: Qt.alpha(view.workspaceIndicatorBadgeBackgroundColor, view.workspaceIndicatorBadgeBackgroundOpacity)
-                    implicitWidth: badgeIncomingText.implicitWidth + view.workspaceIndicatorPaddingX
-                    implicitHeight: badgeIncomingText.implicitHeight + view.workspaceIndicatorPaddingY
+                    color: Qt.alpha(container.view.workspaceIndicatorBadgeBackgroundColor, container.view.workspaceIndicatorBadgeBackgroundOpacity)
+                    implicitWidth: badgeIncomingText.implicitWidth + container.view.workspaceIndicatorPaddingX
+                    implicitHeight: badgeIncomingText.implicitHeight + container.view.workspaceIndicatorPaddingY
 
                     NText {
                         id: badgeIncomingText
                         anchors.centerIn: parent
-                        text: String(view.displayedWorkspaceBadgeCount)
-                        color: Qt.alpha(view.workspaceIndicatorBadgeTextColor, view.workspaceIndicatorBadgeTextOpacity)
-                        font.family: view.workspaceIndicatorBadgeFontFamily || Qt.application.font.family
-                        font.weight: view.fontWeightValue(view.workspaceIndicatorBadgeFontWeightKey, Style.fontWeightSemiBold)
-                        pointSize: view.workspaceIndicatorBadgeFontSize
+                        text: String(container.view.displayedWorkspaceBadgeCount)
+                        color: Qt.alpha(container.view.workspaceIndicatorBadgeTextColor, container.view.workspaceIndicatorBadgeTextOpacity)
+                        font.family: container.view.workspaceIndicatorBadgeFontFamily || Qt.application.font.family // qmllint disable missing-property
+                        font.weight: container.view.fontWeightValue(container.view.workspaceIndicatorBadgeFontWeightKey, Style.fontWeightSemiBold)
+                        pointSize: container.view.workspaceIndicatorBadgeFontSize
                     }
                 }
             }
@@ -107,10 +106,10 @@ Item {
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.NoButton
-        visible: view.workspaceScrollSwitchEnabled
+        visible: container.view.workspaceScrollSwitchEnabled
         onWheel: wheel => {
             const offset = wheel.angleDelta.y > 0 ? -1 : 1;
-            view.mainInstance?.switchWorkspaceByOffset(view.screenName, offset);
+            container.view.mainInstance?.switchWorkspaceByOffset(container.view.screenName, offset);
             wheel.accepted = true;
         }
     }

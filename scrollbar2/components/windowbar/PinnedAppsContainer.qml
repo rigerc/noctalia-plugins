@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Widgets
@@ -10,23 +11,23 @@ Item {
 
     required property var view
 
-    visible: view.pinnedSegmentCount > 0
+    visible: container.view.pinnedSegmentCount > 0
     x: {
-        if (view.pinnedAppsPosition === "left")
-            return view.pinnedAppsMarginLeft;
-        return view.leftAccessoryWidth + view.actualTrackWidth + (view.showWorkspaceIndicator && view.workspaceIndicatorPosition === "right" ? view.totalIndicatorWidth : 0) + view.pinnedAppsMarginLeft;
+        if (container.view.pinnedAppsPosition === "left")
+            return container.view.pinnedAppsMarginLeft;
+        return container.view.leftAccessoryWidth + container.view.actualTrackWidth + (container.view.showWorkspaceIndicator && container.view.workspaceIndicatorPosition === "right" ? container.view.totalIndicatorWidth : 0) + container.view.pinnedAppsMarginLeft;
     }
-    y: view.pinnedAppsAlignedY()
-    width: view.pinnedAreaContentWidth
-    height: view.pinnedSegmentCount > 0 ? view.pinnedSlotSize : 0
+    y: container.view.pinnedAppsAlignedY()
+    width: container.view.pinnedAreaContentWidth
+    height: container.view.pinnedSegmentCount > 0 ? container.view.pinnedSlotSize : 0
     z: 25
 
     Row {
         anchors.fill: parent
-        spacing: view.segmentSpacing
+        spacing: container.view.segmentSpacing
 
         Repeater {
-            model: view.pinnedEntries
+            model: container.view.pinnedEntries
 
             delegate: Item {
                 id: pinnedItem
@@ -36,18 +37,18 @@ Item {
                 readonly property string appId: modelData?.appId ?? ""
                 readonly property string title: modelData?.name ?? appId
 
-                width: view.pinnedSlotSize
-                height: view.pinnedSlotSize
+                width: container.view.pinnedSlotSize
+                height: container.view.pinnedSlotSize
 
                 Rectangle {
                     anchors.fill: parent
-                    radius: Math.min(view.windowBorderRadius, Math.min(width, height) / 2)
-                    color: view.pinnedSlotBackgroundColor(pinnedItem.appId)
+                    radius: Math.min(container.view.windowBorderRadius, Math.min(width, height) / 2)
+                    color: container.view.pinnedSlotBackgroundColor(pinnedItem.appId)
 
                     Behavior on color {
-                        enabled: view.animationEnabled
+                        enabled: container.view.animationEnabled
                         ColorAnimation {
-                            duration: view.animationSpeed
+                            duration: container.view.animationSpeed
                         }
                     }
                 }
@@ -55,16 +56,16 @@ Item {
                 IconImage {
                     id: pinnedCustomIcon
                     anchors.centerIn: parent
-                    width: view.computedIconSize
-                    height: view.computedIconSize
-                    source: view.pinnedAppIconSource(pinnedItem.modelData)
+                    width: container.view.computedIconSize
+                    height: container.view.computedIconSize
+                    source: container.view.pinnedAppIconSource(pinnedItem.modelData)
                     smooth: true
                     asynchronous: true
                     visible: status === Image.Ready
 
-                    layer.enabled: visible && view.pinnedAppsIconColorKey !== "none"
+                    layer.enabled: visible && container.view.pinnedAppsIconColorKey !== "none"
                     layer.effect: ShaderEffect {
-                        property color targetColor: view.pinnedAppsIconColor
+                        property color targetColor: container.view.pinnedAppsIconColor
                         property real colorizeMode: 0.0
 
                         fragmentShader: Qt.resolvedUrl(Quickshell.shellDir + "/Shaders/qsb/appicon_colorize.frag.qsb")
@@ -75,9 +76,9 @@ Item {
                     anchors.centerIn: parent
                     visible: !pinnedCustomIcon.visible
                     text: pinnedItem.title.length > 0 ? pinnedItem.title.charAt(0).toUpperCase() : "?"
-                    pointSize: Math.max(Style.fontSizeXS, view.titleFontSize * view.titleScale * 0.95)
+                    pointSize: Math.max(Style.fontSizeXS, container.view.titleFontSize * container.view.titleScale * 0.95)
                     font.weight: Style.fontWeightBold
-                    color: view.pinnedAppsIconColorKey === "none" ? Color.mOnSurface : view.pinnedAppsIconColor
+                    color: container.view.pinnedAppsIconColorKey === "none" ? Color.mOnSurface : container.view.pinnedAppsIconColor
                 }
 
                 MouseArea {
@@ -88,23 +89,23 @@ Item {
                     preventStealing: true
 
                     onEntered: {
-                        view.hoveredPinnedAppId = pinnedItem.appId;
+                        container.view.hoveredPinnedAppId = pinnedItem.appId;
                         if (pinnedItem.title)
-                            TooltipService.show(pinnedItem, pinnedItem.title, BarService.getTooltipDirection(view.screen?.name));
+                            TooltipService.show(pinnedItem, pinnedItem.title, BarService.getTooltipDirection(container.view.screen?.name));
                     }
 
                     onExited: {
-                        if (view.hoveredPinnedAppId === pinnedItem.appId)
-                            view.hoveredPinnedAppId = "";
+                        if (container.view.hoveredPinnedAppId === pinnedItem.appId)
+                            container.view.hoveredPinnedAppId = "";
                         TooltipService.hide();
                     }
 
                     onReleased: mouse => {
                         if (mouse.button === Qt.RightButton) {
                             TooltipService.hide();
-                            view.openContextMenu(pinnedItem, null, pinnedItem.modelData);
+                            container.view.openContextMenu(pinnedItem, null, pinnedItem.modelData);
                         } else if (mouse.button === Qt.LeftButton) {
-                            view.activatePinnedApp(pinnedItem.appId);
+                            container.view.activatePinnedApp(pinnedItem.appId);
                         }
                     }
                 }

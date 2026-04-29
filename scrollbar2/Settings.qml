@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
 import qs.Commons
-import qs.Services.System
 import qs.Widgets
 import "./settings/tabs"
 import "Migrations.js" as Migrations

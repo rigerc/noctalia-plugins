@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell.Widgets
@@ -11,28 +12,28 @@ Item {
 
     x: 0
     y: 0
-    width: view.effectiveTrackWidth
-    height: view.availableContainerHeight
+    width: layer.view.effectiveTrackWidth
+    height: layer.view.availableContainerHeight
     z: 19
-    visible: (view.closingEntries || []).length > 0
+    visible: (layer.view.closingEntries || []).length > 0
 
     Repeater {
-        model: view.closingEntries
+        model: layer.view.closingEntries
 
         delegate: Item {
             id: closingSegment
 
             required property var modelData
 
-            readonly property int closeUid: modelData?.uid ?? -1
-            readonly property string appId: String(modelData?.appId ?? "")
-            readonly property string title: String(modelData?.title ?? "")
-            readonly property bool showLabel: modelData?.showLabel !== false
+            readonly property int closeUid: closingSegment.modelData?.uid ?? -1
+            readonly property string appId: String(closingSegment.modelData?.appId ?? "")
+            readonly property string title: String(closingSegment.modelData?.title ?? "")
+            readonly property bool showLabel: closingSegment.modelData?.showLabel !== false
 
-            x: modelData?.x ?? 0
-            y: modelData?.y ?? 0
-            width: modelData?.width ?? 0
-            height: modelData?.height ?? 0
+            x: closingSegment.modelData?.x ?? 0
+            y: closingSegment.modelData?.y ?? 0
+            width: closingSegment.modelData?.width ?? 0
+            height: closingSegment.modelData?.height ?? 0
             clip: true
             opacity: 1
             scale: 1
@@ -40,32 +41,32 @@ Item {
 
             Rectangle {
                 anchors.fill: parent
-                anchors.margins: view.windowMargin
-                radius: Math.min(Math.max(0, view.windowBorderRadius), Math.max(0, Math.min(width, height) / 2))
-                color: modelData?.backgroundColor ?? "transparent"
+                anchors.margins: layer.view.windowMargin
+                radius: Math.min(Math.max(0, layer.view.windowBorderRadius), Math.max(0, Math.min(width, height) / 2))
+                color: closingSegment.modelData?.backgroundColor ?? "transparent"
             }
 
             RowLayout {
                 anchors.fill: parent
-                anchors.margins: view.windowMargin
-                anchors.leftMargin: view.windowMargin + view.windowPaddingLeft
-                anchors.rightMargin: view.windowMargin + view.windowPaddingRight
-                anchors.topMargin: view.windowMargin + view.windowPaddingTop
-                anchors.bottomMargin: view.windowMargin + view.windowPaddingBottom
-                spacing: view.labelGap
-                visible: view.showIcon || view.showTitle
+                anchors.margins: layer.view.windowMargin
+                anchors.leftMargin: layer.view.windowMargin + layer.view.windowPaddingLeft
+                anchors.rightMargin: layer.view.windowMargin + layer.view.windowPaddingRight
+                anchors.topMargin: layer.view.windowMargin + layer.view.windowPaddingTop
+                anchors.bottomMargin: layer.view.windowMargin + layer.view.windowPaddingBottom
+                spacing: layer.view.labelGap
+                visible: layer.view.showIcon || layer.view.showTitle
 
                 Item {
-                    Layout.preferredWidth: view.showIcon ? (view.showTitle ? view.computedIconSize : Math.max(view.computedIconSize, closingSegment.width - (view.windowMargin * 2) - view.windowPaddingLeft - view.windowPaddingRight)) : 0
-                    Layout.preferredHeight: view.showIcon ? view.computedIconSize : 0
+                    Layout.preferredWidth: layer.view.showIcon ? (layer.view.showTitle ? layer.view.computedIconSize : Math.max(layer.view.computedIconSize, closingSegment.width - (layer.view.windowMargin * 2) - layer.view.windowPaddingLeft - layer.view.windowPaddingRight)) : 0
+                    Layout.preferredHeight: layer.view.showIcon ? layer.view.computedIconSize : 0
                     Layout.alignment: Qt.AlignVCenter
-                    visible: view.showIcon
+                    visible: layer.view.showIcon
                     opacity: closingSegment.showLabel ? 1 : 0
 
                     IconImage {
                         id: closingAppIcon
-                        width: view.computedIconSize
-                        height: view.computedIconSize
+                        width: layer.view.computedIconSize
+                        height: layer.view.computedIconSize
                         anchors.centerIn: parent
                         source: ThemeIcons.iconForAppId(closingSegment.appId)
                         smooth: true
@@ -75,24 +76,24 @@ Item {
 
                     NIcon {
                         id: closingCustomIcon
-                        width: view.computedIconSize
-                        height: view.computedIconSize
+                        width: layer.view.computedIconSize
+                        height: layer.view.computedIconSize
                         anchors.centerIn: parent
-                        icon: String(modelData?.customIcon ?? "")
-                        pointSize: view.computedIconSize
+                        icon: String(closingSegment.modelData?.customIcon ?? "")
+                        pointSize: layer.view.computedIconSize
                         visible: icon !== ""
-                        color: modelData?.iconColor ?? view.titleColorDefault
+                        color: closingSegment.modelData?.iconColor ?? layer.view.titleColorDefault
                     }
 
                     NText {
-                        width: view.computedIconSize
+                        width: layer.view.computedIconSize
                         anchors.centerIn: parent
-                        horizontalAlignment: view.horizontalAlignment(view.iconAlign)
+                        horizontalAlignment: layer.view.horizontalAlignment(layer.view.iconAlign)
                         visible: !closingAppIcon.visible && !closingCustomIcon.visible
                         text: closingSegment.title.length > 0 ? closingSegment.title.charAt(0).toUpperCase() : "?"
-                        pointSize: Math.max(Style.fontSizeXS, view.titleFontSize * view.titleScale * 0.95)
+                        pointSize: Math.max(Style.fontSizeXS, layer.view.titleFontSize * layer.view.titleScale * 0.95)
                         font.weight: Style.fontWeightBold
-                        color: modelData?.iconColor ?? view.titleColorDefault
+                        color: closingSegment.modelData?.iconColor ?? layer.view.titleColorDefault
                     }
                 }
 
@@ -100,7 +101,7 @@ Item {
                     Layout.fillWidth: true
                     Layout.preferredHeight: closingTitle.implicitHeight
                     Layout.alignment: Qt.AlignVCenter
-                    visible: view.showTitle
+                    visible: layer.view.showTitle
 
                     NText {
                         id: closingTitle
@@ -109,27 +110,27 @@ Item {
                         elide: Text.ElideRight
                         maximumLineCount: 1
                         opacity: closingSegment.showLabel ? 1 : 0
-                        color: modelData?.titleColor ?? view.titleColorDefault
-                        horizontalAlignment: view.horizontalAlignment(view.titleAlign)
-                        font.family: view.titleFontFamily || Qt.application.font.family
-                        pointSize: view.titleFontSize * view.titleScale
-                        font.weight: modelData?.titleWeight ?? Style.fontWeightMedium
+                        color: closingSegment.modelData?.titleColor ?? layer.view.titleColorDefault
+                        horizontalAlignment: layer.view.horizontalAlignment(layer.view.titleAlign)
+                        font.family: layer.view.titleFontFamily || Qt.application.font.family // qmllint disable missing-property
+                        pointSize: layer.view.titleFontSize * layer.view.titleScale
+                        font.weight: closingSegment.modelData?.titleWeight ?? Style.fontWeightMedium
                     }
                 }
             }
 
             ParallelAnimation {
                 id: closeAnimation
-                running: view.windowCloseAnimationActive
+                running: layer.view.windowCloseAnimationActive
 
                 NumberAnimation {
                     target: closingSegment
                     property: "opacity"
                     from: 1
                     to: 0
-                    duration: view.windowAnimationSpeed
-                    easing.type: view.windowAnimationEasingType()
-                    easing.overshoot: view.windowAnimationOvershoot()
+                    duration: layer.view.windowAnimationSpeed
+                    easing.type: layer.view.windowAnimationEasingType()
+                    easing.overshoot: layer.view.windowAnimationOvershoot()
                 }
 
                 NumberAnimation {
@@ -137,17 +138,17 @@ Item {
                     property: "scale"
                     from: 1
                     to: 0.86
-                    duration: view.windowAnimationSpeed
-                    easing.type: view.windowAnimationEasingType()
-                    easing.overshoot: view.windowAnimationOvershoot()
+                    duration: layer.view.windowAnimationSpeed
+                    easing.type: layer.view.windowAnimationEasingType()
+                    easing.overshoot: layer.view.windowAnimationOvershoot()
                 }
 
-                onFinished: view.removeClosingEntry(closingSegment.closeUid)
+                onFinished: layer.view.removeClosingEntry(closingSegment.closeUid)
             }
 
             Component.onCompleted: {
-                if (!view.windowCloseAnimationActive)
-                    view.removeClosingEntry(closeUid);
+                if (!layer.view.windowCloseAnimationActive)
+                    layer.view.removeClosingEntry(closeUid);
             }
         }
     }

@@ -2,7 +2,6 @@ import QtQuick
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Niri
-import Quickshell.Wayland
 import qs.Commons
 import qs.Services.Compositor
 import "./components"

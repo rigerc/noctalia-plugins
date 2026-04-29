@@ -1,5 +1,5 @@
+pragma ComponentBehavior: Bound
 import QtQuick
-import qs.Commons
 
 Item {
     id: separators
@@ -9,22 +9,22 @@ Item {
 
     x: 0
     y: trackLine.y
-    width: view.effectiveTrackWidth
+    width: separators.view.effectiveTrackWidth
     height: trackLine.height
-    visible: view.segmentCount > 1 && view.segmentSpacing > 0 && trackLine.visible
+    visible: separators.view.segmentCount > 1 && separators.view.segmentSpacing > 0 && trackLine.visible
     z: 11
 
     Repeater {
-        model: Math.max(0, view.segmentCount - 1)
+        model: Math.max(0, separators.view.segmentCount - 1)
 
         delegate: Rectangle {
             required property int index
 
-            x: view.separatorOffset(index)
+            x: separators.view.separatorOffset(index)
             y: 0
-            width: view.segmentSpacing
+            width: separators.view.segmentSpacing
             height: separators.height
-            color: Qt.alpha(view.separatorColor, view.trackOpacity)
+            color: Qt.alpha(separators.view.separatorColor, separators.view.trackOpacity)
         }
     }
 }

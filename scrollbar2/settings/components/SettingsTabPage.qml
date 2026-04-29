@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Commons
 import qs.Widgets
+// qmllint disable unqualified
 
 ColumnLayout {
     id: root
@@ -38,7 +39,7 @@ ColumnLayout {
 	            if (section.id !== sectionId)
 	                continue;
 	            if (pageScroll.contentItem)
-	                pageScroll.contentItem.contentY = pageScroll.clampScrollY(root._sectionY(section));
+	                pageScroll.contentItem.contentY = pageScroll.clampScrollY(root._sectionY(section)); // qmllint disable missing-property
 	            root.activeSectionId = section.id;
 	            break;
 	        }
@@ -51,7 +52,7 @@ ColumnLayout {
             return;
         }
 
-	        var currentY = pageScroll.contentItem ? pageScroll.contentItem.contentY : 0;
+	        var currentY = pageScroll.contentItem ? pageScroll.contentItem.contentY : 0; // qmllint disable missing-property
 	        var bestSection = sections[0];
 	        for (var i = 0; i < sections.length; i++) {
 	            var section = sections[i];

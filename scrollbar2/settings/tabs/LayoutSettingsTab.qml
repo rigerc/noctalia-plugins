@@ -1,7 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import qs.Commons
-import qs.Widgets
 import "../components"
 import "../sections"
 
