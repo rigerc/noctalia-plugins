@@ -474,6 +474,7 @@ Item {
             }
         }
 
+        // qmllint disable signal-handler-parameters
         onExited: function (exitCode, exitStatus) {
             var exitedRequestId = root._fetchRequestId;
             fetchTimeout.stop();
@@ -523,12 +524,12 @@ Item {
                 if (exitCode !== 0) {
                     var stderrText = root.rawStderrBuffer;
                     if (root._looksLikeMissingCli(exitCode, stderrText)) {
-                        root.lastError = pluginApi?.tr("errors.cliMissing");
+                        root.lastError = root.pluginApi?.tr("errors.cliMissing");
                         if (!root._cliMissingNotified) {
                             root._cliMissingNotified = true;
                             ToastService.showNotice(
-                                pluginApi?.tr("errors.cliMissingTitle"),
-                                pluginApi?.tr("errors.cliMissingBody"),
+                                root.pluginApi?.tr("errors.cliMissingTitle"),
+                                root.pluginApi?.tr("errors.cliMissingBody"),
                                 "external-link"
                             );
                         }
@@ -539,7 +540,7 @@ Item {
                 } else if (!root.lastError) {
                     root.lastError = root.rawStderrBuffer.length > 0
                         ? root.rawStderrBuffer
-                        : pluginApi?.tr("errors.cliParseFailed") || "Failed to parse CodexBar output.";
+                        : root.pluginApi?.tr("errors.cliParseFailed") || "Failed to parse CodexBar output.";
                 }
             } else {
                 root._cliMissingNotified = false;
@@ -553,6 +554,7 @@ Item {
                 Qt.callLater(root.refresh);
             }
         }
+        // qmllint enable signal-handler-parameters
     }
 
     Timer {

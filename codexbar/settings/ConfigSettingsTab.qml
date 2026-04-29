@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -453,7 +454,7 @@ SettingsTabPage {
             if (!parsed || !tab.loadModelFromParsed(parsed)) {
                 tab.configContent = "{\n  \"version\": 1,\n  \"providers\": []\n}\n";
                 tab.loadModelFromParsed(tab.parseJsonOrNull(tab.configContent));
-                tab.setStatus(rootSettings?.pluginApi?.tr("settings.config.loadFallback"), false);
+                tab.setStatus(tab.rootSettings?.pluginApi?.tr("settings.config.loadFallback"), false);
             }
             tab.runCliValidation();
         }
@@ -461,7 +462,7 @@ SettingsTabPage {
             Logger.w("CodexBar", "Config load error: " + error);
             tab.configContent = "{\n  \"version\": 1,\n  \"providers\": []\n}\n";
             tab.loadModelFromParsed(tab.parseJsonOrNull(tab.configContent));
-            tab.setStatus(rootSettings?.pluginApi?.tr("settings.config.loadFallback"), false);
+            tab.setStatus(tab.rootSettings?.pluginApi?.tr("settings.config.loadFallback"), false);
             tab.runCliValidation();
         }
     }
@@ -469,27 +470,27 @@ SettingsTabPage {
     SectionBox {
         NText {
             Layout.fillWidth: true
-            text: rootSettings?.pluginApi?.tr("settings.config.securityNote")
+            text: tab.rootSettings?.pluginApi?.tr("settings.config.securityNote")
             color: Color.mOnSurface
             wrapMode: Text.Wrap
         }
         NText {
             Layout.fillWidth: true
-            text: rootSettings?.pluginApi?.tr("settings.config.reference")
+            text: tab.rootSettings?.pluginApi?.tr("settings.config.reference")
             color: Color.mOnSurfaceVariant
             pointSize: Style.fontSizeXS
             wrapMode: Text.Wrap
         }
 
         NButton {
-            text: rootSettings?.pluginApi?.tr("settings.config.openDocs")
+            text: tab.rootSettings?.pluginApi?.tr("settings.config.openDocs")
             icon: "external-link"
             outlined: true
             onClicked: Qt.openUrlExternally(tab.docsUrl)
         }
 
         NButton {
-            text: rootSettings?.pluginApi?.tr("settings.config.openProviderDocs")
+            text: tab.rootSettings?.pluginApi?.tr("settings.config.openProviderDocs")
             icon: "external-link"
             outlined: true
             onClicked: Qt.openUrlExternally(tab.providerDocsUrl)
@@ -501,7 +502,7 @@ SettingsTabPage {
 
         NText {
             Layout.fillWidth: true
-            text: rootSettings?.pluginApi?.tr("settings.config.providersTitle")
+            text: tab.rootSettings?.pluginApi?.tr("settings.config.providersTitle")
             color: Color.mOnSurface
             pointSize: Style.fontSizeS
             font.weight: Font.Medium
@@ -513,14 +514,14 @@ SettingsTabPage {
 
             NComboBox {
                 Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.config.addProvider")
+                label: tab.rootSettings?.pluginApi?.tr("settings.config.addProvider")
                 model: tab.providerOptions
                 currentKey: tab.addProviderId
                 onSelected: key => tab.addProviderId = key
             }
 
             NButton {
-                text: rootSettings?.pluginApi?.tr("settings.config.add")
+                text: tab.rootSettings?.pluginApi?.tr("settings.config.add")
                 icon: "plus"
                 onClicked: tab.addProvider()
             }
@@ -534,6 +535,7 @@ SettingsTabPage {
                 model: tab.providersCount
 
                 delegate: SectionBox {
+                    id: providerCard
                     required property int index
 
                     readonly property var providerData: tab.providers && index >= 0 && index < tab.providers.length ? tab.providers[index] : ({})
@@ -556,7 +558,7 @@ SettingsTabPage {
 
                         NText {
                             Layout.fillWidth: true
-                            text: providerData.id || ""
+                            text: providerCard.providerData.id || ""
                             color: Color.mOnSurface
                             pointSize: Style.fontSizeM
                             font.weight: Font.Medium
@@ -565,89 +567,89 @@ SettingsTabPage {
                         NButton {
                             icon: "arrow-up"
                             outlined: true
-                            enabled: index > 0
-                            onClicked: tab.moveProvider(index, -1)
+                            enabled: providerCard.index > 0
+                            onClicked: tab.moveProvider(providerCard.index, -1)
                         }
                         NButton {
                             icon: "arrow-down"
                             outlined: true
-                            enabled: index < tab.providers.length - 1
-                            onClicked: tab.moveProvider(index, +1)
+                            enabled: providerCard.index < tab.providers.length - 1
+                            onClicked: tab.moveProvider(providerCard.index, +1)
                         }
                         NButton {
                             icon: "trash"
                             outlined: true
-                            onClicked: tab.removeProviderAt(index)
+                            onClicked: tab.removeProviderAt(providerCard.index)
                         }
                     }
 
                     NToggle {
-                        label: rootSettings?.pluginApi?.tr("settings.config.enabledField")
-                        checked: providerData.enabled !== false
-                        onToggled: checked => tab.updateProviderField(index, "enabled", checked)
+                        label: tab.rootSettings?.pluginApi?.tr("settings.config.enabledField")
+                        checked: providerCard.providerData.enabled !== false
+                        onToggled: checked => tab.updateProviderField(providerCard.index, "enabled", checked)
                     }
 
                     NComboBox {
                         Layout.fillWidth: true
-                        label: rootSettings?.pluginApi?.tr("settings.config.sourceField")
+                        label: tab.rootSettings?.pluginApi?.tr("settings.config.sourceField")
                         model: tab.sourceModeOptions
-                        currentKey: providerData.source || "auto"
-                        onSelected: key => tab.updateProviderField(index, "source", key)
+                        currentKey: providerCard.providerData.source || "auto"
+                        onSelected: key => tab.updateProviderField(providerCard.index, "source", key)
                     }
 
                     NComboBox {
                         Layout.fillWidth: true
-                        label: rootSettings?.pluginApi?.tr("settings.config.cookieSourceField")
+                        label: tab.rootSettings?.pluginApi?.tr("settings.config.cookieSourceField")
                         model: tab.cookieSourceModeOptions
-                        currentKey: providerData.cookieSource || "auto"
-                        onSelected: key => tab.updateProviderField(index, "cookieSource", key)
+                        currentKey: providerCard.providerData.cookieSource || "auto"
+                        onSelected: key => tab.updateProviderField(providerCard.index, "cookieSource", key)
                     }
 
                     NToggle {
-                        label: rootSettings?.pluginApi?.tr("settings.config.advancedFields")
-                        checked: showAdvanced
-                        onToggled: checked => showAdvanced = checked
+                        label: tab.rootSettings?.pluginApi?.tr("settings.config.advancedFields")
+                        checked: providerCard.showAdvanced
+                        onToggled: checked => providerCard.showAdvanced = checked
                     }
 
                     ColumnLayout {
                         Layout.fillWidth: true
-                        visible: showAdvanced
+                        visible: providerCard.showAdvanced
                         spacing: Style.marginM
 
                         NTextInput {
                             Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.config.regionField")
-                            text: editRegion
-                            onTextChanged: editRegion = text
-                            onEditingFinished: commitOptionalField("region", editRegion)
-                            onAccepted: commitOptionalField("region", editRegion)
+                            label: tab.rootSettings?.pluginApi?.tr("settings.config.regionField")
+                            text: providerCard.editRegion
+                            onTextChanged: providerCard.editRegion = text
+                            onEditingFinished: providerCard.commitOptionalField("region", providerCard.editRegion)
+                            onAccepted: providerCard.commitOptionalField("region", providerCard.editRegion)
                         }
 
                         NTextInput {
                             Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.config.workspaceField")
-                            text: editWorkspaceId
-                            onTextChanged: editWorkspaceId = text
-                            onEditingFinished: commitOptionalField("workspaceID", editWorkspaceId)
-                            onAccepted: commitOptionalField("workspaceID", editWorkspaceId)
+                            label: tab.rootSettings?.pluginApi?.tr("settings.config.workspaceField")
+                            text: providerCard.editWorkspaceId
+                            onTextChanged: providerCard.editWorkspaceId = text
+                            onEditingFinished: providerCard.commitOptionalField("workspaceID", providerCard.editWorkspaceId)
+                            onAccepted: providerCard.commitOptionalField("workspaceID", providerCard.editWorkspaceId)
                         }
 
                         NTextInput {
                             Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.config.apiKeyField")
-                            text: editApiKey
-                            onTextChanged: editApiKey = text
-                            onEditingFinished: commitOptionalField("apiKey", editApiKey)
-                            onAccepted: commitOptionalField("apiKey", editApiKey)
+                            label: tab.rootSettings?.pluginApi?.tr("settings.config.apiKeyField")
+                            text: providerCard.editApiKey
+                            onTextChanged: providerCard.editApiKey = text
+                            onEditingFinished: providerCard.commitOptionalField("apiKey", providerCard.editApiKey)
+                            onAccepted: providerCard.commitOptionalField("apiKey", providerCard.editApiKey)
                         }
 
                         NTextInput {
                             Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.config.cookieHeaderField")
-                            text: editCookieHeader
-                            onTextChanged: editCookieHeader = text
-                            onEditingFinished: commitOptionalField("cookieHeader", editCookieHeader)
-                            onAccepted: commitOptionalField("cookieHeader", editCookieHeader)
+                            label: tab.rootSettings?.pluginApi?.tr("settings.config.cookieHeaderField")
+                            text: providerCard.editCookieHeader
+                            onTextChanged: providerCard.editCookieHeader = text
+                            onEditingFinished: providerCard.commitOptionalField("cookieHeader", providerCard.editCookieHeader)
+                            onAccepted: providerCard.commitOptionalField("cookieHeader", providerCard.editCookieHeader)
                         }
                     }
                 }
@@ -658,7 +660,7 @@ SettingsTabPage {
     SectionBox {
         NText {
             Layout.fillWidth: true
-            text: rootSettings?.pluginApi?.tr("settings.config.advancedTitle")
+            text: tab.rootSettings?.pluginApi?.tr("settings.config.advancedTitle")
             color: Color.mOnSurface
             pointSize: Style.fontSizeS
             font.weight: Font.Medium
@@ -666,7 +668,7 @@ SettingsTabPage {
 
         NToggle {
             Layout.fillWidth: true
-            label: rootSettings?.pluginApi?.tr("settings.config.showRaw")
+            label: tab.rootSettings?.pluginApi?.tr("settings.config.showRaw")
             checked: tab.showRawEditor
             onToggled: checked => tab.showRawEditor = checked
         }
@@ -677,13 +679,13 @@ SettingsTabPage {
             visible: tab.showRawEditor
 
             NButton {
-                text: rootSettings?.pluginApi?.tr("settings.config.applyRaw")
+                text: tab.rootSettings?.pluginApi?.tr("settings.config.applyRaw")
                 icon: "list-details"
                 onClicked: tab.applyRawToModel()
             }
 
             NButton {
-                text: rootSettings?.pluginApi?.tr("settings.config.format")
+                text: tab.rootSettings?.pluginApi?.tr("settings.config.format")
                 icon: "brackets"
                 outlined: true
                 onClicked: tab.formatJson()
@@ -720,7 +722,7 @@ SettingsTabPage {
         spacing: Style.marginM
 
         NButton {
-            text: rootSettings?.pluginApi?.tr("settings.config.save")
+            text: tab.rootSettings?.pluginApi?.tr("settings.config.save")
             icon: "device-floppy"
             enabled: tab.configIsValid && tab.configPath !== "" && !saveConfigProcess.running && !validateConfigProcess.running
             onClicked: {
@@ -733,7 +735,7 @@ SettingsTabPage {
         }
 
         NButton {
-            text: rootSettings?.pluginApi?.tr("settings.config.validate")
+            text: tab.rootSettings?.pluginApi?.tr("settings.config.validate")
             icon: "checkup-list"
             outlined: true
             enabled: tab.configPath !== "" && !saveConfigProcess.running && !validateConfigProcess.running
@@ -741,7 +743,7 @@ SettingsTabPage {
         }
 
         NButton {
-            text: rootSettings?.pluginApi?.tr("settings.config.openEditor")
+            text: tab.rootSettings?.pluginApi?.tr("settings.config.openEditor")
             icon: "external-link"
             outlined: true
             enabled: tab.configPath !== ""
@@ -782,14 +784,16 @@ SettingsTabPage {
             }
         }
 
+        // qmllint disable signal-handler-parameters
         onExited: function (exitCode) {
             if (exitCode === 0) {
-                tab.setStatus(rootSettings?.pluginApi?.tr("settings.config.saved"), false);
+                tab.setStatus(tab.rootSettings?.pluginApi?.tr("settings.config.saved"), false);
                 tab.runCliValidation();
             } else {
-                tab.setStatus(rootSettings?.pluginApi?.tr("settings.config.saveFailed") + ": exit " + exitCode, true);
+                tab.setStatus(tab.rootSettings?.pluginApi?.tr("settings.config.saveFailed") + ": exit " + exitCode, true);
             }
         }
+        // qmllint enable signal-handler-parameters
     }
 
     Process {
@@ -808,21 +812,22 @@ SettingsTabPage {
             }
         }
 
+        // qmllint disable signal-handler-parameters
         onExited: function (exitCode) {
             var entries = tab.parseCliValidationOutput(validateStdout.text);
             if (entries === null) {
                 var stderrText = String(validateStderr.text || "").trim();
-                tab.setValidationSummary(stderrText !== "" ? stderrText : rootSettings?.pluginApi?.tr("settings.config.cliValidateParseFailed"), true);
+                tab.setValidationSummary(stderrText !== "" ? stderrText : tab.rootSettings?.pluginApi?.tr("settings.config.cliValidateParseFailed"), true);
                 return;
             }
 
             if (exitCode === 127) {
-                tab.setValidationSummary(rootSettings?.pluginApi?.tr("errors.cliMissing"), true);
+                tab.setValidationSummary(tab.rootSettings?.pluginApi?.tr("errors.cliMissing"), true);
                 return;
             }
 
             if (entries.length === 0) {
-                tab.setValidationSummary(rootSettings?.pluginApi?.tr("settings.config.cliValid"), false);
+                tab.setValidationSummary(tab.rootSettings?.pluginApi?.tr("settings.config.cliValid"), false);
                 return;
             }
 
@@ -835,6 +840,7 @@ SettingsTabPage {
             }
             tab.setValidationSummary(tab.formatValidationMessage(entries), hasError);
         }
+        // qmllint enable signal-handler-parameters
     }
 
     Timer {

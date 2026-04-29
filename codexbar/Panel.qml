@@ -1,8 +1,8 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.Commons
-import qs.Services.UI
 import qs.Widgets
 import "./components"
 
@@ -65,7 +65,7 @@ Item {
                 Layout.fillWidth: true
 
                 NLabel {
-                    label: pluginApi?.tr("panel.title")
+                    label: root.pluginApi?.tr("panel.title")
                     labelSize: Style.fontSizeXL
                 }
 
@@ -78,8 +78,8 @@ Item {
                     fontSize: Style.fontSizeS
                     outlined: true
                     onClicked: {
-                        if (mainInstance)
-                            mainInstance.refresh();
+                        if (root.mainInstance)
+                            root.mainInstance.refresh();
                     }
                 }
             }
@@ -98,11 +98,21 @@ Item {
                     spacing: Style.marginL
 
                     Repeater {
-                        model: mainInstance?.providerData || []
+                        model: root.mainInstance?.providerData || []
 
                         delegate: NBox {
+                            id: providerCard
                             required property var modelData
                             readonly property var provider: modelData
+                            readonly property string providerId: String(provider.provider || "")
+                            readonly property var providerUsage: provider.usage || ({})
+                            readonly property var providerVisualData: root.mainInstance?.providerVisual(providerId, root.providerVisuals, ({})) || ({
+                                "source": "icon",
+                                "icon": root.mainInstance?.providerIcon(providerId) || "cpu",
+                                "asset": "",
+                                "assetUrl": ""
+                            })
+                            readonly property string providerName: root.capitalizeFirst(root.mainInstance?.providerDisplayName(providerId) || providerId)
                             Layout.fillWidth: true
                             implicitHeight: cardBody.implicitHeight + Style.marginL * 2
 
@@ -119,19 +129,14 @@ Item {
                                         Layout.preferredWidth: Style.fontSizeL
                                         Layout.preferredHeight: Style.fontSizeL
                                         Layout.rightMargin: Style.marginS
-                                        visualData: mainInstance?.providerVisual(provider.provider, root.providerVisuals, ({})) || ({
-                                            "source": "icon",
-                                            "icon": mainInstance?.providerIcon(provider.provider) || "cpu",
-                                            "asset": "",
-                                            "assetUrl": ""
-                                        })
+                                        visualData: providerCard.providerVisualData
                                         color: Color.mPrimary
                                         colorize: root.providerIconColorize
                                         colorizeColor: root.resolvedProviderIconColorizeColor
                                     }
 
                                     NText {
-                                        text: root.capitalizeFirst(mainInstance?.providerDisplayName(provider.provider) || provider.provider)
+                                        text: providerCard.providerName
                                         pointSize: Style.fontSizeL
                                         font.weight: Font.Bold
                                         color: Color.mOnSurface
@@ -142,7 +147,7 @@ Item {
                                     }
 
                                     NText {
-                                        text: String(provider.source || "")
+                                        text: String(providerCard.provider.source || "")
                                         pointSize: Style.fontSizeS
                                         color: Color.mOnSurfaceVariant
                                     }
@@ -150,7 +155,7 @@ Item {
 
                                 NBox {
                                     Layout.fillWidth: true
-                                    visible: !!provider.error
+                                    visible: !!providerCard.provider.error
                                     implicitHeight: errorBody.implicitHeight + Style.marginM * 2
 
                                     ColumnLayout {
@@ -173,7 +178,7 @@ Item {
 
                                             NText {
                                                 Layout.fillWidth: true
-                                                text: pluginApi?.tr("panel.providerError")
+                                                text: root.pluginApi?.tr("panel.providerError")
                                                 pointSize: Style.fontSizeS
                                                 color: Color.mError
                                                 font.weight: Font.Medium
@@ -182,7 +187,7 @@ Item {
 
                                         NText {
                                             Layout.fillWidth: true
-                                            text: root.formatProviderError(provider.error)
+                                            text: root.formatProviderError(providerCard.provider.error)
                                             pointSize: Style.fontSizeXS
                                             color: Color.mOnSurfaceVariant
                                             wrapMode: Text.Wrap
@@ -194,10 +199,15 @@ Item {
                                     model: ["secondary", "primary", "tertiary"]
 
                                     delegate: Loader {
+                                        id: usageWindowLoader
                                         required property var modelData
                                         required property int index
+                                        readonly property string windowKey: String(modelData || "")
+                                        readonly property var usageWindow: providerCard.providerUsage[windowKey] || null
+                                        readonly property int usedPercent: usageWindow ? Number(usageWindow.usedPercent) : 0
+                                        readonly property int leftPercent: 100 - usedPercent
                                         Layout.fillWidth: true
-                                        active: provider.usage ? provider.usage[modelData] != null : false
+                                        active: usageWindow != null
                                         visible: active
                                         Layout.bottomMargin: 15
 
@@ -210,7 +220,7 @@ Item {
                                                     Layout.fillWidth: true
 
                                                     NText {
-                                                        text: pluginApi?.tr("panel.usage") + " (" + root.windowRoleLabel(provider, modelData) + ")"
+                                                        text: root.pluginApi?.tr("panel.usage") + " (" + root.windowRoleLabel(providerCard.provider, usageWindowLoader.windowKey) + ")"
                                                         pointSize: Style.fontSizeM
                                                         color: Color.mOnSurfaceVariant
                                                     }
@@ -220,7 +230,7 @@ Item {
                                                     }
 
                                                     NText {
-                                                        text: (100 - provider.usage[modelData].usedPercent) + "% " + pluginApi?.tr("panel.left")
+                                                        text: usageWindowLoader.leftPercent + "% " + root.pluginApi?.tr("panel.left")
                                                         pointSize: Style.fontSizeM
                                                         color: Color.mOnSurface
                                                         font.weight: Font.Medium
@@ -236,11 +246,11 @@ Item {
                                                     Rectangle {
                                                         anchors.left: parent.left
                                                         anchors.verticalCenter: parent.verticalCenter
-                                                        width: parent.width * (provider.usage[modelData].usedPercent / 100)
+                                                        width: parent.width * (usageWindowLoader.usedPercent / 100)
                                                         height: parent.height
                                                         radius: parent.radius
                                                         color: {
-                                                            var left = 100 - provider.usage[modelData].usedPercent;
+                                                            var left = usageWindowLoader.leftPercent;
                                                             if (left <= 10)
                                                                 return Color.mError;
                                                             if (left <= 25)
@@ -252,21 +262,16 @@ Item {
 
                                                 RowLayout {
                                                     Layout.fillWidth: true
-                                                    visible: {
-                                                        var win = provider.usage ? provider.usage[modelData] : null;
-                                                        if (!win)
-                                                            return false;
-                                                        return !!win.resetsAt || !!win.resetDescription;
-                                                    }
+                                                    visible: !!usageWindowLoader.usageWindow && (!!usageWindowLoader.usageWindow.resetsAt || !!usageWindowLoader.usageWindow.resetDescription)
                                                     spacing: Style.marginM
 
                                                     NText {
                                                         text: {
-                                                            var win = provider.usage ? provider.usage[modelData] : null;
+                                                            var win = usageWindowLoader.usageWindow;
                                                             if (!win)
                                                                 return "";
                                                             if (win.resetsAt)
-                                                                return pluginApi?.tr("panel.resetsIn") + " " + mainInstance.formatResetsCountdown(win.resetsAt);
+                                                                return root.pluginApi?.tr("panel.resetsIn") + " " + root.mainInstance.formatResetsCountdown(win.resetsAt);
                                                             return String(win.resetDescription || "").trim();
                                                         }
                                                         pointSize: Style.fontSizeXS
@@ -280,16 +285,16 @@ Item {
 
                                 RowLayout {
                                     Layout.fillWidth: true
-                                    visible: !!provider.credits && provider.credits.remaining != null
+                                    visible: !!providerCard.provider.credits && providerCard.provider.credits.remaining != null
 
                                     NText {
-                                        text: pluginApi?.tr("panel.credits") + ":"
+                                        text: root.pluginApi?.tr("panel.credits") + ":"
                                         pointSize: Style.fontSizeS
                                         color: Color.mOnSurfaceVariant
                                     }
 
                                     NText {
-                                        text: provider.credits ? String(provider.credits.remaining) : ""
+                                        text: providerCard.provider.credits ? String(providerCard.provider.credits.remaining) : ""
                                         pointSize: Style.fontSizeS
                                         color: Color.mOnSurface
                                     }
@@ -297,10 +302,10 @@ Item {
 
                                 RowLayout {
                                     Layout.fillWidth: true
-                                    visible: !!provider.status
+                                    visible: !!providerCard.provider.status
 
                                     NText {
-                                        text: pluginApi?.tr("panel.status") + ":"
+                                        text: root.pluginApi?.tr("panel.status") + ":"
                                         pointSize: Style.fontSizeS
                                         color: Color.mOnSurfaceVariant
                                     }
@@ -310,9 +315,9 @@ Item {
                                         Layout.preferredHeight: 8 * Style.uiScaleRatio
                                         radius: 4 * Style.uiScaleRatio
                                         color: {
-                                            if (!provider.status)
+                                            if (!providerCard.provider.status)
                                                 return Color.mPrimary;
-                                            var ind = String(provider.status.indicator || "");
+                                            var ind = String(providerCard.provider.status.indicator || "");
                                             if (ind === "major" || ind === "critical")
                                                 return Color.mError;
                                             if (ind === "minor" || ind === "maintenance")
@@ -323,10 +328,10 @@ Item {
 
                                     NText {
                                         text: {
-                                            var ind = String(provider.status?.indicator || "");
-                                            var desc = String(provider.status?.description || "").trim();
+                                            var ind = String(providerCard.provider.status?.indicator || "");
+                                            var desc = String(providerCard.provider.status?.description || "").trim();
                                             if (ind === "none")
-                                                return desc || pluginApi?.tr("panel.statusOperational") || "Operational";
+                                                return desc || root.pluginApi?.tr("panel.statusOperational") || "Operational";
                                             if (desc)
                                                 return desc;
                                             if (ind === "minor")
@@ -346,12 +351,12 @@ Item {
 
                                 NButton {
                                     Layout.alignment: Qt.AlignLeft
-                                    visible: !!provider.status && String(provider.status.url || "").length > 0
-                                    text: pluginApi?.tr("panel.openStatusPage")
+                                    visible: !!providerCard.provider.status && String(providerCard.provider.status.url || "").length > 0
+                                    text: root.pluginApi?.tr("panel.openStatusPage")
                                     icon: "external-link"
                                     outlined: true
                                     onClicked: {
-                                        var url = String(provider.status?.url || "");
+                                        var url = String(providerCard.provider.status?.url || "");
                                         if (url)
                                             Qt.openUrlExternally(url);
                                     }
@@ -362,8 +367,8 @@ Item {
 
                     NLabel {
                         Layout.fillWidth: true
-                        visible: !mainInstance || !Array.isArray(mainInstance.providerData) || mainInstance.providerData.length === 0
-                        label: pluginApi?.tr("panel.noProviders")
+                        visible: !root.mainInstance || !Array.isArray(root.mainInstance.providerData) || root.mainInstance.providerData.length === 0
+                        label: root.pluginApi?.tr("panel.noProviders")
                         labelSize: Style.fontSizeM
                     }
                 }
@@ -378,10 +383,10 @@ Item {
 
                 NText {
                     text: {
-                        if (!mainInstance?.lastUpdated)
+                        if (!root.mainInstance?.lastUpdated)
                             return "";
-                        var d = new Date(mainInstance.lastUpdated);
-                        return pluginApi?.tr("panel.lastUpdated") + ": " + Qt.formatTime(d, "hh:mm");
+                        var d = new Date(root.mainInstance.lastUpdated);
+                        return root.pluginApi?.tr("panel.lastUpdated") + ": " + Qt.formatTime(d, "hh:mm");
                     }
                     pointSize: Style.fontSizeXS
                     color: Color.mOnSurfaceVariant
@@ -392,8 +397,8 @@ Item {
                 }
 
                 NText {
-                    visible: mainInstance?.lastError
-                    text: mainInstance?.lastError || ""
+                    visible: root.mainInstance?.lastError
+                    text: root.mainInstance?.lastError || ""
                     pointSize: Style.fontSizeXS
                     color: Color.mError
                 }

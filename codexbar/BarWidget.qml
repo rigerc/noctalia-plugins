@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -694,17 +695,17 @@ Item {
         id: contextMenu
         model: [
             {
-                "label": pluginApi?.tr("menu.refresh"),
+                "label": root.pluginApi?.tr("menu.refresh"),
                 "action": "refresh",
                 "icon": "refresh"
             },
             {
-                "label": root.barTextShowOnHover ? pluginApi?.tr("menu.disableShowOnHover") : pluginApi?.tr("menu.enableShowOnHover"),
+                "label": root.barTextShowOnHover ? root.pluginApi?.tr("menu.disableShowOnHover") : root.pluginApi?.tr("menu.enableShowOnHover"),
                 "action": "toggle-show-on-hover",
                 "icon": root.barTextShowOnHover ? "eye-off" : "eye"
             },
             {
-                "label": pluginApi?.tr("menu.settings"),
+                "label": root.pluginApi?.tr("menu.settings"),
                 "action": "settings",
                 "icon": "settings"
             }
@@ -713,12 +714,12 @@ Item {
             contextMenu.close();
             PanelService.closeContextMenu(screen);
             if (action === "refresh") {
-                if (mainInstance)
-                    mainInstance.refresh();
+                if (root.mainInstance)
+                    root.mainInstance.refresh();
             } else if (action === "toggle-show-on-hover") {
                 root.toggleShowOnHover();
             } else if (action === "settings") {
-                BarService.openPluginSettings(screen, pluginApi.manifest);
+                BarService.openPluginSettings(screen, root.pluginApi.manifest);
             }
         }
     }
@@ -774,14 +775,20 @@ Item {
                         model: root.providerSegments
 
                         delegate: RowLayout {
+                            id: segmentRow
                             required property int index
                             required property var modelData
+                            readonly property bool showJoiner: index > 0
+                            readonly property bool showIcon: modelData.showIcon
+                            readonly property var segmentVisual: modelData.visual || ({})
+                            readonly property string segmentLabel: modelData.label || ""
+                            readonly property string segmentText: modelData.text || ""
 
                             spacing: Style.marginXS
                             Layout.alignment: Qt.AlignVCenter
 
                             NText {
-                                visible: index > 0
+                                visible: segmentRow.showJoiner
                                 text: root.providerJoiner()
                                 color: mouseArea.containsMouse ? Color.mOnHover : root.resolvedBarTextColor
                                 pointSize: root.barFontSize
@@ -789,8 +796,8 @@ Item {
                             }
 
                             ProviderVisual {
-                                visible: modelData.showIcon
-                                visualData: modelData.visual || ({})
+                                visible: segmentRow.showIcon
+                                visualData: segmentRow.segmentVisual
                                 color: mouseArea.containsMouse ? Color.mOnHover : root.resolvedBarTextColor
                                 colorize: root.providerIconColorize
                                 colorizeColor: mouseArea.containsMouse ? Color.mOnHover : root.resolvedProviderIconColorizeColor
@@ -801,15 +808,15 @@ Item {
                             }
 
                             NText {
-                                visible: modelData.label !== ""
-                                text: modelData.label
+                                visible: segmentRow.segmentLabel !== ""
+                                text: segmentRow.segmentLabel
                                 color: mouseArea.containsMouse ? Color.mOnHover : root.resolvedBarTextColor
                                 pointSize: root.barFontSize
                                 applyUiScale: false
                             }
 
                             NText {
-                                text: modelData.text
+                                text: segmentRow.segmentText
                                 color: mouseArea.containsMouse ? Color.mOnHover : root.resolvedBarTextColor
                                 pointSize: root.barFontSize
                                 applyUiScale: false
@@ -830,10 +837,10 @@ Item {
 
         onClicked: mouse => {
             if (mouse.button === Qt.LeftButton) {
-                if (pluginApi)
-                    pluginApi.togglePanel(root.screen, root);
+                if (root.pluginApi)
+                    root.pluginApi.togglePanel(root.screen, root);
             } else if (mouse.button === Qt.RightButton) {
-                PanelService.showContextMenu(contextMenu, root, screen);
+                PanelService.showContextMenu(contextMenu, root, root.screen);
             }
         }
 

@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.Commons
@@ -10,17 +11,18 @@ SettingsTabPage {
     property var rootSettings: null
     property var availableProviderChoices: []
     readonly property var mainInstance: rootSettings?.pluginApi?.mainInstance
+    property int draggedProviderIndex: -1
 
     function providerDisplayName(providerId) {
-        return rootSettings?.providerOptionName(providerId) || String(providerId || "");
+        return tab.rootSettings?.providerOptionName(providerId) || String(providerId || "");
     }
 
     function providerIcon(providerId) {
-        return rootSettings?.effectiveProviderIcon(providerId) || "cpu";
+        return tab.rootSettings?.effectiveProviderIcon(providerId) || "cpu";
     }
 
     function providerVisual(providerId) {
-        return rootSettings?.effectiveProviderVisual(providerId) || ({
+        return tab.rootSettings?.effectiveProviderVisual(providerId) || ({
             "source": "icon",
             "icon": tab.providerIcon(providerId),
             "asset": "",
@@ -29,21 +31,21 @@ SettingsTabPage {
     }
 
     function providerVisualSourceOptions(providerId) {
-        if (!rootSettings)
+        if (!tab.rootSettings)
             return [];
-        if (rootSettings.providerSupportsBundledVisual(providerId))
-            return rootSettings.providerVisualSourceOptions || [];
-        return rootSettings.providerVisualSourceOptions && rootSettings.providerVisualSourceOptions.length > 0 ? [rootSettings.providerVisualSourceOptions[0]] : [];
+        if (tab.rootSettings.providerSupportsBundledVisual(providerId))
+            return tab.rootSettings.providerVisualSourceOptions || [];
+        return tab.rootSettings.providerVisualSourceOptions && tab.rootSettings.providerVisualSourceOptions.length > 0 ? [tab.rootSettings.providerVisualSourceOptions[0]] : [];
     }
 
     function syncAvailableProviderChoices() {
-        availableProviderChoices = rootSettings ? (rootSettings.getAvailableWidgetProviderOptions() || []) : [];
+        availableProviderChoices = tab.rootSettings ? (tab.rootSettings.getAvailableWidgetProviderOptions() || []) : [];
     }
 
     property string iconPickerProviderId: ""
 
     Connections {
-        target: rootSettings
+        target: tab.rootSettings
 
         function onEditBarProviderIdsChanged() {
             tab.syncAvailableProviderChoices();
@@ -93,12 +95,12 @@ SettingsTabPage {
         implicitHeight: dragCard.implicitHeight
 
         onEntered: drag => {
-            if (!drag.source || !rootSettings)
+            if (tab.draggedProviderIndex < 0 || !tab.rootSettings)
                 return;
-            if (drag.source.providerIndex === index)
+            if (tab.draggedProviderIndex === providerDropArea.index)
                 return;
-            rootSettings.moveBarProvider(drag.source.providerIndex, index);
-            drag.source.providerIndex = index;
+            tab.rootSettings.moveBarProvider(tab.draggedProviderIndex, providerDropArea.index);
+            tab.draggedProviderIndex = providerDropArea.index;
         }
 
         NBox {
@@ -107,11 +109,12 @@ SettingsTabPage {
             width: parent.width
             implicitHeight: cardContent.implicitHeight + Style.marginM * 2
 
-            property int providerIndex: index
+            readonly property int providerIndex: providerDropArea.index
+            readonly property string providerId: String(providerDropArea.modelData || "")
             property bool dragging: dragMouseArea.drag.active
             property string localFieldToAdd: {
-                var _ = rootSettings?.editBarProviderFields;
-                return rootSettings?.firstAvailableBarProviderField(modelData) ?? "primary";
+                var _ = tab.rootSettings?.editBarProviderFields;
+                return tab.rootSettings?.firstAvailableBarProviderField(dragCard.providerId) ?? "primary";
             }
 
             Drag.active: dragging
@@ -124,7 +127,11 @@ SettingsTabPage {
             opacity: dragging ? 0.9 : 1.0
 
             onDraggingChanged: {
+                if (dragging)
+                    tab.draggedProviderIndex = dragCard.providerIndex;
                 if (!dragging) {
+                    if (tab.draggedProviderIndex === dragCard.providerIndex)
+                        tab.draggedProviderIndex = -1;
                     x = 0;
                     y = 0;
                 }
@@ -166,13 +173,13 @@ SettingsTabPage {
                     }
 
                     NText {
-                        text: tab.providerDisplayName(modelData)
+                        text: tab.providerDisplayName(dragCard.providerId)
                         pointSize: Style.fontSizeM
                         color: Color.mOnSurface
                     }
 
                     ProviderVisual {
-                        visualData: tab.providerVisual(modelData)
+                        visualData: tab.providerVisual(dragCard.providerId)
                         color: Color.mOnSurfaceVariant
                         pointSize: Style.fontSizeL
                         Layout.alignment: Qt.AlignVCenter
@@ -184,12 +191,12 @@ SettingsTabPage {
 
                         NComboBox {
                             Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.general.providers.visual.source.label")
-                            model: tab.providerVisualSourceOptions(modelData)
-                            currentKey: rootSettings?.providerVisualSource(modelData) ?? "icon"
+                            label: tab.rootSettings?.pluginApi?.tr("settings.general.providers.visual.source.label")
+                            model: tab.providerVisualSourceOptions(dragCard.providerId)
+                            currentKey: tab.rootSettings?.providerVisualSource(dragCard.providerId) ?? "icon"
                             onSelected: key => {
-                                if (rootSettings)
-                                    rootSettings.setProviderVisualSource(modelData, key);
+                                if (tab.rootSettings)
+                                    tab.rootSettings.setProviderVisualSource(dragCard.providerId, key);
                             }
                         }
 
@@ -198,13 +205,13 @@ SettingsTabPage {
                             spacing: Style.marginS
 
                             NButton {
-                                visible: (rootSettings?.providerVisualSource(modelData) ?? "icon") === "icon"
-                                text: rootSettings?.pluginApi?.tr("settings.general.providers.icon.browse")
+                                visible: (tab.rootSettings?.providerVisualSource(dragCard.providerId) ?? "icon") === "icon"
+                                text: tab.rootSettings?.pluginApi?.tr("settings.general.providers.icon.browse")
                                 icon: "pencil"
                                 outlined: true
                                 onClicked: {
-                                    tab.iconPickerProviderId = String(modelData || "");
-                                    providerIconPicker.initialIcon = tab.providerIcon(modelData);
+                                    tab.iconPickerProviderId = dragCard.providerId;
+                                    providerIconPicker.initialIcon = tab.providerIcon(dragCard.providerId);
                                     providerIconPicker.open();
                                 }
                             }
@@ -212,11 +219,11 @@ SettingsTabPage {
                             NButton {
                                 icon: "restore"
                                 outlined: true
-                                enabled: !!(rootSettings?.editProviderVisuals || ({}))[String(modelData || "")] || !!(rootSettings?.editBarProviderIcons || ({}))[String(modelData || "")]
-                                tooltipText: rootSettings?.pluginApi?.tr("settings.general.providers.icon.reset")
+                                enabled: !!(tab.rootSettings?.editProviderVisuals || ({}))[dragCard.providerId] || !!(tab.rootSettings?.editBarProviderIcons || ({}))[dragCard.providerId]
+                                tooltipText: tab.rootSettings?.pluginApi?.tr("settings.general.providers.icon.reset")
                                 onClicked: {
-                                    if (rootSettings)
-                                        rootSettings.resetProviderVisual(modelData);
+                                    if (tab.rootSettings)
+                                        tab.rootSettings.resetProviderVisual(dragCard.providerId);
                                 }
                             }
 
@@ -224,8 +231,8 @@ SettingsTabPage {
                                 icon: "trash"
                                 outlined: true
                                 onClicked: {
-                                    if (rootSettings)
-                                        rootSettings.removeBarProvider(index);
+                                    if (tab.rootSettings)
+                                        tab.rootSettings.removeBarProvider(providerDropArea.index);
                                 }
                             }
                         }
@@ -238,7 +245,7 @@ SettingsTabPage {
                     spacing: Style.marginS
 
                     NText {
-                        text: rootSettings?.pluginApi?.tr("settings.general.providers.fields.label")
+                        text: tab.rootSettings?.pluginApi?.tr("settings.general.providers.fields.label")
                         pointSize: Style.fontSizeS
                         color: Color.mOnSurfaceVariant
                     }
@@ -248,14 +255,14 @@ SettingsTabPage {
                         spacing: Style.marginS
 
                         readonly property var availableOptions: {
-                            var _ = rootSettings?.editBarProviderFields;
-                            return rootSettings?.getAvailableBarProviderFieldOptions(modelData) || [];
+                            var _ = tab.rootSettings?.editBarProviderFields;
+                            return tab.rootSettings?.getAvailableBarProviderFieldOptions(dragCard.providerId) || [];
                         }
 
                         NComboBox {
                             id: fieldToAddCombo
                             Layout.fillWidth: true
-                            label: rootSettings?.pluginApi?.tr("settings.general.providers.fields.add")
+                            label: tab.rootSettings?.pluginApi?.tr("settings.general.providers.fields.add")
                             model: parent.availableOptions
                             currentKey: dragCard.localFieldToAdd
                             enabled: parent.availableOptions.length > 0
@@ -265,13 +272,13 @@ SettingsTabPage {
                         }
 
                         NButton {
-                            text: rootSettings?.pluginApi?.tr("settings.general.providers.fields.addButton")
+                            text: tab.rootSettings?.pluginApi?.tr("settings.general.providers.fields.addButton")
                             icon: "plus"
                             enabled: parent.availableOptions.length > 0
                             onClicked: {
-                                if (rootSettings) {
-                                    rootSettings.addBarProviderField(modelData, dragCard.localFieldToAdd);
-                                    dragCard.localFieldToAdd = rootSettings.firstAvailableBarProviderField(modelData);
+                                if (tab.rootSettings) {
+                                    tab.rootSettings.addBarProviderField(providerDropArea.modelData, dragCard.localFieldToAdd);
+                                    dragCard.localFieldToAdd = tab.rootSettings.firstAvailableBarProviderField(providerDropArea.modelData);
                                 }
                             }
                         }
@@ -279,15 +286,18 @@ SettingsTabPage {
 
                     Repeater {
                         model: {
-                            var _ = rootSettings?.editBarProviderFields;
-                            return rootSettings?.getBarProviderFields(modelData) || [];
+                            var _ = tab.rootSettings?.editBarProviderFields;
+                            return tab.rootSettings?.getBarProviderFields(providerDropArea.modelData) || [];
                         }
 
                         delegate: NBox {
+                            id: fieldItem
                             required property int index
                             required property var modelData
 
-                            readonly property var outerModelData: providerDropArea.modelData
+                            readonly property string providerId: dragCard.providerId
+                            readonly property string fieldKey: String(modelData || "")
+                            readonly property int fieldCount: tab.rootSettings?.getBarProviderFields(providerId)?.length ?? 0
 
                             Layout.fillWidth: true
                             implicitHeight: fieldRow.implicitHeight + Style.marginS * 2
@@ -301,12 +311,12 @@ SettingsTabPage {
                                 NText {
                                     Layout.fillWidth: true
                                     text: {
-                                        var options = rootSettings?.barTextFieldOptions || [];
+                                        var options = tab.rootSettings?.barTextFieldOptions || [];
                                         for (var optionIndex = 0; optionIndex < options.length; optionIndex++) {
-                                            if (options[optionIndex].key === modelData)
+                                            if (options[optionIndex].key === fieldItem.fieldKey)
                                                 return options[optionIndex].name;
                                         }
-                                        return String(modelData || "");
+                                        return fieldItem.fieldKey;
                                     }
                                     pointSize: Style.fontSizeM
                                     color: Color.mOnSurface
@@ -315,36 +325,30 @@ SettingsTabPage {
                                 NButton {
                                     icon: "arrow-up"
                                     outlined: true
-                                    enabled: index > 0
+                                    enabled: fieldItem.index > 0
                                     onClicked: {
-                                        if (rootSettings)
-                                            rootSettings.moveBarProviderField(outerModelData, index, -1);
+                                        if (tab.rootSettings)
+                                            tab.rootSettings.moveBarProviderField(fieldItem.providerId, fieldItem.index, -1);
                                     }
                                 }
 
                                 NButton {
                                     icon: "arrow-down"
                                     outlined: true
-                                    enabled: {
-                                        var _ = rootSettings?.editBarProviderFields;
-                                        return index < (rootSettings?.getBarProviderFields(outerModelData)?.length ?? 0) - 1;
-                                    }
+                                    enabled: fieldItem.index < fieldItem.fieldCount - 1
                                     onClicked: {
-                                        if (rootSettings)
-                                            rootSettings.moveBarProviderField(outerModelData, index, 1);
+                                        if (tab.rootSettings)
+                                            tab.rootSettings.moveBarProviderField(fieldItem.providerId, fieldItem.index, 1);
                                     }
                                 }
 
                                 NButton {
                                     icon: "trash"
                                     outlined: true
-                                    enabled: {
-                                        var _ = rootSettings?.editBarProviderFields;
-                                        return (rootSettings?.getBarProviderFields(outerModelData)?.length ?? 0) > 1;
-                                    }
+                                    enabled: fieldItem.fieldCount > 1
                                     onClicked: {
-                                        if (rootSettings)
-                                            rootSettings.removeBarProviderField(outerModelData, index);
+                                        if (tab.rootSettings)
+                                            tab.rootSettings.removeBarProviderField(fieldItem.providerId, fieldItem.index);
                                     }
                                 }
                             }
@@ -360,8 +364,8 @@ SettingsTabPage {
     icon: "sparkles"
 
     SettingsCard {
-        title: rootSettings?.pluginApi?.tr("settings.general.appearance.title")
-        description: rootSettings?.pluginApi?.tr("settings.general.appearance.description")
+        title: tab.rootSettings?.pluginApi?.tr("settings.general.appearance.title")
+        description: tab.rootSettings?.pluginApi?.tr("settings.general.appearance.description")
 
         RowLayout {
             Layout.fillWidth: true
@@ -371,9 +375,9 @@ SettingsTabPage {
                 Layout.preferredWidth: Style.fontSizeXL * 2
                 Layout.preferredHeight: Style.fontSizeXL * 2
                 Layout.alignment: Qt.AlignVCenter
-                icon: rootSettings?.editBarIcon ?? "sparkles"
+                icon: tab.rootSettings?.editBarIcon ?? "sparkles"
                 pointSize: Style.fontSizeXL * 1.6
-                color: Color.resolveColorKey(rootSettings?.editBarIconColor ?? "on-surface")
+                color: Color.resolveColorKey(tab.rootSettings?.editBarIconColor ?? "on-surface")
             }
 
             ColumnLayout {
@@ -381,13 +385,13 @@ SettingsTabPage {
                 spacing: Style.marginM
 
                 NButton {
-                    text: rootSettings?.pluginApi?.tr("settings.general.barIcon.browse")
+                    text: tab.rootSettings?.pluginApi?.tr("settings.general.barIcon.browse")
                     onClicked: barIconPicker.open()
                 }
 
                 NText {
                     Layout.fillWidth: true
-                    text: rootSettings?.editBarIcon ?? "sparkles"
+                    text: tab.rootSettings?.editBarIcon ?? "sparkles"
                     color: Color.mOnSurfaceVariant
                     elide: Text.ElideRight
                 }
@@ -396,82 +400,82 @@ SettingsTabPage {
 
         NIconPicker {
             id: barIconPicker
-            initialIcon: rootSettings?.editBarIcon ?? "sparkles"
+            initialIcon: tab.rootSettings?.editBarIcon ?? "sparkles"
             onIconSelected: iconName => {
-                if (rootSettings)
-                    rootSettings.editBarIcon = rootSettings.normalizeIconName(iconName);
+                if (tab.rootSettings)
+                    tab.rootSettings.editBarIcon = tab.rootSettings.normalizeIconName(iconName);
             }
         }
 
         NColorChoice {
             Layout.fillWidth: true
-            label: rootSettings?.pluginApi?.tr("settings.general.barIconColor.label")
-            currentKey: rootSettings?.editBarIconColor ?? "on-surface"
+            label: tab.rootSettings?.pluginApi?.tr("settings.general.barIconColor.label")
+            currentKey: tab.rootSettings?.editBarIconColor ?? "on-surface"
             onSelected: key => {
-                if (rootSettings)
-                    rootSettings.editBarIconColor = key;
+                if (tab.rootSettings)
+                    tab.rootSettings.editBarIconColor = key;
             }
         }
 
         NToggle {
             Layout.fillWidth: true
-            label: rootSettings?.pluginApi?.tr("settings.general.appearance.providerIconColorize.label")
-            description: rootSettings?.pluginApi?.tr("settings.general.appearance.providerIconColorize.desc")
-            checked: rootSettings?.editProviderIconColorize ?? true
+            label: tab.rootSettings?.pluginApi?.tr("settings.general.appearance.providerIconColorize.label")
+            description: tab.rootSettings?.pluginApi?.tr("settings.general.appearance.providerIconColorize.desc")
+            checked: tab.rootSettings?.editProviderIconColorize ?? true
             onToggled: checked => {
-                if (rootSettings)
-                    rootSettings.editProviderIconColorize = checked;
+                if (tab.rootSettings)
+                    tab.rootSettings.editProviderIconColorize = checked;
             }
         }
 
         NColorChoice {
             Layout.fillWidth: true
-            visible: rootSettings?.editProviderIconColorize ?? true
-            label: rootSettings?.pluginApi?.tr("settings.general.appearance.providerIconColorizeColor.label")
-            currentKey: rootSettings?.editProviderIconColorizeColor ?? "on-surface"
+            visible: tab.rootSettings?.editProviderIconColorize ?? true
+            label: tab.rootSettings?.pluginApi?.tr("settings.general.appearance.providerIconColorizeColor.label")
+            currentKey: tab.rootSettings?.editProviderIconColorizeColor ?? "on-surface"
             onSelected: key => {
-                if (rootSettings)
-                    rootSettings.editProviderIconColorizeColor = key;
+                if (tab.rootSettings)
+                    tab.rootSettings.editProviderIconColorizeColor = key;
             }
         }
     }
 
     SettingsCard {
-        title: rootSettings?.pluginApi?.tr("settings.general.providers.title")
-        description: rootSettings?.pluginApi?.tr("settings.general.providers.description")
+        title: tab.rootSettings?.pluginApi?.tr("settings.general.providers.title")
+        description: tab.rootSettings?.pluginApi?.tr("settings.general.providers.description")
 
         NText {
             Layout.fillWidth: true
-            visible: (rootSettings?.widgetProviderOptions?.length ?? 0) === 0
-            text: rootSettings?.pluginApi?.tr("settings.general.providers.noneAvailable")
+            visible: (tab.rootSettings?.widgetProviderOptions?.length ?? 0) === 0
+            text: tab.rootSettings?.pluginApi?.tr("settings.general.providers.noneAvailable")
             color: Color.mOnSurfaceVariant
             wrapMode: Text.Wrap
         }
 
         RowLayout {
             Layout.fillWidth: true
-            visible: (tab.availableProviderChoices?.length ?? 0) > 0 && (rootSettings?.editBarProviderIds?.length ?? 0) < 3
+            visible: (tab.availableProviderChoices?.length ?? 0) > 0 && (tab.rootSettings?.editBarProviderIds?.length ?? 0) < 3
             spacing: Style.marginL
 
             NComboBox {
                 id: providerToAddCombo
                 Layout.fillWidth: true
-                label: rootSettings?.pluginApi?.tr("settings.general.providers.available")
+                label: tab.rootSettings?.pluginApi?.tr("settings.general.providers.available")
                 model: tab.availableProviderChoices || []
-                currentKey: rootSettings?.editWidgetProviderToAdd ?? ""
+                currentKey: tab.rootSettings?.editWidgetProviderToAdd ?? ""
                 onSelected: key => {
-                    if (rootSettings)
-                        rootSettings.editWidgetProviderToAdd = key;
+                    if (tab.rootSettings)
+                        tab.rootSettings.editWidgetProviderToAdd = key;
                 }
             }
 
             NButton {
-                text: rootSettings?.pluginApi?.tr("settings.general.providers.add")
+                text: tab.rootSettings?.pluginApi?.tr("settings.general.providers.add")
                 icon: "plus"
                 onClicked: {
-                    var key = rootSettings?.editWidgetProviderToAdd ?? "";
-                    if (rootSettings)
-                        rootSettings.addBarProvider(key);
+                    var key = tab.rootSettings?.editWidgetProviderToAdd ?? "";
+                    if (tab.rootSettings)
+                        tab.rootSettings.addBarProvider(key);
                 }
             }
         }
@@ -481,21 +485,21 @@ SettingsTabPage {
             spacing: Style.marginM
 
             NText {
-                text: rootSettings?.pluginApi?.tr("settings.general.providers.selected")
+                text: tab.rootSettings?.pluginApi?.tr("settings.general.providers.selected")
                 pointSize: Style.fontSizeS
                 color: Color.mOnSurface
             }
 
             NText {
                 Layout.fillWidth: true
-                visible: (rootSettings?.editBarProviderIds?.length ?? 0) === 0
-                text: rootSettings?.pluginApi?.tr("settings.general.providers.empty")
+                visible: (tab.rootSettings?.editBarProviderIds?.length ?? 0) === 0
+                text: tab.rootSettings?.pluginApi?.tr("settings.general.providers.empty")
                 color: Color.mOnSurfaceVariant
                 wrapMode: Text.Wrap
             }
 
             Repeater {
-                model: rootSettings?.editBarProviderIds || []
+                model: tab.rootSettings?.editBarProviderIds || []
 
                 delegate: SelectedProviderDelegate {
                 }
@@ -506,160 +510,162 @@ SettingsTabPage {
             id: providerIconPicker
             initialIcon: tab.iconPickerProviderId !== "" ? tab.providerIcon(tab.iconPickerProviderId) : "cpu"
             onIconSelected: iconName => {
-                if (rootSettings && tab.iconPickerProviderId !== "")
-                    rootSettings.setBarProviderIcon(tab.iconPickerProviderId, iconName);
+                if (tab.rootSettings && tab.iconPickerProviderId !== "")
+                    tab.rootSettings.setBarProviderIcon(tab.iconPickerProviderId, iconName);
             }
         }
 
         NComboBox {
             Layout.fillWidth: true
-            label: rootSettings?.pluginApi?.tr("settings.general.providers.labelMode.label")
-            model: rootSettings?.providerLabelModeOptions || []
-            currentKey: rootSettings?.editBarProviderLabelMode ?? "icon"
+            label: tab.rootSettings?.pluginApi?.tr("settings.general.providers.labelMode.label")
+            model: tab.rootSettings?.providerLabelModeOptions || []
+            currentKey: tab.rootSettings?.editBarProviderLabelMode ?? "icon"
             onSelected: key => {
-                if (rootSettings)
-                    rootSettings.editBarProviderLabelMode = key;
+                if (tab.rootSettings)
+                    tab.rootSettings.editBarProviderLabelMode = key;
             }
         }
 
         NTextInput {
             Layout.fillWidth: true
-            label: rootSettings?.pluginApi?.tr("settings.general.providers.separator.label")
-            description: rootSettings?.pluginApi?.tr("settings.general.providers.separator.desc")
-            text: rootSettings?.editBarProviderSeparator ?? "|"
+            label: tab.rootSettings?.pluginApi?.tr("settings.general.providers.separator.label")
+            description: tab.rootSettings?.pluginApi?.tr("settings.general.providers.separator.desc")
+            text: tab.rootSettings?.editBarProviderSeparator ?? "|"
             onTextChanged: {
-                if (rootSettings)
-                    rootSettings.editBarProviderSeparator = text;
+                if (tab.rootSettings)
+                    tab.rootSettings.editBarProviderSeparator = text;
             }
         }
 
         NSpinBox {
             Layout.fillWidth: true
-            label: rootSettings?.pluginApi?.tr("settings.general.providers.separatorSpacing.label")
-            description: rootSettings?.pluginApi?.tr("settings.general.providers.separatorSpacing.desc")
+            label: tab.rootSettings?.pluginApi?.tr("settings.general.providers.separatorSpacing.label")
+            description: tab.rootSettings?.pluginApi?.tr("settings.general.providers.separatorSpacing.desc")
             from: 0
             to: 4
             stepSize: 1
-            value: rootSettings?.editBarProviderSeparatorSpacing ?? 1
+            value: tab.rootSettings?.editBarProviderSeparatorSpacing ?? 1
             suffix: "sp"
             onValueChanged: {
-                if (rootSettings)
-                    rootSettings.editBarProviderSeparatorSpacing = value;
+                if (tab.rootSettings)
+                    tab.rootSettings.editBarProviderSeparatorSpacing = value;
             }
         }
     }
 
     SettingsCard {
-        title: rootSettings?.pluginApi?.tr("settings.general.textStyle.title")
-        description: rootSettings?.pluginApi?.tr("settings.general.textStyle.description")
+        title: tab.rootSettings?.pluginApi?.tr("settings.general.textStyle.title")
+        description: tab.rootSettings?.pluginApi?.tr("settings.general.textStyle.description")
 
         NColorChoice {
             Layout.fillWidth: true
-            label: rootSettings?.pluginApi?.tr("settings.general.text.color.label")
-            currentKey: rootSettings?.editBarTextColor ?? "on-surface"
+            label: tab.rootSettings?.pluginApi?.tr("settings.general.text.color.label")
+            currentKey: tab.rootSettings?.editBarTextColor ?? "on-surface"
             onSelected: key => {
-                if (rootSettings)
-                    rootSettings.editBarTextColor = key;
+                if (tab.rootSettings)
+                    tab.rootSettings.editBarTextColor = key;
             }
         }
 
         NSpinBox {
             Layout.fillWidth: true
-            label: rootSettings?.pluginApi?.tr("settings.general.text.opacity.label")
-            description: rootSettings?.pluginApi?.tr("settings.general.text.opacity.desc")
+            label: tab.rootSettings?.pluginApi?.tr("settings.general.text.opacity.label")
+            description: tab.rootSettings?.pluginApi?.tr("settings.general.text.opacity.desc")
             from: 0
             to: 100
             stepSize: 5
-            value: rootSettings?.editBarTextOpacityPercent ?? 100
+            value: tab.rootSettings?.editBarTextOpacityPercent ?? 100
             suffix: "%"
             onValueChanged: {
-                if (rootSettings)
-                    rootSettings.editBarTextOpacityPercent = value;
+                if (tab.rootSettings)
+                    tab.rootSettings.editBarTextOpacityPercent = value;
             }
         }
 
         NTextInput {
             Layout.fillWidth: true
-            label: rootSettings?.pluginApi?.tr("settings.general.textFields.separator.label")
-            description: rootSettings?.pluginApi?.tr("settings.general.textFields.separator.desc")
-            text: rootSettings?.editBarTextSeparator ?? ""
+            label: tab.rootSettings?.pluginApi?.tr("settings.general.textFields.separator.label")
+            description: tab.rootSettings?.pluginApi?.tr("settings.general.textFields.separator.desc")
+            text: tab.rootSettings?.editBarTextSeparator ?? ""
             onTextChanged: {
-                if (rootSettings)
-                    rootSettings.editBarTextSeparator = text;
+                if (tab.rootSettings)
+                    tab.rootSettings.editBarTextSeparator = text;
             }
         }
 
         NSpinBox {
             Layout.fillWidth: true
-            label: rootSettings?.pluginApi?.tr("settings.general.textFields.separatorSpacing.label")
-            description: rootSettings?.pluginApi?.tr("settings.general.textFields.separatorSpacing.desc")
+            label: tab.rootSettings?.pluginApi?.tr("settings.general.textFields.separatorSpacing.label")
+            description: tab.rootSettings?.pluginApi?.tr("settings.general.textFields.separatorSpacing.desc")
             from: 0
             to: 4
             stepSize: 1
-            value: rootSettings?.editBarTextSeparatorSpacing ?? 1
+            value: tab.rootSettings?.editBarTextSeparatorSpacing ?? 1
             suffix: "sp"
             onValueChanged: {
-                if (rootSettings)
-                    rootSettings.editBarTextSeparatorSpacing = value;
+                if (tab.rootSettings)
+                    tab.rootSettings.editBarTextSeparatorSpacing = value;
             }
         }
     }
 
     SettingsCard {
-        title: rootSettings?.pluginApi?.tr("settings.general.behavior.title")
-        description: rootSettings?.pluginApi?.tr("settings.general.behavior.description")
+        title: tab.rootSettings?.pluginApi?.tr("settings.general.behavior.title")
+        description: tab.rootSettings?.pluginApi?.tr("settings.general.behavior.description")
 
         NToggle {
             Layout.fillWidth: true
-            label: rootSettings?.pluginApi?.tr("settings.general.behavior.showOnHover.label")
-            description: rootSettings?.pluginApi?.tr("settings.general.behavior.showOnHover.desc")
-            checked: rootSettings?.editBarTextShowOnHover ?? false
+            label: tab.rootSettings?.pluginApi?.tr("settings.general.behavior.showOnHover.label")
+            description: tab.rootSettings?.pluginApi?.tr("settings.general.behavior.showOnHover.desc")
+            checked: tab.rootSettings?.editBarTextShowOnHover ?? false
             onToggled: checked => {
-                if (rootSettings)
-                    rootSettings.editBarTextShowOnHover = checked;
+                if (tab.rootSettings)
+                    tab.rootSettings.editBarTextShowOnHover = checked;
             }
         }
 
         NToggle {
             Layout.fillWidth: true
-            label: rootSettings?.pluginApi?.tr("settings.general.behavior.expandOnChange.label")
-            description: rootSettings?.pluginApi?.tr("settings.general.behavior.expandOnChange.desc")
-            checked: rootSettings?.editBarTextExpandOnChange ?? false
-            enabled: rootSettings?.editBarTextShowOnHover ?? false
+            label: tab.rootSettings?.pluginApi?.tr("settings.general.behavior.expandOnChange.label")
+            description: tab.rootSettings?.pluginApi?.tr("settings.general.behavior.expandOnChange.desc")
+            checked: tab.rootSettings?.editBarTextExpandOnChange ?? false
+            enabled: tab.rootSettings?.editBarTextShowOnHover ?? false
             onToggled: checked => {
-                if (rootSettings)
-                    rootSettings.editBarTextExpandOnChange = checked;
+                if (tab.rootSettings)
+                    tab.rootSettings.editBarTextExpandOnChange = checked;
             }
         }
 
         NToggle {
             Layout.fillWidth: true
-            label: rootSettings?.pluginApi?.tr("settings.general.behavior.countdownOnEmpty.label")
-            description: rootSettings?.pluginApi?.tr("settings.general.behavior.countdownOnEmpty.desc")
-            checked: rootSettings?.editBarCountdownOnEmpty ?? false
+            label: tab.rootSettings?.pluginApi?.tr("settings.general.behavior.countdownOnEmpty.label")
+            description: tab.rootSettings?.pluginApi?.tr("settings.general.behavior.countdownOnEmpty.desc")
+            checked: tab.rootSettings?.editBarCountdownOnEmpty ?? false
             onToggled: checked => {
-                if (rootSettings)
-                    rootSettings.editBarCountdownOnEmpty = checked;
+                if (tab.rootSettings)
+                    tab.rootSettings.editBarCountdownOnEmpty = checked;
             }
         }
 
         ColumnLayout {
             Layout.fillWidth: true
             spacing: Style.marginM
-            visible: rootSettings?.editBarCountdownOnEmpty ?? false
+            visible: tab.rootSettings?.editBarCountdownOnEmpty ?? false
 
             NText {
-                text: rootSettings?.pluginApi?.tr("settings.general.behavior.countdownWindows.label")
+                text: tab.rootSettings?.pluginApi?.tr("settings.general.behavior.countdownWindows.label")
                 pointSize: Style.fontSizeS
                 color: Color.mOnSurface
             }
 
             Repeater {
-                model: rootSettings?.editBarCountdownWindows || []
+                model: tab.rootSettings?.editBarCountdownWindows || []
 
                 delegate: NBox {
+                    id: countdownItem
                     required property int index
                     required property var modelData
+                    readonly property string windowKey: String(modelData || "")
 
                     Layout.fillWidth: true
                     implicitHeight: countdownWinRow.implicitHeight + Style.marginM * 2
@@ -673,12 +679,12 @@ SettingsTabPage {
                         NText {
                             Layout.fillWidth: true
                             text: {
-                                var options = rootSettings?.countdownWindowOptions || [];
+                                var options = tab.rootSettings?.countdownWindowOptions || [];
                                 for (var optionIndex = 0; optionIndex < options.length; optionIndex++) {
-                                    if (options[optionIndex].key === modelData)
+                                    if (options[optionIndex].key === countdownItem.windowKey)
                                         return options[optionIndex].name;
                                 }
-                                return String(modelData || "");
+                                return countdownItem.windowKey;
                             }
                             pointSize: Style.fontSizeM
                             color: Color.mOnSurface
@@ -687,10 +693,10 @@ SettingsTabPage {
                         NButton {
                             icon: "trash"
                             outlined: true
-                            enabled: (rootSettings?.editBarCountdownWindows?.length ?? 0) > 1
+                            enabled: (tab.rootSettings?.editBarCountdownWindows?.length ?? 0) > 1
                             onClicked: {
-                                if (rootSettings)
-                                    rootSettings.removeCountdownWindow(index);
+                                if (tab.rootSettings)
+                                    tab.rootSettings.removeCountdownWindow(countdownItem.index);
                             }
                         }
                     }
@@ -698,59 +704,59 @@ SettingsTabPage {
             }
 
             NButton {
-                visible: (rootSettings?.editBarCountdownWindows?.length ?? 0) < 3
-                text: rootSettings?.pluginApi?.tr("settings.general.textFields.addButton")
+                visible: (tab.rootSettings?.editBarCountdownWindows?.length ?? 0) < 3
+                text: tab.rootSettings?.pluginApi?.tr("settings.general.textFields.addButton")
                 icon: "plus"
                 outlined: true
                 onClicked: {
-                    if (rootSettings)
-                        rootSettings.addCountdownWindow(rootSettings.editCountdownWindowToAdd);
+                    if (tab.rootSettings)
+                        tab.rootSettings.addCountdownWindow(tab.rootSettings.editCountdownWindowToAdd);
                 }
             }
         }
 
         NToggle {
             Layout.fillWidth: true
-            label: rootSettings?.pluginApi?.tr("settings.general.lowUsageAlert.enabled.label")
-            description: rootSettings?.pluginApi?.tr("settings.general.lowUsageAlert.enabled.desc")
-            checked: rootSettings?.editBarLowUsageAlertEnabled ?? false
+            label: tab.rootSettings?.pluginApi?.tr("settings.general.lowUsageAlert.enabled.label")
+            description: tab.rootSettings?.pluginApi?.tr("settings.general.lowUsageAlert.enabled.desc")
+            checked: tab.rootSettings?.editBarLowUsageAlertEnabled ?? false
             onToggled: checked => {
-                if (rootSettings)
-                    rootSettings.editBarLowUsageAlertEnabled = checked;
+                if (tab.rootSettings)
+                    tab.rootSettings.editBarLowUsageAlertEnabled = checked;
             }
         }
 
         NComboBox {
             Layout.fillWidth: true
-            label: rootSettings?.pluginApi?.tr("settings.general.lowUsageAlert.window.label")
-            model: rootSettings?.lowUsageAlertWindowOptions || []
-            currentKey: rootSettings?.editBarLowUsageAlertWindow ?? "primary"
-            enabled: rootSettings?.editBarLowUsageAlertEnabled ?? false
+            label: tab.rootSettings?.pluginApi?.tr("settings.general.lowUsageAlert.window.label")
+            model: tab.rootSettings?.lowUsageAlertWindowOptions || []
+            currentKey: tab.rootSettings?.editBarLowUsageAlertWindow ?? "primary"
+            enabled: tab.rootSettings?.editBarLowUsageAlertEnabled ?? false
             onSelected: key => {
-                if (rootSettings)
-                    rootSettings.editBarLowUsageAlertWindow = (key === "secondary" || key === "tertiary") ? key : "primary";
+                if (tab.rootSettings)
+                    tab.rootSettings.editBarLowUsageAlertWindow = (key === "secondary" || key === "tertiary") ? key : "primary";
             }
         }
 
         NColorChoice {
             Layout.fillWidth: true
-            label: rootSettings?.pluginApi?.tr("settings.general.lowUsageAlert.color.label")
-            currentKey: rootSettings?.editBarLowUsageAlertColor ?? "error"
-            enabled: rootSettings?.editBarLowUsageAlertEnabled ?? false
+            label: tab.rootSettings?.pluginApi?.tr("settings.general.lowUsageAlert.color.label")
+            currentKey: tab.rootSettings?.editBarLowUsageAlertColor ?? "error"
+            enabled: tab.rootSettings?.editBarLowUsageAlertEnabled ?? false
             onSelected: key => {
-                if (rootSettings)
-                    rootSettings.editBarLowUsageAlertColor = key;
+                if (tab.rootSettings)
+                    tab.rootSettings.editBarLowUsageAlertColor = key;
             }
         }
 
         NComboBox {
             Layout.fillWidth: true
-            label: rootSettings?.pluginApi?.tr("settings.general.refreshInterval.label")
-            model: rootSettings?.refreshIntervalOptions || []
-            currentKey: String(rootSettings?.editRefreshInterval ?? 120)
+            label: tab.rootSettings?.pluginApi?.tr("settings.general.refreshInterval.label")
+            model: tab.rootSettings?.refreshIntervalOptions || []
+            currentKey: String(tab.rootSettings?.editRefreshInterval ?? 120)
             onSelected: key => {
-                if (rootSettings)
-                    rootSettings.editRefreshInterval = Number(key);
+                if (tab.rootSettings)
+                    tab.rootSettings.editRefreshInterval = Number(key);
             }
         }
 

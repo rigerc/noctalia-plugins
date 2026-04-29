@@ -1,6 +1,4 @@
-import QtQuick
 import QtQuick.Layouts
-import qs.Commons
 import qs.Widgets
 
 SettingsTabPage {
@@ -14,37 +12,37 @@ SettingsTabPage {
 
     NToggle {
         Layout.fillWidth: true
-        label: rootSettings?.pluginApi?.tr("settings.notifications.notifyOnReset.label")
-        description: rootSettings?.pluginApi?.tr("settings.notifications.notifyOnReset.desc")
-        checked: rootSettings?.editNotifyOnReset ?? true
+        label: tab.rootSettings?.pluginApi?.tr("settings.notifications.notifyOnReset.label")
+        description: tab.rootSettings?.pluginApi?.tr("settings.notifications.notifyOnReset.desc")
+        checked: tab.rootSettings?.editNotifyOnReset ?? true
         onToggled: checked => {
-            if (rootSettings)
-                rootSettings.editNotifyOnReset = checked;
+            if (tab.rootSettings)
+                tab.rootSettings.editNotifyOnReset = checked;
         }
     }
 
     NToggle {
         Layout.fillWidth: true
-        label: rootSettings?.pluginApi?.tr("settings.notifications.notifyOnLowUsage.label")
-        description: rootSettings?.pluginApi?.tr("settings.notifications.notifyOnLowUsage.desc")
-        checked: rootSettings?.editNotifyOnLowUsage ?? true
+        label: tab.rootSettings?.pluginApi?.tr("settings.notifications.notifyOnLowUsage.label")
+        description: tab.rootSettings?.pluginApi?.tr("settings.notifications.notifyOnLowUsage.desc")
+        checked: tab.rootSettings?.editNotifyOnLowUsage ?? true
         onToggled: checked => {
-            if (rootSettings)
-                rootSettings.editNotifyOnLowUsage = checked;
+            if (tab.rootSettings)
+                tab.rootSettings.editNotifyOnLowUsage = checked;
         }
     }
 
     NSpinBox {
         Layout.fillWidth: true
-        label: rootSettings?.pluginApi?.tr("settings.notifications.lowUsageThreshold.label")
-        description: rootSettings?.pluginApi?.tr("settings.notifications.lowUsageThreshold.desc")
+        label: tab.rootSettings?.pluginApi?.tr("settings.notifications.lowUsageThreshold.label")
+        description: tab.rootSettings?.pluginApi?.tr("settings.notifications.lowUsageThreshold.desc")
         from: 5
         to: 50
         stepSize: 5
-        value: rootSettings?.editLowUsageThreshold ?? 20
+        value: tab.rootSettings?.editLowUsageThreshold ?? 20
         suffix: "%"
         onValueChanged: {
-            if (rootSettings) rootSettings.editLowUsageThreshold = value;
+            if (tab.rootSettings) tab.rootSettings.editLowUsageThreshold = value;
         }
     }
 }

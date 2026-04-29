@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -743,35 +744,35 @@ ColumnLayout {
     ]
 
     Connections {
-        target: pluginApi
+        target: root.pluginApi
 
         function onPluginSettingsChanged() {
-            root.editBarIcon = root.normalizeIconName(cfg.barIcon ?? defaults.barIcon ?? "sparkles");
-            root.editBarIconColor = cfg.barIconColor ?? defaults.barIconColor ?? "on-surface";
-            root.editBarProviderIds = root.normalizeBarProviderIds(cfg.barProviderIds ?? defaults.barProviderIds ?? []);
-            root.editBarProviderIcons = root.normalizeBarProviderIcons(cfg.barProviderIcons ?? defaults.barProviderIcons ?? ({}));
-            root.editProviderVisuals = root.normalizeProviderVisuals(cfg.providerVisuals ?? defaults.providerVisuals ?? ({}));
-            root.editBarProviderLabelMode = root.normalizeBarProviderLabelMode(cfg.barProviderLabelMode ?? defaults.barProviderLabelMode ?? "icon");
-            root.editBarProviderSeparator = String(cfg.barProviderSeparator ?? defaults.barProviderSeparator ?? "|");
-            root.editBarProviderSeparatorSpacing = Math.max(0, Math.min(4, Number(cfg.barProviderSeparatorSpacing ?? defaults.barProviderSeparatorSpacing ?? 1)));
-            root.editBarTextFields = root.normalizeBarTextFields(cfg.barTextFields ?? defaults.barTextFields ?? ["primary"]);
-            root.editBarProviderFields = root.normalizeBarProviderFields(cfg.barProviderFields ?? defaults.barProviderFields ?? ({}));
-            root.editBarTextSeparator = String(cfg.barTextSeparator ?? defaults.barTextSeparator ?? "·");
-            root.editBarTextSeparatorSpacing = Math.max(0, Math.min(4, Number(cfg.barTextSeparatorSpacing ?? defaults.barTextSeparatorSpacing ?? 1)));
-            root.editBarTextColor = String(cfg.barTextColor ?? defaults.barTextColor ?? "on-surface");
-            root.editBarTextOpacityPercent = Math.max(0, Math.min(100, Math.round(Number(cfg.barTextOpacity ?? defaults.barTextOpacity ?? 1) * 100)));
-            root.editBarTextShowOnHover = cfg.barTextShowOnHover ?? defaults.barTextShowOnHover ?? false;
-            root.editBarTextExpandOnChange = cfg.barTextExpandOnChange ?? defaults.barTextExpandOnChange ?? false;
-            root.editBarLowUsageAlertEnabled = cfg.barLowUsageAlertEnabled ?? defaults.barLowUsageAlertEnabled ?? false;
-            root.editBarLowUsageAlertWindow = String(cfg.barLowUsageAlertWindow ?? defaults.barLowUsageAlertWindow ?? "primary");
-            root.editBarLowUsageAlertColor = String(cfg.barLowUsageAlertColor ?? defaults.barLowUsageAlertColor ?? "error");
-            root.editBarCountdownOnEmpty = cfg.barCountdownOnEmpty ?? defaults.barCountdownOnEmpty ?? false;
-            root.editBarCountdownWindows = root.normalizeCountdownWindows(cfg.barCountdownWindows ?? defaults.barCountdownWindows ?? ["primary"]);
-            root.editRefreshInterval = root.normalizeRefreshInterval(cfg.refreshInterval ?? defaults.refreshInterval ?? 120);
-            root.editDefaultProvider = cfg.defaultProvider ?? defaults.defaultProvider ?? "";
-            root.editNotifyOnReset = cfg.notifyOnReset ?? defaults.notifyOnReset ?? true;
-            root.editNotifyOnLowUsage = cfg.notifyOnLowUsage ?? defaults.notifyOnLowUsage ?? true;
-            root.editLowUsageThreshold = Math.max(5, Math.min(50, Number(cfg.lowUsageThreshold ?? defaults.lowUsageThreshold ?? 20)));
+            root.editBarIcon = root.normalizeIconName(root.cfg.barIcon ?? root.defaults.barIcon ?? "sparkles");
+            root.editBarIconColor = root.cfg.barIconColor ?? root.defaults.barIconColor ?? "on-surface";
+            root.editBarProviderIds = root.normalizeBarProviderIds(root.cfg.barProviderIds ?? root.defaults.barProviderIds ?? []);
+            root.editBarProviderIcons = root.normalizeBarProviderIcons(root.cfg.barProviderIcons ?? root.defaults.barProviderIcons ?? ({}));
+            root.editProviderVisuals = root.normalizeProviderVisuals(root.cfg.providerVisuals ?? root.defaults.providerVisuals ?? ({}));
+            root.editBarProviderLabelMode = root.normalizeBarProviderLabelMode(root.cfg.barProviderLabelMode ?? root.defaults.barProviderLabelMode ?? "icon");
+            root.editBarProviderSeparator = String(root.cfg.barProviderSeparator ?? root.defaults.barProviderSeparator ?? "|");
+            root.editBarProviderSeparatorSpacing = Math.max(0, Math.min(4, Number(root.cfg.barProviderSeparatorSpacing ?? root.defaults.barProviderSeparatorSpacing ?? 1)));
+            root.editBarTextFields = root.normalizeBarTextFields(root.cfg.barTextFields ?? root.defaults.barTextFields ?? ["primary"]);
+            root.editBarProviderFields = root.normalizeBarProviderFields(root.cfg.barProviderFields ?? root.defaults.barProviderFields ?? ({}));
+            root.editBarTextSeparator = String(root.cfg.barTextSeparator ?? root.defaults.barTextSeparator ?? "·");
+            root.editBarTextSeparatorSpacing = Math.max(0, Math.min(4, Number(root.cfg.barTextSeparatorSpacing ?? root.defaults.barTextSeparatorSpacing ?? 1)));
+            root.editBarTextColor = String(root.cfg.barTextColor ?? root.defaults.barTextColor ?? "on-surface");
+            root.editBarTextOpacityPercent = Math.max(0, Math.min(100, Math.round(Number(root.cfg.barTextOpacity ?? root.defaults.barTextOpacity ?? 1) * 100)));
+            root.editBarTextShowOnHover = root.cfg.barTextShowOnHover ?? root.defaults.barTextShowOnHover ?? false;
+            root.editBarTextExpandOnChange = root.cfg.barTextExpandOnChange ?? root.defaults.barTextExpandOnChange ?? false;
+            root.editBarLowUsageAlertEnabled = root.cfg.barLowUsageAlertEnabled ?? root.defaults.barLowUsageAlertEnabled ?? false;
+            root.editBarLowUsageAlertWindow = String(root.cfg.barLowUsageAlertWindow ?? root.defaults.barLowUsageAlertWindow ?? "primary");
+            root.editBarLowUsageAlertColor = String(root.cfg.barLowUsageAlertColor ?? root.defaults.barLowUsageAlertColor ?? "error");
+            root.editBarCountdownOnEmpty = root.cfg.barCountdownOnEmpty ?? root.defaults.barCountdownOnEmpty ?? false;
+            root.editBarCountdownWindows = root.normalizeCountdownWindows(root.cfg.barCountdownWindows ?? root.defaults.barCountdownWindows ?? ["primary"]);
+            root.editRefreshInterval = root.normalizeRefreshInterval(root.cfg.refreshInterval ?? root.defaults.refreshInterval ?? 120);
+            root.editDefaultProvider = root.cfg.defaultProvider ?? root.defaults.defaultProvider ?? "";
+            root.editNotifyOnReset = root.cfg.notifyOnReset ?? root.defaults.notifyOnReset ?? true;
+            root.editNotifyOnLowUsage = root.cfg.notifyOnLowUsage ?? root.defaults.notifyOnLowUsage ?? true;
+            root.editLowUsageThreshold = Math.max(5, Math.min(50, Number(root.cfg.lowUsageThreshold ?? root.defaults.lowUsageThreshold ?? 20)));
             root.syncSelectedWidgetProviders();
             root.syncWidgetProviderToAdd();
             root.syncBarTextFieldToAdd();
@@ -812,7 +813,7 @@ ColumnLayout {
     Component.onCompleted: root.syncWidgetProviderOptions()
 
     NTabBar {
-        currentIndex: selectedTab
+        currentIndex: root.selectedTab
         Layout.fillWidth: true
         distributeEvenly: true
 
@@ -833,7 +834,7 @@ ColumnLayout {
     }
 
     NTabView {
-        currentIndex: selectedTab
+        currentIndex: root.selectedTab
         Layout.fillWidth: true
 
         GeneralSettingsTab {

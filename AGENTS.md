@@ -19,6 +19,19 @@ References:
 
 Guidelines for AI tools contributing to the Noctalia Plugins repository. **Study the official plugins before writing code** — especially `hello-world` (minimal reference) and `timer` (complex example with shared state). Official plugins have `"official": true` in their manifest.
 
+## QML Linting
+
+Use `scripts/qmllint-plugins.sh` for targeted QML lint checks in this workspace.
+
+- Lint a whole plugin: `./scripts/qmllint-plugins.sh --plugin codexbar`
+- Lint a directory subtree: `./scripts/qmllint-plugins.sh --dir codexbar/settings`
+- Lint one file: `./scripts/qmllint-plugins.sh --file codexbar/Main.qml`
+- Use `--summary` for human-readable output; default output is JSON suitable for `jq`
+- The script fails on any `qmllint` warning or error
+- You must pass explicit targets; the script does not lint the entire workspace by default
+
+When editing QML, prefer running the script on the specific files or directories you changed before concluding work.
+
 ## Plugin API
 
 Every plugin component receives a `pluginApi` property. This is the core interface:

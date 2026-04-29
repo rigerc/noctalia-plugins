@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -31,18 +32,22 @@ ColumnLayout {
         });
     }
 
-	    function jumpToSection(sectionId) {
-	        var sections = root._resolvedSections();
-	        for (var i = 0; i < sections.length; i++) {
-	            var section = sections[i];
-	            if (section.id !== sectionId)
-	                continue;
-	            if (pageScroll.contentItem)
-	                pageScroll.contentItem.contentY = pageScroll.clampScrollY(root._sectionY(section));
-	            root.activeSectionId = section.id;
-	            break;
-	        }
-	    }
+    function currentScrollY() {
+        return pageScroll._internalFlickable ? pageScroll._internalFlickable.contentY : 0;
+    }
+
+    function jumpToSection(sectionId) {
+        var sections = root._resolvedSections();
+        for (var i = 0; i < sections.length; i++) {
+            var section = sections[i];
+            if (section.id !== sectionId)
+                continue;
+            if (pageScroll._internalFlickable)
+                pageScroll._internalFlickable.contentY = pageScroll.clampScrollY(root._sectionY(section));
+            root.activeSectionId = section.id;
+            break;
+        }
+    }
 
     function _updateActiveSection() {
         var sections = root._resolvedSections();
@@ -51,11 +56,11 @@ ColumnLayout {
             return;
         }
 
-	        var currentY = pageScroll.contentItem ? pageScroll.contentItem.contentY : 0;
-	        var bestSection = sections[0];
-	        for (var i = 0; i < sections.length; i++) {
-	            var section = sections[i];
-	            if (root._sectionY(section) <= currentY + Style.marginM)
+        var currentY = root.currentScrollY();
+        var bestSection = sections[0];
+        for (var i = 0; i < sections.length; i++) {
+            var section = sections[i];
+            if (root._sectionY(section) <= currentY + Style.marginM)
                 bestSection = section;
         }
         root.activeSectionId = bestSection.id;
@@ -84,15 +89,16 @@ ColumnLayout {
 
             delegate: NButton {
                 required property var modelData
+                readonly property bool isActive: root.activeSectionId === modelData.id
 
                 text: modelData.label || ""
                 icon: modelData.icon || ""
                 fontSize: Style.fontSizeS
-                outlined: root.activeSectionId !== modelData.id
+                outlined: !isActive
                 backgroundColor: Color.mPrimary
                 textColor: Color.mOnPrimary
-                hoverColor: root.activeSectionId === modelData.id ? Color.mPrimary : Color.mHover
-                textHoverColor: root.activeSectionId === modelData.id ? Color.mOnPrimary : Color.mOnHover
+                hoverColor: isActive ? Color.mPrimary : Color.mHover
+                textHoverColor: isActive ? Color.mOnPrimary : Color.mOnHover
                 onClicked: root.jumpToSection(modelData.id)
             }
         }
@@ -112,14 +118,14 @@ ColumnLayout {
             width: pageScroll.availableWidth
             spacing: Style.marginXL
         }
-	    }
+    }
 
-	    Connections {
-	        target: pageScroll.contentItem
+    Connections {
+        target: pageScroll._internalFlickable
 
         function onContentYChanged() {
             root._updateActiveSection();
-	    }
+        }
     }
 
     Component.onCompleted: root._updateActiveSection()
