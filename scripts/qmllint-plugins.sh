@@ -16,6 +16,7 @@ declare -a FILE_TARGETS=()
 declare -a RESOLVED_FILES=()
 declare -a GROUPED_PLUGIN_ROOTS=()
 declare -A SEEN_FILES=()
+declare -A SEEN_PLUGIN_ROOTS=()
 declare -A PLUGIN_FILE_LISTS=()
 declare -A PLUGIN_RESULT_JSONS=()
 declare -A PLUGIN_RESULT_STATUSES=()
@@ -54,22 +55,9 @@ cleanup() {
   fi
 }
 
-is_absolute_path() {
-  local path="$1"
-  [[ "${path}" == /* ]]
-}
-
 resolve_existing_path() {
   local raw_path="$1"
-  local resolved=""
-
-  if is_absolute_path "${raw_path}"; then
-    resolved="$(realpath -e "${raw_path}")"
-  else
-    resolved="$(realpath -e "${raw_path}")"
-  fi
-
-  printf '%s\n' "${resolved}"
+  printf '%s\n' "$(realpath -e "${raw_path}")"
 }
 
 ensure_within_project() {
@@ -149,34 +137,19 @@ add_resolved_file() {
   RESOLVED_FILES+=("${file_path}")
 }
 
-collect_qml_files_from_plugin() {
-  local plugin_root="$1"
+collect_qml_files() {
+  local path="$1"
+  local label="$2"
   local found_any=0
   local file_path=""
 
   while IFS= read -r file_path; do
     found_any=1
     add_resolved_file "${file_path}"
-  done < <(find "${plugin_root}" -type f -name '*.qml' | sort)
+  done < <(find "${path}" -type f -name '*.qml' | sort)
 
   if [[ "${found_any}" -eq 0 ]]; then
-    err "No QML files found under plugin: ${plugin_root}"
-    return 1
-  fi
-}
-
-collect_qml_files_from_dir() {
-  local dir_path="$1"
-  local found_any=0
-  local file_path=""
-
-  while IFS= read -r file_path; do
-    found_any=1
-    add_resolved_file "${file_path}"
-  done < <(find "${dir_path}" -type f -name '*.qml' | sort)
-
-  if [[ "${found_any}" -eq 0 ]]; then
-    err "No QML files found under directory: ${dir_path}"
+    err "No QML files found under ${label}: ${path}"
     return 1
   fi
 }
@@ -187,11 +160,11 @@ collect_explicit_targets() {
   local file_path=""
 
   for plugin_root in "${PLUGIN_TARGETS[@]}"; do
-    collect_qml_files_from_plugin "${plugin_root}"
+    collect_qml_files "${plugin_root}" "plugin"
   done
 
   for dir_path in "${DIR_TARGETS[@]}"; do
-    collect_qml_files_from_dir "${dir_path}"
+    collect_qml_files "${dir_path}" "directory"
   done
 
   for file_path in "${FILE_TARGETS[@]}"; do
@@ -206,14 +179,12 @@ collect_explicit_targets() {
 
 register_grouped_plugin_root() {
   local plugin_root="$1"
-  local existing=""
 
-  for existing in "${GROUPED_PLUGIN_ROOTS[@]}"; do
-    if [[ "${existing}" == "${plugin_root}" ]]; then
-      return 0
-    fi
-  done
+  if [[ -n "${SEEN_PLUGIN_ROOTS["${plugin_root}"]+x}" ]]; then
+    return 0
+  fi
 
+  SEEN_PLUGIN_ROOTS["${plugin_root}"]=1
   GROUPED_PLUGIN_ROOTS+=("${plugin_root}")
 }
 
@@ -238,13 +209,13 @@ write_qmldir() {
   local first_line=""
 
   mkdir -p "${module_dir}"
-  {
+  (
     echo "module ${module_name}"
     shopt -s nullglob
     for qml_file in "${source_dir}"/*.qml; do
       base_name="$(basename "${qml_file}")"
       type_name="${base_name%.qml}"
-      first_line="$(head -n 1 "${qml_file}" || true)"
+      first_line="$(head -n 1 "${qml_file}")"
       if [[ "${first_line}" == "pragma Singleton" ]]; then
         echo "singleton ${type_name} 1.0 ${base_name}"
       else
@@ -252,27 +223,59 @@ write_qmldir() {
       fi
       ln -sfn "${qml_file}" "${module_dir}/${base_name}"
     done
-  } > "${module_dir}/qmldir"
+  ) > "${module_dir}/qmldir"
 }
 
 build_import_shims() {
   local service_dir=""
   local service_name=""
+  local sub_dir=""
+  local sub_name=""
 
   mkdir -p "${TMP_ROOT}/qs/Services"
+  ln -sfn "${NOCTALIA_SHELL_DIR}/Helpers" "${TMP_ROOT}/qs/Helpers"
+
   write_qmldir "${TMP_ROOT}/qs/Commons" "qs.Commons" "${NOCTALIA_SHELL_DIR}/Commons"
   write_qmldir "${TMP_ROOT}/qs/Widgets" "qs.Widgets" "${NOCTALIA_SHELL_DIR}/Widgets"
 
+  for sub_dir in "${NOCTALIA_SHELL_DIR}/Commons"/*/; do
+    [[ -d "${sub_dir}" ]] || continue
+    compgen -G "${sub_dir}*.qml" > /dev/null || continue
+    sub_name="$(basename "${sub_dir%/}")"
+    write_qmldir \
+      "${TMP_ROOT}/qs/Commons/${sub_name}" \
+      "qs.Commons.${sub_name}" \
+      "${sub_dir}"
+  done
+
+  for sub_dir in "${NOCTALIA_SHELL_DIR}/Widgets"/*/; do
+    [[ -d "${sub_dir}" ]] || continue
+    compgen -G "${sub_dir}*.qml" > /dev/null || continue
+    sub_name="$(basename "${sub_dir%/}")"
+    write_qmldir \
+      "${TMP_ROOT}/qs/Widgets/${sub_name}" \
+      "qs.Widgets.${sub_name}" \
+      "${sub_dir}"
+  done
+
   for service_dir in "${NOCTALIA_SHELL_DIR}"/Services/*; do
     [[ -d "${service_dir}" ]] || continue
-    shopt -s nullglob
-    if [[ "${#service_dir}" -gt 0 ]] && compgen -G "${service_dir}/*.qml" > /dev/null; then
-      service_name="$(basename "${service_dir}")"
+    service_name="$(basename "${service_dir}")"
+    if compgen -G "${service_dir}/*.qml" > /dev/null; then
       write_qmldir \
         "${TMP_ROOT}/qs/Services/${service_name}" \
         "qs.Services.${service_name}" \
         "${service_dir}"
     fi
+    for sub_dir in "${service_dir}"/*/; do
+      [[ -d "${sub_dir}" ]] || continue
+      compgen -G "${sub_dir}*.qml" > /dev/null || continue
+      sub_name="$(basename "${sub_dir%/}")"
+      write_qmldir \
+        "${TMP_ROOT}/qs/Services/${service_name}/${sub_name}" \
+        "qs.Services.${service_name}.${sub_name}" \
+        "${sub_dir}"
+    done
   done
 }
 
@@ -459,7 +462,7 @@ emit_results_summary() {
     ' "${report_json}"
 
     jq -r '
-      .qmllint.files[]
+      (.qmllint.files // [])[]
       | select((.warnings | length) > 0)
       | "  " + .filename,
         (
@@ -558,7 +561,6 @@ main() {
   qmllint_bin="$(resolve_qmllint_bin)"
   ensure_jq_available
 
-  cleanup
   TMP_ROOT="$(mktemp -d /tmp/noctalia-qmllint.XXXXXX)"
   trap cleanup EXIT
 
