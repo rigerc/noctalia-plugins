@@ -4,11 +4,14 @@
 
 set -euo pipefail
 
-readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly SCRIPT_DIR
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+readonly PROJECT_ROOT
 readonly NOCTALIA_SHELL_DIR="${PROJECT_ROOT}/docs/noctalia-shell"
 TMP_ROOT=""
 OUTPUT_MODE="json"
+JSON_OUTPUT_FILE=""
 
 declare -a PLUGIN_TARGETS=()
 declare -a DIR_TARGETS=()
@@ -28,23 +31,24 @@ err() {
 
 usage() {
   cat <<EOF
-Usage: $(basename "$0") [--plugin <plugin>] [--dir <directory>] [--file <file.qml>] [--summary]
+Usage: $(basename "$0") [--plugin <plugin>] [--dir <directory>] [--file <file.qml>] [--summary] [--json-file <path>]
 
 Required:
   At least one target flag must be provided.
 
 Flags:
   --plugin <plugin>  Lint a plugin directory identified by name or path.
-  --dir <directory>  Lint all .qml files under a directory.
-  --file <file.qml>  Lint one specific QML file.
-  --summary          Print a human-readable summary instead of JSON.
+  --dir <directory>  Lint all .qml files under a plugin subdirectory.
+  --file <file.qml>  Lint one specific .qml file inside a plugin.
+  --summary          Print a compact human-readable summary instead of JSON.
+  --json-file <path> Write the aggregated lint report to a JSON file.
   --help             Show this help message.
 
 Output:
   Default: writes a JSON report to stdout containing all qmllint warnings and
   errors for each selected plugin group.
-  --summary: prints a compact human-readable summary with finding counts and
-  per-file diagnostics.
+  --summary: prints finding totals and counts grouped by warning id.
+  --json-file: writes the same aggregated report to the given file path.
   Exits non-zero if any selected plugin group has findings.
 EOF
 }
@@ -53,11 +57,6 @@ cleanup() {
   if [[ -n "${TMP_ROOT}" && -d "${TMP_ROOT}" ]]; then
     rm -rf "${TMP_ROOT}"
   fi
-}
-
-resolve_existing_path() {
-  local raw_path="$1"
-  printf '%s\n' "$(realpath -e "${raw_path}")"
 }
 
 ensure_within_project() {
@@ -74,19 +73,39 @@ ensure_within_project() {
   esac
 }
 
-resolve_plugin_target() {
-  local raw_target="$1"
-  local candidate=""
+resolve_candidate_path() {
+  local raw_path="$1"
   local resolved=""
+  local project_candidate="${PROJECT_ROOT}/${raw_path}"
 
-  if [[ -d "${PROJECT_ROOT}/${raw_target}" ]]; then
-    candidate="${PROJECT_ROOT}/${raw_target}"
+  if [[ -e "${project_candidate}" ]]; then
+    resolved="$(realpath -e -- "${project_candidate}")"
+  elif [[ -e "${raw_path}" ]]; then
+    resolved="$(realpath -e -- "${raw_path}")"
   else
-    candidate="${raw_target}"
+    return 1
   fi
 
-  resolved="$(resolve_existing_path "${candidate}")"
-  ensure_within_project "${resolved}"
+  printf '%s\n' "${resolved}"
+}
+
+resolve_target_path() {
+  local raw_target="$1"
+  local target_label="$2"
+  local candidate=""
+  candidate="$(resolve_candidate_path "${raw_target}")" || {
+    err "${target_label} does not exist: ${raw_target}"
+    return 1
+  }
+  ensure_within_project "${candidate}" || return 1
+  printf '%s\n' "${candidate}"
+}
+
+resolve_plugin_target() {
+  local raw_target="$1"
+  local resolved=""
+
+  resolved="$(resolve_target_path "${raw_target}" "Plugin target")" || return 1
 
   if [[ ! -d "${resolved}" ]]; then
     err "Plugin target is not a directory: ${raw_target}"
@@ -101,7 +120,7 @@ resolve_plugin_target() {
   printf '%s\n' "${resolved}"
 }
 
-find_plugin_root() {
+find_plugin_root_internal() {
   local raw_path="$1"
   local current=""
 
@@ -122,9 +141,86 @@ find_plugin_root() {
     current="$(dirname "${current}")"
   done
 
-  err "No plugin root found for path: ${raw_path}"
   return 1
 }
+
+find_plugin_root() {
+  local raw_path="$1"
+  local plugin_root=""
+
+  plugin_root="$(find_plugin_root_internal "${raw_path}")" || {
+    err "No plugin root found for path: ${raw_path}"
+    return 1
+  }
+
+  printf '%s\n' "${plugin_root}"
+}
+
+ensure_target_in_plugin_root() {
+  local resolved_path="$1"
+  local target_label="$2"
+  local raw_target="$3"
+
+  find_plugin_root_internal "${resolved_path}" > /dev/null || {
+    err "${target_label} must be inside a plugin root: ${raw_target}"
+    return 1
+  }
+}
+
+resolve_directory_target() {
+  local raw_target="$1"
+  local resolved=""
+
+  resolved="$(resolve_target_path "${raw_target}" "Directory target")" || return 1
+
+  if [[ ! -d "${resolved}" ]]; then
+    err "Directory target is not a directory: ${raw_target}"
+    return 1
+  fi
+
+  ensure_target_in_plugin_root "${resolved}" "Directory target" "${raw_target}" || return 1
+  printf '%s\n' "${resolved}"
+}
+
+resolve_file_target() {
+  local raw_target="$1"
+  local resolved=""
+
+  resolved="$(resolve_target_path "${raw_target}" "File target")" || return 1
+
+  if [[ ! -f "${resolved}" ]]; then
+    err "File target is not a file: ${raw_target}"
+    return 1
+  fi
+
+  if [[ "${resolved}" != *.qml ]]; then
+    err "File target must be a .qml file: ${raw_target}"
+    return 1
+  fi
+
+  ensure_target_in_plugin_root "${resolved}" "File target" "${raw_target}" || return 1
+  printf '%s\n' "${resolved}"
+}
+
+resolve_output_file_path() {
+  local raw_target="$1"
+  local parent_dir=""
+  local resolved_parent=""
+
+  if [[ "${raw_target}" != /* ]]; then
+    raw_target="${PROJECT_ROOT}/${raw_target}"
+  fi
+
+  parent_dir="$(dirname "${raw_target}")"
+  mkdir -p "${parent_dir}" || {
+    err "Could not create JSON output directory: ${parent_dir}"
+    return 1
+  }
+
+  resolved_parent="$(realpath -e -- "${parent_dir}")"
+  printf '%s\n' "${resolved_parent}/$(basename "${raw_target}")"
+}
+
 
 add_resolved_file() {
   local file_path="$1"
@@ -357,9 +453,12 @@ lint_plugin_group() {
 build_plugin_report() {
   local plugin_root="$1"
   local result_json="${PLUGIN_RESULT_JSONS["${plugin_root}"]}"
-  local group_file="${TMP_ROOT}/files.$(basename "${plugin_root}").txt"
-  local report_json="${TMP_ROOT}/report.$(basename "${plugin_root}").json"
+  local group_file=""
+  local report_json=""
   local lint_status="${PLUGIN_RESULT_STATUSES["${plugin_root}"]:-1}"
+
+  group_file="${TMP_ROOT}/files.$(basename "${plugin_root}").txt"
+  report_json="${TMP_ROOT}/report.$(basename "${plugin_root}").json"
 
   jq \
     --arg plugin "$(basename "${plugin_root}")" \
@@ -371,12 +470,25 @@ build_plugin_report() {
         $selectedFilesRaw
         | split("\n")
         | map(select(length > 0));
-      def all_warnings:
-        (.files // [])
-        | map(.warnings // [])
-        | add // [];
+      def diagnostics:
+        [
+          (.files // [])[]
+          | .filename as $filename
+          | (.warnings // [])[]
+          | {
+              plugin: $plugin,
+              filename: $filename,
+              line,
+              column,
+              id,
+              message,
+              severity: .type
+            }
+        ];
+      def all_diagnostics:
+        diagnostics;
       def warning_count:
-        ((all_warnings | length) // 0);
+        ((all_diagnostics | length) // 0);
       {
         plugin: $plugin,
         pluginRoot: $pluginRoot,
@@ -385,12 +497,19 @@ build_plugin_report() {
         lintExitCode: $lintExitCode,
         selectedFileCount: (selected_files | length),
         warningCount: warning_count,
+        severityCounts: (
+          all_diagnostics
+          | group_by(.severity)
+          | map({key: .[0].severity, value: length})
+          | from_entries
+        ),
         warningCountsById: (
-          all_warnings
+          all_diagnostics
           | group_by(.id)
           | map({key: .[0].id, value: length})
           | from_entries
         ),
+        diagnostics: all_diagnostics,
         qmllint: .
       }
     ' "${result_json}" > "${report_json}"
@@ -398,10 +517,11 @@ build_plugin_report() {
   PLUGIN_REPORT_JSONS["${plugin_root}"]="${report_json}"
 }
 
-emit_results_json() {
+build_aggregate_report() {
   local checked_groups="$1"
   local pass_groups="$2"
   local failed_groups="$3"
+  local aggregate_report="$4"
   local report_json=""
   local -a report_files=()
 
@@ -424,21 +544,29 @@ emit_results_json() {
         failCount: $failCount,
         results: .
       }
-    ' "${report_files[@]}"
+    ' "${report_files[@]}" > "${aggregate_report}"
+}
+
+write_json_artifact() {
+  local source_json="$1"
+  local destination_json="$2"
+
+  jq '.' "${source_json}" > "${destination_json}" || {
+    err "Could not write JSON output file: ${destination_json}"
+    return 1
+  }
 }
 
 emit_results_summary() {
-  local checked_groups="$1"
-  local pass_groups="$2"
-  local failed_groups="$3"
+  local aggregate_report="$1"
   local plugin_root=""
   local report_json=""
 
   echo "qmllint summary"
-  echo "selected files: ${#RESOLVED_FILES[@]}"
-  echo "plugin groups: ${checked_groups}"
-  echo "passed: ${pass_groups}"
-  echo "failed: ${failed_groups}"
+  jq -r '"selected files: " + (.selectedFileCount | tostring)' "${aggregate_report}"
+  jq -r '"plugin groups: " + (.pluginGroupCount | tostring)' "${aggregate_report}"
+  jq -r '"passed: " + (.passCount | tostring)' "${aggregate_report}"
+  jq -r '"failed: " + (.failCount | tostring)' "${aggregate_report}"
   echo ""
 
   for plugin_root in "${GROUPED_PLUGIN_ROOTS[@]}"; do
@@ -449,7 +577,10 @@ emit_results_summary() {
         (if .lintPassed then "PASS" else "FAIL" end),
         .plugin,
         "(" + (.selectedFileCount | tostring) + " file(s), " +
-        (.warningCount | tostring) + " finding(s))"
+        (.warningCount | tostring) + " finding(s), " +
+        "info=" + ((.severityCounts.info // 0) | tostring) + ", " +
+        "warning=" + ((.severityCounts.warning // 0) | tostring) + ", " +
+        "error=" + ((.severityCounts.error // 0) | tostring) + ")"
       ] | join(" ")
     ' "${report_json}"
 
@@ -459,17 +590,6 @@ emit_results_summary() {
       | sort_by(.key)
       | .[]
       | "  " + .key + ": " + (.value | tostring)
-    ' "${report_json}"
-
-    jq -r '
-      (.qmllint.files // [])[]
-      | select((.warnings | length) > 0)
-      | "  " + .filename,
-        (
-          .warnings[]
-          | "    line " + (.line | tostring) + ":" + (.column | tostring)
-            + " [" + .type + "/" + .id + "] " + .message
-        )
     ' "${report_json}"
 
     echo ""
@@ -494,12 +614,7 @@ parse_args() {
           usage
           return 1
         fi
-        DIR_TARGETS+=("$(resolve_existing_path "$2")")
-        ensure_within_project "${DIR_TARGETS[${#DIR_TARGETS[@]}-1]}"
-        if [[ ! -d "${DIR_TARGETS[${#DIR_TARGETS[@]}-1]}" ]]; then
-          err "Directory target does not exist: $2"
-          return 1
-        fi
+        DIR_TARGETS+=("$(resolve_directory_target "$2")")
         shift 2
         ;;
       --file)
@@ -508,21 +623,21 @@ parse_args() {
           usage
           return 1
         fi
-        FILE_TARGETS+=("$(resolve_existing_path "$2")")
-        ensure_within_project "${FILE_TARGETS[${#FILE_TARGETS[@]}-1]}"
-        if [[ ! -f "${FILE_TARGETS[${#FILE_TARGETS[@]}-1]}" ]]; then
-          err "File target does not exist: $2"
-          return 1
-        fi
-        if [[ "${FILE_TARGETS[${#FILE_TARGETS[@]}-1]}" != *.qml ]]; then
-          err "File target must be a .qml file: $2"
-          return 1
-        fi
+        FILE_TARGETS+=("$(resolve_file_target "$2")")
         shift 2
         ;;
       --summary)
         OUTPUT_MODE="summary"
         shift
+        ;;
+      --json-file)
+        if [[ $# -lt 2 ]]; then
+          err "Missing value for --json-file"
+          usage
+          return 1
+        fi
+        JSON_OUTPUT_FILE="$(resolve_output_file_path "$2")"
+        shift 2
         ;;
       --help)
         usage
@@ -554,6 +669,7 @@ main() {
   local checked_groups=0
   local failed_groups=0
   local pass_groups=0
+  local aggregate_report=""
   local report_json=""
 
   parse_args "$@"
@@ -563,6 +679,7 @@ main() {
 
   TMP_ROOT="$(mktemp -d /tmp/noctalia-qmllint.XXXXXX)"
   trap cleanup EXIT
+  aggregate_report="${TMP_ROOT}/aggregate-report.json"
 
   collect_explicit_targets
   group_files_by_plugin_root
@@ -580,10 +697,20 @@ main() {
     fi
   done
 
+  build_aggregate_report \
+    "${checked_groups}" \
+    "${pass_groups}" \
+    "${failed_groups}" \
+    "${aggregate_report}"
+
+  if [[ -n "${JSON_OUTPUT_FILE}" ]]; then
+    write_json_artifact "${aggregate_report}" "${JSON_OUTPUT_FILE}"
+  fi
+
   if [[ "${OUTPUT_MODE}" == "summary" ]]; then
-    emit_results_summary "${checked_groups}" "${pass_groups}" "${failed_groups}"
+    emit_results_summary "${aggregate_report}"
   else
-    emit_results_json "${checked_groups}" "${pass_groups}" "${failed_groups}"
+    cat "${aggregate_report}"
   fi
 
   if [[ "${failed_groups}" -gt 0 ]]; then

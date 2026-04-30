@@ -20,3 +20,4 @@ opencode.json
 .sidecar-start.sh
 .sidecar-base
 .td-root
+.rulesync/

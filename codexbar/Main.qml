@@ -22,6 +22,7 @@ Item {
     property int _timedOutRequestId: -1
     property int countdownTick: 0
     property bool _refreshAfterConfigChange: false
+    property string configState: "pending"
     readonly property string homeDir: Quickshell.env("HOME") || ""
     readonly property string configDir: homeDir !== "" ? homeDir + "/.codexbar" : ""
     readonly property string configPath: configDir !== "" ? configDir + "/config.json" : ""
@@ -298,9 +299,20 @@ Item {
         return true;
     }
 
-    function setConfiguredProviderIds(nextIds) {
+    function clearRuntimeData() {
+        root.providerData = [];
+        root.previousResets = ({});
+        root.previousUsedPercents = ({});
+        root.lastUpdated = "";
+    }
+
+    function applyConfiguredProviders(nextState, nextIds) {
         var normalized = Array.isArray(nextIds) ? nextIds.slice() : [];
-        if (root.arraysEqual(root.configuredProviderIds, normalized))
+        var stateChanged = root.configState !== nextState;
+        var providersChanged = !root.arraysEqual(root.configuredProviderIds, normalized);
+
+        root.configState = nextState;
+        if (!providersChanged && !stateChanged)
             return;
 
         root.configuredProviderIds = normalized;
@@ -314,6 +326,16 @@ Item {
     function refresh() {
         if (root.isRefreshing)
             return;
+        if (root.configState === "pending")
+            return;
+        if (!Array.isArray(root.configuredProviderIds) || root.configuredProviderIds.length === 0) {
+            root.clearRuntimeData();
+            root.rawJsonBuffer = "";
+            root.rawStderrBuffer = "";
+            root._timedOutRequestId = -1;
+            root.lastError = root.pluginApi?.tr("errors.noConfiguredProviders");
+            return;
+        }
 
         root.isRefreshing = true;
         root.lastError = "";
@@ -430,9 +452,6 @@ Item {
         property var _command: {
             var script = ""
                 + "codexbar_path=$(command -v codexbar 2>/dev/null) || exit 127\n"
-                + "if [ \"$#\" -eq 0 ]; then\n"
-                + "  exec \"$codexbar_path\" --format json --status\n"
-                + "fi\n"
                 + "if [ \"$#\" -eq 1 ]; then\n"
                 + "  exec \"$codexbar_path\" --provider \"$1\" --format json --status\n"
                 + "fi\n"
@@ -617,15 +636,15 @@ Item {
                 reload();
         }
         onLoaded: {
-            root.setConfiguredProviderIds(root.normalizedConfiguredProviderIdsFromText(text()));
+            var configuredIds = root.normalizedConfiguredProviderIdsFromText(text());
+            root.applyConfiguredProviders(configuredIds.length > 0 ? "ready" : "empty", configuredIds);
         }
         onLoadFailed: function (_error) {
-            root.setConfiguredProviderIds([]);
+            root.applyConfiguredProviders("loadFailed", []);
         }
     }
 
     Component.onCompleted: {
         Logger.i("CodexBar", "Plugin loaded, refresh interval: " + root.refreshInterval + "s");
-        Qt.callLater(root.refresh);
     }
 }

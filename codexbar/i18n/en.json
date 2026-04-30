@@ -323,6 +323,7 @@
     "cliMissingTitle": "CodexBar CLI not found",
     "cliMissingBody": "Install codexbar and make sure it's available on your PATH. See Settings → Config for docs.",
     "cliMissing": "CodexBar CLI not found (install codexbar and ensure it's on your PATH).",
-    "cliParseFailed": "CodexBar produced invalid JSON output."
+    "cliParseFailed": "CodexBar produced invalid JSON output.",
+    "noConfiguredProviders": "No enabled CodexBar providers are configured."
   }
 }
