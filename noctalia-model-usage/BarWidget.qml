@@ -115,14 +115,31 @@ Item {
         return tip;
     }
 
-    readonly property bool textVisible: !root.barTextShowOnHover || mouseArea.containsMouse
+    // Show-on-hover internal state (matches BarPillHorizontal pattern)
+    property bool showPill: false
+    readonly property bool revealed: !root.barTextShowOnHover || root.showPill
 
-    readonly property real contentWidth: isBarVertical ? capsuleHeight : (root.textVisible ? content.implicitWidth : capsuleHeight) + Style.marginM * 2
-    readonly property real contentHeight: isBarVertical ? (root.textVisible ? content.implicitHeight : capsuleHeight) + Style.marginM * 2 : capsuleHeight
+    readonly property real contentWidth: isBarVertical ? capsuleHeight : (root.revealed ? content.implicitWidth : capsuleHeight) + Style.marginM * 2
+    readonly property real contentHeight: isBarVertical ? (root.revealed ? content.implicitHeight : capsuleHeight) + Style.marginM * 2 : capsuleHeight
 
     anchors.centerIn: parent
     implicitWidth: contentWidth
     implicitHeight: contentHeight
+
+    function showDelayed() {
+        if (root.barTextShowOnHover && !root.showPill)
+            showTimer.restart();
+    }
+
+    function hidePill() {
+        if (root.barTextShowOnHover && root.showPill) {
+            if (root.isBarVertical)
+                hideAnimVertical.start();
+            else
+                hideAnim.start();
+        }
+        showTimer.stop();
+    }
 
     NPopupContextMenu {
         id: contextMenu
@@ -161,6 +178,121 @@ Item {
             } else if (action === "settings") {
                 BarService.openPluginSettings(root.screen, pluginApi.manifest);
             }
+        }
+    }
+
+    Timer {
+        id: showTimer
+        interval: Style.pillDelay
+        onTriggered: {
+            if (!root.showPill) {
+                // Set state first so revealed is true before animation captures to values
+                root.showPill = true;
+                if (root.isBarVertical)
+                    showAnimVertical.start();
+                else
+                    showAnim.start();
+            }
+        }
+    }
+
+    ParallelAnimation {
+        id: showAnim
+        running: false
+
+        NumberAnimation {
+            target: textContainer
+            property: "opacity"
+            from: 0
+            to: 1
+            duration: Style.animationFast
+            easing.type: Easing.OutCubic
+        }
+
+        NumberAnimation {
+            target: textContainer
+            property: "Layout.preferredWidth"
+            from: 0
+            to: textItem.implicitWidth
+            duration: Style.animationNormal
+            easing.type: Easing.OutCubic
+        }
+    }
+
+    ParallelAnimation {
+        id: hideAnim
+        running: false
+
+        NumberAnimation {
+            target: textContainer
+            property: "opacity"
+            from: 1
+            to: 0
+            duration: Style.animationFast
+            easing.type: Easing.InCubic
+        }
+
+        NumberAnimation {
+            target: textContainer
+            property: "Layout.preferredWidth"
+            from: textItem.implicitWidth
+            to: 0
+            duration: Style.animationNormal
+            easing.type: Easing.InCubic
+        }
+
+        onStopped: {
+            root.showPill = false;
+        }
+    }
+
+    ParallelAnimation {
+        id: showAnimVertical
+        running: false
+
+        NumberAnimation {
+            target: textContainerVertical
+            property: "opacity"
+            from: 0
+            to: 1
+            duration: Style.animationFast
+            easing.type: Easing.OutCubic
+        }
+
+        NumberAnimation {
+            target: textContainerVertical
+            property: "Layout.preferredHeight"
+            from: 0
+            to: textItemVertical.implicitHeight
+            duration: Style.animationNormal
+            easing.type: Easing.OutCubic
+        }
+    }
+
+    ParallelAnimation {
+        id: hideAnimVertical
+        running: false
+
+        NumberAnimation {
+            target: textContainerVertical
+            property: "opacity"
+            from: 1
+            to: 0
+            duration: Style.animationFast
+            easing.type: Easing.InCubic
+        }
+
+        NumberAnimation {
+            target: textContainerVertical
+            property: "Layout.preferredHeight"
+            from: textItemVertical.implicitHeight
+            to: 0
+            duration: Style.animationNormal
+            easing.type: Easing.InCubic
+        }
+
+        onStopped: {
+            root.showPill = false;
         }
     }
 
@@ -213,27 +345,21 @@ Item {
                     colorizeColor: root.resolvedProviderIconColor
                 }
 
-                NText {
-                    text: root.displayText
-                    opacity: root.textVisible ? 1 : 0
-                    pointSize: root.barFontSize
-                    applyUiScale: false
-                    color: Color.mOnSurface
+                Item {
+                    id: textContainer
+                    clip: true
                     Layout.alignment: Qt.AlignVCenter
-                    Layout.preferredWidth: root.textVisible ? implicitWidth : 0
+                    opacity: root.revealed ? 1 : 0
+                    Layout.preferredWidth: root.revealed ? textItem.implicitWidth : 0
+                    Layout.preferredHeight: textItem.implicitHeight
 
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: Style.animationFast
-                            easing.type: Easing.OutCubic
-                        }
-                    }
-
-                    Behavior on Layout.preferredWidth {
-                        NumberAnimation {
-                            duration: Style.animationNormal
-                            easing.type: Easing.OutCubic
-                        }
+                    NText {
+                        id: textItem
+                        visible: root.revealed
+                        text: root.displayText
+                        pointSize: root.barFontSize
+                        applyUiScale: false
+                        color: Color.mOnSurface
                     }
                 }
             }
@@ -256,28 +382,22 @@ Item {
                     colorizeColor: root.resolvedProviderIconColor
                 }
 
-                NText {
-                    text: root.displayText
-                    opacity: root.textVisible ? 1 : 0
-                    pointSize: root.barFontSize
-                    applyUiScale: false
-                    font.weight: Style.fontWeightSemiBold
-                    color: Color.mOnSurface
+                Item {
+                    id: textContainerVertical
+                    clip: true
                     Layout.alignment: Qt.AlignHCenter
-                    Layout.preferredHeight: root.textVisible ? implicitHeight : 0
+                    opacity: root.revealed ? 1 : 0
+                    Layout.preferredHeight: root.revealed ? textItemVertical.implicitHeight : 0
+                    Layout.preferredWidth: textItemVertical.implicitWidth
 
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: Style.animationFast
-                            easing.type: Easing.OutCubic
-                        }
-                    }
-
-                    Behavior on Layout.preferredHeight {
-                        NumberAnimation {
-                            duration: Style.animationNormal
-                            easing.type: Easing.OutCubic
-                        }
+                    NText {
+                        id: textItemVertical
+                        visible: root.revealed
+                        text: root.displayText
+                        pointSize: root.barFontSize
+                        applyUiScale: false
+                        font.weight: Style.fontWeightSemiBold
+                        color: Color.mOnSurface
                     }
                 }
             }
@@ -303,10 +423,12 @@ Item {
 
         onEntered: {
             TooltipService.show(root, root.tooltipText, BarService.getTooltipDirection(root.screenName));
+            root.showDelayed();
         }
 
         onExited: {
             TooltipService.hide();
+            root.hidePill();
         }
     }
 }
