@@ -277,6 +277,35 @@ ColumnLayout {
                     Layout.fillWidth: true
                     spacing: Style.marginM
                     NToggle {
+                        checked: editSettings?.barTextShowOnHover ?? false
+                        onToggled: value => {
+                            editSettings.barTextShowOnHover = value;
+                            editSettingsChanged();
+                        }
+                    }
+                    NText {
+                        text: "Show text on hover"
+                        pointSize: Style.fontSizeM
+                        font.weight: Style.fontWeightSemiBold
+                        color: Color.mOnSurface
+                        Layout.fillWidth: true
+                    }
+                }
+                NText {
+                    text: "When enabled, only the icon is shown by default and the metric text appears when you hover over the widget"
+                    pointSize: Style.fontSizeXS
+                    color: Color.mOnSurfaceVariant
+                }
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: Style.marginXS
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Style.marginM
+                    NToggle {
                         checked: editSettings?.includeCacheTokens ?? true
                         onToggled: value => {
                             editSettings.includeCacheTokens = value;

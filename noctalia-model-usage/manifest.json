@@ -54,6 +54,7 @@
       "barMetric": "prompts",
       "includeCacheTokens": true,
       "barShowRemaining": false,
+      "barTextShowOnHover": false,
       "barIconAlertOnLimit": false,
       "barIconAlertThreshold": 95,
       "refreshIntervalSec": 30,

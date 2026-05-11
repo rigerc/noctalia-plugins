@@ -27,6 +27,7 @@ Item {
 
     property string barMetric: mainInstance?.barMetric ?? "prompts"
     property bool barShowRemaining: mainInstance?.barShowRemaining ?? false
+    property bool barTextShowOnHover: mainInstance?.barTextShowOnHover ?? false
     property bool barIconAlertOnLimit: mainInstance?.barIconAlertOnLimit ?? false
     property int barIconAlertThreshold: Math.max(50, Math.min(100, Number(mainInstance?.barIconAlertThreshold ?? 95)))
 
@@ -114,8 +115,10 @@ Item {
         return tip;
     }
 
-    readonly property real contentWidth: isBarVertical ? capsuleHeight : content.implicitWidth + Style.marginM * 2
-    readonly property real contentHeight: isBarVertical ? content.implicitHeight + Style.marginM * 2 : capsuleHeight
+    readonly property bool textVisible: !root.barTextShowOnHover || mouseArea.containsMouse
+
+    readonly property real contentWidth: isBarVertical ? capsuleHeight : (root.textVisible ? content.implicitWidth : capsuleHeight) + Style.marginM * 2
+    readonly property real contentHeight: isBarVertical ? (root.textVisible ? content.implicitHeight : capsuleHeight) + Style.marginM * 2 : capsuleHeight
 
     anchors.centerIn: parent
     implicitWidth: contentWidth
@@ -132,6 +135,11 @@ Item {
                 "icon": "refresh"
             },
             {
+                "label": root.barTextShowOnHover ? "Show text always" : "Show text on hover",
+                "action": "toggle-show-on-hover",
+                "icon": root.barTextShowOnHover ? "eye-off" : "eye"
+            },
+            {
                 "label": "Settings",
                 "action": "settings",
                 "icon": "settings"
@@ -143,6 +151,13 @@ Item {
             PanelService.closeContextMenu(root.screen);
             if (action === "refresh") {
                 mainInstance?.refresh();
+            } else if (action === "toggle-show-on-hover") {
+                if (pluginApi) {
+                    if (!pluginApi.pluginSettings)
+                        pluginApi.pluginSettings = {};
+                    pluginApi.pluginSettings.barTextShowOnHover = !root.barTextShowOnHover;
+                    pluginApi.saveSettings();
+                }
             } else if (action === "settings") {
                 BarService.openPluginSettings(root.screen, pluginApi.manifest);
             }
@@ -159,6 +174,20 @@ Item {
         color: mouseArea.containsMouse ? Color.mHover : Style.capsuleColor
         border.color: Style.capsuleBorderColor
         border.width: Style.capsuleBorderWidth
+
+        Behavior on width {
+            NumberAnimation {
+                duration: Style.animationNormal
+                easing.type: Easing.OutCubic
+            }
+        }
+
+        Behavior on height {
+            NumberAnimation {
+                duration: Style.animationNormal
+                easing.type: Easing.OutCubic
+            }
+        }
 
         Item {
             id: content
@@ -186,10 +215,26 @@ Item {
 
                 NText {
                     text: root.displayText
+                    opacity: root.textVisible ? 1 : 0
                     pointSize: root.barFontSize
                     applyUiScale: false
                     color: Color.mOnSurface
                     Layout.alignment: Qt.AlignVCenter
+                    Layout.preferredWidth: root.textVisible ? implicitWidth : 0
+
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: Style.animationFast
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+
+                    Behavior on Layout.preferredWidth {
+                        NumberAnimation {
+                            duration: Style.animationNormal
+                            easing.type: Easing.OutCubic
+                        }
+                    }
                 }
             }
 
@@ -213,11 +258,27 @@ Item {
 
                 NText {
                     text: root.displayText
+                    opacity: root.textVisible ? 1 : 0
                     pointSize: root.barFontSize
                     applyUiScale: false
                     font.weight: Style.fontWeightSemiBold
                     color: Color.mOnSurface
                     Layout.alignment: Qt.AlignHCenter
+                    Layout.preferredHeight: root.textVisible ? implicitHeight : 0
+
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: Style.animationFast
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+
+                    Behavior on Layout.preferredHeight {
+                        NumberAnimation {
+                            duration: Style.animationNormal
+                            easing.type: Easing.OutCubic
+                        }
+                    }
                 }
             }
         }
