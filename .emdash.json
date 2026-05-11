@@ -1,0 +1,16 @@
+{
+  "preservePatterns": [
+    ".env",
+    ".env.keys",
+    ".env.local",
+    ".env.*.local",
+    ".envrc",
+    "docker-compose.override.yml",
+    ".emdash.json"
+  ],
+  "scripts": {
+    "setup": "skillshare sync\nagentsmesh generate",
+    "run": "",
+    "teardown": ""
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "common": {
+    "never": "Never",
+    "unknown": "Unknown"
+  },
+  "menu": {
+    "refresh": "Refresh",
+    "settings": "Settings"
+  },
+  "tooltip": {
+    "checkingNow": "Checking for updates…",
+    "mpmMissing": "mpm not found in PATH",
+    "mpmBroken": "mpm failed to execute",
+    "noUpdates": "No package updates available",
+    "updatesAvailable": "{count} updates available",
+    "genericError": "Last refresh ended with an error"
+  },
+  "panel": {
+    "title": "Package Updates",
+    "lastChecked": "Last checked: {time}",
+    "refresh": "Refresh",
+    "noUpdates": "All packages are up to date.",
+    "packageVersion": "{installed} → {latest}",
+    "summary": {
+      "updates": "Updates",
+      "managers": "Active managers",
+      "errors": "Errors"
+    },
+    "state": {
+      "checkingTitle": "Checking for updates",
+      "checkingMessage": "Syncing and querying package managers…",
+      "unavailableTitle": "mpm unavailable",
+      "unavailableMessage": "Install meta-package-manager and ensure mpm is in PATH.",
+      "brokenTitle": "mpm failed",
+      "brokenMessage": "mpm exited with an error. Check that it works from the terminal.",
+      "errorTitle": "Refresh error",
+      "noUpdatesTitle": "All caught up",
+      "noUpdatesMessage": "No outdated packages found."
+    }
+  },
+  "settings": {
+    "backend": {
+      "detected": "mpm detected",
+      "missing": "mpm not found",
+      "detail": "Version {version} at {path}",
+      "installHint": "Install meta-package-manager (pip install meta-package-manager)."
+    },
+    "managers": {
+      "title": "Package Managers",
+      "desc": "{count} manager(s) enabled",
+      "available": "Available",
+      "unavailable": "Unavailable (not installed)",
+      "noneDetected": "No managers detected yet. Trigger a refresh first."
+    },
+    "refreshInterval": {
+      "label": "Refresh interval",
+      "desc": "How often to check for updates."
+    },
+    "interval": {
+      "5": "Every 5 min",
+      "15": "Every 15 min",
+      "30": "Every 30 min",
+      "60": "Every hour",
+      "120": "Every 2 hours"
+    },
+    "hideOnZero": {
+      "label": "Hide when no updates",
+      "desc": "Hide the bar widget when there are no pending updates."
+    },
+    "presyncCmd": {
+      "label": "Pre-sync command",
+      "desc": "Shell command to sync package caches before checking for updates. Leave empty to skip. Default uses checkupdates + paru (Arch only)."
+    },
+    "refreshOnStartup": {
+      "label": "Refresh on startup",
+      "desc": "Check for updates when Noctalia Shell starts."
+    },
+    "behavior": "Behavior"
+  }
+}
