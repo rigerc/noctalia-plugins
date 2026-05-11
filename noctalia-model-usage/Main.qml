@@ -10,14 +10,14 @@ Item {
 
     Claude {
         id: claudeProvider
-        enabled: root.providerEnabled("claude")
+        providerEnabled: root.providerEnabled("claude")
         providerSettings: root.pluginSettings?.providers?.claude ?? ({})
         includeCacheTokens: root.pluginSettings?.includeCacheTokens ?? true
     }
 
     Codex {
         id: codexProvider
-        enabled: root.providerEnabled("codex")
+        providerEnabled: root.providerEnabled("codex")
         providerSettings: root.pluginSettings?.providers?.codex ?? ({})
         includeCacheTokens: root.pluginSettings?.includeCacheTokens ?? true
         apiRefreshIntervalMin: root.apiRefreshIntervalMin
@@ -25,27 +25,27 @@ Item {
 
     OpenRouter {
         id: openRouterProvider
-        enabled: root.providerEnabled("openrouter")
+        providerEnabled: root.providerEnabled("openrouter")
         providerSettings: root.pluginSettings?.providers?.openrouter ?? ({})
         apiRefreshIntervalMin: root.apiRefreshIntervalMin
     }
 
     Copilot {
         id: copilotProvider
-        enabled: root.providerEnabled("copilot")
+        providerEnabled: root.providerEnabled("copilot")
         providerSettings: root.pluginSettings?.providers?.copilot ?? ({})
     }
 
     Zen {
         id: zenProvider
-        enabled: root.providerEnabled("zen")
+        providerEnabled: root.providerEnabled("zen")
         providerSettings: root.pluginSettings?.providers?.zen ?? ({})
         apiRefreshIntervalMin: root.apiRefreshIntervalMin
     }
 
     DeepSeek {
         id: deepseekProvider
-        enabled: root.providerEnabled("deepseek")
+        providerEnabled: root.providerEnabled("deepseek")
         providerSettings: root.pluginSettings?.providers?.deepseek ?? ({})
     }
 
@@ -65,7 +65,7 @@ Item {
         const result = [];
         for (const id of order) {
             const p = providerMap[id];
-            if (p && p.enabled)
+            if (p && p.providerEnabled)
                 result.push(p);
         }
         return result;
@@ -145,7 +145,7 @@ Item {
 
     function refreshAll() {
         for (const p of providers) {
-            if (p.enabled)
+            if (p.providerEnabled)
                 p.refresh();
         }
     }

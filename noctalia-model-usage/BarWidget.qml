@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -16,8 +17,8 @@ Item {
     property int sectionWidgetIndex: -1
     property int sectionWidgetsCount: 0
 
-    property var mainInstance: pluginApi?.mainInstance
-    property var activeProvider: mainInstance?.activeProvider
+    property var mainInstance: root.pluginApi?.mainInstance
+    property var activeProvider: root.mainInstance?.activeProvider
 
     readonly property string screenName: screen ? screen.name : ""
     readonly property string barPosition: Settings.getBarPositionForScreen(screenName)
@@ -25,12 +26,12 @@ Item {
     readonly property real capsuleHeight: Style.getCapsuleHeightForScreen(screenName)
     readonly property real barFontSize: Style.getBarFontSizeForScreen(screenName)
 
-    property string barMetric: mainInstance?.barMetric ?? "prompts"
-    property bool barShowRemaining: mainInstance?.barShowRemaining ?? false
-    property bool barTextShowOnHover: mainInstance?.barTextShowOnHover ?? false
-    property bool barIconAlertOnLimit: mainInstance?.barIconAlertOnLimit ?? false
-    property int barIconAlertThreshold: Math.max(50, Math.min(100, Number(mainInstance?.barIconAlertThreshold ?? 95)))
-    property bool barCycleEnabled: mainInstance?.barCycleEnabled ?? false
+    property string barMetric: root.mainInstance?.barMetric ?? "prompts"
+    property bool barShowRemaining: root.mainInstance?.barShowRemaining ?? false
+    property bool barTextShowOnHover: root.mainInstance?.barTextShowOnHover ?? false
+    property bool barIconAlertOnLimit: root.mainInstance?.barIconAlertOnLimit ?? false
+    property int barIconAlertThreshold: Math.max(50, Math.min(100, Number(root.mainInstance?.barIconAlertThreshold ?? 95)))
+    property bool barCycleEnabled: root.mainInstance?.barCycleEnabled ?? false
 
     readonly property color resolvedProviderIconColor: {
         if (!root.barIconAlertOnLimit || !root.activeProvider)
@@ -48,13 +49,13 @@ Item {
 
     property string tooltipText: {
         if (!activeProvider) {
-            const ep = mainInstance?.barProviders ?? [];
+            const ep = root.mainInstance?.barProviders ?? [];
             if (ep.length === 0)
                 return "Model Usage";
             return "Model Usage \u2014 " + ep.length + " providers";
         }
         if (!root.barCycleEnabled) {
-            const ep = mainInstance?.barProviders ?? [];
+            const ep = root.mainInstance?.barProviders ?? [];
             let tip = "All providers:";
             for (const p of ep) {
                 tip += "\n" + p.providerName + ": " + root.providerDisplayText(p);
@@ -67,7 +68,7 @@ Item {
         const name = activeProvider.providerName;
         const prompts = activeProvider.todayPrompts;
         const sess = activeProvider.todaySessions;
-        const tokens = mainInstance?.formatTokenCount(activeProvider.todayTotalTokens) ?? "0";
+        const tokens = root.mainInstance?.formatTokenCount(root.activeProvider.todayTotalTokens) ?? "0";
         let tip = name + " \u2014 Today: " + prompts + " prompts, " + sess + " sessions, " + tokens + " tokens";
         const rl = activeProvider.rateLimitPercent;
         if (rl >= 0)
@@ -148,7 +149,7 @@ Item {
             return part5h + "  " + part7d;
         }
         if (barMetric === "tokens")
-            return mainInstance?.formatTokenCount(provider.todayTotalTokens) ?? "0";
+            return root.mainInstance?.formatTokenCount(provider.todayTotalTokens) ?? "0";
         return String(provider.todayPrompts);
     }
 
@@ -197,16 +198,16 @@ Item {
             contextMenu.close();
             PanelService.closeContextMenu(root.screen);
             if (action === "refresh") {
-                mainInstance?.refresh();
+                root.mainInstance?.refresh();
             } else if (action === "toggle-show-on-hover") {
-                if (pluginApi) {
-                    if (!pluginApi.pluginSettings)
-                        pluginApi.pluginSettings = {};
-                    pluginApi.pluginSettings.barTextShowOnHover = !root.barTextShowOnHover;
-                    pluginApi.saveSettings();
+                if (root.pluginApi) {
+                    if (!root.pluginApi.pluginSettings)
+                        root.pluginApi.pluginSettings = {};
+                    root.pluginApi.pluginSettings.barTextShowOnHover = !root.barTextShowOnHover;
+                    root.pluginApi.saveSettings();
                 }
             } else if (action === "settings") {
-                BarService.openPluginSettings(root.screen, pluginApi.manifest);
+                BarService.openPluginSettings(root.screen, root.pluginApi.manifest);
             }
         }
     }
@@ -450,23 +451,25 @@ Item {
                 spacing: Style.marginL
 
                 Repeater {
-                    model: mainInstance?.barProviders ?? []
+                    model: root.mainInstance?.barProviders ?? []
 
                     delegate: RowLayout {
+                        id: rowDel
+                        required property var modelData
                         spacing: Style.marginS
                         Layout.alignment: Qt.AlignVCenter
 
                         ProviderVisual {
                             Layout.alignment: Qt.AlignVCenter
-                            visualData: root.mainInstance?.providerVisualData(modelData.providerId) ?? ({
+                            visualData: root.mainInstance?.providerVisualData(rowDel.modelData.providerId) ?? ({
                                 "source": "icon",
                                 "icon": "ai"
                             })
                             pointSize: root.barFontSize
                             applyUiScale: false
-                            color: root.resolvedProviderIconColorFor(modelData)
-                            colorize: root.resolvedProviderIconColorFor(modelData) !== Color.mOnSurface
-                            colorizeColor: root.resolvedProviderIconColorFor(modelData)
+                            color: root.resolvedProviderIconColorFor(rowDel.modelData)
+                            colorize: root.resolvedProviderIconColorFor(rowDel.modelData) !== Color.mOnSurface
+                            colorizeColor: root.resolvedProviderIconColorFor(rowDel.modelData)
                         }
 
                         Item {
@@ -479,7 +482,7 @@ Item {
                             NText {
                                 id: textAllItem
                                 visible: root.revealed
-                                text: root.providerDisplayText(modelData)
+                                text: root.providerDisplayText(rowDel.modelData)
                                 pointSize: root.barFontSize
                                 applyUiScale: false
                                 color: Color.mOnSurface
@@ -495,23 +498,25 @@ Item {
                 spacing: Style.marginXS
 
                 Repeater {
-                    model: mainInstance?.barProviders ?? []
+                    model: root.mainInstance?.barProviders ?? []
 
                     delegate: RowLayout {
+                        id: colDel
+                        required property var modelData
                         spacing: Style.marginS
                         Layout.alignment: Qt.AlignHCenter
 
                         ProviderVisual {
                             Layout.alignment: Qt.AlignVCenter
-                            visualData: root.mainInstance?.providerVisualData(modelData.providerId) ?? ({
+                            visualData: root.mainInstance?.providerVisualData(colDel.modelData.providerId) ?? ({
                                 "source": "icon",
                                 "icon": "ai"
                             })
                             pointSize: root.barFontSize
                             applyUiScale: false
-                            color: root.resolvedProviderIconColorFor(modelData)
-                            colorize: root.resolvedProviderIconColorFor(modelData) !== Color.mOnSurface
-                            colorizeColor: root.resolvedProviderIconColorFor(modelData)
+                            color: root.resolvedProviderIconColorFor(colDel.modelData)
+                            colorize: root.resolvedProviderIconColorFor(colDel.modelData) !== Color.mOnSurface
+                            colorizeColor: root.resolvedProviderIconColorFor(colDel.modelData)
                         }
 
                         Item {
@@ -524,7 +529,7 @@ Item {
                             NText {
                                 id: textAllVItem
                                 visible: root.revealed
-                                text: root.providerDisplayText(modelData)
+                                text: root.providerDisplayText(colDel.modelData)
                                 pointSize: root.barFontSize
                                 applyUiScale: false
                                 color: Color.mOnSurface
@@ -546,7 +551,7 @@ Item {
         onClicked: mouse => {
             if (mouse.button === Qt.LeftButton) {
                 TooltipService.hide();
-                pluginApi?.togglePanel(root.screen, root);
+                root.pluginApi?.togglePanel(root.screen, root);
             } else if (mouse.button === Qt.RightButton) {
                 TooltipService.hide();
                 PanelService.showContextMenu(contextMenu, root, root.screen);

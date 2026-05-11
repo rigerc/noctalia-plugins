@@ -7,7 +7,7 @@ A Noctalia bar widget and detail panel for AI coding assistant usage stats.
 ## Credits
 
 - **Original plugin** by [cmptr](https://github.com/noctalia-dev) — MIT License
-- **Enhancements**: DeepSeek provider, fixed bar display mode, Claude third-party API support, `~/.claude.json` data source migration
+- **Enhancements**: DeepSeek provider, Claude third-party API support, `~/.claude.json` data source migration
 
 ## Providers
 
@@ -27,9 +27,6 @@ Shows account balance from the DeepSeek API. Set `DEEPSEEK_API_KEY` env var or e
 
 ### Claude Code — third-party API support
 When Claude Code is configured with a third-party API backend (e.g. DeepSeek, OpenAI), the plugin reads `~/.claude.json` and aggregates `lastModelUsage` across all projects. No Anthropic OAuth required — stats display normally without auth warnings.
-
-### Fixed bar display mode
-Bar Display Mode now has three options: **Active provider** (first enabled), **Cycle providers**, and **Fixed provider** — pin a specific provider to always show in the bar.
 
 ### Data source migration
 Claude provider reads from `~/.claude.json` instead of the non-existent `stats-cache.json`. Aggregates per-project `lastModelUsage` data and extracts all-time prompt/session counts from `history.jsonl`.

@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 
+import "../components"
 Item {
     id: root
     visible: false
@@ -9,7 +10,7 @@ Item {
     property string providerName: "DeepSeek"
     property string providerIcon: "ai"
     property string providerIconAsset: "assets/deepseek.svg"
-    property bool enabled: false
+    property bool providerEnabled: false
     property bool ready: false
 
     property real rateLimitPercent: -1
@@ -35,6 +36,7 @@ Item {
     property string usageStatusText: ""
 
     property var providerSettings: ({})
+    property var utils: ProviderUtils {}
     property string apiKey: {
         const envKey = Quickshell.env("DEEPSEEK_API_KEY") ?? "";
         return envKey || (providerSettings?.apiKey ?? "");
@@ -53,8 +55,8 @@ Item {
         onTriggered: root.fetchBalance()
     }
 
-    onEnabledChanged: {
-        if (enabled && apiKey !== "")
+    onProviderEnabledChanged: {
+        if (providerEnabled && apiKey !== "")
             fetchBalance();
     }
 
@@ -62,7 +64,7 @@ Item {
         root.ready = false;
         root.tierLabel = "";
         root.usageStatusText = "";
-        if (enabled && apiKey !== "")
+        if (providerEnabled && apiKey !== "")
             fetchBalance();
     }
 
@@ -132,20 +134,4 @@ Item {
             fetchBalance();
     }
 
-    function formatResetTime(isoTimestamp) {
-        if (!isoTimestamp)
-            return "";
-        const reset = new Date(isoTimestamp);
-        const now = new Date();
-        const diffMs = reset.getTime() - now.getTime();
-        if (diffMs <= 0)
-            return "now";
-        const hours = Math.floor(diffMs / 3600000);
-        const mins = Math.floor((diffMs % 3600000) / 60000);
-        if (hours > 24)
-            return Math.floor(hours / 24) + "d " + (hours % 24) + "h";
-        if (hours > 0)
-            return hours + "h " + mins + "m";
-        return mins + "m";
-    }
 }

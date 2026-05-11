@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "../components"
 
 Item {
     id: root
@@ -10,7 +11,7 @@ Item {
     property string providerName: "Claude Code"
     property string providerIcon: "ai"
     property string providerIconAsset: "assets/claude.svg"
-    property bool enabled: false
+    property bool providerEnabled: false
     property bool ready: false
     property string usageStatusText: ""
 
@@ -46,6 +47,8 @@ Item {
 
     property var providerSettings: ({})
     property bool includeCacheTokens: true
+
+    property var utils: ProviderUtils {}
 
     function resolvePath(p) {
         if (p && p.startsWith("~"))
@@ -96,14 +99,6 @@ Item {
         running: root.enabled && root.oauthAccessToken !== ""
         repeat: true
         onTriggered: root.probeRateLimits()
-    }
-
-    function localDateString() {
-        const now = new Date();
-        const y = now.getFullYear();
-        const m = String(now.getMonth() + 1).padStart(2, "0");
-        const d = String(now.getDate()).padStart(2, "0");
-        return y + "-" + m + "-" + d;
     }
 
     function parseClaudeJson(content) {
@@ -293,25 +288,6 @@ Item {
         return Math.min(1, n);
     }
 
-    function normalizeResetAt(value) {
-        if (value === null || value === undefined)
-            return "";
-        const raw = String(value).trim();
-        if (raw === "")
-            return "";
-        if (/^\d+$/.test(raw)) {
-            let ts = parseInt(raw, 10);
-            if (ts < 1e12)
-                ts = ts * 1000;
-            const d = new Date(ts);
-            if (!isNaN(d.getTime()))
-                return d.toISOString();
-        }
-        const parsed = new Date(raw);
-        if (!isNaN(parsed.getTime()))
-            return parsed.toISOString();
-        return raw;
-    }
 
     function oauthUsageBucket(payload, key) {
         const bucket = payload?.[key];
@@ -339,9 +315,9 @@ Item {
         if (sessionNorm >= 0)
             root.secondaryRateLimitPercent = sessionNorm;
         if (weeklyReset !== null && weeklyReset !== undefined)
-            root.rateLimitResetAt = root.normalizeResetAt(weeklyReset);
+            root.rateLimitResetAt = root.utils.normalizeResetAt(weeklyReset);
         if (sessionReset !== null && sessionReset !== undefined)
-            root.secondaryRateLimitResetAt = root.normalizeResetAt(sessionReset);
+            root.secondaryRateLimitResetAt = root.utils.normalizeResetAt(sessionReset);
 
         if (root.rateLimitPercent < 0 && sessionNorm >= 0) {
             root.rateLimitPercent = sessionNorm;
@@ -398,22 +374,6 @@ Item {
         credentialsFile.reload();
     }
 
-    function formatResetTime(isoTimestamp) {
-        if (!isoTimestamp)
-            return "";
-        const reset = new Date(isoTimestamp);
-        const now = new Date();
-        const diffMs = reset.getTime() - now.getTime();
-        if (diffMs <= 0)
-            return "now";
-        const hours = Math.floor(diffMs / 3600000);
-        const mins = Math.floor((diffMs % 3600000) / 60000);
-        if (hours > 24)
-            return Math.floor(hours / 24) + "d " + (hours % 24) + "h";
-        if (hours > 0)
-            return hours + "h " + mins + "m";
-        return mins + "m";
-    }
 
     function probeRateLimits() {
         if (!root.oauthAccessToken || root.authMode !== "oauth") {

@@ -1,6 +1,9 @@
+pragma ComponentBehavior: Bound
+// qmllint disable unused-imports
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+// qmllint enable unused-imports
 import qs.Commons
 import qs.Widgets
 import "./components"
@@ -11,6 +14,7 @@ Item {
     property var pluginApi: null
     property var mainInstance: pluginApi?.mainInstance
     readonly property color sectionBackgroundColor: Color.mSurfaceVariant
+    readonly property var utils: ProviderUtils {}
     readonly property color usageWarnColor: Qt.alpha(Color.mError, 0.72)
 
     readonly property var geometryPlaceholder: panelContainer
@@ -22,7 +26,7 @@ Item {
 
     property int selectedTabIndex: 0
     property var selectedProvider: {
-        const ep = mainInstance?.enabledProviders ?? [];
+        const ep = root.mainInstance?.enabledProviders ?? [];
         if (ep.length === 0)
             return null;
         return ep[Math.min(selectedTabIndex, ep.length - 1)];
@@ -41,15 +45,15 @@ Item {
             NTabBar {
                 id: tabBar
                 Layout.fillWidth: true
-                visible: (mainInstance?.enabledProviders ?? []).length > 1
+                visible: (root.mainInstance?.enabledProviders ?? []).length > 1
 
                 Repeater {
-                    model: mainInstance?.enabledProviders ?? []
+                    model: root.mainInstance?.enabledProviders ?? []
 
                     NTabButton {
                         required property var modelData
                         required property int index
-                        readonly property int tabCount: (mainInstance?.enabledProviders ?? []).length
+                        readonly property int tabCount: (root.mainInstance?.enabledProviders ?? []).length
                         text: modelData.providerName
                         width: tabCount > 0 ? Math.floor(tabBar.width / tabCount) : implicitWidth
                         Layout.fillWidth: true
@@ -61,7 +65,7 @@ Item {
             }
 
             Item {
-                height: Style.marginM
+                Layout.preferredHeight: Style.marginM
                 Layout.fillWidth: true
             }
 
@@ -142,7 +146,7 @@ Item {
                     Rectangle {
                         visible: !!root.selectedProvider
                         Layout.fillWidth: true
-                        height: 1
+                        Layout.preferredHeight: 1
                         color: Color.mOutline
                     }
 
@@ -238,7 +242,7 @@ Item {
 
                                 Rectangle {
                                     Layout.fillWidth: true
-                                    height: 8
+                                    Layout.preferredHeight: 8
                                     color: Qt.alpha(Color.mOutline, 0.2)
                                     radius: Style.radiusXXS
 
@@ -270,7 +274,7 @@ Item {
 
                                 NText {
                                     visible: (root.selectedProvider?.rateLimitResetAt ?? "") !== ""
-                                    text: "Resets in " + (root.selectedProvider?.formatResetTime(root.selectedProvider?.rateLimitResetAt ?? "") ?? "")
+                                    text: "Resets in " + (root.utils.formatResetTime(root.selectedProvider?.rateLimitResetAt ?? "") ?? "")
                                     pointSize: Style.fontSizeXS
                                     color: Color.mOnSurfaceVariant
                                 }
@@ -313,7 +317,7 @@ Item {
 
                                 Rectangle {
                                     Layout.fillWidth: true
-                                    height: 8
+                                    Layout.preferredHeight: 8
                                     color: Qt.alpha(Color.mOutline, 0.2)
                                     radius: Style.radiusXXS
 
@@ -345,7 +349,7 @@ Item {
 
                                 NText {
                                     visible: (root.selectedProvider?.secondaryRateLimitResetAt ?? "") !== ""
-                                    text: "Resets in " + (root.selectedProvider?.formatResetTime(root.selectedProvider?.secondaryRateLimitResetAt ?? "") ?? "")
+                                    text: "Resets in " + (root.utils.formatResetTime(root.selectedProvider?.secondaryRateLimitResetAt ?? "") ?? "")
                                     pointSize: Style.fontSizeXS
                                     color: Color.mOnSurfaceVariant
                                 }
@@ -425,12 +429,13 @@ Item {
                                 }
 
                                 RowLayout {
+                                    id: todayDel
                                     required property var modelData
                                     Layout.fillWidth: true
                                     spacing: Style.marginS
 
                                     NText {
-                                        text: mainInstance?.friendlyModelName(modelData.modelId) ?? modelData.modelId
+                                        text: root.mainInstance?.friendlyModelName(todayDel.modelData.modelId) ?? todayDel.modelData.modelId
                                         pointSize: Style.fontSizeS
                                         color: Color.mOnSurfaceVariant
                                     }
@@ -438,7 +443,7 @@ Item {
                                         Layout.fillWidth: true
                                     }
                                     NText {
-                                        text: (mainInstance?.formatTokenCount(modelData.count) ?? "0") + " tokens"
+                                        text: (root.mainInstance?.formatTokenCount(todayDel.modelData.count) ?? "0") + " tokens"
                                         pointSize: Style.fontSizeS
                                         font.weight: Style.fontWeightSemiBold
                                         color: Color.mOnSurface
@@ -476,6 +481,7 @@ Item {
                                 model: root.selectedProvider?.recentDays ?? []
 
                                 RowLayout {
+                                    id: weekDel
                                     required property var modelData
                                     required property int index
                                     Layout.fillWidth: true
@@ -483,7 +489,7 @@ Item {
 
                                     NText {
                                         text: {
-                                            const d = modelData.date;
+                                            const d = weekDel.modelData.date;
                                             if (!d)
                                                 return "";
                                             const dt = new Date(d + "T00:00:00");
@@ -497,7 +503,7 @@ Item {
 
                                     Rectangle {
                                         Layout.fillWidth: true
-                                        height: 12
+                                        Layout.preferredHeight: 12
                                         color: Qt.alpha(Color.mOutline, 0.2)
                                         radius: Style.radiusXXS
 
@@ -516,7 +522,7 @@ Item {
                                                     if ((days[i]?.messageCount ?? 0) > maxCount)
                                                         maxCount = days[i].messageCount;
                                                 }
-                                                const count = modelData?.messageCount ?? 0;
+                                                const count = weekDel.modelData?.messageCount ?? 0;
                                                 return parent.width * (count / maxCount);
                                             }
 
@@ -530,7 +536,7 @@ Item {
                                     }
 
                                     NText {
-                                        text: mainInstance?.formatTokenCount(modelData?.messageCount ?? 0) ?? "0"
+                                        text: root.mainInstance?.formatTokenCount(weekDel.modelData?.messageCount ?? 0) ?? "0"
                                         pointSize: Style.fontSizeXS
                                         font.weight: Style.fontWeightSemiBold
                                         color: Color.mOnSurface
@@ -576,7 +582,7 @@ Item {
                                 ColumnLayout {
                                     spacing: Style.marginXXS
                                     NText {
-                                        text: mainInstance?.formatTokenCount(root.selectedProvider?.totalPrompts ?? 0) ?? "0"
+                                        text: root.mainInstance?.formatTokenCount(root.selectedProvider?.totalPrompts ?? 0) ?? "0"
                                         pointSize: Style.fontSizeXL
                                         font.weight: Style.fontWeightBold
                                         color: Color.mOnSurface
@@ -606,7 +612,7 @@ Item {
 
                             Rectangle {
                                 Layout.fillWidth: true
-                                height: 1
+                                Layout.preferredHeight: 1
                                 color: Color.mOutline
                             }
 
@@ -623,12 +629,13 @@ Item {
                                 }
 
                                 ColumnLayout {
+                                    id: usageDel
                                     required property var modelData
                                     Layout.fillWidth: true
                                     spacing: Style.marginXS
 
                                     NText {
-                                        text: mainInstance?.friendlyModelName(modelData.modelId) ?? modelData.modelId
+                                        text: root.mainInstance?.friendlyModelName(usageDel.modelData.modelId) ?? usageDel.modelData.modelId
                                         pointSize: Style.fontSizeM
                                         font.weight: Style.fontWeightSemiBold
                                         color: Color.mOnSurface
@@ -647,7 +654,7 @@ Item {
                                             color: Color.mOnSurfaceVariant
                                         }
                                         NText {
-                                            text: mainInstance?.formatTokenCount(modelData.data?.inputTokens ?? 0) ?? "0"
+                                            text: root.mainInstance?.formatTokenCount(usageDel.modelData.data?.inputTokens ?? 0) ?? "0"
                                             pointSize: Style.fontSizeXS
                                             font.weight: Style.fontWeightSemiBold
                                             color: Color.mOnSurface
@@ -659,7 +666,7 @@ Item {
                                             color: Color.mOnSurfaceVariant
                                         }
                                         NText {
-                                            text: mainInstance?.formatTokenCount(modelData.data?.outputTokens ?? 0) ?? "0"
+                                            text: root.mainInstance?.formatTokenCount(usageDel.modelData.data?.outputTokens ?? 0) ?? "0"
                                             pointSize: Style.fontSizeXS
                                             font.weight: Style.fontWeightSemiBold
                                             color: Color.mOnSurface
@@ -671,7 +678,7 @@ Item {
                                             color: Color.mOnSurfaceVariant
                                         }
                                         NText {
-                                            text: mainInstance?.formatTokenCount(modelData.data?.cacheReadInputTokens ?? 0) ?? "0"
+                                            text: root.mainInstance?.formatTokenCount(usageDel.modelData.data?.cacheReadInputTokens ?? 0) ?? "0"
                                             pointSize: Style.fontSizeXS
                                             font.weight: Style.fontWeightSemiBold
                                             color: Color.mOnSurface
@@ -683,7 +690,7 @@ Item {
                                             color: Color.mOnSurfaceVariant
                                         }
                                         NText {
-                                            text: mainInstance?.formatTokenCount(modelData.data?.cacheCreationInputTokens ?? 0) ?? "0"
+                                            text: root.mainInstance?.formatTokenCount(usageDel.modelData.data?.cacheCreationInputTokens ?? 0) ?? "0"
                                             pointSize: Style.fontSizeXS
                                             font.weight: Style.fontWeightSemiBold
                                             color: Color.mOnSurface
@@ -691,7 +698,7 @@ Item {
                                     }
 
                                     Item {
-                                        height: Style.marginXS
+                                        Layout.preferredHeight: Style.marginXS
                                     }
                                 }
                             }

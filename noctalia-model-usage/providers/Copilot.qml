@@ -1,6 +1,9 @@
+// qmllint disable unused-imports
 import QtQuick
 import Quickshell
 import Quickshell.Io
+// qmllint enable unused-imports
+import "../components"
 
 Item {
     id: root
@@ -10,7 +13,7 @@ Item {
     property string providerName: "Copilot"
     property string providerIcon: "ai"
     property string providerIconAsset: "assets/copilot.svg"
-    property bool enabled: false
+    property bool providerEnabled: false
     property bool ready: false
 
     property real rateLimitPercent: -1
@@ -40,6 +43,8 @@ Item {
     property int refreshMinIntervalMs: 5 * 60 * 1000
     property var providerSettings: ({})
 
+    property var utils: ProviderUtils {}
+
     Process {
         id: tokenProcess
         command: ["gh", "auth", "token"]
@@ -59,7 +64,8 @@ Item {
                 }
             }
         }
-        onExited: (code, status) => {
+        // qmllint disable signal-handler-parameters
+        onExited: (code) => {
             if (code !== 0) {
                 Logger.e("model-usage/copilot", "gh auth token failed (exit " + code + ")");
                 root.usageStatusText = "Not authenticated";
@@ -71,13 +77,13 @@ Item {
 
     Timer {
         interval: 5 * 60 * 1000
-        running: root.enabled
+        running: root.providerEnabled
         repeat: true
         onTriggered: root.refreshToken()
     }
 
-    onEnabledChanged: {
-        if (enabled)
+    onProviderEnabledChanged: {
+        if (providerEnabled)
             refreshToken();
     }
 
@@ -142,7 +148,7 @@ Item {
                 const usedPct = Math.min(100, Math.max(0, 100 - premium.percent_remaining));
                 root.rateLimitPercent = usedPct / 100;
                 root.rateLimitLabel = "Premium (" + Math.round(usedPct) + "%)";
-                root.rateLimitResetAt = normalizeResetAt(resetDate);
+                root.rateLimitResetAt = root.utils.normalizeResetAt(resetDate);
             }
 
             const chat = snapshots.chat;
@@ -150,7 +156,7 @@ Item {
                 const chatUsed = Math.min(100, Math.max(0, 100 - chat.percent_remaining));
                 root.secondaryRateLimitPercent = chatUsed / 100;
                 root.secondaryRateLimitLabel = "Chat (" + Math.round(chatUsed) + "%)";
-                root.secondaryRateLimitResetAt = normalizeResetAt(resetDate);
+                root.secondaryRateLimitResetAt = root.utils.normalizeResetAt(resetDate);
             }
         }
 
@@ -165,7 +171,7 @@ Item {
                 const usedPct = Math.min(100, Math.max(0, Math.round((used / mq.chat) * 100)));
                 root.rateLimitPercent = usedPct / 100;
                 root.rateLimitLabel = "Chat (" + used + "/" + mq.chat + ")";
-                root.rateLimitResetAt = normalizeResetAt(freeReset);
+                root.rateLimitResetAt = root.utils.normalizeResetAt(freeReset);
             }
 
             if (typeof lq.completions === "number" && typeof mq.completions === "number" && mq.completions > 0) {
@@ -173,7 +179,7 @@ Item {
                 const usedPct = Math.min(100, Math.max(0, Math.round((used / mq.completions) * 100)));
                 root.secondaryRateLimitPercent = usedPct / 100;
                 root.secondaryRateLimitLabel = "Completions (" + used + "/" + mq.completions + ")";
-                root.secondaryRateLimitResetAt = normalizeResetAt(freeReset);
+                root.secondaryRateLimitResetAt = root.utils.normalizeResetAt(freeReset);
             }
         }
     }
@@ -194,14 +200,6 @@ Item {
         root.secondaryRateLimitResetAt = "";
     }
 
-    function normalizeResetAt(value) {
-        if (value === null || value === undefined || value === "")
-            return "";
-        const d = new Date(String(value));
-        if (!isNaN(d.getTime()))
-            return d.toISOString();
-        return "";
-    }
 
     function refresh() {
         const now = Date.now();
@@ -211,20 +209,4 @@ Item {
         refreshToken();
     }
 
-    function formatResetTime(isoTimestamp) {
-        if (!isoTimestamp)
-            return "";
-        const reset = new Date(isoTimestamp);
-        const now = new Date();
-        const diffMs = reset.getTime() - now.getTime();
-        if (diffMs <= 0)
-            return "now";
-        const hours = Math.floor(diffMs / 3600000);
-        const mins = Math.floor((diffMs % 3600000) / 60000);
-        if (hours > 24)
-            return Math.floor(hours / 24) + "d " + (hours % 24) + "h";
-        if (hours > 0)
-            return hours + "h " + mins + "m";
-        return mins + "m";
-    }
 }

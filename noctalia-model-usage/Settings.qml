@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.Commons
@@ -40,16 +41,16 @@ ColumnLayout {
     }
 
     function moveProvider(fromIndex, toIndex) {
-        var order = (editSettings?.providerOrder || defaultProviderOrder).slice();
+        var order = (root.editSettings?.providerOrder || root.defaultProviderOrder).slice();
         if (fromIndex < 0 || fromIndex >= order.length || toIndex < 0 || toIndex >= order.length || fromIndex === toIndex)
             return;
         var moved = order[fromIndex];
         order.splice(fromIndex, 1);
         order.splice(toIndex, 0, moved);
-        if (!editSettings)
-            editSettings = {};
-        editSettings.providerOrder = order;
-        editSettingsChanged();
+        if (!root.editSettings)
+            root.editSettings = {};
+        root.editSettings.providerOrder = order;
+        root.editSettingsChanged();
     }
 
     function normalizeBarMetricKey(value) {
@@ -64,8 +65,8 @@ ColumnLayout {
         if (root.editSettings?.barMetric) {
             root.editSettings.barMetric = root.normalizeBarMetricKey(root.editSettings.barMetric);
         }
-        pluginApi.pluginSettings = JSON.parse(JSON.stringify(root.editSettings));
-        pluginApi.saveSettings();
+        root.pluginApi.pluginSettings = JSON.parse(JSON.stringify(root.editSettings));
+        root.pluginApi.saveSettings();
     }
 
     spacing: Style.marginL
@@ -106,10 +107,10 @@ ColumnLayout {
                 spacing: Style.marginM
 
                 NToggle {
-                    checked: editSettings?.barCycleEnabled ?? false
+                    checked: root.editSettings?.barCycleEnabled ?? false
                     onToggled: value => {
-                        editSettings.barCycleEnabled = value;
-                        editSettingsChanged();
+                        root.editSettings.barCycleEnabled = value;
+                        root.editSettingsChanged();
                     }
                 }
 
@@ -132,7 +133,7 @@ ColumnLayout {
             }
 
             ColumnLayout {
-                visible: editSettings?.barCycleEnabled ?? false
+                visible: root.editSettings?.barCycleEnabled ?? false
                 Layout.fillWidth: true
                 spacing: Style.marginXS
 
@@ -146,10 +147,10 @@ ColumnLayout {
                 NSpinBox {
                     from: 2
                     to: 60
-                    value: editSettings?.barCycleIntervalSec ?? 5
+                    value: root.editSettings?.barCycleIntervalSec ?? 5
                     stepSize: 1
                     onValueChanged: {
-                        editSettings.barCycleIntervalSec = value;
+                        root.editSettings.barCycleIntervalSec = value;
                     }
                 }
             }
@@ -194,10 +195,10 @@ ColumnLayout {
                             name: "Usage % 5h/7d"
                         }
                     ]
-                    currentKey: root.normalizeBarMetricKey(editSettings?.barMetric ?? "prompts")
+                    currentKey: root.normalizeBarMetricKey(root.editSettings?.barMetric ?? "prompts")
                     onSelected: key => {
-                        editSettings.barMetric = key;
-                        editSettingsChanged();
+                        root.editSettings.barMetric = key;
+                        root.editSettingsChanged();
                     }
                 }
             }
@@ -206,7 +207,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 spacing: Style.marginS
                 visible: {
-                    var metric = editSettings?.barMetric ?? "prompts";
+                    var metric = root.editSettings?.barMetric ?? "prompts";
                     return metric === "usage" || metric === "usage5h" || metric === "usage5h7d";
                 }
 
@@ -214,10 +215,10 @@ ColumnLayout {
                     Layout.fillWidth: true
                     spacing: Style.marginM
                     NToggle {
-                        checked: editSettings?.barShowRemaining ?? false
+                        checked: root.editSettings?.barShowRemaining ?? false
                         onToggled: value => {
-                            editSettings.barShowRemaining = value;
-                            editSettingsChanged();
+                            root.editSettings.barShowRemaining = value;
+                            root.editSettingsChanged();
                         }
                     }
                     NText {
@@ -233,10 +234,10 @@ ColumnLayout {
                     Layout.fillWidth: true
                     spacing: Style.marginM
                     NToggle {
-                        checked: editSettings?.barIconAlertOnLimit ?? false
+                        checked: root.editSettings?.barIconAlertOnLimit ?? false
                         onToggled: value => {
-                            editSettings.barIconAlertOnLimit = value;
-                            editSettingsChanged();
+                            root.editSettings.barIconAlertOnLimit = value;
+                            root.editSettingsChanged();
                         }
                     }
                     NText {
@@ -250,16 +251,16 @@ ColumnLayout {
 
                 NSpinBox {
                     Layout.fillWidth: true
-                    visible: editSettings?.barIconAlertOnLimit ?? false
+                    visible: root.editSettings?.barIconAlertOnLimit ?? false
                     label: "Alert threshold (%)"
                     description: "Percentage used at which the icon turns red"
                     from: 50
                     to: 100
                     stepSize: 5
-                    value: editSettings?.barIconAlertThreshold ?? 95
+                    value: root.editSettings?.barIconAlertThreshold ?? 95
                     suffix: "%"
                     onValueChanged: {
-                        editSettings.barIconAlertThreshold = value;
+                        root.editSettings.barIconAlertThreshold = value;
                     }
                 }
             }
@@ -272,10 +273,10 @@ ColumnLayout {
                     Layout.fillWidth: true
                     spacing: Style.marginM
                     NToggle {
-                        checked: editSettings?.barTextShowOnHover ?? false
+                        checked: root.editSettings?.barTextShowOnHover ?? false
                         onToggled: value => {
-                            editSettings.barTextShowOnHover = value;
-                            editSettingsChanged();
+                            root.editSettings.barTextShowOnHover = value;
+                            root.editSettingsChanged();
                         }
                     }
                     NText {
@@ -301,10 +302,10 @@ ColumnLayout {
                     Layout.fillWidth: true
                     spacing: Style.marginM
                     NToggle {
-                        checked: editSettings?.includeCacheTokens ?? true
+                        checked: root.editSettings?.includeCacheTokens ?? true
                         onToggled: value => {
-                            editSettings.includeCacheTokens = value;
-                            editSettingsChanged();
+                            root.editSettings.includeCacheTokens = value;
+                            root.editSettingsChanged();
                         }
                     }
                     NText {
@@ -341,10 +342,10 @@ ColumnLayout {
                 NSpinBox {
                     from: 5
                     to: 300
-                    value: editSettings?.refreshIntervalSec ?? 30
+                    value: root.editSettings?.refreshIntervalSec ?? 30
                     stepSize: 5
                     onValueChanged: {
-                        editSettings.refreshIntervalSec = value;
+                        root.editSettings.refreshIntervalSec = value;
                     }
                 }
             }
@@ -368,11 +369,11 @@ ColumnLayout {
                 NSpinBox {
                     from: 1
                     to: 360
-                    value: editSettings?.apiRefreshIntervalMin ?? 1
+                    value: root.editSettings?.apiRefreshIntervalMin ?? 1
                     stepSize: 1
                     suffix: "min"
                     onValueChanged: {
-                        editSettings.apiRefreshIntervalMin = value;
+                        root.editSettings.apiRefreshIntervalMin = value;
                     }
                 }
             }
@@ -413,7 +414,7 @@ ColumnLayout {
             // Functions are defined at root level
 
             Repeater {
-                model: editSettings?.providerOrder || defaultProviderOrder
+                model: root.editSettings?.providerOrder || root.defaultProviderOrder
 
                 delegate: DropArea {
                     id: providerDropArea
@@ -499,16 +500,16 @@ ColumnLayout {
                                     NToggle {
                                         Layout.alignment: Qt.AlignHCenter
                                         checked: {
-                                            var prov = editSettings?.providers?.[providerCard.providerId];
+                                            var prov = root.editSettings?.providers?.[providerCard.providerId];
                                             return prov ? (prov.enabled ?? true) : true;
                                         }
                                         onToggled: function(value) {
-                                            if (!editSettings.providers)
-                                                editSettings.providers = {};
-                                            if (!editSettings.providers[providerCard.providerId])
-                                                editSettings.providers[providerCard.providerId] = {};
-                                            editSettings.providers[providerCard.providerId].enabled = value;
-                                            editSettingsChanged();
+                                            if (!root.editSettings.providers)
+                                                root.editSettings.providers = {};
+                                            if (!root.editSettings.providers[providerCard.providerId])
+                                                root.editSettings.providers[providerCard.providerId] = {};
+                                            root.editSettings.providers[providerCard.providerId].enabled = value;
+                                            root.editSettingsChanged();
                                         }
                                     }
                                     NText {
@@ -526,16 +527,16 @@ ColumnLayout {
                                     NToggle {
                                         Layout.alignment: Qt.AlignHCenter
                                         checked: {
-                                            var prov = editSettings?.providers?.[providerCard.providerId];
+                                            var prov = root.editSettings?.providers?.[providerCard.providerId];
                                             return prov ? (prov.showInWidget ?? true) : true;
                                         }
                                         onToggled: function(value) {
-                                            if (!editSettings.providers)
-                                                editSettings.providers = {};
-                                            if (!editSettings.providers[providerCard.providerId])
-                                                editSettings.providers[providerCard.providerId] = {};
-                                            editSettings.providers[providerCard.providerId].showInWidget = value;
-                                            editSettingsChanged();
+                                            if (!root.editSettings.providers)
+                                                root.editSettings.providers = {};
+                                            if (!root.editSettings.providers[providerCard.providerId])
+                                                root.editSettings.providers[providerCard.providerId] = {};
+                                            root.editSettings.providers[providerCard.providerId].showInWidget = value;
+                                            root.editSettingsChanged();
                                         }
                                     }
                                     NText {
@@ -576,7 +577,7 @@ ColumnLayout {
 
                             // Codex: data source selector
                             ColumnLayout {
-                                visible: providerCard.providerId === "codex" && (editSettings?.providers?.codex?.enabled ?? true)
+                                visible: providerCard.providerId === "codex" && (root.editSettings?.providers?.codex?.enabled ?? true)
                                 Layout.fillWidth: true
                                 Layout.leftMargin: Style.marginXL
                                 spacing: Style.marginXS
@@ -599,17 +600,17 @@ ColumnLayout {
                                         { key: "local", name: "Local files" },
                                         { key: "api", name: "API" }
                                     ]
-                                    currentKey: editSettings?.providers?.codex?.usageMode ?? "local"
+                                    currentKey: root.editSettings?.providers?.codex?.usageMode ?? "local"
                                     onSelected: function(key) {
-                                        if (!editSettings.providers) editSettings.providers = {};
-                                        if (!editSettings.providers.codex) editSettings.providers.codex = {};
-                                        editSettings.providers.codex.usageMode = key;
-                                        editSettingsChanged();
+                                        if (!root.editSettings.providers) root.editSettings.providers = {};
+                                        if (!root.editSettings.providers.codex) root.editSettings.providers.codex = {};
+                                        root.editSettings.providers.codex.usageMode = key;
+                                        root.editSettingsChanged();
                                     }
                                 }
 
                                 NText {
-                                    text: editSettings?.providers?.codex?.usageMode === "api"
+                                    text: root.editSettings?.providers?.codex?.usageMode === "api"
                                         ? "Reads from ChatGPT backend API using auth from ~/.codex/auth.json"
                                         : "Reads ~/.codex/ files directly (history.jsonl, sessions/)"
                                     pointSize: Style.fontSizeXS
@@ -622,7 +623,7 @@ ColumnLayout {
 
                             // OpenRouter: API key
                             ColumnLayout {
-                                visible: providerCard.providerId === "openrouter" && (editSettings?.providers?.openrouter?.enabled ?? false)
+                                visible: providerCard.providerId === "openrouter" && (root.editSettings?.providers?.openrouter?.enabled ?? false)
                                 Layout.fillWidth: true
                                 Layout.leftMargin: Style.marginXL
                                 spacing: Style.marginXS
@@ -630,18 +631,18 @@ ColumnLayout {
                                 NTextInput {
                                     Layout.fillWidth: true
                                     placeholderText: "OPENROUTER_API_KEY env var or enter key here"
-                                    text: editSettings?.providers?.openrouter?.apiKey ?? ""
+                                    text: root.editSettings?.providers?.openrouter?.apiKey ?? ""
                                     onTextChanged: {
-                                        if (!editSettings.providers) editSettings.providers = {};
-                                        if (!editSettings.providers.openrouter) editSettings.providers.openrouter = {};
-                                        editSettings.providers.openrouter.apiKey = text;
+                                        if (!root.editSettings.providers) root.editSettings.providers = {};
+                                        if (!root.editSettings.providers.openrouter) root.editSettings.providers.openrouter = {};
+                                        root.editSettings.providers.openrouter.apiKey = text;
                                     }
                                 }
                             }
 
                             // Zen: API key
                             ColumnLayout {
-                                visible: providerCard.providerId === "zen" && (editSettings?.providers?.zen?.enabled ?? false)
+                                visible: providerCard.providerId === "zen" && (root.editSettings?.providers?.zen?.enabled ?? false)
                                 Layout.fillWidth: true
                                 Layout.leftMargin: Style.marginXL
                                 spacing: Style.marginXS
@@ -649,18 +650,18 @@ ColumnLayout {
                                 NTextInput {
                                     Layout.fillWidth: true
                                     placeholderText: "OPENCODE_ZEN_API_KEY / OPENCODE_API_KEY env var or enter key here"
-                                    text: editSettings?.providers?.zen?.apiKey ?? ""
+                                    text: root.editSettings?.providers?.zen?.apiKey ?? ""
                                     onTextChanged: {
-                                        if (!editSettings.providers) editSettings.providers = {};
-                                        if (!editSettings.providers.zen) editSettings.providers.zen = {};
-                                        editSettings.providers.zen.apiKey = text;
+                                        if (!root.editSettings.providers) root.editSettings.providers = {};
+                                        if (!root.editSettings.providers.zen) root.editSettings.providers.zen = {};
+                                        root.editSettings.providers.zen.apiKey = text;
                                     }
                                 }
                             }
 
                             // DeepSeek: API key
                             ColumnLayout {
-                                visible: providerCard.providerId === "deepseek" && (editSettings?.providers?.deepseek?.enabled ?? false)
+                                visible: providerCard.providerId === "deepseek" && (root.editSettings?.providers?.deepseek?.enabled ?? false)
                                 Layout.fillWidth: true
                                 Layout.leftMargin: Style.marginXL
                                 spacing: Style.marginXS
@@ -668,11 +669,11 @@ ColumnLayout {
                                 NTextInput {
                                     Layout.fillWidth: true
                                     placeholderText: "DEEPSEEK_API_KEY env var or enter key here"
-                                    text: editSettings?.providers?.deepseek?.apiKey ?? ""
+                                    text: root.editSettings?.providers?.deepseek?.apiKey ?? ""
                                     onTextChanged: {
-                                        if (!editSettings.providers) editSettings.providers = {};
-                                        if (!editSettings.providers.deepseek) editSettings.providers.deepseek = {};
-                                        editSettings.providers.deepseek.apiKey = text;
+                                        if (!root.editSettings.providers) root.editSettings.providers = {};
+                                        if (!root.editSettings.providers.deepseek) root.editSettings.providers.deepseek = {};
+                                        root.editSettings.providers.deepseek.apiKey = text;
                                     }
                                 }
                             }
@@ -698,7 +699,7 @@ ColumnLayout {
         NButton {
             text: "Reset"
             onClicked: {
-                root.editSettings = JSON.parse(JSON.stringify(pluginApi?.manifest?.metadata?.defaultSettings ?? {}));
+                root.editSettings = JSON.parse(JSON.stringify(root.pluginApi?.manifest?.metadata?.defaultSettings ?? {}));
             }
         }
     }

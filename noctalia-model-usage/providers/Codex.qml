@@ -11,7 +11,7 @@ Item {
     property string providerName: "Codex"
     property string providerIcon: "ai"
     property string providerIconAsset: "assets/codex.svg"
-    property bool enabled: false
+    property bool providerEnabled: false
     property bool ready: false
 
     property real rateLimitPercent: -1
@@ -49,18 +49,12 @@ Item {
     property double _lastApiRefreshMs: 0
     readonly property int _apiRefreshMinIntervalMs: 60000
 
+    property var utils: ProviderUtils {}
+
     function resolvePath(p) {
         if (p && p.startsWith("~"))
             return (Quickshell.env("HOME") ?? "/home") + p.substring(1);
         return p;
-    }
-
-    function localDateString() {
-        const now = new Date();
-        const y = now.getFullYear();
-        const m = String(now.getMonth() + 1).padStart(2, "0");
-        const d = String(now.getDate()).padStart(2, "0");
-        return y + "-" + m + "-" + d;
     }
 
     FileView {
@@ -133,19 +127,19 @@ Item {
 
     Timer {
         interval: 60 * 1000
-        running: root.enabled && root.usageMode === "local"
+        running: root.providerEnabled && root.usageMode === "local"
         repeat: true
         onTriggered: root.scanSessions()
     }
 
     ApiRefreshTimer {
-        providerEnabled: root.enabled && root.usageMode === "api"
+        providerEnabled: root.providerEnabled && root.usageMode === "api"
         intervalMin: root.apiRefreshIntervalMin
         onTick: root.fetchUsageFromApi()
     }
 
-    onEnabledChanged: {
-        if (enabled) {
+    onProviderEnabledChanged: {
+        if (providerEnabled) {
             if (root.usageMode === "api")
                 root.fetchUsageFromApi();
             else
@@ -221,7 +215,7 @@ Item {
                 root.tierLabel = data.auth_mode;
 
             // In API mode, retry fetch once tokens become available
-            if (root.usageMode === "api" && root.enabled && root.accessToken)
+            if (root.usageMode === "api" && root.providerEnabled && root.accessToken)
                 root.fetchUsageFromApi();
         } catch (e) {
             Logger.e("model-usage/codex", "Failed to parse auth.json:", e);
@@ -492,20 +486,4 @@ Item {
         }
     }
 
-    function formatResetTime(isoTimestamp) {
-        if (!isoTimestamp)
-            return "";
-        const reset = new Date(isoTimestamp);
-        const now = new Date();
-        const diffMs = reset.getTime() - now.getTime();
-        if (diffMs <= 0)
-            return "now";
-        const hours = Math.floor(diffMs / 3600000);
-        const mins = Math.floor((diffMs % 3600000) / 60000);
-        if (hours > 24)
-            return Math.floor(hours / 24) + "d " + (hours % 24) + "h";
-        if (hours > 0)
-            return hours + "h " + mins + "m";
-        return mins + "m";
-    }
 }

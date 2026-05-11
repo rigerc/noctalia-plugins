@@ -10,7 +10,7 @@ Item {
     property string providerName: "Zen"
     property string providerIcon: "ai"
     property string providerIconAsset: "assets/opencode.svg"
-    property bool enabled: false
+    property bool providerEnabled: false
     property bool ready: false
 
     property real rateLimitPercent: -1
@@ -35,6 +35,7 @@ Item {
     property bool hasLocalStats: true
 
     property var providerSettings: ({})
+    property var utils: ProviderUtils {}
     property string apiBaseUrl: providerSettings?.apiBaseUrl ?? "https://opencode.ai/zen/v1"
     property string apiKey: {
         const envZen = Quickshell.env("OPENCODE_ZEN_API_KEY") ?? "";
@@ -93,7 +94,7 @@ Item {
             root.ready = root.modelsLoaded;
         }
 
-        root.rateLimitPercent = 0;
+        root.rateLimitPercent = -1;
         root.rateLimitLabel = "Usage API unavailable";
         root.rateLimitResetAt = "";
         root.secondaryRateLimitPercent = -1;
@@ -201,20 +202,4 @@ Item {
             updateState();
     }
 
-    function formatResetTime(isoTimestamp) {
-        if (!isoTimestamp)
-            return "";
-        const reset = new Date(isoTimestamp);
-        const now = new Date();
-        const diffMs = reset.getTime() - now.getTime();
-        if (diffMs <= 0)
-            return "now";
-        const hours = Math.floor(diffMs / 3600000);
-        const mins = Math.floor((diffMs % 3600000) / 60000);
-        if (hours > 24)
-            return Math.floor(hours / 24) + "d " + (hours % 24) + "h";
-        if (hours > 0)
-            return hours + "h " + mins + "m";
-        return mins + "m";
-    }
 }

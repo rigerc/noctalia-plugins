@@ -10,7 +10,7 @@ Item {
     property string providerName: "OpenRouter"
     property string providerIcon: "ai"
     property string providerIconAsset: "assets/openrouter.svg"
-    property bool enabled: false
+    property bool providerEnabled: false
     property bool ready: false
 
     property real rateLimitPercent: -1
@@ -48,19 +48,21 @@ Item {
 
     property int apiRefreshIntervalMin: 1
 
+    property var utils: ProviderUtils {}
+
     ApiRefreshTimer {
-        providerEnabled: root.enabled && root.apiKey !== ""
+        providerEnabled: root.providerEnabled && root.apiKey !== ""
         intervalMin: root.apiRefreshIntervalMin
         onTick: root.fetchKeyInfo()
     }
 
-    onEnabledChanged: {
-        if (enabled && apiKey !== "")
+    onProviderEnabledChanged: {
+        if (providerEnabled && apiKey !== "")
             fetchKeyInfo();
     }
 
     onApiKeyChanged: {
-        if (enabled && apiKey !== "")
+        if (providerEnabled && apiKey !== "")
             fetchKeyInfo();
     }
 
@@ -89,7 +91,7 @@ Item {
                 root.usageMonthly = root.parseFinite(info.usage_monthly, 0);
                 root.spendingLimit = root.parseFinite(info.limit, -1);
                 root.limitRemaining = root.parseFinite(info.limit_remaining, -1);
-                root.rateLimitResetAt = root.normalizeResetAt(info.limit_reset);
+                root.rateLimitResetAt = root.utils.normalizeResetAt(info.limit_reset);
 
                 if (root.spendingLimit > 0) {
                     root.rateLimitPercent = Math.min(1, Math.max(0, root.usageWeekly / root.spendingLimit));
@@ -99,7 +101,7 @@ Item {
                     root.rateLimitPercent = Math.min(1, Math.max(0, root.usageWeekly / budget));
                     root.rateLimitLabel = "Budget ($" + root.usageWeekly.toFixed(2) + " / $" + budget.toFixed(2) + ")";
                 } else {
-                    root.rateLimitPercent = 0;
+                    root.rateLimitPercent = -1;
                     root.rateLimitLabel = "No spending limit";
                 }
 
@@ -121,23 +123,6 @@ Item {
         return isFinite(n) ? n : fallback;
     }
 
-    function normalizeResetAt(value) {
-        if (value === null || value === undefined || value === "")
-            return "";
-        if (typeof value === "number" && isFinite(value)) {
-            let ts = value;
-            if (ts < 1e12)
-                ts *= 1000;
-            const d = new Date(ts);
-            if (!isNaN(d.getTime()))
-                return d.toISOString();
-            return "";
-        }
-        const d = new Date(String(value));
-        if (!isNaN(d.getTime()))
-            return d.toISOString();
-        return "";
-    }
 
     function fetchActivity() {
         if (!root.apiKey)
@@ -264,20 +249,4 @@ Item {
             fetchKeyInfo();
     }
 
-    function formatResetTime(isoTimestamp) {
-        if (!isoTimestamp)
-            return "";
-        const reset = new Date(isoTimestamp);
-        const now = new Date();
-        const diffMs = reset.getTime() - now.getTime();
-        if (diffMs <= 0)
-            return "now";
-        const hours = Math.floor(diffMs / 3600000);
-        const mins = Math.floor((diffMs % 3600000) / 60000);
-        if (hours > 24)
-            return Math.floor(hours / 24) + "d " + (hours % 24) + "h";
-        if (hours > 0)
-            return hours + "h " + mins + "m";
-        return mins + "m";
-    }
 }
