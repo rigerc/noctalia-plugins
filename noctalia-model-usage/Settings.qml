@@ -209,7 +209,7 @@ ColumnLayout {
 
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: Style.marginXS
+                spacing: Style.marginS
                 visible: {
                     var metric = editSettings?.barMetric ?? "prompts";
                     return metric === "usage" || metric === "usage5h" || metric === "usage5h7d";
@@ -233,10 +233,39 @@ ColumnLayout {
                         Layout.fillWidth: true
                     }
                 }
-                NText {
-                    text: "When enabled, usage metrics display the percentage left (e.g. 25% remaining) instead of the percentage used"
-                    pointSize: Style.fontSizeXS
-                    color: Color.mOnSurfaceVariant
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Style.marginM
+                    NToggle {
+                        checked: editSettings?.barIconAlertOnLimit ?? false
+                        onToggled: value => {
+                            editSettings.barIconAlertOnLimit = value;
+                            editSettingsChanged();
+                        }
+                    }
+                    NText {
+                        text: "Color icon red on rate limit reached"
+                        pointSize: Style.fontSizeM
+                        font.weight: Style.fontWeightSemiBold
+                        color: Color.mOnSurface
+                        Layout.fillWidth: true
+                    }
+                }
+
+                NSpinBox {
+                    Layout.fillWidth: true
+                    visible: editSettings?.barIconAlertOnLimit ?? false
+                    label: "Alert threshold (%)"
+                    description: "Percentage used at which the icon turns red"
+                    from: 50
+                    to: 100
+                    stepSize: 5
+                    value: editSettings?.barIconAlertThreshold ?? 95
+                    suffix: "%"
+                    onValueChanged: {
+                        editSettings.barIconAlertThreshold = value;
+                    }
                 }
             }
 

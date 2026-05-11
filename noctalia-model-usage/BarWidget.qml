@@ -27,6 +27,22 @@ Item {
 
     property string barMetric: mainInstance?.barMetric ?? "prompts"
     property bool barShowRemaining: mainInstance?.barShowRemaining ?? false
+    property bool barIconAlertOnLimit: mainInstance?.barIconAlertOnLimit ?? false
+    property int barIconAlertThreshold: Math.max(50, Math.min(100, Number(mainInstance?.barIconAlertThreshold ?? 95)))
+
+    readonly property color resolvedProviderIconColor: {
+        if (!root.barIconAlertOnLimit || !root.activeProvider)
+            return Color.mOnSurface;
+
+        const rl = root.activeProvider.rateLimitPercent ?? -1;
+        const rl5h = root.activeProvider.secondaryRateLimitPercent ?? -1;
+
+        if ((rl >= 0 && Math.round(rl * 100) >= root.barIconAlertThreshold) ||
+            (rl5h >= 0 && Math.round(rl5h * 100) >= root.barIconAlertThreshold))
+            return Color.mError;
+
+        return Color.mOnSurface;
+    }
 
     function formatUsagePercent(rawPercent) {
         const used = Math.round(rawPercent * 100);
@@ -163,6 +179,9 @@ Item {
                     })
                     pointSize: root.barFontSize
                     applyUiScale: false
+                    color: root.resolvedProviderIconColor
+                    colorize: root.resolvedProviderIconColor !== Color.mOnSurface
+                    colorizeColor: root.resolvedProviderIconColor
                 }
 
                 NText {
@@ -187,6 +206,9 @@ Item {
                     })
                     pointSize: root.barFontSize
                     applyUiScale: false
+                    color: root.resolvedProviderIconColor
+                    colorize: root.resolvedProviderIconColor !== Color.mOnSurface
+                    colorizeColor: root.resolvedProviderIconColor
                 }
 
                 NText {

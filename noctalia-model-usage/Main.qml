@@ -81,6 +81,8 @@ Item {
     property string barDisplayMode: pluginSettings?.barDisplayMode ?? "active"
     property int barCycleIntervalSec: pluginSettings?.barCycleIntervalSec ?? 5
     property bool barShowRemaining: pluginSettings?.barShowRemaining ?? false
+    property bool barIconAlertOnLimit: pluginSettings?.barIconAlertOnLimit ?? false
+    property int barIconAlertThreshold: Math.max(50, Math.min(100, Number(pluginSettings?.barIconAlertThreshold ?? 95)))
     property int refreshIntervalSec: pluginSettings?.refreshIntervalSec ?? 30
 
     property string barMetric: {

@@ -54,6 +54,8 @@
       "barMetric": "prompts",
       "includeCacheTokens": true,
       "barShowRemaining": false,
+      "barIconAlertOnLimit": false,
+      "barIconAlertThreshold": 95,
       "refreshIntervalSec": 30,
       "providerOrder": [
         "claude",
