@@ -8,6 +8,7 @@ Item {
     property string providerId: "deepseek"
     property string providerName: "DeepSeek"
     property string providerIcon: "ai"
+    property string providerIconAsset: "assets/deepseek.svg"
     property bool enabled: false
     property bool ready: false
 

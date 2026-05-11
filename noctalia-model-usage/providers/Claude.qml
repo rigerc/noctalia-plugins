@@ -9,6 +9,7 @@ Item {
     property string providerId: "claude"
     property string providerName: "Claude Code"
     property string providerIcon: "ai"
+    property string providerIconAsset: "assets/claude.svg"
     property bool enabled: false
     property bool ready: false
     property string usageStatusText: ""

@@ -8,6 +8,7 @@ Item {
     property string providerId: "zen"
     property string providerName: "Zen"
     property string providerIcon: "ai"
+    property string providerIconAsset: "assets/opencode.svg"
     property bool enabled: false
     property bool ready: false
 

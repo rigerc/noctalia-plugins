@@ -4,6 +4,7 @@ import Quickshell
 import qs.Commons
 import qs.Services.UI
 import qs.Widgets
+import "./components"
 
 Item {
     id: root
@@ -154,12 +155,14 @@ Item {
                 visible: !root.isBarVertical
                 spacing: Style.marginS
 
-                NIcon {
-                    icon: root.activeProvider?.providerIcon ?? "ai"
+                ProviderVisual {
+                    Layout.alignment: Qt.AlignVCenter
+                    visualData: root.mainInstance?.providerVisualData(root.activeProvider?.providerId) ?? ({
+                        "source": "icon",
+                        "icon": "ai"
+                    })
                     pointSize: root.barFontSize
                     applyUiScale: false
-                    color: Color.mPrimary
-                    Layout.alignment: Qt.AlignVCenter
                 }
 
                 NText {
@@ -176,12 +179,14 @@ Item {
                 visible: root.isBarVertical
                 spacing: Style.marginXS
 
-                NIcon {
-                    icon: root.activeProvider?.providerIcon ?? "ai"
+                ProviderVisual {
+                    Layout.alignment: Qt.AlignHCenter
+                    visualData: root.mainInstance?.providerVisualData(root.activeProvider?.providerId) ?? ({
+                        "source": "icon",
+                        "icon": "ai"
+                    })
                     pointSize: root.barFontSize
                     applyUiScale: false
-                    color: Color.mPrimary
-                    Layout.alignment: Qt.AlignHCenter
                 }
 
                 NText {

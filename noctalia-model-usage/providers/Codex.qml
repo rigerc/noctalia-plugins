@@ -9,6 +9,7 @@ Item {
     property string providerId: "codex"
     property string providerName: "Codex"
     property string providerIcon: "ai"
+    property string providerIconAsset: "assets/codex.svg"
     property bool enabled: false
     property bool ready: false
 

@@ -8,6 +8,7 @@ Item {
     property string providerId: "openrouter"
     property string providerName: "OpenRouter"
     property string providerIcon: "ai"
+    property string providerIconAsset: "assets/openrouter.svg"
     property bool enabled: false
     property bool ready: false
 

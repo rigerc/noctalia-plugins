@@ -2,11 +2,13 @@ import QtQuick
 import QtQuick.Layouts
 import qs.Commons
 import qs.Widgets
+import "./components"
 
 ColumnLayout {
     id: root
 
     property var pluginApi: null
+    readonly property var mainInstance: pluginApi?.mainInstance
     readonly property color sectionBackgroundColor: Color.mSurfaceVariant
 
     property var editSettings: JSON.parse(JSON.stringify(pluginApi?.pluginSettings ?? pluginApi?.manifest?.metadata?.defaultSettings ?? {}))
@@ -423,6 +425,16 @@ ColumnLayout {
                                         editSettings.providers[providerCard.providerId].enabled = value;
                                         editSettingsChanged();
                                     }
+                                }
+
+                                ProviderVisual {
+                                    Layout.rightMargin: Style.marginS
+                                    Layout.alignment: Qt.AlignVCenter
+                                    visualData: root.mainInstance?.providerVisualData(providerCard.providerId) ?? ({
+                                        "source": "icon",
+                                        "icon": "ai"
+                                    })
+                                    pointSize: Style.fontSizeL
                                 }
 
                                 // Provider name

@@ -9,6 +9,7 @@ Item {
     property string providerId: "copilot"
     property string providerName: "Copilot"
     property string providerIcon: "ai"
+    property string providerIconAsset: "assets/copilot.svg"
     property bool enabled: false
     property bool ready: false
 

@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import Quickshell
 import qs.Commons
 import qs.Widgets
+import "./components"
 
 Item {
     id: root
@@ -101,10 +102,12 @@ Item {
                         Layout.fillWidth: true
                         spacing: Style.marginM
 
-                        NIcon {
-                            icon: root.selectedProvider?.providerIcon ?? "ai"
+                        ProviderVisual {
+                            visualData: root.mainInstance?.providerVisualData(root.selectedProvider?.providerId) ?? ({
+                                "source": "icon",
+                                "icon": "ai"
+                            })
                             pointSize: Style.fontSizeXXXL
-                            color: Color.mPrimary
                         }
 
                         NText {

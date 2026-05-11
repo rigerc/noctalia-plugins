@@ -142,6 +142,44 @@ Item {
         return String(n);
     }
 
+    function providerIconAsset(providerId) {
+        if (!providerId)
+            return "";
+        var p = root.providerMap[providerId];
+        if (p && p.providerIconAsset)
+            return String(p.providerIconAsset);
+        return "";
+    }
+
+    function providerAssetUrl(providerId) {
+        var assetPath = root.providerIconAsset(providerId);
+        if (!assetPath || !pluginApi?.pluginDir)
+            return "";
+        return Qt.resolvedUrl(pluginApi.pluginDir + "/" + assetPath);
+    }
+
+    function providerVisualData(providerId) {
+        var id = String(providerId || "").trim();
+        var p = root.providerMap[id];
+        var assetPath = p ? String(p.providerIconAsset || "") : "";
+        var iconName = p ? String(p.providerIcon || "ai") : "ai";
+
+        if (assetPath !== "") {
+            return {
+                "source": "asset",
+                "icon": iconName,
+                "asset": assetPath,
+                "assetUrl": root.providerAssetUrl(id)
+            };
+        }
+        return {
+            "source": "icon",
+            "icon": iconName,
+            "asset": "",
+            "assetUrl": ""
+        };
+    }
+
     function friendlyModelName(id) {
         if (!id)
             return "Unknown";
