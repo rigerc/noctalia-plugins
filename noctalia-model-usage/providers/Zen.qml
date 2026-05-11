@@ -59,7 +59,7 @@ Item {
     property int apiRefreshIntervalMin: 1
 
     ApiRefreshTimer {
-        providerEnabled: root.enabled
+        providerEnabled: root.providerEnabled
         intervalMin: root.apiRefreshIntervalMin
         onTick: root.fetchModels()
     }

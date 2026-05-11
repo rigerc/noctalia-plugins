@@ -50,7 +50,7 @@ Item {
 
     Timer {
         interval: 5 * 60 * 1000
-        running: root.enabled && root.apiKey !== ""
+        running: root.providerEnabled && root.apiKey !== ""
         repeat: true
         onTriggered: root.fetchBalance()
     }

@@ -14,7 +14,7 @@ Timer {
 
     signal tick()
 
-    interval: Math.max(1, root.intervalMin) * 60 * 1000
+    interval: Math.min(1440, Math.max(1, root.intervalMin)) * 60 * 1000
     running: root.providerEnabled
     repeat: true
     onTriggered: root.tick()

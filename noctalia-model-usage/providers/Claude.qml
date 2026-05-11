@@ -96,7 +96,7 @@ Item {
 
     Timer {
         interval: 5 * 60 * 1000
-        running: root.enabled && root.oauthAccessToken !== ""
+        running: root.providerEnabled && root.oauthAccessToken !== ""
         repeat: true
         onTriggered: root.probeRateLimits()
     }
