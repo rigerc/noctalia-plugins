@@ -25,6 +25,20 @@ Item {
     readonly property real barFontSize: Style.getBarFontSizeForScreen(screenName)
 
     property string barMetric: mainInstance?.barMetric ?? "prompts"
+    property bool barShowRemaining: mainInstance?.barShowRemaining ?? false
+
+    function formatUsagePercent(rawPercent) {
+        const used = Math.round(rawPercent * 100);
+        if (root.barShowRemaining)
+            return Math.max(0, 100 - used) + "%";
+        return used + "%";
+    }
+
+    function formatUsageWithPrefix(percent, prefix) {
+        if (!(percent >= 0))
+            return "\u2014";
+        return prefix + ": " + root.formatUsagePercent(percent);
+    }
 
     property string displayText: {
         if (!activeProvider)
@@ -37,9 +51,9 @@ Item {
                     return status;
                 return "\u2014";
             }
-            return Math.round(rl * 100) + "%";
+            return root.formatUsageWithPrefix(rl, "7d");
         }
-        if (barMetric === "usage24h") {
+        if (barMetric === "usage5h") {
             const rl = activeProvider.secondaryRateLimitPercent ?? -1;
             if (!(rl >= 0)) {
                 const status = String(activeProvider.usageStatusText ?? "");
@@ -47,20 +61,20 @@ Item {
                     return status;
                 return "\u2014";
             }
-            return Math.round(rl * 100) + "%";
+            return root.formatUsageWithPrefix(rl, "5h");
         }
-        if (barMetric === "usage24h7d") {
-            const rl24h = activeProvider.secondaryRateLimitPercent ?? -1;
+        if (barMetric === "usage5h7d") {
+            const rl5h = activeProvider.secondaryRateLimitPercent ?? -1;
             const rl7d = activeProvider.rateLimitPercent ?? -1;
-            if (!(rl24h >= 0) && !(rl7d >= 0)) {
+            if (!(rl5h >= 0) && !(rl7d >= 0)) {
                 const status = String(activeProvider.usageStatusText ?? "");
                 if (status !== "")
                     return status;
                 return "\u2014";
             }
-            const part24h = rl24h >= 0 ? Math.round(rl24h * 100) + "%" : "\u2014";
-            const part7d = rl7d >= 0 ? Math.round(rl7d * 100) + "%" : "\u2014";
-            return part24h + "/" + part7d;
+            const part5h = rl5h >= 0 ? root.formatUsageWithPrefix(rl5h, "5h") : "\u2014";
+            const part7d = rl7d >= 0 ? root.formatUsageWithPrefix(rl7d, "7d") : "\u2014";
+            return part5h + "  " + part7d;
         }
         if (barMetric === "tokens")
             return mainInstance?.formatTokenCount(activeProvider.todayTotalTokens) ?? "0";

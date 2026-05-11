@@ -50,7 +50,18 @@ ColumnLayout {
         editSettingsChanged();
     }
 
+    function normalizeBarMetricKey(value) {
+        var raw = String(value || "").trim();
+        if (raw === "usage24h") return "usage5h";
+        if (raw === "usage24h7d") return "usage5h7d";
+        return raw;
+    }
+
     function saveSettings() {
+        // Normalize old barMetric keys before saving
+        if (root.editSettings?.barMetric) {
+            root.editSettings.barMetric = root.normalizeBarMetricKey(root.editSettings.barMetric);
+        }
         pluginApi.pluginSettings = JSON.parse(JSON.stringify(root.editSettings));
         pluginApi.saveSettings();
     }
@@ -178,18 +189,52 @@ ColumnLayout {
                             name: "Usage % 7d"
                         },
                         {
-                            key: "usage24h",
-                            name: "Usage % 24h"
+                            key: "usage5h",
+                            name: "Usage % 5h"
                         },
                         {
-                            key: "usage24h7d",
-                            name: "Usage % 24h/7d"
+                            key: "usage5h7d",
+                            name: "Usage % 5h/7d"
                         }
                     ]
-                    currentKey: editSettings?.barMetric ?? "prompts"
+                    currentKey: root.normalizeBarMetricKey(editSettings?.barMetric ?? "prompts")
                     onSelected: key => {
                         editSettings.barMetric = key;
+                        editSettingsChanged();
                     }
+                }
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: Style.marginXS
+                visible: {
+                    var metric = editSettings?.barMetric ?? "prompts";
+                    return metric === "usage" || metric === "usage5h" || metric === "usage5h7d";
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Style.marginM
+                    NToggle {
+                        checked: editSettings?.barShowRemaining ?? false
+                        onToggled: value => {
+                            editSettings.barShowRemaining = value;
+                            editSettingsChanged();
+                        }
+                    }
+                    NText {
+                        text: "Show remaining % instead of used %"
+                        pointSize: Style.fontSizeM
+                        font.weight: Style.fontWeightSemiBold
+                        color: Color.mOnSurface
+                        Layout.fillWidth: true
+                    }
+                }
+                NText {
+                    text: "When enabled, usage metrics display the percentage left (e.g. 25% remaining) instead of the percentage used"
+                    pointSize: Style.fontSizeXS
+                    color: Color.mOnSurfaceVariant
                 }
             }
 
@@ -204,6 +249,7 @@ ColumnLayout {
                         checked: editSettings?.includeCacheTokens ?? true
                         onToggled: value => {
                             editSettings.includeCacheTokens = value;
+                            editSettingsChanged();
                         }
                     }
                     NText {

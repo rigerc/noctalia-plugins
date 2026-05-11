@@ -53,6 +53,7 @@
       "barCycleIntervalSec": 5,
       "barMetric": "prompts",
       "includeCacheTokens": true,
+      "barShowRemaining": false,
       "refreshIntervalSec": 30,
       "providerOrder": [
         "claude",
