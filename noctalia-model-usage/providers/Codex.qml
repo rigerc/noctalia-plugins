@@ -210,9 +210,8 @@ Item {
                 root.accountId = String(data.tokens.account_id ?? "");
             }
 
-            // Tier label from auth mode
-            if (data.auth_mode)
-                root.tierLabel = data.auth_mode;
+            // Tier label is only set from plan_type in API mode (parseApiResponse)
+            // auth_mode is the auth method ("chatgpt"), not a plan type
 
             // In API mode, retry fetch once tokens become available
             if (root.usageMode === "api" && root.providerEnabled && root.accessToken)
