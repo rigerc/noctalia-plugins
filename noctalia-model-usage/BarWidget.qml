@@ -30,6 +30,7 @@ Item {
     property bool barTextShowOnHover: mainInstance?.barTextShowOnHover ?? false
     property bool barIconAlertOnLimit: mainInstance?.barIconAlertOnLimit ?? false
     property int barIconAlertThreshold: Math.max(50, Math.min(100, Number(mainInstance?.barIconAlertThreshold ?? 95)))
+    property bool barCycleEnabled: mainInstance?.barCycleEnabled ?? false
 
     readonly property color resolvedProviderIconColor: {
         if (!root.barIconAlertOnLimit || !root.activeProvider)
@@ -45,63 +46,24 @@ Item {
         return Color.mOnSurface;
     }
 
-    function formatUsagePercent(rawPercent) {
-        const used = Math.round(rawPercent * 100);
-        if (root.barShowRemaining)
-            return Math.max(0, 100 - used) + "%";
-        return used + "%";
-    }
-
-    function formatUsageWithPrefix(percent, prefix) {
-        if (!(percent >= 0))
-            return "\u2014";
-        return prefix + ": " + root.formatUsagePercent(percent);
-    }
-
-    property string displayText: {
-        if (!activeProvider)
-            return "\u2014";
-        if (barMetric === "usage") {
-            const rl = activeProvider.rateLimitPercent ?? -1;
-            if (!(rl >= 0)) {
-                const status = String(activeProvider.usageStatusText ?? "");
-                if (status !== "")
-                    return status;
-                return "\u2014";
-            }
-            return root.formatUsageWithPrefix(rl, "7d");
-        }
-        if (barMetric === "usage5h") {
-            const rl = activeProvider.secondaryRateLimitPercent ?? -1;
-            if (!(rl >= 0)) {
-                const status = String(activeProvider.usageStatusText ?? "");
-                if (status !== "")
-                    return status;
-                return "\u2014";
-            }
-            return root.formatUsageWithPrefix(rl, "5h");
-        }
-        if (barMetric === "usage5h7d") {
-            const rl5h = activeProvider.secondaryRateLimitPercent ?? -1;
-            const rl7d = activeProvider.rateLimitPercent ?? -1;
-            if (!(rl5h >= 0) && !(rl7d >= 0)) {
-                const status = String(activeProvider.usageStatusText ?? "");
-                if (status !== "")
-                    return status;
-                return "\u2014";
-            }
-            const part5h = rl5h >= 0 ? root.formatUsageWithPrefix(rl5h, "5h") : "\u2014";
-            const part7d = rl7d >= 0 ? root.formatUsageWithPrefix(rl7d, "7d") : "\u2014";
-            return part5h + "  " + part7d;
-        }
-        if (barMetric === "tokens")
-            return mainInstance?.formatTokenCount(activeProvider.todayTotalTokens) ?? "0";
-        return String(activeProvider.todayPrompts);
-    }
-
     property string tooltipText: {
-        if (!activeProvider)
-            return "Model Usage";
+        if (!activeProvider) {
+            const ep = mainInstance?.barProviders ?? [];
+            if (ep.length === 0)
+                return "Model Usage";
+            return "Model Usage \u2014 " + ep.length + " providers";
+        }
+        if (!root.barCycleEnabled) {
+            const ep = mainInstance?.barProviders ?? [];
+            let tip = "All providers:";
+            for (const p of ep) {
+                tip += "\n" + p.providerName + ": " + root.providerDisplayText(p);
+                const rl = p.rateLimitPercent;
+                if (rl >= 0)
+                    tip += " (" + p.rateLimitLabel + ": " + Math.round(rl * 100) + "%)";
+            }
+            return tip;
+        }
         const name = activeProvider.providerName;
         const prompts = activeProvider.todayPrompts;
         const sess = activeProvider.todaySessions;
@@ -121,6 +83,74 @@ Item {
 
     readonly property real contentWidth: isBarVertical ? capsuleHeight : (root.revealed ? content.implicitWidth : capsuleHeight) + Style.marginM * 2
     readonly property real contentHeight: isBarVertical ? (root.revealed ? content.implicitHeight : capsuleHeight) + Style.marginM * 2 : capsuleHeight
+
+    function resolvedProviderIconColorFor(provider) {
+        if (!root.barIconAlertOnLimit || !provider)
+            return Color.mOnSurface;
+
+        const rl = provider.rateLimitPercent ?? -1;
+        const rl5h = provider.secondaryRateLimitPercent ?? -1;
+
+        if ((rl >= 0 && Math.round(rl * 100) >= root.barIconAlertThreshold) ||
+            (rl5h >= 0 && Math.round(rl5h * 100) >= root.barIconAlertThreshold))
+            return Color.mError;
+
+        return Color.mOnSurface;
+    }
+
+    function formatUsagePercent(rawPercent) {
+        const used = Math.round(rawPercent * 100);
+        if (root.barShowRemaining)
+            return Math.max(0, 100 - used) + "%";
+        return used + "%";
+    }
+
+    function formatUsageWithPrefix(percent, prefix) {
+        if (!(percent >= 0))
+            return "—";
+        return prefix + ": " + root.formatUsagePercent(percent);
+    }
+
+    function providerDisplayText(provider) {
+        if (!provider)
+            return "—";
+        if (barMetric === "usage") {
+            const rl = provider.rateLimitPercent ?? -1;
+            if (!(rl >= 0)) {
+                const status = String(provider.usageStatusText ?? "");
+                if (status !== "")
+                    return status;
+                return "—";
+            }
+            return root.formatUsageWithPrefix(rl, "7d");
+        }
+        if (barMetric === "usage5h") {
+            const rl = provider.secondaryRateLimitPercent ?? -1;
+            if (!(rl >= 0)) {
+                const status = String(provider.usageStatusText ?? "");
+                if (status !== "")
+                    return status;
+                return "—";
+            }
+            return root.formatUsageWithPrefix(rl, "5h");
+        }
+        if (barMetric === "usage5h7d") {
+            const rl5h = provider.secondaryRateLimitPercent ?? -1;
+            const rl7d = provider.rateLimitPercent ?? -1;
+            if (!(rl5h >= 0) && !(rl7d >= 0)) {
+                const status = String(provider.usageStatusText ?? "");
+                if (status !== "")
+                    return status;
+                return "—";
+            }
+            const part5h = rl5h >= 0 ? root.formatUsageWithPrefix(rl5h, "5h") : "—";
+            const part7d = rl7d >= 0 ? root.formatUsageWithPrefix(rl7d, "7d") : "—";
+            return part5h + "  " + part7d;
+        }
+        if (barMetric === "tokens")
+            return mainInstance?.formatTokenCount(provider.todayTotalTokens) ?? "0";
+        return String(provider.todayPrompts);
+    }
 
     anchors.centerIn: parent
     implicitWidth: contentWidth
@@ -324,12 +354,22 @@ Item {
         Item {
             id: content
             anchors.centerIn: parent
-            implicitWidth: rowLayout.visible ? rowLayout.implicitWidth : colLayout.implicitWidth
-            implicitHeight: rowLayout.visible ? rowLayout.implicitHeight : colLayout.implicitHeight
+            implicitWidth: {
+                if (!root.barCycleEnabled)
+                    return root.isBarVertical ? allColLayout.implicitWidth : allRowLayout.implicitWidth;
+                return root.isBarVertical ? colLayout.implicitWidth : rowLayout.implicitWidth;
+            }
+            implicitHeight: {
+                if (!root.barCycleEnabled)
+                    return root.isBarVertical ? allColLayout.implicitHeight : allRowLayout.implicitHeight;
+                return root.isBarVertical ? colLayout.implicitHeight : rowLayout.implicitHeight;
+            }
+
+            // ---- Single-provider layouts (cycle) ----
 
             RowLayout {
                 id: rowLayout
-                visible: !root.isBarVertical
+                visible: !root.isBarVertical && root.barCycleEnabled
                 spacing: Style.marginS
 
                 ProviderVisual {
@@ -356,7 +396,7 @@ Item {
                     NText {
                         id: textItem
                         visible: root.revealed
-                        text: root.displayText
+                        text: root.providerDisplayText(root.activeProvider)
                         pointSize: root.barFontSize
                         applyUiScale: false
                         color: Color.mOnSurface
@@ -366,7 +406,7 @@ Item {
 
             ColumnLayout {
                 id: colLayout
-                visible: root.isBarVertical
+                visible: root.isBarVertical && root.barCycleEnabled
                 spacing: Style.marginXS
 
                 ProviderVisual {
@@ -393,11 +433,103 @@ Item {
                     NText {
                         id: textItemVertical
                         visible: root.revealed
-                        text: root.displayText
+                        text: root.providerDisplayText(root.activeProvider)
                         pointSize: root.barFontSize
                         applyUiScale: false
                         font.weight: Style.fontWeightSemiBold
                         color: Color.mOnSurface
+                    }
+                }
+            }
+
+            // ---- All providers layout ----
+
+            RowLayout {
+                id: allRowLayout
+                visible: !root.isBarVertical && !root.barCycleEnabled
+                spacing: Style.marginL
+
+                Repeater {
+                    model: mainInstance?.barProviders ?? []
+
+                    delegate: RowLayout {
+                        spacing: Style.marginS
+                        Layout.alignment: Qt.AlignVCenter
+
+                        ProviderVisual {
+                            Layout.alignment: Qt.AlignVCenter
+                            visualData: root.mainInstance?.providerVisualData(modelData.providerId) ?? ({
+                                "source": "icon",
+                                "icon": "ai"
+                            })
+                            pointSize: root.barFontSize
+                            applyUiScale: false
+                            color: root.resolvedProviderIconColorFor(modelData)
+                            colorize: root.resolvedProviderIconColorFor(modelData) !== Color.mOnSurface
+                            colorizeColor: root.resolvedProviderIconColorFor(modelData)
+                        }
+
+                        Item {
+                            clip: true
+                            Layout.alignment: Qt.AlignVCenter
+                            opacity: root.revealed ? 1 : 0
+                            Layout.preferredWidth: root.revealed ? textAllItem.implicitWidth : 0
+                            Layout.preferredHeight: textAllItem.implicitHeight
+
+                            NText {
+                                id: textAllItem
+                                visible: root.revealed
+                                text: root.providerDisplayText(modelData)
+                                pointSize: root.barFontSize
+                                applyUiScale: false
+                                color: Color.mOnSurface
+                            }
+                        }
+                    }
+                }
+            }
+
+            ColumnLayout {
+                id: allColLayout
+                visible: root.isBarVertical && !root.barCycleEnabled
+                spacing: Style.marginXS
+
+                Repeater {
+                    model: mainInstance?.barProviders ?? []
+
+                    delegate: RowLayout {
+                        spacing: Style.marginS
+                        Layout.alignment: Qt.AlignHCenter
+
+                        ProviderVisual {
+                            Layout.alignment: Qt.AlignVCenter
+                            visualData: root.mainInstance?.providerVisualData(modelData.providerId) ?? ({
+                                "source": "icon",
+                                "icon": "ai"
+                            })
+                            pointSize: root.barFontSize
+                            applyUiScale: false
+                            color: root.resolvedProviderIconColorFor(modelData)
+                            colorize: root.resolvedProviderIconColorFor(modelData) !== Color.mOnSurface
+                            colorizeColor: root.resolvedProviderIconColorFor(modelData)
+                        }
+
+                        Item {
+                            clip: true
+                            Layout.alignment: Qt.AlignVCenter
+                            opacity: root.revealed ? 1 : 0
+                            Layout.preferredWidth: root.revealed ? textAllVItem.implicitWidth : 0
+                            Layout.preferredHeight: textAllVItem.implicitHeight
+
+                            NText {
+                                id: textAllVItem
+                                visible: root.revealed
+                                text: root.providerDisplayText(modelData)
+                                pointSize: root.barFontSize
+                                applyUiScale: false
+                                color: Color.mOnSurface
+                            }
+                        }
                     }
                 }
             }

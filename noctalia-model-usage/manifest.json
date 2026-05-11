@@ -26,30 +26,36 @@
       "providers": {
         "claude": {
           "enabled": false,
+          "showInWidget": true,
           "statsPath": "~/.claude/stats-cache.json",
           "credentialsPath": "~/.claude/.credentials.json"
         },
         "codex": {
           "enabled": false,
+          "showInWidget": true,
           "usageMode": "local"
         },
         "copilot": {
-          "enabled": false
+          "enabled": false,
+          "showInWidget": true
         },
         "openrouter": {
           "enabled": false,
+          "showInWidget": true,
           "apiKey": ""
         },
         "zen": {
           "enabled": false,
+          "showInWidget": true,
           "apiKey": ""
         },
         "deepseek": {
           "enabled": false,
+          "showInWidget": true,
           "apiKey": ""
         }
       },
-      "barDisplayMode": "first",
+      "barCycleEnabled": false,
       "barCycleIntervalSec": 5,
       "barMetric": "prompts",
       "includeCacheTokens": true,

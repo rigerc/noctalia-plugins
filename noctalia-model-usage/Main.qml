@@ -68,17 +68,28 @@ Item {
         return result;
     }
 
+    // Bar-only filtered subset (respects showInWidget)
+    property var barProviders: {
+        const result = [];
+        for (const p of root.enabledProviders) {
+            const ps = pluginSettings?.providers?.[p.providerId] ?? {};
+            if (ps.showInWidget !== false)
+                result.push(p);
+        }
+        return result;
+    }
+
     property int activeIndex: 0
 
     property var activeProvider: {
-        if (enabledProviders.length === 0)
+        if (barProviders.length === 0)
             return null;
-        if (barDisplayMode === "cycle")
-            return enabledProviders[Math.min(activeIndex, enabledProviders.length - 1)];
-        return enabledProviders[0];
+        if (barCycleEnabled)
+            return barProviders[Math.min(activeIndex, barProviders.length - 1)];
+        return barProviders[0];
     }
 
-    property string barDisplayMode: pluginSettings?.barDisplayMode ?? "active"
+    property bool barCycleEnabled: pluginSettings?.barCycleEnabled ?? false
     property int barCycleIntervalSec: pluginSettings?.barCycleIntervalSec ?? 5
     property bool barShowRemaining: pluginSettings?.barShowRemaining ?? false
     property bool barTextShowOnHover: pluginSettings?.barTextShowOnHover ?? false
@@ -96,10 +107,10 @@ Item {
 
     Timer {
         interval: root.barCycleIntervalSec * 1000
-        running: root.barDisplayMode === "cycle" && root.enabledProviders.length > 1
+        running: root.barCycleEnabled && root.barProviders.length > 1
         repeat: true
         onTriggered: {
-            root.activeIndex = (root.activeIndex + 1) % root.enabledProviders.length;
+            root.activeIndex = (root.activeIndex + 1) % root.barProviders.length;
         }
     }
 
@@ -110,10 +121,10 @@ Item {
         onTriggered: root.refreshAll()
     }
 
-    onEnabledProvidersChanged: {
-        if (enabledProviders.length === 0) {
+    onBarProvidersChanged: {
+        if (barProviders.length === 0) {
             activeIndex = 0;
-        } else if (activeIndex >= enabledProviders.length) {
+        } else if (activeIndex >= barProviders.length) {
             activeIndex = 0;
         }
     }

@@ -101,43 +101,38 @@ ColumnLayout {
                 color: Color.mPrimary
             }
 
-            ColumnLayout {
+            RowLayout {
                 Layout.fillWidth: true
-                spacing: Style.marginXS
+                spacing: Style.marginM
 
-                NText {
-                    text: "Bar display mode"
-                    pointSize: Style.fontSizeM
-                    font.weight: Style.fontWeightSemiBold
-                    color: Color.mOnSurface
-                }
-                NText {
-                    text: "Show the first enabled provider, or cycle between all enabled providers"
-                    pointSize: Style.fontSizeXS
-                    color: Color.mOnSurfaceVariant
+                NToggle {
+                    checked: editSettings?.barCycleEnabled ?? false
+                    onToggled: value => {
+                        editSettings.barCycleEnabled = value;
+                        editSettingsChanged();
+                    }
                 }
 
-                NComboBox {
+                ColumnLayout {
                     Layout.fillWidth: true
-                    model: [
-                        {
-                            key: "first",
-                            name: "First provider"
-                        },
-                        {
-                            key: "cycle",
-                            name: "Cycle providers"
-                        }
-                    ]
-                    currentKey: editSettings?.barDisplayMode ?? "first"
-                    onSelected: key => {
-                        editSettings.barDisplayMode = key;
+                    spacing: Style.marginXS
+
+                    NText {
+                        text: "Cycle through providers"
+                        pointSize: Style.fontSizeM
+                        font.weight: Style.fontWeightSemiBold
+                        color: Color.mOnSurface
+                    }
+                    NText {
+                        text: "When off, all providers are shown at once in the bar"
+                        pointSize: Style.fontSizeXS
+                        color: Color.mOnSurfaceVariant
                     }
                 }
             }
 
             ColumnLayout {
-                visible: (editSettings?.barDisplayMode ?? "first") === "cycle"
+                visible: editSettings?.barCycleEnabled ?? false
                 Layout.fillWidth: true
                 spacing: Style.marginXS
 
@@ -380,7 +375,7 @@ ColumnLayout {
             }
 
             NText {
-                text: "Drag grip handles to reorder · Toggle to enable/disable"
+                text: "Drag grip handles to reorder · Toggle data collection and bar visibility"
                 pointSize: Style.fontSizeXS
                 color: Color.mOnSurfaceVariant
             }
@@ -469,19 +464,57 @@ ColumnLayout {
                                     }
                                 }
 
-                                // Enable toggle
-                                NToggle {
-                                    checked: {
-                                        var prov = editSettings?.providers?.[providerCard.providerId];
-                                        return prov ? (prov.enabled ?? true) : true;
+                                // Enable toggle (data collection)
+                                ColumnLayout {
+                                    spacing: 0
+                                    Layout.alignment: Qt.AlignVCenter
+                                    NToggle {
+                                        Layout.alignment: Qt.AlignHCenter
+                                        checked: {
+                                            var prov = editSettings?.providers?.[providerCard.providerId];
+                                            return prov ? (prov.enabled ?? true) : true;
+                                        }
+                                        onToggled: function(value) {
+                                            if (!editSettings.providers)
+                                                editSettings.providers = {};
+                                            if (!editSettings.providers[providerCard.providerId])
+                                                editSettings.providers[providerCard.providerId] = {};
+                                            editSettings.providers[providerCard.providerId].enabled = value;
+                                            editSettingsChanged();
+                                        }
                                     }
-                                    onToggled: function(value) {
-                                        if (!editSettings.providers)
-                                            editSettings.providers = {};
-                                        if (!editSettings.providers[providerCard.providerId])
-                                            editSettings.providers[providerCard.providerId] = {};
-                                        editSettings.providers[providerCard.providerId].enabled = value;
-                                        editSettingsChanged();
+                                    NText {
+                                        Layout.alignment: Qt.AlignHCenter
+                                        text: "Collect"
+                                        pointSize: Style.fontSizeXS
+                                        color: Color.mOnSurfaceVariant
+                                    }
+                                }
+
+                                // Show in widget toggle
+                                ColumnLayout {
+                                    spacing: 0
+                                    Layout.alignment: Qt.AlignVCenter
+                                    NToggle {
+                                        Layout.alignment: Qt.AlignHCenter
+                                        checked: {
+                                            var prov = editSettings?.providers?.[providerCard.providerId];
+                                            return prov ? (prov.showInWidget ?? true) : true;
+                                        }
+                                        onToggled: function(value) {
+                                            if (!editSettings.providers)
+                                                editSettings.providers = {};
+                                            if (!editSettings.providers[providerCard.providerId])
+                                                editSettings.providers[providerCard.providerId] = {};
+                                            editSettings.providers[providerCard.providerId].showInWidget = value;
+                                            editSettingsChanged();
+                                        }
+                                    }
+                                    NText {
+                                        Layout.alignment: Qt.AlignHCenter
+                                        text: "Show"
+                                        pointSize: Style.fontSizeXS
+                                        color: Color.mOnSurfaceVariant
                                     }
                                 }
 
