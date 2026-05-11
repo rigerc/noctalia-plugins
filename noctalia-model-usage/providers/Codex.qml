@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "../components"
 
 Item {
     id: root
@@ -42,6 +43,8 @@ Item {
     property string accessToken: ""
     property string accountId: ""
     readonly property string apiEndpoint: "https://chatgpt.com/backend-api/wham/usage"
+
+    property int apiRefreshIntervalMin: 1
 
     property double _lastApiRefreshMs: 0
     readonly property int _apiRefreshMinIntervalMs: 60000
@@ -133,6 +136,12 @@ Item {
         running: root.enabled && root.usageMode === "local"
         repeat: true
         onTriggered: root.scanSessions()
+    }
+
+    ApiRefreshTimer {
+        providerEnabled: root.enabled && root.usageMode === "api"
+        intervalMin: root.apiRefreshIntervalMin
+        onTick: root.fetchUsageFromApi()
     }
 
     onEnabledChanged: {

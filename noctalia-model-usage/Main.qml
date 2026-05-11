@@ -20,12 +20,14 @@ Item {
         enabled: root.providerEnabled("codex")
         providerSettings: root.pluginSettings?.providers?.codex ?? ({})
         includeCacheTokens: root.pluginSettings?.includeCacheTokens ?? true
+        apiRefreshIntervalMin: root.apiRefreshIntervalMin
     }
 
     OpenRouter {
         id: openRouterProvider
         enabled: root.providerEnabled("openrouter")
         providerSettings: root.pluginSettings?.providers?.openrouter ?? ({})
+        apiRefreshIntervalMin: root.apiRefreshIntervalMin
     }
 
     Copilot {
@@ -38,6 +40,7 @@ Item {
         id: zenProvider
         enabled: root.providerEnabled("zen")
         providerSettings: root.pluginSettings?.providers?.zen ?? ({})
+        apiRefreshIntervalMin: root.apiRefreshIntervalMin
     }
 
     DeepSeek {
@@ -88,6 +91,9 @@ Item {
             return barProviders[Math.min(activeIndex, barProviders.length - 1)];
         return barProviders[0];
     }
+
+    property int apiRefreshIntervalMin: Math.max(1, Math.min(360,
+        Number(pluginSettings?.apiRefreshIntervalMin ?? 1)))
 
     property bool barCycleEnabled: pluginSettings?.barCycleEnabled ?? false
     property int barCycleIntervalSec: pluginSettings?.barCycleIntervalSec ?? 5

@@ -64,6 +64,7 @@
       "barIconAlertOnLimit": false,
       "barIconAlertThreshold": 95,
       "refreshIntervalSec": 30,
+      "apiRefreshIntervalMin": 1,
       "providerOrder": [
         "claude",
         "codex",

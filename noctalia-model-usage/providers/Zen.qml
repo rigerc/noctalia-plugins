@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import "../components"
 
 Item {
     id: root
@@ -54,11 +55,12 @@ Item {
     property int availableModels: 0
     property string defaultModel: ""
 
-    Timer {
-        interval: 10 * 60 * 1000
-        running: root.enabled
-        repeat: true
-        onTriggered: root.fetchModels()
+    property int apiRefreshIntervalMin: 1
+
+    ApiRefreshTimer {
+        providerEnabled: root.enabled
+        intervalMin: root.apiRefreshIntervalMin
+        onTick: root.fetchModels()
     }
 
     onEnabledChanged: {

@@ -348,6 +348,34 @@ ColumnLayout {
                     }
                 }
             }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: Style.marginXS
+
+                NText {
+                    text: "API providers refresh interval"
+                    pointSize: Style.fontSizeM
+                    font.weight: Style.fontWeightSemiBold
+                    color: Color.mOnSurface
+                }
+                NText {
+                    text: "How often to poll API-backed providers (Codex API, OpenRouter, Zen)"
+                    pointSize: Style.fontSizeXS
+                    color: Color.mOnSurfaceVariant
+                }
+
+                NSpinBox {
+                    from: 1
+                    to: 360
+                    value: editSettings?.apiRefreshIntervalMin ?? 1
+                    stepSize: 1
+                    suffix: "min"
+                    onValueChanged: {
+                        editSettings.apiRefreshIntervalMin = value;
+                    }
+                }
+            }
         }
     }
 
@@ -588,6 +616,8 @@ ColumnLayout {
                                     color: Color.mOnSurfaceVariant
                                     wrapMode: Text.Wrap
                                 }
+
+
                             }
 
                             // OpenRouter: API key

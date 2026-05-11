@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import "../components"
 
 Item {
     id: root
@@ -45,11 +46,12 @@ Item {
         return envKey || (providerSettings?.apiKey ?? "");
     }
 
-    Timer {
-        interval: 5 * 60 * 1000
-        running: root.enabled && root.apiKey !== ""
-        repeat: true
-        onTriggered: root.fetchKeyInfo()
+    property int apiRefreshIntervalMin: 1
+
+    ApiRefreshTimer {
+        providerEnabled: root.enabled && root.apiKey !== ""
+        intervalMin: root.apiRefreshIntervalMin
+        onTick: root.fetchKeyInfo()
     }
 
     onEnabledChanged: {
