@@ -143,11 +143,21 @@ Item {
         refreshAll();
     }
 
+    property string lastRefreshTime: ""
+
     function refreshAll() {
+        root.refreshTimestamp();
         for (const p of providers) {
             if (p.providerEnabled)
                 p.refresh();
         }
+    }
+
+    function refreshTimestamp() {
+        const d = new Date();
+        const h = String(d.getHours()).padStart(2, "0");
+        const m = String(d.getMinutes()).padStart(2, "0");
+        root.lastRefreshTime = h + ":" + m;
     }
 
     function formatTokenCount(n) {

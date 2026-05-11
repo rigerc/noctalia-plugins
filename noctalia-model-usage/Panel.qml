@@ -704,6 +704,15 @@ Item {
                             }
                         }
                     }
+
+                    NText {
+                        visible: root.selectedProvider && root.mainInstance?.lastRefreshTime
+                        text: "Last refreshed: " + (root.mainInstance?.lastRefreshTime ?? "")
+                        pointSize: Style.fontSizeXS
+                        color: Color.mOnSurfaceVariant
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.bottomMargin: Style.marginS
+                    }
                 }
             }
         }
