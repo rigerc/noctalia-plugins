@@ -1739,8 +1739,81 @@ Item {
         }) || null;
     }
 
+    function getLiveCompositorWindows() {
+        const liveWindows = [];
+
+        try {
+            const total = CompositorService.windows?.count || 0;
+            for (let i = 0; i < total; i++) {
+                const window = CompositorService.windows.get(i);
+                if (window)
+                    liveWindows.push(window);
+            }
+        } catch (error) {
+            try {
+                const windows = CompositorService.windows;
+                if (Array.isArray(windows))
+                    return windows.filter(function (window) {
+                        return !!window;
+                    });
+            } catch (nestedError) {}
+        }
+
+        return liveWindows;
+    }
+
+    function getActionWindowByEntry(entryKey) {
+        const entry = getEntryRecord(entryKey);
+        if (!entryKey || !entry) {
+            Logger.w("Scrollbar2", "No entry record found for action target: " + String(entryKey || ""));
+            return null;
+        }
+
+        if (CompositorService.isHyprland) {
+            const windowId = String(entry?.id ?? "").trim();
+            if (windowId === "") {
+                Logger.w("Scrollbar2", "Missing Hyprland window id for entry: " + String(entryKey));
+                return null;
+            }
+
+            try {
+                const toplevels = Hyprland.toplevels?.values || [];
+                for (let i = 0; i < toplevels.length; i++) {
+                    const address = String(toplevels[i]?.address || "").trim();
+                    if (address === windowId)
+                        return {
+                            "id": windowId
+                        };
+                }
+            } catch (error) {}
+
+            Logger.w("Scrollbar2", "Unable to resolve live Hyprland window for entry: " + String(entryKey) + " id=" + windowId);
+            return null;
+        }
+
+        const liveWindows = getLiveCompositorWindows();
+        for (let i = 0; i < liveWindows.length; i++) {
+            const window = liveWindows[i];
+            if (!window)
+                continue;
+            if (getWindowKey(window) === entryKey)
+                return window;
+            if (entry?.id !== undefined && entry?.id !== null && String(window?.id ?? "") === String(entry.id))
+                return window;
+        }
+
+        if (CompositorService.isNiri && entry?.id !== undefined && entry?.id !== null) {
+            return {
+                "id": entry.id
+            };
+        }
+
+        Logger.w("Scrollbar2", "Unable to resolve live action target for entry: " + String(entryKey));
+        return null;
+    }
+
     function focusEntry(entryKey) {
-        const window = getWindowByEntry(entryKey);
+        const window = getActionWindowByEntry(entryKey);
         if (!window)
             return;
 
@@ -1752,7 +1825,7 @@ Item {
     }
 
     function closeEntry(entryKey) {
-        const window = getWindowByEntry(entryKey);
+        const window = getActionWindowByEntry(entryKey);
         if (!window)
             return;
 
