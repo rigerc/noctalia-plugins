@@ -65,6 +65,9 @@ ColumnLayout {
         if (root.editSettings?.barMetric) {
             root.editSettings.barMetric = root.normalizeBarMetricKey(root.editSettings.barMetric);
         }
+        if (root.editSettings?.providerOrderMode !== "recent7dChange") {
+            root.editSettings.providerOrderMode = "manual";
+        }
         root.pluginApi.pluginSettings = JSON.parse(JSON.stringify(root.editSettings));
         root.pluginApi.saveSettings();
     }
@@ -407,6 +410,51 @@ ColumnLayout {
                 text: "Drag grip handles to reorder · Toggle data collection and bar visibility"
                 pointSize: Style.fontSizeXS
                 color: Color.mOnSurfaceVariant
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: Style.marginXS
+
+                NText {
+                    text: "Provider order"
+                    pointSize: Style.fontSizeM
+                    font.weight: Style.fontWeightSemiBold
+                    color: Color.mOnSurface
+                }
+                NText {
+                    text: "Manual order is used directly, or as a tie-breaker when sorting by recent 7d usage changes"
+                    pointSize: Style.fontSizeXS
+                    color: Color.mOnSurfaceVariant
+                    wrapMode: Text.Wrap
+                }
+
+                NComboBox {
+                    Layout.fillWidth: true
+                    model: [
+                        {
+                            key: "manual",
+                            name: "Manual order"
+                        },
+                        {
+                            key: "recent7dChange",
+                            name: "Recently changed 7d usage"
+                        }
+                    ]
+                    currentKey: root.editSettings?.providerOrderMode ?? "manual"
+                    onSelected: key => {
+                        root.editSettings.providerOrderMode = key;
+                        root.editSettingsChanged();
+                    }
+                }
+
+                NText {
+                    visible: root.editSettings?.providerOrderMode === "recent7dChange"
+                    text: "Providers whose 7d usage percentage changed most recently move to the front. Providers without 7d usage stay in manual order. History resets when the shell restarts."
+                    pointSize: Style.fontSizeXS
+                    color: Color.mOnSurfaceVariant
+                    wrapMode: Text.Wrap
+                }
             }
 
             // --- Drag-and-drop reorderable provider list ---

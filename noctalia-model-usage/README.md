@@ -31,6 +31,9 @@ When Claude Code is configured with a third-party API backend (e.g. DeepSeek, Op
 ### Data source migration
 Claude provider reads from `~/.claude.json` instead of the non-existent `stats-cache.json`. Aggregates per-project `lastModelUsage` data and extracts all-time prompt/session counts from `history.jsonl`.
 
+### Provider ordering modes
+Settings can keep the manual provider order or prioritize providers whose 7d usage percentage changed most recently. Manual order is still used as the tie-breaker, and recent-change history resets when the shell restarts.
+
 ## Installation
 
 1. Copy this directory to your Noctalia plugins folder

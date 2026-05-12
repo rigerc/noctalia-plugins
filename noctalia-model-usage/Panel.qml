@@ -24,12 +24,18 @@ Item {
 
     anchors.fill: parent
 
-    property int selectedTabIndex: 0
+    property string selectedProviderId: ""
     property var selectedProvider: {
         const ep = root.mainInstance?.enabledProviders ?? [];
         if (ep.length === 0)
             return null;
-        return ep[Math.min(selectedTabIndex, ep.length - 1)];
+
+        for (const p of ep) {
+            if (p.providerId === root.selectedProviderId)
+                return p;
+        }
+
+        return ep[0];
     }
 
     Rectangle {
@@ -52,14 +58,13 @@ Item {
 
                     NTabButton {
                         required property var modelData
-                        required property int index
                         readonly property int tabCount: (root.mainInstance?.enabledProviders ?? []).length
                         text: modelData.providerName
                         width: tabCount > 0 ? Math.floor(tabBar.width / tabCount) : implicitWidth
                         Layout.fillWidth: true
                         Layout.preferredWidth: 1
-                        checked: index === root.selectedTabIndex
-                        onClicked: root.selectedTabIndex = index
+                        checked: modelData.providerId === root.selectedProvider?.providerId
+                        onClicked: root.selectedProviderId = modelData.providerId
                     }
                 }
             }

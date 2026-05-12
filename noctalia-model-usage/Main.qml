@@ -13,6 +13,7 @@ Item {
         providerEnabled: root.providerEnabled("claude")
         providerSettings: root.pluginSettings?.providers?.claude ?? ({})
         includeCacheTokens: root.pluginSettings?.includeCacheTokens ?? true
+        onRateLimitPercentChanged: root.trackProvider7dUsageChange(providerId, rateLimitPercent)
     }
 
     Codex {
@@ -21,6 +22,7 @@ Item {
         providerSettings: root.pluginSettings?.providers?.codex ?? ({})
         includeCacheTokens: root.pluginSettings?.includeCacheTokens ?? true
         apiRefreshIntervalMin: root.apiRefreshIntervalMin
+        onRateLimitPercentChanged: root.trackProvider7dUsageChange(providerId, rateLimitPercent)
     }
 
     OpenRouter {
@@ -28,12 +30,14 @@ Item {
         providerEnabled: root.providerEnabled("openrouter")
         providerSettings: root.pluginSettings?.providers?.openrouter ?? ({})
         apiRefreshIntervalMin: root.apiRefreshIntervalMin
+        onRateLimitPercentChanged: root.trackProvider7dUsageChange(providerId, rateLimitPercent)
     }
 
     Copilot {
         id: copilotProvider
         providerEnabled: root.providerEnabled("copilot")
         providerSettings: root.pluginSettings?.providers?.copilot ?? ({})
+        onRateLimitPercentChanged: root.trackProvider7dUsageChange(providerId, rateLimitPercent)
     }
 
     Zen {
@@ -41,14 +45,17 @@ Item {
         providerEnabled: root.providerEnabled("zen")
         providerSettings: root.pluginSettings?.providers?.zen ?? ({})
         apiRefreshIntervalMin: root.apiRefreshIntervalMin
+        onRateLimitPercentChanged: root.trackProvider7dUsageChange(providerId, rateLimitPercent)
     }
 
     DeepSeek {
         id: deepseekProvider
         providerEnabled: root.providerEnabled("deepseek")
         providerSettings: root.pluginSettings?.providers?.deepseek ?? ({})
+        onRateLimitPercentChanged: root.trackProvider7dUsageChange(providerId, rateLimitPercent)
     }
 
+    readonly property var defaultProviderOrder: ["claude", "codex", "copilot", "openrouter", "zen", "deepseek"]
     property var providers: [claudeProvider, codexProvider, copilotProvider, openRouterProvider, zenProvider, deepseekProvider]
 
     property var providerMap: ({
@@ -60,11 +67,37 @@ Item {
         "deepseek": deepseekProvider
     })
 
+    property string providerOrderMode: String(pluginSettings?.providerOrderMode ?? "manual")
+    property var lastSeen7dPercentByProvider: ({})
+    property var lastChanged7dOrderByProvider: ({})
+    property int providerChangeSequence: 0
+    property int providerSortRevision: 0
+
+    property var manualProviderOrder: root.normalizedProviderOrder(pluginSettings?.providerOrder)
+
+    property var effectiveProviderOrder: {
+        root.providerSortRevision;
+        const order = root.manualProviderOrder.slice();
+        if (root.providerOrderMode !== "recent7dChange")
+            return order;
+
+        const manualIndex = {};
+        for (let i = 0; i < order.length; i++)
+            manualIndex[order[i]] = i;
+
+        return order.sort((a, b) => {
+            const aChanged = root.lastChanged7dOrderByProvider[a] ?? 0;
+            const bChanged = root.lastChanged7dOrderByProvider[b] ?? 0;
+            if (aChanged !== bChanged)
+                return bChanged - aChanged;
+            return (manualIndex[a] ?? 999) - (manualIndex[b] ?? 999);
+        });
+    }
+
     property var enabledProviders: {
-        const order = pluginSettings?.providerOrder ?? ["claude", "codex", "copilot", "openrouter", "zen", "deepseek"];
         const result = [];
-        for (const id of order) {
-            const p = providerMap[id];
+        for (const id of root.effectiveProviderOrder) {
+            const p = root.providerMap[id];
             if (p && p.providerEnabled)
                 result.push(p);
         }
@@ -133,6 +166,52 @@ Item {
         } else if (activeIndex >= barProviders.length) {
             activeIndex = 0;
         }
+    }
+
+    onProviderSortRevisionChanged: activeIndex = 0
+    onProviderOrderModeChanged: activeIndex = 0
+
+    function normalizedProviderOrder(savedOrder) {
+        const result = [];
+        const seen = {};
+        const source = Array.isArray(savedOrder) ? savedOrder : [];
+
+        for (const rawId of source) {
+            const id = String(rawId || "");
+            if (root.defaultProviderOrder.indexOf(id) !== -1 && !seen[id]) {
+                result.push(id);
+                seen[id] = true;
+            }
+        }
+
+        for (const id of root.defaultProviderOrder) {
+            if (!seen[id])
+                result.push(id);
+        }
+
+        return result;
+    }
+
+    function trackProvider7dUsageChange(providerId, rawPercent) {
+        const id = String(providerId || "");
+        if (id === "" || !(rawPercent >= 0))
+            return;
+
+        const roundedPercent = Math.round(Number(rawPercent) * 100);
+        const seen = Object.assign({}, root.lastSeen7dPercentByProvider);
+        const changed = Object.assign({}, root.lastChanged7dOrderByProvider);
+        const previous = seen[id];
+
+        seen[id] = roundedPercent;
+        root.lastSeen7dPercentByProvider = seen;
+
+        if (previous === undefined || previous === roundedPercent)
+            return;
+
+        root.providerChangeSequence += 1;
+        changed[id] = root.providerChangeSequence;
+        root.lastChanged7dOrderByProvider = changed;
+        root.providerSortRevision += 1;
     }
 
     function providerEnabled(id) {

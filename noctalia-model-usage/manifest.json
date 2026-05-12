@@ -65,6 +65,7 @@
       "barIconAlertThreshold": 95,
       "refreshIntervalSec": 30,
       "apiRefreshIntervalMin": 1,
+      "providerOrderMode": "manual",
       "providerOrder": [
         "claude",
         "codex",
