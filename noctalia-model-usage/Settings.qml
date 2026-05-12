@@ -171,13 +171,12 @@ ColumnLayout {
     }
 
     function saveSettings() {
-        if (root.editSettings?.barMetric)
-            root.editSettings.barMetric = root.normalizeBarMetricKey(root.editSettings.barMetric);
-        if (root.editSettings?.providerOrderMode !== "recent7dChange")
-            root.editSettings.providerOrderMode = "manual";
-        if (root.editSettings?.barIconAlertWindow !== "usage5h")
-            root.editSettings.barIconAlertWindow = "usage7d";
-        root.pluginApi.pluginSettings = JSON.parse(JSON.stringify(root.editSettings));
+        if (!pluginApi) return;
+        const s = JSON.parse(JSON.stringify(root.editSettings ?? ({})));
+        if (s.barMetric) s.barMetric = root.normalizeBarMetricKey(s.barMetric);
+        if (s.providerOrderMode !== "recent7dChange") s.providerOrderMode = "manual";
+        if (s.barIconAlertWindow !== "usage5h") s.barIconAlertWindow = "usage7d";
+        root.pluginApi.pluginSettings = s;
         root.pluginApi.saveSettings();
     }
 
@@ -916,14 +915,14 @@ ColumnLayout {
                                             spacing: Style.marginXS
 
                                             NText {
-                                                text: root.pluginApi?.tr("settings.codexbar.label")
+                                                text: root.tr("settings.codexbar.label")
                                                 pointSize: Style.fontSizeM
                                                 font.weight: Style.fontWeightSemiBold
                                                 color: Color.mOnSurface
                                             }
 
                                             NText {
-                                                text: root.pluginApi?.tr("settings.codexbar.desc")
+                                                text: root.tr("settings.codexbar.desc")
                                                 pointSize: Style.fontSizeXS
                                                 color: Color.mOnSurfaceVariant
                                                 wrapMode: Text.Wrap
@@ -1043,12 +1042,7 @@ ColumnLayout {
 
                                 NText {
                                     visible: !root.providerSupportsCodexbar(providerCard.providerId)
-                                        && providerCard.providerId !== "codex"
-                                        && providerCard.providerId !== "openrouter"
-                                        && providerCard.providerId !== "zen"
                                         && providerCard.providerId !== "deepseek"
-                                        && providerCard.providerId !== "kilocode"
-                                        && providerCard.providerId !== "zai"
                                     text: root.tr("settings.providers.noAdditional")
                                     pointSize: Style.fontSizeXS
                                     color: Color.mOnSurfaceVariant
