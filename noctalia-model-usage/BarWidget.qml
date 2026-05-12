@@ -82,8 +82,10 @@ Item {
     property bool showPill: false
     readonly property bool revealed: !root.barTextShowOnHover || root.showPill
 
-    readonly property real contentWidth: isBarVertical ? capsuleHeight : (root.revealed ? content.implicitWidth : capsuleHeight) + Style.marginM * 2
-    readonly property real contentHeight: isBarVertical ? (root.revealed ? content.implicitHeight : capsuleHeight) + Style.marginM * 2 : capsuleHeight
+    readonly property real collapsedContentWidth: root.barCycleEnabled ? root.capsuleHeight : content.implicitWidth
+    readonly property real collapsedContentHeight: root.barCycleEnabled ? root.capsuleHeight : content.implicitHeight
+    readonly property real contentWidth: root.isBarVertical ? root.capsuleHeight : (root.revealed ? content.implicitWidth : root.collapsedContentWidth) + Style.marginM * 2
+    readonly property real contentHeight: root.isBarVertical ? (root.revealed ? content.implicitHeight : root.collapsedContentHeight) + Style.marginM * 2 : root.capsuleHeight
 
     function resolvedProviderIconColorFor(provider) {
         if (!root.barIconAlertOnLimit || !provider)

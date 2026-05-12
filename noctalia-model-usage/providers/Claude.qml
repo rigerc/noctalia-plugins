@@ -80,6 +80,16 @@ Item {
         }
     }
 
+    Timer {
+        id: waitingForAuthTimer
+        interval: 2000
+        repeat: false
+        onTriggered: {
+            if (!root.ready)
+                root.usageStatusText = "Waiting for auth";
+        }
+    }
+
     FileView {
         id: credentialsFile
         path: root.resolvePath(root.providerSettings?.credentialsPath ?? "~/.claude/.credentials.json")
@@ -89,7 +99,7 @@ Item {
         onLoadFailed: error => {
             if (error === FileViewError.FileNotFound) {
                 if (!root.ready)
-                    root.usageStatusText = "Waiting for auth";
+                    waitingForAuthTimer.restart();
             }
         }
     }
