@@ -31,17 +31,14 @@ Item {
     property bool barTextShowOnHover: root.mainInstance?.barTextShowOnHover ?? false
     property bool barIconAlertOnLimit: root.mainInstance?.barIconAlertOnLimit ?? false
     property int barIconAlertThreshold: Math.max(50, Math.min(100, Number(root.mainInstance?.barIconAlertThreshold ?? 95)))
+    property string barIconAlertWindow: root.mainInstance?.barIconAlertWindow ?? "usage7d"
     property bool barCycleEnabled: root.mainInstance?.barCycleEnabled ?? false
 
     readonly property color resolvedProviderIconColor: {
         if (!root.barIconAlertOnLimit || !root.activeProvider)
             return Color.mOnSurface;
 
-        const rl = root.activeProvider.rateLimitPercent ?? -1;
-        const rl5h = root.activeProvider.secondaryRateLimitPercent ?? -1;
-
-        if ((rl >= 0 && Math.round(rl * 100) >= root.barIconAlertThreshold) ||
-            (rl5h >= 0 && Math.round(rl5h * 100) >= root.barIconAlertThreshold))
+        if (root.providerCrossesAlertThreshold(root.activeProvider))
             return Color.mError;
 
         return Color.mOnSurface;
@@ -91,14 +88,19 @@ Item {
         if (!root.barIconAlertOnLimit || !provider)
             return Color.mOnSurface;
 
-        const rl = provider.rateLimitPercent ?? -1;
-        const rl5h = provider.secondaryRateLimitPercent ?? -1;
-
-        if ((rl >= 0 && Math.round(rl * 100) >= root.barIconAlertThreshold) ||
-            (rl5h >= 0 && Math.round(rl5h * 100) >= root.barIconAlertThreshold))
+        if (root.providerCrossesAlertThreshold(provider))
             return Color.mError;
 
         return Color.mOnSurface;
+    }
+
+    function providerCrossesAlertThreshold(provider) {
+        if (!provider)
+            return false;
+        const percent = root.barIconAlertWindow === "usage5h"
+            ? (provider.secondaryRateLimitPercent ?? -1)
+            : (provider.rateLimitPercent ?? -1);
+        return percent >= 0 && Math.round(percent * 100) >= root.barIconAlertThreshold;
     }
 
     function formatUsagePercent(rawPercent) {

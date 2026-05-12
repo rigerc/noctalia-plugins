@@ -2,6 +2,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.Commons
 // qmllint enable unused-imports
 import "../components"
 
@@ -42,8 +43,22 @@ Item {
     property double lastRefreshAtMs: 0
     property int refreshMinIntervalMs: 5 * 60 * 1000
     property var providerSettings: ({})
+    property bool useCodexbar: root.providerSettings?.useCodexbar ?? false
+    readonly property string codexbarProviderName: "copilot"
 
     property var utils: ProviderUtils {}
+
+    CodexbarFetcher {
+        id: codexbarFetcher
+        codexbarProvider: root.codexbarProviderName
+        onDataReady: result => root.applyCodexbarData(result)
+        onFetchError: msg => {
+            root.usageStatusText = msg;
+            root.ready = false;
+            Logger.e("model-usage/" + root.providerId, "codexbar error: " + msg);
+        }
+    }
+
 
     Process {
         id: tokenProcess
@@ -77,17 +92,23 @@ Item {
 
     Timer {
         interval: 5 * 60 * 1000
-        running: root.providerEnabled
+        running: root.providerEnabled && !root.useCodexbar
         repeat: true
         onTriggered: root.refreshToken()
     }
 
     onProviderEnabledChanged: {
-        if (providerEnabled)
-            refreshToken();
+        if (providerEnabled) {
+            if (root.useCodexbar)
+                codexbarFetcher.fetch();
+            else
+                refreshToken();
+        }
     }
 
     function refreshToken() {
+        if (root.useCodexbar)
+            return;
         tokenProcess.running = true;
     }
 
@@ -201,7 +222,53 @@ Item {
     }
 
 
+
+    function applyCodexbarData(result) {
+        const usage = result?.usage ?? null;
+        const primary = usage?.primary ?? null;
+        const secondary = usage?.secondary ?? null;
+        const identity = usage?.identity ?? null;
+        const credits = result?.credits ?? null;
+
+        if (primary) {
+            root.rateLimitPercent = Math.min(1, Math.max(0, Number(primary.usedPercent ?? 0) / 100));
+            root.rateLimitLabel = primary.resetDescription ?? "Usage";
+            root.rateLimitResetAt = primary.resetsAt ?? "";
+        } else {
+            root.rateLimitPercent = -1;
+            root.rateLimitLabel = "";
+            root.rateLimitResetAt = "";
+        }
+
+        if (secondary) {
+            root.secondaryRateLimitPercent = Math.min(1, Math.max(0, Number(secondary.usedPercent ?? 0) / 100));
+            root.secondaryRateLimitLabel = secondary.resetDescription ?? "Secondary";
+            root.secondaryRateLimitResetAt = secondary.resetsAt ?? "";
+        } else {
+            root.secondaryRateLimitPercent = -1;
+            root.secondaryRateLimitLabel = "";
+            root.secondaryRateLimitResetAt = "";
+        }
+
+        if (credits && Number(credits.total ?? 0) > 0) {
+            const used = Number(credits.used ?? 0);
+            const total = Number(credits.total ?? 0);
+            root.rateLimitPercent = Math.min(1, Math.max(0, used / total));
+            root.rateLimitLabel = "Credits ($" + used.toFixed(2) + " / $" + total.toFixed(2) + ")";
+            root.rateLimitResetAt = "";
+        }
+
+        root.tierLabel = identity?.loginMethod ?? root.tierLabel;
+        root.usageStatusText = "";
+        root.ready = true;
+    }
+
     function refresh() {
+        if (root.useCodexbar) {
+            codexbarFetcher.fetch();
+            return;
+        }
+
         const now = Date.now();
         if (root.lastRefreshAtMs > 0 && (now - root.lastRefreshAtMs) < root.refreshMinIntervalMs)
             return;

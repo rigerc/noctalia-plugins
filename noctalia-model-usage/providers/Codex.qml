@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.Commons
 import "../components"
 
 Item {
@@ -39,6 +40,8 @@ Item {
     property bool includeCacheTokens: true
     property string configModel: ""
     property var providerSettings: ({})
+    property bool useCodexbar: root.providerSettings?.useCodexbar ?? false
+    readonly property string codexbarProviderName: "codex"
     property string usageMode: providerSettings?.usageMode ?? "api"
     property string accessToken: ""
     property string accountId: ""
@@ -50,6 +53,18 @@ Item {
     readonly property int _apiRefreshMinIntervalMs: 60000
 
     property var utils: ProviderUtils {}
+
+    CodexbarFetcher {
+        id: codexbarFetcher
+        codexbarProvider: root.codexbarProviderName
+        onDataReady: result => root.applyCodexbarData(result)
+        onFetchError: msg => {
+            root.usageStatusText = msg;
+            root.ready = false;
+            Logger.e("model-usage/" + root.providerId, "codexbar error: " + msg);
+        }
+    }
+
 
     function resolvePath(p) {
         if (p && p.startsWith("~"))
@@ -133,26 +148,32 @@ Item {
     }
 
     ApiRefreshTimer {
-        providerEnabled: root.providerEnabled && root.usageMode === "api"
+        providerEnabled: root.providerEnabled && !root.useCodexbar && root.usageMode === "api"
         intervalMin: root.apiRefreshIntervalMin
         onTick: root.fetchUsageFromApi()
     }
 
     onProviderEnabledChanged: {
         if (providerEnabled) {
-            if (root.usageMode === "api")
+            if (root.useCodexbar) {
+                codexbarFetcher.fetch();
+            } else if (root.usageMode === "api") {
                 root.fetchUsageFromApi();
-            else
+            } else {
                 root.scanSessions();
+            }
         }
     }
 
     onUsageModeChanged: {
-        if (enabled) {
-            if (root.usageMode === "api")
+        if (root.providerEnabled) {
+            if (root.useCodexbar) {
+                codexbarFetcher.fetch();
+            } else if (root.usageMode === "api") {
                 root.fetchUsageFromApi();
-            else
+            } else {
                 root.scanSessions();
+            }
         }
     }
 
@@ -470,7 +491,53 @@ Item {
 
     // --- Shared ---
 
+
+    function applyCodexbarData(result) {
+        const usage = result?.usage ?? null;
+        const primary = usage?.primary ?? null;
+        const secondary = usage?.secondary ?? null;
+        const identity = usage?.identity ?? null;
+        const credits = result?.credits ?? null;
+
+        if (primary) {
+            root.rateLimitPercent = Math.min(1, Math.max(0, Number(primary.usedPercent ?? 0) / 100));
+            root.rateLimitLabel = primary.resetDescription ?? "Usage";
+            root.rateLimitResetAt = primary.resetsAt ?? "";
+        } else {
+            root.rateLimitPercent = -1;
+            root.rateLimitLabel = "";
+            root.rateLimitResetAt = "";
+        }
+
+        if (secondary) {
+            root.secondaryRateLimitPercent = Math.min(1, Math.max(0, Number(secondary.usedPercent ?? 0) / 100));
+            root.secondaryRateLimitLabel = secondary.resetDescription ?? "Secondary";
+            root.secondaryRateLimitResetAt = secondary.resetsAt ?? "";
+        } else {
+            root.secondaryRateLimitPercent = -1;
+            root.secondaryRateLimitLabel = "";
+            root.secondaryRateLimitResetAt = "";
+        }
+
+        if (credits && Number(credits.total ?? 0) > 0) {
+            const used = Number(credits.used ?? 0);
+            const total = Number(credits.total ?? 0);
+            root.rateLimitPercent = Math.min(1, Math.max(0, used / total));
+            root.rateLimitLabel = "Credits ($" + used.toFixed(2) + " / $" + total.toFixed(2) + ")";
+            root.rateLimitResetAt = "";
+        }
+
+        root.tierLabel = identity?.loginMethod ?? root.tierLabel;
+        root.usageStatusText = "";
+        root.ready = true;
+    }
+
     function refresh() {
+        if (root.useCodexbar) {
+            codexbarFetcher.fetch();
+            return;
+        }
+
         if (root.usageMode === "api") {
             authFile.reload();
             root.fetchUsageFromApi();

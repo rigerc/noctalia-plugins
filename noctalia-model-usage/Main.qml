@@ -55,8 +55,32 @@ Item {
         onRateLimitPercentChanged: root.trackProvider7dUsageChange(providerId, rateLimitPercent)
     }
 
-    readonly property var defaultProviderOrder: ["claude", "codex", "copilot", "openrouter", "zen", "deepseek"]
-    property var providers: [claudeProvider, codexProvider, copilotProvider, openRouterProvider, zenProvider, deepseekProvider]
+    KiloCode {
+        id: kiloCodeProvider
+        providerEnabled: root.providerEnabled("kilocode")
+        providerSettings: root.pluginSettings?.providers?.kilocode ?? ({})
+        apiRefreshIntervalMin: root.apiRefreshIntervalMin
+        onRateLimitPercentChanged: root.trackProvider7dUsageChange(providerId, rateLimitPercent)
+    }
+
+    Zai {
+        id: zaiProvider
+        providerEnabled: root.providerEnabled("zai")
+        providerSettings: root.pluginSettings?.providers?.zai ?? ({})
+        apiRefreshIntervalMin: root.apiRefreshIntervalMin
+        onRateLimitPercentChanged: root.trackProvider7dUsageChange(providerId, rateLimitPercent)
+    }
+
+    Gemini {
+        id: geminiProvider
+        providerEnabled: root.providerEnabled("gemini")
+        providerSettings: root.pluginSettings?.providers?.gemini ?? ({})
+        apiRefreshIntervalMin: root.apiRefreshIntervalMin
+        onRateLimitPercentChanged: root.trackProvider7dUsageChange(providerId, rateLimitPercent)
+    }
+
+    readonly property var defaultProviderOrder: ["claude", "codex", "copilot", "openrouter", "zen", "deepseek", "kilocode", "zai", "gemini"]
+    property var providers: [claudeProvider, codexProvider, copilotProvider, openRouterProvider, zenProvider, deepseekProvider, kiloCodeProvider, zaiProvider, geminiProvider]
 
     property var providerMap: ({
         "claude": claudeProvider,
@@ -64,7 +88,10 @@ Item {
         "copilot": copilotProvider,
         "openrouter": openRouterProvider,
         "zen": zenProvider,
-        "deepseek": deepseekProvider
+        "deepseek": deepseekProvider,
+        "kilocode": kiloCodeProvider,
+        "zai": zaiProvider,
+        "gemini": geminiProvider
     })
 
     property string providerOrderMode: String(pluginSettings?.providerOrderMode ?? "manual")
@@ -134,6 +161,7 @@ Item {
     property bool barTextShowOnHover: pluginSettings?.barTextShowOnHover ?? false
     property bool barIconAlertOnLimit: pluginSettings?.barIconAlertOnLimit ?? false
     property int barIconAlertThreshold: Math.max(50, Math.min(100, Number(pluginSettings?.barIconAlertThreshold ?? 95)))
+    property string barIconAlertWindow: String(pluginSettings?.barIconAlertWindow ?? "usage7d") === "usage5h" ? "usage5h" : "usage7d"
     property int refreshIntervalSec: pluginSettings?.refreshIntervalSec ?? 30
 
     property string barMetric: {

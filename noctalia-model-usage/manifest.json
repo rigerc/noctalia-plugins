@@ -1,11 +1,11 @@
 {
   "id": "noctalia-model-usage",
   "name": "Model Usage",
-  "version": "0.2.3",
+  "version": "0.4.0",
   "minNoctaliaVersion": "4.4.1",
   "author": "cmptr",
   "license": "MIT",
-  "description": "Shows AI coding assistant usage stats in the bar with detail panel (Claude Code, Codex, Copilot, OpenRouter, Zen, DeepSeek)",
+  "description": "Shows AI coding assistant usage stats in the bar with detail panel (Claude Code, Codex, Copilot, OpenRouter, Zen, DeepSeek, Kilo Code, Z.ai, Gemini)",
   "repository": "https://github.com/noctalia-dev/noctalia-plugins",
   "tags": [
     "Bar",
@@ -27,31 +27,53 @@
         "claude": {
           "enabled": false,
           "showInWidget": true,
-          "credentialsPath": "~/.claude/.credentials.json"
+          "credentialsPath": "~/.claude/.credentials.json",
+          "useCodexbar": false
         },
         "codex": {
           "enabled": false,
           "showInWidget": true,
-          "usageMode": "local"
+          "usageMode": "local",
+          "useCodexbar": false
         },
         "copilot": {
           "enabled": false,
-          "showInWidget": true
+          "showInWidget": true,
+          "useCodexbar": false
         },
         "openrouter": {
           "enabled": false,
           "showInWidget": true,
-          "apiKey": ""
+          "apiKey": "",
+          "useCodexbar": false
         },
         "zen": {
           "enabled": false,
           "showInWidget": true,
-          "apiKey": ""
+          "apiKey": "",
+          "useCodexbar": false
         },
         "deepseek": {
           "enabled": false,
           "showInWidget": true,
           "apiKey": ""
+        },
+        "kilocode": {
+          "enabled": false,
+          "showInWidget": true,
+          "apiKey": "",
+          "useCodexbar": false
+        },
+        "zai": {
+          "enabled": false,
+          "showInWidget": true,
+          "apiKey": "",
+          "useCodexbar": false
+        },
+        "gemini": {
+          "enabled": false,
+          "showInWidget": true,
+          "useCodexbar": false
         }
       },
       "barCycleEnabled": false,
@@ -71,8 +93,12 @@
         "copilot",
         "openrouter",
         "zen",
-        "deepseek"
-      ]
+        "deepseek",
+        "kilocode",
+        "zai",
+        "gemini"
+      ],
+      "barIconAlertWindow": "usage7d"
     }
   }
 }

@@ -1,0 +1,8 @@
+{
+  "settings": {
+    "codexbar": {
+      "label": "Use Codexbar CLI",
+      "desc": "Fetch usage via the codexbar CLI instead of this provider's native API path."
+    }
+  }
+}

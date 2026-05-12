@@ -35,7 +35,21 @@ Item {
     property bool hasLocalStats: true
 
     property var providerSettings: ({})
+    property bool useCodexbar: root.providerSettings?.useCodexbar ?? false
+    readonly property string codexbarProviderName: "opencode"
     property var utils: ProviderUtils {}
+
+    CodexbarFetcher {
+        id: codexbarFetcher
+        codexbarProvider: root.codexbarProviderName
+        onDataReady: result => root.applyCodexbarData(result)
+        onFetchError: msg => {
+            root.usageStatusText = msg;
+            root.ready = false;
+            Logger.e("model-usage/" + root.providerId, "codexbar error: " + msg);
+        }
+    }
+
     property string apiBaseUrl: providerSettings?.apiBaseUrl ?? "https://opencode.ai/zen/v1"
     property string apiKey: {
         const envZen = Quickshell.env("OPENCODE_ZEN_API_KEY") ?? "";
@@ -59,21 +73,23 @@ Item {
     property int apiRefreshIntervalMin: 1
 
     ApiRefreshTimer {
-        providerEnabled: root.providerEnabled
+        providerEnabled: root.providerEnabled && !root.useCodexbar
         intervalMin: root.apiRefreshIntervalMin
         onTick: root.fetchModels()
     }
 
-    onEnabledChanged: {
-        if (enabled)
+    onProviderEnabledChanged: {
+        if (providerEnabled)
             refresh();
     }
 
     onApiKeyChanged: {
+        if (root.useCodexbar)
+            return;
         root.validatedApiKey = "";
         root.authState = apiKey === "" ? "unknown" : "checking";
         root.updateState();
-        if (enabled)
+        if (providerEnabled)
             refresh();
     }
 
@@ -194,7 +210,53 @@ Item {
         xhr.send();
     }
 
+
+    function applyCodexbarData(result) {
+        const usage = result?.usage ?? null;
+        const primary = usage?.primary ?? null;
+        const secondary = usage?.secondary ?? null;
+        const identity = usage?.identity ?? null;
+        const credits = result?.credits ?? null;
+
+        if (primary) {
+            root.rateLimitPercent = Math.min(1, Math.max(0, Number(primary.usedPercent ?? 0) / 100));
+            root.rateLimitLabel = primary.resetDescription ?? "Usage";
+            root.rateLimitResetAt = primary.resetsAt ?? "";
+        } else {
+            root.rateLimitPercent = -1;
+            root.rateLimitLabel = "";
+            root.rateLimitResetAt = "";
+        }
+
+        if (secondary) {
+            root.secondaryRateLimitPercent = Math.min(1, Math.max(0, Number(secondary.usedPercent ?? 0) / 100));
+            root.secondaryRateLimitLabel = secondary.resetDescription ?? "Secondary";
+            root.secondaryRateLimitResetAt = secondary.resetsAt ?? "";
+        } else {
+            root.secondaryRateLimitPercent = -1;
+            root.secondaryRateLimitLabel = "";
+            root.secondaryRateLimitResetAt = "";
+        }
+
+        if (credits && Number(credits.total ?? 0) > 0) {
+            const used = Number(credits.used ?? 0);
+            const total = Number(credits.total ?? 0);
+            root.rateLimitPercent = Math.min(1, Math.max(0, used / total));
+            root.rateLimitLabel = "Credits ($" + used.toFixed(2) + " / $" + total.toFixed(2) + ")";
+            root.rateLimitResetAt = "";
+        }
+
+        root.tierLabel = identity?.loginMethod ?? root.tierLabel;
+        root.usageStatusText = "";
+        root.ready = true;
+    }
+
     function refresh() {
+        if (root.useCodexbar) {
+            codexbarFetcher.fetch();
+            return;
+        }
+
         fetchModels();
         if (root.apiKey && (root.validatedApiKey !== root.apiKey || root.authState === "unknown" || root.authState === "checking"))
             validateApiKey();

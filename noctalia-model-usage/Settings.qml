@@ -16,7 +16,28 @@ ColumnLayout {
     property int draggedProviderIndex: -1
     property var expandedProviders: ({})
 
-    readonly property var defaultProviderOrder: ["claude", "codex", "copilot", "openrouter", "zen", "deepseek"]
+    readonly property var defaultProviderOrder: ["claude", "codex", "copilot", "openrouter", "zen", "deepseek", "kilocode", "zai", "gemini"]
+    readonly property var codexbarProviderIds: ["claude", "codex", "copilot", "openrouter", "zen", "kilocode", "zai", "gemini"]
+
+    readonly property var normalizedEditProviderOrder: {
+        const saved = root.editSettings?.providerOrder;
+        const source = Array.isArray(saved) ? saved : [];
+        const result = [];
+        const seen = {};
+        for (const rawId of source) {
+            const id = String(rawId || "");
+            if (root.defaultProviderOrder.indexOf(id) !== -1 && !seen[id]) {
+                result.push(id);
+                seen[id] = true;
+            }
+        }
+        for (const id of root.defaultProviderOrder) {
+            if (!seen[id])
+                result.push(id);
+        }
+        return result;
+    }
+
     readonly property var providerOrderModeOptions: [
         {
             "key": "manual",
@@ -30,7 +51,7 @@ ColumnLayout {
 
     readonly property int enabledProviderCount: {
         var count = 0;
-        var order = root.editSettings?.providerOrder || root.defaultProviderOrder;
+        var order = root.normalizedEditProviderOrder;
         for (var i = 0; i < order.length; i++) {
             var prov = root.providerSettingsFor(order[i]);
             if (prov.enabled ?? true)
@@ -41,7 +62,7 @@ ColumnLayout {
 
     readonly property int shownInBarCount: {
         var count = 0;
-        var order = root.editSettings?.providerOrder || root.defaultProviderOrder;
+        var order = root.normalizedEditProviderOrder;
         for (var i = 0; i < order.length; i++) {
             var prov = root.providerSettingsFor(order[i]);
             if ((prov.enabled ?? true) && (prov.showInWidget ?? true))
@@ -57,7 +78,10 @@ ColumnLayout {
             "copilot": "Copilot",
             "openrouter": "OpenRouter",
             "zen": "Zen (opencode.ai)",
-            "deepseek": "DeepSeek"
+            "deepseek": "DeepSeek",
+            "kilocode": "Kilo Code",
+            "zai": "Z.ai",
+            "gemini": "Gemini"
         };
         return names[id] || id;
     }
@@ -69,13 +93,20 @@ ColumnLayout {
             "copilot": "GitHub auth",
             "openrouter": "API key",
             "zen": "API key",
-            "deepseek": "API key"
+            "deepseek": "API key",
+            "kilocode": "API key or kilo login",
+            "zai": "API key",
+            "gemini": "Local OAuth"
         };
         return labels[id] || "";
     }
 
     function providerSettingsFor(id) {
         return root.editSettings?.providers?.[id] ?? ({});
+    }
+
+    function providerSupportsCodexbar(id) {
+        return root.codexbarProviderIds.indexOf(String(id || "")) !== -1;
     }
 
     function ensureProviderSettings(id) {
@@ -88,14 +119,26 @@ ColumnLayout {
         return root.editSettings.providers[id];
     }
 
+    function updateProviderSetting(id, key, value) {
+        const settings = Object.assign({}, root.editSettings ?? ({}));
+        const providers = Object.assign({}, settings.providers ?? ({}));
+        const provider = Object.assign({}, providers[id] ?? ({}));
+        provider[key] = value;
+        providers[id] = provider;
+        settings.providers = providers;
+        root.editSettings = settings;
+    }
+
     function setProviderEnabled(id, value) {
-        root.ensureProviderSettings(id).enabled = value;
-        root.editSettingsChanged();
+        root.updateProviderSetting(id, "enabled", value);
     }
 
     function setProviderShownInBar(id, value) {
-        root.ensureProviderSettings(id).showInWidget = value;
-        root.editSettingsChanged();
+        root.updateProviderSetting(id, "showInWidget", value);
+    }
+
+    function setProviderUseCodexbar(id, value) {
+        root.updateProviderSetting(id, "useCodexbar", value);
     }
 
     function isProviderExpanded(id) {
@@ -113,7 +156,7 @@ ColumnLayout {
     }
 
     function moveProvider(fromIndex, toIndex) {
-        var order = (root.editSettings?.providerOrder || root.defaultProviderOrder).slice();
+        var order = (root.normalizedEditProviderOrder).slice();
         if (fromIndex < 0 || fromIndex >= order.length || toIndex < 0 || toIndex >= order.length || fromIndex === toIndex)
             return;
         var moved = order[fromIndex];
@@ -150,6 +193,8 @@ ColumnLayout {
             root.editSettings.barMetric = root.normalizeBarMetricKey(root.editSettings.barMetric);
         if (root.editSettings?.providerOrderMode !== "recent7dChange")
             root.editSettings.providerOrderMode = "manual";
+        if (root.editSettings?.barIconAlertWindow !== "usage5h")
+            root.editSettings.barIconAlertWindow = "usage7d";
         root.pluginApi.pluginSettings = JSON.parse(JSON.stringify(root.editSettings));
         root.pluginApi.saveSettings();
     }
@@ -460,6 +505,38 @@ ColumnLayout {
                     }
                 }
 
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Style.marginL
+
+                    NToggle {
+                        checked: (root.editSettings?.barIconAlertWindow ?? "usage7d") === "usage5h"
+                        onToggled: value => {
+                            root.editSettings.barIconAlertWindow = value ? "usage5h" : "usage7d";
+                            root.editSettingsChanged();
+                        }
+                    }
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: Style.marginS
+
+                        NText {
+                            text: "Use 5h window for icon alerts"
+                            pointSize: Style.fontSizeM
+                            font.weight: Style.fontWeightSemiBold
+                            color: Color.mOnSurface
+                        }
+
+                        NText {
+                            text: "Off uses the 7d usage window. On uses the 5h usage window. Providers without the selected window will not alert."
+                            pointSize: Style.fontSizeXS
+                            color: Color.mOnSurfaceVariant
+                            wrapMode: Text.Wrap
+                        }
+                    }
+                }
+
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: Style.marginS
@@ -474,7 +551,7 @@ ColumnLayout {
                     NText {
                         Layout.fillWidth: true
                         text: (root.editSettings?.barIconAlertOnLimit ?? false)
-                            ? "The used percentage at which the provider icon switches to the warning color."
+                            ? "The selected window's used percentage at which the provider icon switches to the warning color."
                             : "This threshold is saved now and will take effect when icon alerts are enabled."
                         pointSize: Style.fontSizeXS
                         color: Color.mOnSurfaceVariant
@@ -581,7 +658,7 @@ ColumnLayout {
 
                     NText {
                         Layout.fillWidth: true
-                        text: "How often to poll API-backed providers such as Codex API mode, OpenRouter, and Zen."
+                        text: "How often to poll API-backed providers such as Codex API mode, OpenRouter, Zen, Kilo Code, Z.ai, and Gemini."
                         pointSize: Style.fontSizeXS
                         color: Color.mOnSurfaceVariant
                         wrapMode: Text.Wrap
@@ -649,7 +726,7 @@ ColumnLayout {
             }
 
             Repeater {
-                model: root.editSettings?.providerOrder || root.defaultProviderOrder
+                model: root.normalizedEditProviderOrder
 
                 delegate: DropArea {
                     id: providerDropArea
@@ -839,6 +916,44 @@ ColumnLayout {
                                 }
 
                                 ColumnLayout {
+                                    visible: root.providerSupportsCodexbar(providerCard.providerId)
+                                    Layout.fillWidth: true
+                                    spacing: Style.marginS
+
+                                    RowLayout {
+                                        Layout.fillWidth: true
+                                        spacing: Style.marginL
+
+                                        NToggle {
+                                            checked: providerCard.providerCfg.useCodexbar ?? false
+                                            onToggled: value => root.setProviderUseCodexbar(providerCard.providerId, value)
+                                        }
+
+                                        ColumnLayout {
+                                            Layout.fillWidth: true
+                                            spacing: Style.marginXS
+
+                                            NText {
+                                                text: root.pluginApi?.tr("settings.codexbar.label")
+                                                pointSize: Style.fontSizeM
+                                                font.weight: Style.fontWeightSemiBold
+                                                color: Color.mOnSurface
+                                            }
+
+                                            NText {
+                                                text: root.pluginApi?.tr("settings.codexbar.desc")
+                                                pointSize: Style.fontSizeXS
+                                                color: Color.mOnSurfaceVariant
+                                                wrapMode: Text.Wrap
+                                                Layout.fillWidth: true
+                                            }
+                                        }
+                                    }
+
+                                    NDivider { Layout.fillWidth: true }
+                                }
+
+                                ColumnLayout {
                                     visible: providerCard.providerId === "codex" && (providerCard.providerCfg.enabled ?? true)
                                     Layout.fillWidth: true
                                     spacing: Style.marginS
@@ -870,7 +985,7 @@ ColumnLayout {
                                 }
 
                                 ColumnLayout {
-                                    visible: providerCard.providerId === "openrouter" && (providerCard.providerCfg.enabled ?? false)
+                                    visible: providerCard.providerId === "openrouter"
                                     Layout.fillWidth: true
                                     spacing: Style.marginS
 
@@ -885,7 +1000,7 @@ ColumnLayout {
                                 }
 
                                 ColumnLayout {
-                                    visible: providerCard.providerId === "zen" && (providerCard.providerCfg.enabled ?? false)
+                                    visible: providerCard.providerId === "zen"
                                     Layout.fillWidth: true
                                     spacing: Style.marginS
 
@@ -900,7 +1015,7 @@ ColumnLayout {
                                 }
 
                                 ColumnLayout {
-                                    visible: providerCard.providerId === "deepseek" && (providerCard.providerCfg.enabled ?? false)
+                                    visible: providerCard.providerId === "deepseek"
                                     Layout.fillWidth: true
                                     spacing: Style.marginS
 
@@ -914,11 +1029,44 @@ ColumnLayout {
                                     }
                                 }
 
+                                ColumnLayout {
+                                    visible: providerCard.providerId === "kilocode"
+                                    Layout.fillWidth: true
+                                    spacing: Style.marginS
+
+                                    NTextInput {
+                                        Layout.fillWidth: true
+                                        label: "Kilo Code API key"
+                                        description: "You can leave this empty if KILO_API_KEY is set in your environment, or if you have authenticated via kilo login."
+                                        placeholderText: "KILO_API_KEY env var or enter key here"
+                                        text: providerCard.providerCfg.apiKey ?? ""
+                                        onTextChanged: root.ensureProviderSettings("kilocode").apiKey = text
+                                    }
+                                }
+
+                                ColumnLayout {
+                                    visible: providerCard.providerId === "zai"
+                                    Layout.fillWidth: true
+                                    spacing: Style.marginS
+
+                                    NTextInput {
+                                        Layout.fillWidth: true
+                                        label: "Z.ai API key"
+                                        description: "You can leave this empty if Z_AI_API_KEY is already set in your environment."
+                                        placeholderText: "Z_AI_API_KEY env var or enter key here"
+                                        text: providerCard.providerCfg.apiKey ?? ""
+                                        onTextChanged: root.ensureProviderSettings("zai").apiKey = text
+                                    }
+                                }
+
                                 NText {
-                                    visible: providerCard.providerId !== "codex"
+                                    visible: !root.providerSupportsCodexbar(providerCard.providerId)
+                                        && providerCard.providerId !== "codex"
                                         && providerCard.providerId !== "openrouter"
                                         && providerCard.providerId !== "zen"
                                         && providerCard.providerId !== "deepseek"
+                                        && providerCard.providerId !== "kilocode"
+                                        && providerCard.providerId !== "zai"
                                     text: "This provider does not currently expose additional settings in the panel. Its usage data will follow the general display and refresh settings above."
                                     pointSize: Style.fontSizeXS
                                     color: Color.mOnSurfaceVariant

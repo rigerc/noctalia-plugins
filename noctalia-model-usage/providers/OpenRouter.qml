@@ -40,6 +40,8 @@ Item {
     property real spendingLimit: -1
     property real limitRemaining: -1
     property var providerSettings: ({})
+    property bool useCodexbar: root.providerSettings?.useCodexbar ?? false
+    readonly property string codexbarProviderName: "openrouter"
 
     property string apiKey: {
         const envKey = Quickshell.env("OPENROUTER_API_KEY") ?? "";
@@ -50,19 +52,35 @@ Item {
 
     property var utils: ProviderUtils {}
 
+    CodexbarFetcher {
+        id: codexbarFetcher
+        codexbarProvider: root.codexbarProviderName
+        onDataReady: result => root.applyCodexbarData(result)
+        onFetchError: msg => {
+            root.usageStatusText = msg;
+            root.ready = false;
+            Logger.e("model-usage/" + root.providerId, "codexbar error: " + msg);
+        }
+    }
+
+
     ApiRefreshTimer {
-        providerEnabled: root.providerEnabled && root.apiKey !== ""
+        providerEnabled: root.providerEnabled && !root.useCodexbar && root.apiKey !== ""
         intervalMin: root.apiRefreshIntervalMin
         onTick: root.fetchKeyInfo()
     }
 
     onProviderEnabledChanged: {
-        if (providerEnabled && apiKey !== "")
-            fetchKeyInfo();
+        if (providerEnabled) {
+            if (root.useCodexbar)
+                codexbarFetcher.fetch();
+            else if (apiKey !== "")
+                fetchKeyInfo();
+        }
     }
 
     onApiKeyChanged: {
-        if (providerEnabled && apiKey !== "")
+        if (providerEnabled && !root.useCodexbar && apiKey !== "")
             fetchKeyInfo();
     }
 
@@ -244,7 +262,53 @@ Item {
         root.todayTokensByModel = todayByModel;
     }
 
+
+    function applyCodexbarData(result) {
+        const usage = result?.usage ?? null;
+        const primary = usage?.primary ?? null;
+        const secondary = usage?.secondary ?? null;
+        const identity = usage?.identity ?? null;
+        const credits = result?.credits ?? null;
+
+        if (primary) {
+            root.rateLimitPercent = Math.min(1, Math.max(0, Number(primary.usedPercent ?? 0) / 100));
+            root.rateLimitLabel = primary.resetDescription ?? "Usage";
+            root.rateLimitResetAt = primary.resetsAt ?? "";
+        } else {
+            root.rateLimitPercent = -1;
+            root.rateLimitLabel = "";
+            root.rateLimitResetAt = "";
+        }
+
+        if (secondary) {
+            root.secondaryRateLimitPercent = Math.min(1, Math.max(0, Number(secondary.usedPercent ?? 0) / 100));
+            root.secondaryRateLimitLabel = secondary.resetDescription ?? "Secondary";
+            root.secondaryRateLimitResetAt = secondary.resetsAt ?? "";
+        } else {
+            root.secondaryRateLimitPercent = -1;
+            root.secondaryRateLimitLabel = "";
+            root.secondaryRateLimitResetAt = "";
+        }
+
+        if (credits && Number(credits.total ?? 0) > 0) {
+            const used = Number(credits.used ?? 0);
+            const total = Number(credits.total ?? 0);
+            root.rateLimitPercent = Math.min(1, Math.max(0, used / total));
+            root.rateLimitLabel = "Credits ($" + used.toFixed(2) + " / $" + total.toFixed(2) + ")";
+            root.rateLimitResetAt = "";
+        }
+
+        root.tierLabel = identity?.loginMethod ?? root.tierLabel;
+        root.usageStatusText = "";
+        root.ready = true;
+    }
+
     function refresh() {
+        if (root.useCodexbar) {
+            codexbarFetcher.fetch();
+            return;
+        }
+
         if (root.apiKey !== "")
             fetchKeyInfo();
     }
