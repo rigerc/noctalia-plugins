@@ -114,7 +114,9 @@
     },
     "codexbar": {
       "label": "Use Codexbar CLI",
-      "desc": "Fetch usage via the codexbar CLI instead of this provider's native API path."
+      "desc": "Fetch usage via the codexbar CLI instead of this provider's native API path.",
+      "checking": "Checking...",
+      "ok": "Codexbar is working"
     },
     "codex": {
       "sourceLabel": "Data source",

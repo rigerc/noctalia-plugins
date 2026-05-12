@@ -897,9 +897,23 @@ ColumnLayout {
                                 }
 
                                 ColumnLayout {
+                                    id: codexbarSection
                                     visible: root.providerSupportsCodexbar(providerCard.providerId)
                                     Layout.fillWidth: true
                                     spacing: Style.marginS
+
+                                    property string checkState: "idle"
+                                    property string checkError: ""
+
+                                    CodexbarFetcher {
+                                        id: codexbarChecker
+                                        codexbarProvider: providerCard.providerId
+                                        onDataReady: _ => { codexbarSection.checkState = "ok" }
+                                        onFetchError: message => {
+                                            codexbarSection.checkState = "error";
+                                            codexbarSection.checkError = message;
+                                        }
+                                    }
 
                                     RowLayout {
                                         Layout.fillWidth: true
@@ -907,7 +921,16 @@ ColumnLayout {
 
                                         NToggle {
                                             checked: providerCard.providerCfg.useCodexbar ?? false
-                                            onToggled: value => root.setProviderUseCodexbar(providerCard.providerId, value)
+                                            onToggled: value => {
+                                                root.setProviderUseCodexbar(providerCard.providerId, value);
+                                                if (value) {
+                                                    codexbarSection.checkState = "running";
+                                                    codexbarSection.checkError = "";
+                                                    codexbarChecker.fetch();
+                                                } else {
+                                                    codexbarSection.checkState = "idle";
+                                                }
+                                            }
                                         }
 
                                         ColumnLayout {
@@ -928,6 +951,47 @@ ColumnLayout {
                                                 wrapMode: Text.Wrap
                                                 Layout.fillWidth: true
                                             }
+                                        }
+                                    }
+
+                                    RowLayout {
+                                        visible: codexbarSection.checkState !== "idle"
+                                        Layout.fillWidth: true
+                                        spacing: Style.marginS
+
+                                        NText {
+                                            visible: codexbarSection.checkState === "running"
+                                            text: root.tr("settings.codexbar.checking")
+                                            pointSize: Style.fontSizeXS
+                                            color: Color.mOnSurfaceVariant
+                                        }
+
+                                        NIcon {
+                                            visible: codexbarSection.checkState === "ok"
+                                            icon: "check"
+                                            color: Color.mPrimary
+                                        }
+
+                                        NText {
+                                            visible: codexbarSection.checkState === "ok"
+                                            text: root.tr("settings.codexbar.ok")
+                                            pointSize: Style.fontSizeXS
+                                            color: Color.mPrimary
+                                        }
+
+                                        NIcon {
+                                            visible: codexbarSection.checkState === "error"
+                                            icon: "x"
+                                            color: Color.mError
+                                        }
+
+                                        NText {
+                                            visible: codexbarSection.checkState === "error"
+                                            Layout.fillWidth: true
+                                            text: codexbarSection.checkError
+                                            pointSize: Style.fontSizeXS
+                                            color: Color.mError
+                                            wrapMode: Text.Wrap
                                         }
                                     }
 
