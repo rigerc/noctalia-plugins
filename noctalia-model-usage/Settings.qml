@@ -155,15 +155,8 @@ ColumnLayout {
         root.editSettingsChanged();
     }
 
-    function normalizeBarMetricKey(value) {
-        var raw = String(value || "").trim();
-        if (raw === "usage24h") return "usage5h";
-        if (raw === "usage24h7d") return "usage5h7d";
-        return raw;
-    }
-
     function barMetricLabel(value) {
-        var key = root.normalizeBarMetricKey(value);
+        var key = String(value || "").trim();
         if (key === "tokens")
             return root.tr("settings.barMetrics.tokens");
         if (key === "usage")
@@ -178,7 +171,7 @@ ColumnLayout {
     function saveSettings() {
         if (!pluginApi) return;
         const s = JSON.parse(JSON.stringify(root.editSettings ?? ({})));
-        if (s.barMetric) s.barMetric = root.normalizeBarMetricKey(s.barMetric);
+
         if (s.providerOrderMode !== "recent7dChange") s.providerOrderMode = "manual";
         if (s.barIconAlertWindow !== "usage5h") s.barIconAlertWindow = "usage7d";
         root.pluginApi.pluginSettings = s;
@@ -207,11 +200,10 @@ ColumnLayout {
             anchors.margins: Style.marginXL
             spacing: Style.marginL
 
-            NLabel {
+            NHeader {
                 Layout.fillWidth: true
                 label: root.tr("settings.overview.label")
                 description: root.tr("settings.overview.desc")
-                labelSize: Style.fontSizeL
             }
 
             Flow {
@@ -357,7 +349,7 @@ ColumnLayout {
                         { "key": "usage5h", "name": root.tr("settings.barMetrics.usage5h") },
                         { "key": "usage5h7d", "name": root.tr("settings.barMetrics.usage5h7d") }
                     ]
-                    currentKey: root.normalizeBarMetricKey(root.editSettings?.barMetric ?? "prompts")
+                    currentKey: root.editSettings?.barMetric ?? "prompts"
                     onSelected: key => {
                         root.editSettings.barMetric = key;
                         root.editSettingsChanged();

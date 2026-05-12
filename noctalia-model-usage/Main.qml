@@ -173,13 +173,7 @@ Item {
     property string barIconAlertWindow: String(pluginSettings?.barIconAlertWindow ?? "usage7d") === "usage5h" ? "usage5h" : "usage7d"
     property int refreshIntervalSec: pluginSettings?.refreshIntervalSec ?? 30
 
-    property string barMetric: {
-        const raw = String(pluginSettings?.barMetric ?? "prompts").trim();
-        // Migrate old usage24h/usage24h7d keys to usage5h/usage5h7d
-        if (raw === "usage24h") return "usage5h";
-        if (raw === "usage24h7d") return "usage5h7d";
-        return raw;
-    }
+    property string barMetric: String(pluginSettings?.barMetric ?? "prompts").trim()
 
     Timer {
         interval: root.barCycleIntervalSec * 1000
