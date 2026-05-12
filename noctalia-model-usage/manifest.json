@@ -27,7 +27,6 @@
         "claude": {
           "enabled": false,
           "showInWidget": true,
-          "statsPath": "~/.claude/stats-cache.json",
           "credentialsPath": "~/.claude/.credentials.json"
         },
         "codex": {
