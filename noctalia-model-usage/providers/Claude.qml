@@ -64,7 +64,7 @@ Item {
         onLoaded: root.parseClaudeJson(text())
         onLoadFailed: error => {
             if (error === FileViewError.FileNotFound)
-                Logger.e("model-usage/claude", "~/.claude.json not found");
+                Logger.d("model-usage/claude", "~/.claude.json not found — local stats unavailable");
         }
     }
 
@@ -76,7 +76,7 @@ Item {
         onLoaded: root.parseHistory(text())
         onLoadFailed: error => {
             if (error === FileViewError.FileNotFound)
-                Logger.e("model-usage/claude", "history.jsonl not found");
+                Logger.d("model-usage/claude", "history.jsonl not found — prompt counts unavailable");
         }
     }
 
@@ -357,6 +357,7 @@ Item {
                     const sessionBucket = root.oauthUsageBucket(payload, "five_hour");
 
                     if (root.applyAuthoritativeRateLimits(weeklyBucket?.utilization, weeklyBucket?.resets_at, sessionBucket?.utilization, sessionBucket?.resets_at, "")) {
+                        root.ready = true;
                         root.clearUsageStatus();
                         return;
                     }

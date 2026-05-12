@@ -39,7 +39,7 @@ Item {
     property bool includeCacheTokens: true
     property string configModel: ""
     property var providerSettings: ({})
-    property string usageMode: providerSettings?.usageMode ?? "local"
+    property string usageMode: providerSettings?.usageMode ?? "api"
     property string accessToken: ""
     property string accountId: ""
     readonly property string apiEndpoint: "https://chatgpt.com/backend-api/wham/usage"
@@ -65,7 +65,7 @@ Item {
         onLoaded: root.parseHistory(text())
         onLoadFailed: error => {
             if (error === FileViewError.FileNotFound)
-                Logger.e("model-usage/codex", "history.jsonl not found");
+                Logger.d("model-usage/codex", "history.jsonl not found — prompt counts unavailable");
         }
     }
 
@@ -77,7 +77,7 @@ Item {
         onLoaded: root.parseConfig(text())
         onLoadFailed: error => {
             if (error === FileViewError.FileNotFound)
-                Logger.e("model-usage/codex", "config.toml not found");
+                Logger.d("model-usage/codex", "config.toml not found");
         }
     }
 
