@@ -6,8 +6,14 @@ Item {
     id: root
     visible: false
 
+    property var pluginApi: null
+
+    function tr(key, vars) {
+        return root.pluginApi?.tr(key, vars);
+    }
+
     property string providerId: "deepseek"
-    property string providerName: "DeepSeek"
+    property string providerName: root.tr("providers.names.deepseek")
     property string providerIcon: "ai"
     property string providerIconAsset: "assets/deepseek.svg"
     property bool providerEnabled: false
@@ -31,7 +37,7 @@ Item {
     property var modelUsage: ({})
 
     property string tierLabel: ""
-    property string authHelpText: "Check your DeepSeek API key at platform.deepseek.com."
+    property string authHelpText: root.tr("providers.help.deepseek")
     property bool hasLocalStats: false
     property string usageStatusText: ""
 
@@ -82,7 +88,7 @@ Item {
                 return;
 
             if (xhr.status === 401 || xhr.status === 403) {
-                root.usageStatusText = "Invalid API key";
+                root.usageStatusText = root.tr("providers.status.invalidApiKey");
                 root.ready = false;
                 root.tierLabel = "";
                 Logger.e("model-usage/deepseek", "Auth failed (status " + xhr.status + ")");

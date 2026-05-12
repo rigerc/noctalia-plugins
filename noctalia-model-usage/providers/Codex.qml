@@ -8,15 +8,21 @@ Item {
     id: root
     visible: false
 
+    property var pluginApi: null
+
+    function tr(key, vars) {
+        return root.pluginApi?.tr(key, vars);
+    }
+
     property string providerId: "codex"
-    property string providerName: "Codex"
+    property string providerName: root.tr("providers.names.codex")
     property string providerIcon: "ai"
     property string providerIconAsset: "assets/codex.svg"
     property bool providerEnabled: false
     property bool ready: false
 
     property real rateLimitPercent: -1
-    property string rateLimitLabel: "Weekly (7-day)"
+    property string rateLimitLabel: root.tr("providers.rateLimits.weekly7d")
     property string rateLimitResetAt: ""
     property real secondaryRateLimitPercent: -1
     property string secondaryRateLimitLabel: ""
@@ -33,7 +39,7 @@ Item {
     property var modelUsage: ({})
 
     property string tierLabel: ""
-    property string authHelpText: "Run `codex` to authenticate."
+    property string authHelpText: root.tr("providers.help.codex")
     property string usageStatusText: ""
     property bool hasLocalStats: true
 
@@ -324,9 +330,9 @@ Item {
             if (rl) {
                 root.rateLimitPercent = (rl.used_percent ?? 0) / 100;
                 if (rl.window_minutes === 10080)
-                    root.rateLimitLabel = "Weekly (7-day)";
+                    root.rateLimitLabel = root.tr("providers.rateLimits.weekly7d");
                 else
-                    root.rateLimitLabel = Math.round(rl.window_minutes / 60) + "h window";
+                    root.rateLimitLabel = root.tr("providers.rateLimits.rollingWindow", { "hours": Math.round(rl.window_minutes / 60) });
                 if (rl.resets_at) {
                     const resetDate = new Date(rl.resets_at * 1000);
                     root.rateLimitResetAt = resetDate.toISOString();
@@ -376,7 +382,7 @@ Item {
 
     function clearRateLimits() {
         root.rateLimitPercent = -1;
-        root.rateLimitLabel = "Weekly (7-day)";
+        root.rateLimitLabel = root.tr("providers.rateLimits.weekly7d");
         root.rateLimitResetAt = "";
         root.secondaryRateLimitPercent = -1;
         root.secondaryRateLimitLabel = "";
@@ -422,7 +428,7 @@ Item {
 
         // Limit reached status
         if (data.rate_limit?.limit_reached) {
-            root.usageStatusText = "Rate limit reached";
+            root.usageStatusText = root.tr("providers.status.rateLimitReached");
             root.authHelpText = "Wait for the rate limit window to reset.";
         } else {
             root.usageStatusText = "";
@@ -432,7 +438,7 @@ Item {
 
     function fetchUsageFromApi() {
         if (!root.accessToken) {
-            root.usageStatusText = "No auth token available";
+            root.usageStatusText = root.tr("providers.status.noAuthToken");
             root.authHelpText = "Run `codex` to authenticate first.";
             root.ready = false;
             root.clearRateLimits();
@@ -459,7 +465,7 @@ Item {
             root._lastApiRefreshMs = Date.now();
 
             if (xhr.status === 401 || xhr.status === 403) {
-                root.usageStatusText = "Token expired";
+                root.usageStatusText = root.tr("providers.status.tokenExpired");
                 root.authHelpText = "Run `codex` to re-authenticate.";
                 root.ready = false;
                 root.clearRateLimits();
@@ -468,7 +474,7 @@ Item {
             }
 
             if (xhr.status < 200 || xhr.status >= 300) {
-                root.usageStatusText = "Failed to fetch usage (status " + xhr.status + ")";
+                root.usageStatusText = root.tr("providers.status.fetchUsageFailed", { "status": xhr.status });
                 root.authHelpText = "Check your internet connection and try again.";
                 root.ready = false;
                 root.clearRateLimits();
@@ -482,7 +488,7 @@ Item {
                 root.ready = true;
             } catch (e) {
                 Logger.e("model-usage/codex", "Failed to parse API response:", e);
-                root.usageStatusText = "Failed to parse usage data";
+                root.usageStatusText = root.tr("providers.status.parseUsageFailed");
             }
         };
 

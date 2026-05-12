@@ -10,18 +10,24 @@ Item {
     id: root
     visible: false
 
+    property var pluginApi: null
+
+    function tr(key, vars) {
+        return root.pluginApi?.tr(key, vars);
+    }
+
     property string providerId: "copilot"
-    property string providerName: "Copilot"
+    property string providerName: root.tr("providers.names.copilot")
     property string providerIcon: "ai"
     property string providerIconAsset: "assets/copilot.svg"
     property bool providerEnabled: false
     property bool ready: false
 
     property real rateLimitPercent: -1
-    property string rateLimitLabel: "Premium"
+    property string rateLimitLabel: root.tr("providers.rateLimits.premium")
     property string rateLimitResetAt: ""
     property real secondaryRateLimitPercent: -1
-    property string secondaryRateLimitLabel: "Chat"
+    property string secondaryRateLimitLabel: root.tr("providers.rateLimits.chat")
     property string secondaryRateLimitResetAt: ""
 
     property int todayPrompts: 0
@@ -35,7 +41,7 @@ Item {
     property var modelUsage: ({})
 
     property string tierLabel: ""
-    property string authHelpText: "Run `gh auth login` to re-authenticate."
+    property string authHelpText: root.tr("providers.help.copilot")
     property bool hasLocalStats: false
     property string usageStatusText: ""
 
@@ -73,7 +79,7 @@ Item {
                     root.fetchUsage();
                 } else {
                     Logger.e("model-usage/copilot", "gh auth token returned empty");
-                    root.usageStatusText = "No token";
+                    root.usageStatusText = root.tr("providers.status.noToken");
                     root.ready = false;
                     root.clearRateLimits();
                 }
@@ -83,7 +89,7 @@ Item {
         onExited: (code) => {
             if (code !== 0) {
                 Logger.e("model-usage/copilot", "gh auth token failed (exit " + code + ")");
-                root.usageStatusText = "Not authenticated";
+                root.usageStatusText = root.tr("providers.status.notAuthenticated");
                 root.ready = false;
                 root.clearRateLimits();
             }
@@ -126,7 +132,7 @@ Item {
                 return;
 
             if (xhr.status === 401 || xhr.status === 403) {
-                root.usageStatusText = "Token invalid";
+                root.usageStatusText = root.tr("providers.status.tokenInvalid");
                 root.ready = false;
                 root.ghToken = "";
                 root.tierLabel = "";

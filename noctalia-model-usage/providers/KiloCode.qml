@@ -7,15 +7,21 @@ Item {
     id: root
     visible: false
 
+    property var pluginApi: null
+
+    function tr(key, vars) {
+        return root.pluginApi?.tr(key, vars);
+    }
+
     property string providerId: "kilocode"
-    property string providerName: "Kilo Code"
+    property string providerName: root.tr("providers.names.kilocode")
     property string providerIcon: "ai"
     property string providerIconAsset: "assets/kilocode.svg"
     property bool providerEnabled: false
     property bool ready: false
 
     property real rateLimitPercent: -1
-    property string rateLimitLabel: "Credits"
+    property string rateLimitLabel: root.tr("providers.rateLimits.credits")
     property string rateLimitResetAt: ""
     property real secondaryRateLimitPercent: -1
     property string secondaryRateLimitLabel: ""
@@ -32,7 +38,7 @@ Item {
     property var modelUsage: ({})
 
     property string tierLabel: ""
-    property string authHelpText: "Set KILO_API_KEY or run kilo login."
+    property string authHelpText: root.tr("providers.help.kilocode")
     property string usageStatusText: ""
     property bool hasLocalStats: false
 
@@ -107,7 +113,7 @@ Item {
     function fetchUsage() {
         const token = root.effectiveToken;
         if (!token) {
-            root.usageStatusText = "No API key found. " + root.authHelpText;
+            root.usageStatusText = root.tr("providers.status.noApiKeyFound", { "help": root.authHelpText });
             return;
         }
 
@@ -125,7 +131,7 @@ Item {
             if (xhr.status !== 200) {
                 Logger.e("model-usage/kilocode", "tRPC request failed (status " + xhr.status + ")");
                 if (xhr.status === 401 || xhr.status === 403)
-                    root.usageStatusText = "Authentication failed. " + root.authHelpText;
+                    root.usageStatusText = root.tr("providers.status.authenticationFailed", { "help": root.authHelpText });
                 return;
             }
 

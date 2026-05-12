@@ -16,6 +16,10 @@ ColumnLayout {
     property int draggedProviderIndex: -1
     property var expandedProviders: ({})
 
+    function tr(key, vars) {
+        return root.pluginApi?.tr(key, vars);
+    }
+
     readonly property var defaultProviderOrder: ["claude", "codex", "copilot", "openrouter", "zen", "deepseek", "kilocode", "zai", "gemini"]
     readonly property var codexbarProviderIds: ["claude", "codex", "copilot", "openrouter", "zen", "kilocode", "zai", "gemini"]
 
@@ -41,11 +45,11 @@ ColumnLayout {
     readonly property var providerOrderModeOptions: [
         {
             "key": "manual",
-            "name": "Manual order"
+            "name": root.tr("settings.summary.manual")
         },
         {
             "key": "recent7dChange",
-            "name": "Recently changed 7d usage"
+            "name": root.tr("settings.summary.recent7dChange")
         }
     ]
 
@@ -72,33 +76,11 @@ ColumnLayout {
     }
 
     function providerDisplayName(id) {
-        var names = {
-            "claude": "Claude Code",
-            "codex": "Codex",
-            "copilot": "Copilot",
-            "openrouter": "OpenRouter",
-            "zen": "Zen (opencode.ai)",
-            "deepseek": "DeepSeek",
-            "kilocode": "Kilo Code",
-            "zai": "Z.ai",
-            "gemini": "Gemini"
-        };
-        return names[id] || id;
+        return root.tr("providers.names." + id) || id;
     }
 
     function providerAuthLabel(id) {
-        var labels = {
-            "claude": "Local files + OAuth",
-            "codex": "Local files or API",
-            "copilot": "GitHub auth",
-            "openrouter": "API key",
-            "zen": "API key",
-            "deepseek": "API key",
-            "kilocode": "API key or kilo login",
-            "zai": "API key",
-            "gemini": "Local OAuth"
-        };
-        return labels[id] || "";
+        return root.tr("providers.auth." + id) || "";
     }
 
     function providerSettingsFor(id) {
@@ -178,14 +160,14 @@ ColumnLayout {
     function barMetricLabel(value) {
         var key = root.normalizeBarMetricKey(value);
         if (key === "tokens")
-            return "Tokens";
+            return root.tr("settings.barMetrics.tokens");
         if (key === "usage")
-            return "Usage % 7d";
+            return root.tr("settings.barMetrics.usage");
         if (key === "usage5h")
-            return "Usage % 5h";
+            return root.tr("settings.barMetrics.usage5h");
         if (key === "usage5h7d")
-            return "Usage % 5h/7d";
-        return "Prompts";
+            return root.tr("settings.barMetrics.usage5h7d");
+        return root.tr("settings.barMetrics.prompts");
     }
 
     function saveSettings() {
@@ -204,8 +186,8 @@ ColumnLayout {
 
     NLabel {
         Layout.fillWidth: true
-        label: "Model Usage Settings"
-        description: "Configure how usage appears in the bar, how providers are refreshed, and which providers are enabled or visible."
+        label: root.tr("settings.title")
+        description: root.tr("settings.description")
         labelSize: Style.fontSizeXL
         icon: "settings"
         iconColor: Color.mPrimary
@@ -223,8 +205,8 @@ ColumnLayout {
 
             NLabel {
                 Layout.fillWidth: true
-                label: "Overview"
-                description: "Quick summary of the current configuration before you adjust the details below."
+                label: root.tr("settings.overview.label")
+                description: root.tr("settings.overview.desc")
                 labelSize: Style.fontSizeL
             }
 
@@ -234,10 +216,10 @@ ColumnLayout {
 
                 Repeater {
                     model: [
-                        { "label": "Enabled", "value": String(root.enabledProviderCount) },
-                        { "label": "Shown in bar", "value": String(root.shownInBarCount) },
-                        { "label": "Bar metric", "value": root.barMetricLabel(root.editSettings?.barMetric ?? "prompts") },
-                        { "label": "Order mode", "value": (root.editSettings?.providerOrderMode ?? "manual") === "recent7dChange" ? "Recent 7d change" : "Manual" }
+                        { "label": root.tr("settings.summary.enabled"), "value": String(root.enabledProviderCount) },
+                        { "label": root.tr("settings.summary.shownInBar"), "value": String(root.shownInBarCount) },
+                        { "label": root.tr("settings.summary.barMetric"), "value": root.barMetricLabel(root.editSettings?.barMetric ?? "prompts") },
+                        { "label": root.tr("settings.summary.orderMode"), "value": (root.editSettings?.providerOrderMode ?? "manual") === "recent7dChange" ? root.tr("settings.summary.recent7dChange") : root.tr("settings.summary.manual") }
                     ]
 
                     delegate: NBox {
@@ -284,8 +266,8 @@ ColumnLayout {
 
             NLabel {
                 Layout.fillWidth: true
-                label: "General"
-                description: "These settings control the overall behavior of the bar widget and how provider data is refreshed."
+                label: root.tr("settings.general.label")
+                description: root.tr("settings.general.desc")
                 labelSize: Style.fontSizeL
             }
 
@@ -295,8 +277,8 @@ ColumnLayout {
 
                 NLabel {
                     Layout.fillWidth: true
-                    label: "Bar display"
-                    description: "Choose what the bar shows and how it behaves when multiple providers are available."
+                    label: root.tr("settings.barDisplay.label")
+                    description: root.tr("settings.barDisplay.desc")
                     labelSize: Style.fontSizeM
                 }
 
@@ -317,13 +299,13 @@ ColumnLayout {
                         spacing: Style.marginS
 
                         NText {
-                            text: "Cycle through providers"
+                            text: root.tr("settings.cycle.label")
                             pointSize: Style.fontSizeM
                             font.weight: Style.fontWeightSemiBold
                             color: Color.mOnSurface
                         }
                         NText {
-                            text: "When enabled, the bar shows one provider at a time and rotates through them. When disabled, all visible providers are shown together in the bar."
+                            text: root.tr("settings.cycle.desc")
                             pointSize: Style.fontSizeXS
                             color: Color.mOnSurfaceVariant
                             wrapMode: Text.Wrap
@@ -337,7 +319,7 @@ ColumnLayout {
                     spacing: Style.marginS
 
                     NText {
-                        text: "Cycle interval (seconds)"
+                        text: root.tr("settings.cycle.intervalLabel")
                         pointSize: Style.fontSizeM
                         font.weight: Style.fontWeightSemiBold
                         color: Color.mOnSurface
@@ -345,7 +327,7 @@ ColumnLayout {
 
                     NText {
                         Layout.fillWidth: true
-                        text: "How often the bar moves to the next provider while cycling is enabled."
+                        text: root.tr("settings.cycle.intervalDesc")
                         pointSize: Style.fontSizeXS
                         color: Color.mOnSurfaceVariant
                         wrapMode: Text.Wrap
@@ -362,14 +344,14 @@ ColumnLayout {
 
                 NComboBox {
                     Layout.fillWidth: true
-                    label: "Bar metric"
-                    description: "Choose the number or percentage shown next to each provider in the bar."
+                    label: root.tr("settings.barMetric.label")
+                    description: root.tr("settings.barMetric.desc")
                     model: [
-                        { "key": "prompts", "name": "Prompts" },
-                        { "key": "tokens", "name": "Tokens" },
-                        { "key": "usage", "name": "Usage % 7d" },
-                        { "key": "usage5h", "name": "Usage % 5h" },
-                        { "key": "usage5h7d", "name": "Usage % 5h/7d" }
+                        { "key": "prompts", "name": root.tr("settings.barMetrics.prompts") },
+                        { "key": "tokens", "name": root.tr("settings.barMetrics.tokens") },
+                        { "key": "usage", "name": root.tr("settings.barMetrics.usage") },
+                        { "key": "usage5h", "name": root.tr("settings.barMetrics.usage5h") },
+                        { "key": "usage5h7d", "name": root.tr("settings.barMetrics.usage5h7d") }
                     ]
                     currentKey: root.normalizeBarMetricKey(root.editSettings?.barMetric ?? "prompts")
                     onSelected: key => {
@@ -395,13 +377,13 @@ ColumnLayout {
                         spacing: Style.marginS
 
                         NText {
-                            text: "Show text on hover"
+                            text: root.tr("settings.hover.label")
                             pointSize: Style.fontSizeM
                             font.weight: Style.fontWeightSemiBold
                             color: Color.mOnSurface
                         }
                         NText {
-                            text: "When enabled, the bar defaults to icons and reveals the metric text when you hover over the widget. This is useful when you want a more compact bar."
+                            text: root.tr("settings.hover.desc")
                             pointSize: Style.fontSizeXS
                             color: Color.mOnSurfaceVariant
                             wrapMode: Text.Wrap
@@ -422,8 +404,8 @@ ColumnLayout {
 
                 NLabel {
                     Layout.fillWidth: true
-                    label: "Usage display"
-                    description: "These options are most relevant when the selected bar metric shows a usage percentage, but icon alerts can still be configured here at any time."
+                    label: root.tr("settings.usageDisplay.label")
+                    description: root.tr("settings.usageDisplay.desc")
                     labelSize: Style.fontSizeM
                 }
 
@@ -433,7 +415,7 @@ ColumnLayout {
                         return !(metric === "usage" || metric === "usage5h" || metric === "usage5h7d");
                     }
                     Layout.fillWidth: true
-                    text: "You are currently showing a non-usage bar metric, so the remaining-percentage option will not affect the bar right now."
+                    text: root.tr("settings.usageDisplay.nonUsage")
                     pointSize: Style.fontSizeXS
                     color: Color.mOnSurfaceVariant
                     wrapMode: Text.Wrap
@@ -460,13 +442,13 @@ ColumnLayout {
                         spacing: Style.marginS
 
                         NText {
-                            text: "Show remaining % instead of used %"
+                            text: root.tr("settings.usageDisplay.remainingLabel")
                             pointSize: Style.fontSizeM
                             font.weight: Style.fontWeightSemiBold
                             color: Color.mOnSurface
                         }
                         NText {
-                            text: "Switches usage metrics from consumed percentage to remaining percentage. For example, 80% used becomes 20% remaining."
+                            text: root.tr("settings.usageDisplay.remainingDesc")
                             pointSize: Style.fontSizeXS
                             color: Color.mOnSurfaceVariant
                             wrapMode: Text.Wrap
@@ -491,13 +473,13 @@ ColumnLayout {
                         spacing: Style.marginS
 
                         NText {
-                            text: "Color icon red on rate limit reached"
+                            text: root.tr("settings.iconAlert.label")
                             pointSize: Style.fontSizeM
                             font.weight: Style.fontWeightSemiBold
                             color: Color.mOnSurface
                         }
                         NText {
-                            text: "Highlights provider icons when their usage crosses the alert threshold. This makes approaching limits easier to notice in the bar at a glance."
+                            text: root.tr("settings.iconAlert.desc")
                             pointSize: Style.fontSizeXS
                             color: Color.mOnSurfaceVariant
                             wrapMode: Text.Wrap
@@ -522,14 +504,14 @@ ColumnLayout {
                         spacing: Style.marginS
 
                         NText {
-                            text: "Use 5h window for icon alerts"
+                            text: root.tr("settings.iconAlert.windowLabel")
                             pointSize: Style.fontSizeM
                             font.weight: Style.fontWeightSemiBold
                             color: Color.mOnSurface
                         }
 
                         NText {
-                            text: "Off uses the 7d usage window. On uses the 5h usage window. Providers without the selected window will not alert."
+                            text: root.tr("settings.iconAlert.windowDesc")
                             pointSize: Style.fontSizeXS
                             color: Color.mOnSurfaceVariant
                             wrapMode: Text.Wrap
@@ -542,7 +524,7 @@ ColumnLayout {
                     spacing: Style.marginS
 
                     NText {
-                        text: "Alert threshold (%)"
+                        text: root.tr("settings.iconAlert.thresholdLabel")
                         pointSize: Style.fontSizeM
                         font.weight: Style.fontWeightSemiBold
                         color: Color.mOnSurface
@@ -551,8 +533,8 @@ ColumnLayout {
                     NText {
                         Layout.fillWidth: true
                         text: (root.editSettings?.barIconAlertOnLimit ?? false)
-                            ? "The selected window's used percentage at which the provider icon switches to the warning color."
-                            : "This threshold is saved now and will take effect when icon alerts are enabled."
+                            ? root.tr("settings.iconAlert.thresholdDescEnabled")
+                            : root.tr("settings.iconAlert.thresholdDescDisabled")
                         pointSize: Style.fontSizeXS
                         color: Color.mOnSurfaceVariant
                         wrapMode: Text.Wrap
@@ -581,8 +563,8 @@ ColumnLayout {
 
                 NLabel {
                     Layout.fillWidth: true
-                    label: "Refresh behavior"
-                    description: "Control how often local files are polled and how frequently API-backed providers are refreshed."
+                    label: root.tr("settings.refresh.label")
+                    description: root.tr("settings.refresh.desc")
                     labelSize: Style.fontSizeM
                 }
 
@@ -603,13 +585,13 @@ ColumnLayout {
                         spacing: Style.marginS
 
                         NText {
-                            text: "Include cache tokens in token count"
+                            text: root.tr("settings.refresh.cacheLabel")
                             pointSize: Style.fontSizeM
                             font.weight: Style.fontWeightSemiBold
                             color: Color.mOnSurface
                         }
                         NText {
-                            text: "Counts cache read and cache write tokens in totals wherever the provider exposes them. Disable this if you want to focus only on direct input and output tokens."
+                            text: root.tr("settings.refresh.cacheDesc")
                             pointSize: Style.fontSizeXS
                             color: Color.mOnSurfaceVariant
                             wrapMode: Text.Wrap
@@ -622,7 +604,7 @@ ColumnLayout {
                     spacing: Style.marginS
 
                     NText {
-                        text: "Refresh interval (seconds)"
+                        text: root.tr("settings.refresh.intervalLabel")
                         pointSize: Style.fontSizeM
                         font.weight: Style.fontWeightSemiBold
                         color: Color.mOnSurface
@@ -630,7 +612,7 @@ ColumnLayout {
 
                     NText {
                         Layout.fillWidth: true
-                        text: "Fallback polling interval for local file-based providers when file watching does not catch an update."
+                        text: root.tr("settings.refresh.intervalDesc")
                         pointSize: Style.fontSizeXS
                         color: Color.mOnSurfaceVariant
                         wrapMode: Text.Wrap
@@ -650,7 +632,7 @@ ColumnLayout {
                     spacing: Style.marginS
 
                     NText {
-                        text: "API providers refresh interval"
+                        text: root.tr("settings.refresh.apiIntervalLabel")
                         pointSize: Style.fontSizeM
                         font.weight: Style.fontWeightSemiBold
                         color: Color.mOnSurface
@@ -658,7 +640,7 @@ ColumnLayout {
 
                     NText {
                         Layout.fillWidth: true
-                        text: "How often to poll API-backed providers such as Codex API mode, OpenRouter, Zen, Kilo Code, Z.ai, and Gemini."
+                        text: root.tr("settings.refresh.apiIntervalDesc")
                         pointSize: Style.fontSizeXS
                         color: Color.mOnSurfaceVariant
                         wrapMode: Text.Wrap
@@ -669,7 +651,7 @@ ColumnLayout {
                         to: 360
                         value: root.editSettings?.apiRefreshIntervalMin ?? 1
                         stepSize: 1
-                        suffix: "min"
+                        suffix: root.tr("units.minutesShort")
                         onValueChanged: root.editSettings.apiRefreshIntervalMin = value
                     }
                 }
@@ -689,15 +671,15 @@ ColumnLayout {
 
             NLabel {
                 Layout.fillWidth: true
-                label: "Providers"
-                description: "Enable providers, choose which ones appear in the bar, and configure provider-specific details when needed."
+                label: root.tr("settings.providers.label")
+                description: root.tr("settings.providers.desc")
                 labelSize: Style.fontSizeL
             }
 
             NComboBox {
                 Layout.fillWidth: true
-                label: "Provider order"
-                description: "Manual order is used directly, or as a tie-breaker when sorting by recently changed 7d usage."
+                label: root.tr("settings.providers.orderLabel")
+                description: root.tr("settings.providers.orderDesc")
                 model: root.providerOrderModeOptions
                 currentKey: root.editSettings?.providerOrderMode ?? "manual"
                 onSelected: key => {
@@ -708,7 +690,7 @@ ColumnLayout {
 
             NText {
                 visible: root.editSettings?.providerOrderMode === "recent7dChange"
-                text: "Providers whose 7d usage percentage changed most recently move to the front. Providers without 7d usage stay in your manual drag order. This recent-change history resets when the shell restarts."
+                text: root.tr("settings.providers.recentHelp")
                 pointSize: Style.fontSizeXS
                 color: Color.mOnSurfaceVariant
                 wrapMode: Text.Wrap
@@ -718,7 +700,7 @@ ColumnLayout {
             NDivider { Layout.fillWidth: true }
 
             NText {
-                text: "Drag providers to set the manual order. The manual order also acts as the tie-break order when recent 7d change sorting is enabled."
+                text: root.tr("settings.providers.dragHelp")
                 pointSize: Style.fontSizeXS
                 color: Color.mOnSurfaceVariant
                 wrapMode: Text.Wrap
@@ -851,7 +833,7 @@ ColumnLayout {
                                     NText {
                                         Layout.alignment: Qt.AlignHCenter
                                         horizontalAlignment: Text.AlignHCenter
-                                        text: "Enable"
+                                        text: root.tr("settings.providers.enable")
                                         pointSize: Style.fontSizeXS
                                         color: Color.mOnSurfaceVariant
                                     }
@@ -871,7 +853,7 @@ ColumnLayout {
                                     NText {
                                         Layout.alignment: Qt.AlignHCenter
                                         horizontalAlignment: Text.AlignHCenter
-                                        text: "Show in bar"
+                                        text: root.tr("settings.providers.showInBar")
                                         pointSize: Style.fontSizeXS
                                         color: Color.mOnSurfaceVariant
                                     }
@@ -883,7 +865,7 @@ ColumnLayout {
 
                                 NButton {
                                     Layout.preferredWidth: 140 * Style.uiScaleRatio
-                                    text: providerCard.expanded ? "Hide details" : "Configure"
+                                    text: providerCard.expanded ? root.tr("settings.providers.hideDetails") : root.tr("settings.providers.configure")
                                     outlined: true
                                     onClicked: root.toggleProviderExpanded(providerCard.providerId)
                                 }
@@ -892,8 +874,8 @@ ColumnLayout {
                             NText {
                                 visible: !providerCard.expanded
                                 text: providerCard.providerCfg.enabled ?? true
-                                    ? "Enabled. Open details to configure provider-specific settings."
-                                    : "Disabled. Enable this provider if you want the plugin to collect and display its usage."
+                                    ? root.tr("settings.providers.enabledSummary")
+                                    : root.tr("settings.providers.disabledSummary")
                                 pointSize: Style.fontSizeXS
                                 color: Color.mOnSurfaceVariant
                                 wrapMode: Text.Wrap
@@ -910,8 +892,8 @@ ColumnLayout {
 
                                 NLabel {
                                     Layout.fillWidth: true
-                                    label: "Provider details"
-                                    description: "These options only affect " + root.providerDisplayName(providerCard.providerId) + "."
+                                    label: root.tr("settings.providers.detailsLabel")
+                                    description: root.tr("settings.providers.detailsDesc", { "provider": root.providerDisplayName(providerCard.providerId) })
                                     labelSize: Style.fontSizeM
                                 }
 
@@ -960,11 +942,11 @@ ColumnLayout {
 
                                     NComboBox {
                                         Layout.fillWidth: true
-                                        label: "Data source"
-                                        description: "Choose whether Codex usage is read from local files or from the ChatGPT backend API."
+                                        label: root.tr("settings.codex.sourceLabel")
+                                        description: root.tr("settings.codex.sourceDesc")
                                         model: [
-                                            { "key": "local", "name": "Local files" },
-                                            { "key": "api", "name": "API" }
+                                            { "key": "local", "name": root.tr("settings.codex.local") },
+                                            { "key": "api", "name": root.tr("settings.codex.api") }
                                         ]
                                         currentKey: providerCard.providerCfg.usageMode ?? "local"
                                         onSelected: function(key) {
@@ -975,8 +957,8 @@ ColumnLayout {
 
                                     NText {
                                         text: providerCard.providerCfg.usageMode === "api"
-                                            ? "API mode reads from the ChatGPT backend using auth from ~/.codex/auth.json. Use this when local files are unavailable or incomplete."
-                                            : "Local mode reads from ~/.codex/ files such as history.jsonl and sessions. This avoids remote polling when the local data is sufficient."
+                                            ? root.tr("settings.codex.apiHelp")
+                                            : root.tr("settings.codex.localHelp")
                                         pointSize: Style.fontSizeXS
                                         color: Color.mOnSurfaceVariant
                                         wrapMode: Text.Wrap
@@ -991,9 +973,9 @@ ColumnLayout {
 
                                     NTextInput {
                                         Layout.fillWidth: true
-                                        label: "OpenRouter API key"
-                                        description: "You can leave this empty if OPENROUTER_API_KEY is already set in your environment."
-                                        placeholderText: "OPENROUTER_API_KEY env var or enter key here"
+                                        label: root.tr("settings.apiKey.openrouterLabel")
+                                        description: root.tr("settings.apiKey.openrouterDesc")
+                                        placeholderText: root.tr("settings.apiKey.openrouterPlaceholder")
                                         text: providerCard.providerCfg.apiKey ?? ""
                                         onTextChanged: root.ensureProviderSettings("openrouter").apiKey = text
                                     }
@@ -1006,9 +988,9 @@ ColumnLayout {
 
                                     NTextInput {
                                         Layout.fillWidth: true
-                                        label: "Zen API key"
-                                        description: "You can leave this empty if OPENCODE_ZEN_API_KEY or OPENCODE_API_KEY is already set in your environment."
-                                        placeholderText: "OPENCODE_ZEN_API_KEY / OPENCODE_API_KEY env var or enter key here"
+                                        label: root.tr("settings.apiKey.zenLabel")
+                                        description: root.tr("settings.apiKey.zenDesc")
+                                        placeholderText: root.tr("settings.apiKey.zenPlaceholder")
                                         text: providerCard.providerCfg.apiKey ?? ""
                                         onTextChanged: root.ensureProviderSettings("zen").apiKey = text
                                     }
@@ -1021,9 +1003,9 @@ ColumnLayout {
 
                                     NTextInput {
                                         Layout.fillWidth: true
-                                        label: "DeepSeek API key"
-                                        description: "You can leave this empty if DEEPSEEK_API_KEY is already set in your environment."
-                                        placeholderText: "DEEPSEEK_API_KEY env var or enter key here"
+                                        label: root.tr("settings.apiKey.deepseekLabel")
+                                        description: root.tr("settings.apiKey.deepseekDesc")
+                                        placeholderText: root.tr("settings.apiKey.deepseekPlaceholder")
                                         text: providerCard.providerCfg.apiKey ?? ""
                                         onTextChanged: root.ensureProviderSettings("deepseek").apiKey = text
                                     }
@@ -1036,9 +1018,9 @@ ColumnLayout {
 
                                     NTextInput {
                                         Layout.fillWidth: true
-                                        label: "Kilo Code API key"
-                                        description: "You can leave this empty if KILO_API_KEY is set in your environment, or if you have authenticated via kilo login."
-                                        placeholderText: "KILO_API_KEY env var or enter key here"
+                                        label: root.tr("settings.apiKey.kilocodeLabel")
+                                        description: root.tr("settings.apiKey.kilocodeDesc")
+                                        placeholderText: root.tr("settings.apiKey.kilocodePlaceholder")
                                         text: providerCard.providerCfg.apiKey ?? ""
                                         onTextChanged: root.ensureProviderSettings("kilocode").apiKey = text
                                     }
@@ -1051,9 +1033,9 @@ ColumnLayout {
 
                                     NTextInput {
                                         Layout.fillWidth: true
-                                        label: "Z.ai API key"
-                                        description: "You can leave this empty if Z_AI_API_KEY is already set in your environment."
-                                        placeholderText: "Z_AI_API_KEY env var or enter key here"
+                                        label: root.tr("settings.apiKey.zaiLabel")
+                                        description: root.tr("settings.apiKey.zaiDesc")
+                                        placeholderText: root.tr("settings.apiKey.zaiPlaceholder")
                                         text: providerCard.providerCfg.apiKey ?? ""
                                         onTextChanged: root.ensureProviderSettings("zai").apiKey = text
                                     }
@@ -1067,7 +1049,7 @@ ColumnLayout {
                                         && providerCard.providerId !== "deepseek"
                                         && providerCard.providerId !== "kilocode"
                                         && providerCard.providerId !== "zai"
-                                    text: "This provider does not currently expose additional settings in the panel. Its usage data will follow the general display and refresh settings above."
+                                    text: root.tr("settings.providers.noAdditional")
                                     pointSize: Style.fontSizeXS
                                     color: Color.mOnSurfaceVariant
                                     wrapMode: Text.Wrap
@@ -1091,14 +1073,14 @@ ColumnLayout {
 
         NText {
             Layout.fillWidth: true
-            text: "Use Reset to restore manifest defaults. Save is handled by Noctalia when you apply settings."
+            text: root.tr("settings.footerHelp")
             pointSize: Style.fontSizeXS
             color: Color.mOnSurfaceVariant
             wrapMode: Text.Wrap
         }
 
         NButton {
-            text: "Reset to defaults"
+            text: root.tr("settings.reset")
             outlined: true
             onClicked: {
                 root.editSettings = JSON.parse(JSON.stringify(root.pluginApi?.manifest?.metadata?.defaultSettings ?? {}));

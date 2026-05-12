@@ -10,6 +10,7 @@ Item {
 
     Claude {
         id: claudeProvider
+        pluginApi: root.pluginApi
         providerEnabled: root.providerEnabled("claude")
         providerSettings: root.pluginSettings?.providers?.claude ?? ({})
         includeCacheTokens: root.pluginSettings?.includeCacheTokens ?? true
@@ -18,6 +19,7 @@ Item {
 
     Codex {
         id: codexProvider
+        pluginApi: root.pluginApi
         providerEnabled: root.providerEnabled("codex")
         providerSettings: root.pluginSettings?.providers?.codex ?? ({})
         includeCacheTokens: root.pluginSettings?.includeCacheTokens ?? true
@@ -27,6 +29,7 @@ Item {
 
     OpenRouter {
         id: openRouterProvider
+        pluginApi: root.pluginApi
         providerEnabled: root.providerEnabled("openrouter")
         providerSettings: root.pluginSettings?.providers?.openrouter ?? ({})
         apiRefreshIntervalMin: root.apiRefreshIntervalMin
@@ -35,6 +38,7 @@ Item {
 
     Copilot {
         id: copilotProvider
+        pluginApi: root.pluginApi
         providerEnabled: root.providerEnabled("copilot")
         providerSettings: root.pluginSettings?.providers?.copilot ?? ({})
         onRateLimitPercentChanged: root.trackProvider7dUsageChange(providerId, rateLimitPercent)
@@ -42,6 +46,7 @@ Item {
 
     Zen {
         id: zenProvider
+        pluginApi: root.pluginApi
         providerEnabled: root.providerEnabled("zen")
         providerSettings: root.pluginSettings?.providers?.zen ?? ({})
         apiRefreshIntervalMin: root.apiRefreshIntervalMin
@@ -50,6 +55,7 @@ Item {
 
     DeepSeek {
         id: deepseekProvider
+        pluginApi: root.pluginApi
         providerEnabled: root.providerEnabled("deepseek")
         providerSettings: root.pluginSettings?.providers?.deepseek ?? ({})
         onRateLimitPercentChanged: root.trackProvider7dUsageChange(providerId, rateLimitPercent)
@@ -57,6 +63,7 @@ Item {
 
     KiloCode {
         id: kiloCodeProvider
+        pluginApi: root.pluginApi
         providerEnabled: root.providerEnabled("kilocode")
         providerSettings: root.pluginSettings?.providers?.kilocode ?? ({})
         apiRefreshIntervalMin: root.apiRefreshIntervalMin
@@ -65,6 +72,7 @@ Item {
 
     Zai {
         id: zaiProvider
+        pluginApi: root.pluginApi
         providerEnabled: root.providerEnabled("zai")
         providerSettings: root.pluginSettings?.providers?.zai ?? ({})
         apiRefreshIntervalMin: root.apiRefreshIntervalMin
@@ -73,6 +81,7 @@ Item {
 
     Gemini {
         id: geminiProvider
+        pluginApi: root.pluginApi
         providerEnabled: root.providerEnabled("gemini")
         providerSettings: root.pluginSettings?.providers?.gemini ?? ({})
         apiRefreshIntervalMin: root.apiRefreshIntervalMin

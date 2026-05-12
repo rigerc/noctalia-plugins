@@ -6,15 +6,21 @@ Item {
     id: root
     visible: false
 
+    property var pluginApi: null
+
+    function tr(key, vars) {
+        return root.pluginApi?.tr(key, vars);
+    }
+
     property string providerId: "openrouter"
-    property string providerName: "OpenRouter"
+    property string providerName: root.tr("providers.names.openrouter")
     property string providerIcon: "ai"
     property string providerIconAsset: "assets/openrouter.svg"
     property bool providerEnabled: false
     property bool ready: false
 
     property real rateLimitPercent: -1
-    property string rateLimitLabel: "Spending limit"
+    property string rateLimitLabel: root.tr("providers.rateLimits.spendingLimit")
     property string rateLimitResetAt: ""
     property real secondaryRateLimitPercent: -1
     property string secondaryRateLimitLabel: ""
@@ -31,7 +37,7 @@ Item {
     property var modelUsage: ({})
 
     property string tierLabel: ""
-    property string authHelpText: "Check your OpenRouter API key."
+    property string authHelpText: root.tr("providers.help.openrouter")
     property bool hasLocalStats: true
 
     property real usageDaily: 0

@@ -8,8 +8,14 @@ Item {
     id: root
     visible: false
 
+    property var pluginApi: null
+
+    function tr(key, vars) {
+        return root.pluginApi?.tr(key, vars);
+    }
+
     property string providerId: "claude"
-    property string providerName: "Claude Code"
+    property string providerName: root.tr("providers.names.claude")
     property string providerIcon: "ai"
     property string providerIconAsset: "assets/claude.svg"
     property bool providerEnabled: false
@@ -17,10 +23,10 @@ Item {
     property string usageStatusText: ""
 
     property real rateLimitPercent: -1
-    property string rateLimitLabel: "Weekly (7-day)"
+    property string rateLimitLabel: root.tr("providers.rateLimits.weekly7d")
     property string rateLimitResetAt: ""
     property real secondaryRateLimitPercent: -1
-    property string secondaryRateLimitLabel: "Session (5-hour)"
+    property string secondaryRateLimitLabel: root.tr("providers.rateLimits.session5h")
     property string secondaryRateLimitResetAt: ""
 
     property int todayPrompts: 0
@@ -33,7 +39,7 @@ Item {
     property int totalSessions: 0
     property var modelUsage: ({})
     property string tierLabel: ""
-    property string authHelpText: "Run `claude auth login` to restore authoritative usage."
+    property string authHelpText: root.tr("providers.help.claude")
     property bool hasLocalStats: true
 
     property string oauthAccessToken: ""
@@ -101,7 +107,7 @@ Item {
         repeat: false
         onTriggered: {
             if (!root.ready)
-                root.usageStatusText = "Waiting for auth";
+                root.usageStatusText = root.tr("providers.status.waitingAuth");
         }
     }
 
@@ -169,9 +175,9 @@ Item {
             root.ready = true;
 
             if (root.authMode === "none" && !root.tierLabel) {
-                root.tierLabel = "Third-party API";
+                root.tierLabel = root.tr("providers.tiers.thirdPartyApi");
             }
-            if (root.usageStatusText === "Waiting for auth")
+            if (root.usageStatusText === root.tr("providers.status.waitingAuth"))
                 root.clearUsageStatus();
         } catch (e) {
             Logger.e("model-usage/claude", "Failed to parse ~/.claude.json:", e);
@@ -244,19 +250,19 @@ Item {
                 if (root.ready) {
                     root.clearUsageStatus();
                     if (!root.tierLabel)
-                        root.tierLabel = "Third-party API";
+                        root.tierLabel = root.tr("providers.tiers.thirdPartyApi");
                 } else {
-                    root.usageStatusText = "Waiting for auth";
+                    root.usageStatusText = root.tr("providers.status.waitingAuth");
                 }
             } else {
-                root.usageStatusText = "Token expired";
+                root.usageStatusText = root.tr("providers.status.tokenExpired");
                 root.clearAuthoritativeRateLimits();
             }
         } catch (e) {
             Logger.e("model-usage/claude", "Failed to parse credentials.json:", e);
             root.clearAuthoritativeRateLimits();
             if (!root.ready)
-                root.usageStatusText = "Waiting for auth";
+                root.usageStatusText = root.tr("providers.status.waitingAuth");
         }
     }
 
@@ -287,7 +293,7 @@ Item {
     function clearAuthoritativeRateLimits() {
         root.hasAuthoritativeRateLimit = false;
         root.rateLimitPercent = -1;
-        root.rateLimitLabel = "Weekly (7-day)";
+        root.rateLimitLabel = root.tr("providers.rateLimits.weekly7d");
         root.rateLimitResetAt = "";
         root.secondaryRateLimitPercent = -1;
         root.secondaryRateLimitLabel = "Session (5-hour)";
@@ -329,7 +335,7 @@ Item {
 
         root.hasAuthoritativeRateLimit = true;
         root.rateLimitPercent = -1;
-        root.rateLimitLabel = "Weekly (7-day)";
+        root.rateLimitLabel = root.tr("providers.rateLimits.weekly7d");
         root.rateLimitResetAt = "";
         root.secondaryRateLimitPercent = -1;
         root.secondaryRateLimitLabel = "Session (5-hour)";
@@ -382,7 +388,7 @@ Item {
             }
 
             if (xhr.status === 401 || xhr.status === 403) {
-                root.usageStatusText = "Token expired";
+                root.usageStatusText = root.tr("providers.status.tokenExpired");
                 root.clearAuthoritativeRateLimits();
                 return;
             }
@@ -454,7 +460,7 @@ Item {
         }
 
         if (root.oauthTokenExpired()) {
-            root.usageStatusText = "Token expired";
+            root.usageStatusText = root.tr("providers.status.tokenExpired");
             root.clearAuthoritativeRateLimits();
             return;
         }

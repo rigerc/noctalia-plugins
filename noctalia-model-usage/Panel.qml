@@ -17,6 +17,10 @@ Item {
     readonly property var utils: ProviderUtils {}
     readonly property color usageWarnColor: Qt.alpha(Color.mError, 0.72)
 
+    function tr(key, vars) {
+        return root.pluginApi?.tr(key, vars);
+    }
+
     readonly property var geometryPlaceholder: panelContainer
     readonly property bool allowAttach: true
     property real contentPreferredWidth: 400 * Style.uiScaleRatio
@@ -88,7 +92,7 @@ Item {
 
                     NText {
                         visible: !root.selectedProvider
-                        text: "No providers enabled. Enable providers in Settings."
+                        text: root.tr("panel.empty")
                         pointSize: Style.fontSizeM
                         color: Color.mOnSurfaceVariant
                         Layout.fillWidth: true
@@ -98,7 +102,7 @@ Item {
 
                     NText {
                         visible: root.selectedProvider && !root.selectedProvider.ready
-                        text: root.selectedProvider ? (root.selectedProvider.providerName + " — waiting for data...") : ""
+                        text: root.selectedProvider ? root.tr("panel.waiting", { "provider": root.selectedProvider.providerName }) : ""
                         pointSize: Style.fontSizeM
                         color: Color.mOnSurfaceVariant
                         Layout.fillWidth: true
@@ -120,7 +124,7 @@ Item {
                         }
 
                         NText {
-                            text: (root.selectedProvider?.providerName ?? "") + " Usage"
+                            text: root.tr("panel.usageHeading", { "provider": root.selectedProvider?.providerName ?? "" })
                             pointSize: Style.fontSizeXL
                             font.weight: Style.fontWeightBold
                             color: Color.mOnSurface
@@ -205,7 +209,7 @@ Item {
                             spacing: Style.marginM
 
                             NText {
-                                text: "Rate Limit Usage"
+                                text: root.tr("panel.rateLimitUsage")
                                 pointSize: Style.fontSizeL
                                 font.weight: Style.fontWeightSemiBold
                                 color: Color.mPrimary
@@ -279,7 +283,7 @@ Item {
 
                                 NText {
                                     visible: (root.selectedProvider?.rateLimitResetAt ?? "") !== ""
-                                    text: "Resets in " + (root.utils.formatResetTime(root.selectedProvider?.rateLimitResetAt ?? "") ?? "")
+                                    text: root.tr("panel.resetsIn", { "time": root.utils.formatResetTime(root.selectedProvider?.rateLimitResetAt ?? "") ?? "" })
                                     pointSize: Style.fontSizeXS
                                     color: Color.mOnSurfaceVariant
                                 }
@@ -354,7 +358,7 @@ Item {
 
                                 NText {
                                     visible: (root.selectedProvider?.secondaryRateLimitResetAt ?? "") !== ""
-                                    text: "Resets in " + (root.utils.formatResetTime(root.selectedProvider?.secondaryRateLimitResetAt ?? "") ?? "")
+                                    text: root.tr("panel.resetsIn", { "time": root.utils.formatResetTime(root.selectedProvider?.secondaryRateLimitResetAt ?? "") ?? "" })
                                     pointSize: Style.fontSizeXS
                                     color: Color.mOnSurfaceVariant
                                 }
@@ -380,7 +384,7 @@ Item {
                             spacing: Style.marginM
 
                             NText {
-                                text: "Today"
+                                text: root.tr("panel.today")
                                 pointSize: Style.fontSizeL
                                 font.weight: Style.fontWeightSemiBold
                                 color: Color.mPrimary
@@ -399,7 +403,7 @@ Item {
                                         color: Color.mOnSurface
                                     }
                                     NText {
-                                        text: "prompts"
+                                        text: root.tr("units.prompts")
                                         pointSize: Style.fontSizeXS
                                         color: Color.mOnSurfaceVariant
                                     }
@@ -414,7 +418,7 @@ Item {
                                         color: Color.mOnSurface
                                     }
                                     NText {
-                                        text: "sessions"
+                                        text: root.tr("units.sessions")
                                         pointSize: Style.fontSizeXS
                                         color: Color.mOnSurfaceVariant
                                     }
@@ -448,7 +452,7 @@ Item {
                                         Layout.fillWidth: true
                                     }
                                     NText {
-                                        text: (root.mainInstance?.formatTokenCount(todayDel.modelData.count) ?? "0") + " tokens"
+                                        text: root.tr("panel.tokensCount", { "count": root.mainInstance?.formatTokenCount(todayDel.modelData.count) ?? "0" })
                                         pointSize: Style.fontSizeS
                                         font.weight: Style.fontWeightSemiBold
                                         color: Color.mOnSurface
@@ -476,7 +480,7 @@ Item {
                             spacing: Style.marginS
 
                             NText {
-                                text: "Last 7 Days"
+                                text: root.tr("panel.last7Days")
                                 pointSize: Style.fontSizeL
                                 font.weight: Style.fontWeightSemiBold
                                 color: Color.mPrimary
@@ -498,8 +502,8 @@ Item {
                                             if (!d)
                                                 return "";
                                             const dt = new Date(d + "T00:00:00");
-                                            const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-                                            return days[dt.getDay()] + " " + String(dt.getMonth() + 1).padStart(2, "0") + "/" + String(dt.getDate()).padStart(2, "0");
+                                            const dayKeys = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+                                            return root.tr("time.weekdaysShort." + dayKeys[dt.getDay()]) + " " + String(dt.getMonth() + 1).padStart(2, "0") + "/" + String(dt.getDate()).padStart(2, "0");
                                         }
                                         pointSize: Style.fontSizeXS
                                         color: Color.mOnSurfaceVariant
@@ -574,7 +578,7 @@ Item {
                             spacing: Style.marginM
 
                             NText {
-                                text: "All-Time"
+                                text: root.tr("panel.allTime")
                                 pointSize: Style.fontSizeL
                                 font.weight: Style.fontWeightSemiBold
                                 color: Color.mPrimary
@@ -593,7 +597,7 @@ Item {
                                         color: Color.mOnSurface
                                     }
                                     NText {
-                                        text: "messages"
+                                        text: root.tr("units.messages")
                                         pointSize: Style.fontSizeXS
                                         color: Color.mOnSurfaceVariant
                                     }
@@ -608,7 +612,7 @@ Item {
                                         color: Color.mOnSurface
                                     }
                                     NText {
-                                        text: "sessions"
+                                        text: root.tr("units.sessions")
                                         pointSize: Style.fontSizeXS
                                         color: Color.mOnSurfaceVariant
                                     }
@@ -654,7 +658,7 @@ Item {
                                         rowSpacing: Style.marginXXS
 
                                         NText {
-                                            text: "Input"
+                                            text: root.tr("units.input")
                                             pointSize: Style.fontSizeXS
                                             color: Color.mOnSurfaceVariant
                                         }
@@ -666,7 +670,7 @@ Item {
                                         }
 
                                         NText {
-                                            text: "Output"
+                                            text: root.tr("units.output")
                                             pointSize: Style.fontSizeXS
                                             color: Color.mOnSurfaceVariant
                                         }
@@ -678,7 +682,7 @@ Item {
                                         }
 
                                         NText {
-                                            text: "Cache Read"
+                                            text: root.tr("units.cacheRead")
                                             pointSize: Style.fontSizeXS
                                             color: Color.mOnSurfaceVariant
                                         }
@@ -690,7 +694,7 @@ Item {
                                         }
 
                                         NText {
-                                            text: "Cache Write"
+                                            text: root.tr("units.cacheWrite")
                                             pointSize: Style.fontSizeXS
                                             color: Color.mOnSurfaceVariant
                                         }
@@ -712,7 +716,7 @@ Item {
 
                     NText {
                         visible: root.selectedProvider && root.mainInstance?.lastRefreshTime
-                        text: "Last refreshed: " + (root.mainInstance?.lastRefreshTime ?? "")
+                        text: root.tr("panel.lastRefreshed", { "time": root.mainInstance?.lastRefreshTime ?? "" })
                         pointSize: Style.fontSizeXS
                         color: Color.mOnSurfaceVariant
                         Layout.alignment: Qt.AlignHCenter

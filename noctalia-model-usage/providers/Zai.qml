@@ -6,15 +6,21 @@ Item {
     id: root
     visible: false
 
+    property var pluginApi: null
+
+    function tr(key, vars) {
+        return root.pluginApi?.tr(key, vars);
+    }
+
     property string providerId: "zai"
-    property string providerName: "Z.ai"
+    property string providerName: root.tr("providers.names.zai")
     property string providerIcon: "ai"
     property string providerIconAsset: "assets/zai.svg"
     property bool providerEnabled: false
     property bool ready: false
 
     property real rateLimitPercent: -1
-    property string rateLimitLabel: "Tokens"
+    property string rateLimitLabel: root.tr("providers.rateLimits.tokens")
     property string rateLimitResetAt: ""
     property real secondaryRateLimitPercent: -1
     property string secondaryRateLimitLabel: ""
@@ -31,7 +37,7 @@ Item {
     property var modelUsage: ({})
 
     property string tierLabel: ""
-    property string authHelpText: "Set Z_AI_API_KEY in your environment."
+    property string authHelpText: root.tr("providers.help.zai")
     property string usageStatusText: ""
     property bool hasLocalStats: false
 
@@ -88,7 +94,7 @@ Item {
 
     function fetchQuota() {
         if (!root.apiKey) {
-            root.usageStatusText = "No API key found. " + root.authHelpText;
+            root.usageStatusText = root.tr("providers.status.noApiKeyFound", { "help": root.authHelpText });
             return;
         }
 
@@ -102,7 +108,7 @@ Item {
             if (xhr.status !== 200) {
                 Logger.e("model-usage/zai", "Quota request failed (status " + xhr.status + ")");
                 if (xhr.status === 401 || xhr.status === 403)
-                    root.usageStatusText = "Authentication failed. " + root.authHelpText;
+                    root.usageStatusText = root.tr("providers.status.authenticationFailed", { "help": root.authHelpText });
                 return;
             }
 

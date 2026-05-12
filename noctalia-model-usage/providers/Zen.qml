@@ -6,8 +6,14 @@ Item {
     id: root
     visible: false
 
+    property var pluginApi: null
+
+    function tr(key, vars) {
+        return root.pluginApi?.tr(key, vars);
+    }
+
     property string providerId: "zen"
-    property string providerName: "Zen"
+    property string providerName: root.tr("providers.names.zen")
     property string providerIcon: "ai"
     property string providerIconAsset: "assets/opencode.svg"
     property bool providerEnabled: false
@@ -31,7 +37,7 @@ Item {
     property var modelUsage: ({})
 
     property string tierLabel: ""
-    property string authHelpText: "Check your Zen API key."
+    property string authHelpText: root.tr("providers.help.zen")
     property bool hasLocalStats: true
 
     property var providerSettings: ({})
@@ -97,16 +103,16 @@ Item {
         const hasKey = root.apiKey !== "";
 
         if (!hasKey) {
-            root.tierLabel = "API key required";
+            root.tierLabel = root.tr("providers.tiers.apiKeyRequired");
             root.ready = false;
         } else if (root.authState === "invalid") {
-            root.tierLabel = "Invalid API key";
+            root.tierLabel = root.tr("providers.tiers.invalidApiKey");
             root.ready = false;
         } else if (root.authState === "valid") {
-            root.tierLabel = "API key valid";
+            root.tierLabel = root.tr("providers.tiers.apiKeyValid");
             root.ready = root.modelsLoaded;
         } else {
-            root.tierLabel = "Checking API key...";
+            root.tierLabel = root.tr("providers.tiers.checkingApiKey");
             root.ready = root.modelsLoaded;
         }
 

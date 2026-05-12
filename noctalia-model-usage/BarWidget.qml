@@ -20,6 +20,10 @@ Item {
     property var mainInstance: root.pluginApi?.mainInstance
     property var activeProvider: root.mainInstance?.activeProvider
 
+    function tr(key, vars) {
+        return root.pluginApi?.tr(key, vars);
+    }
+
     readonly property string screenName: screen ? screen.name : ""
     readonly property string barPosition: Settings.getBarPositionForScreen(screenName)
     readonly property bool isBarVertical: barPosition === "left" || barPosition === "right"
@@ -48,12 +52,12 @@ Item {
         if (!activeProvider) {
             const ep = root.mainInstance?.barProviders ?? [];
             if (ep.length === 0)
-                return "Model Usage";
-            return "Model Usage \u2014 " + ep.length + " providers";
+                return root.tr("widget.title");
+            return root.tr("widget.title") + " — " + root.tr("widget.providerCount", { "count": ep.length });
         }
         if (!root.barCycleEnabled) {
             const ep = root.mainInstance?.barProviders ?? [];
-            let tip = "All providers:";
+            let tip = root.tr("widget.allProviders");
             for (const p of ep) {
                 tip += "\n" + p.providerName + ": " + root.providerDisplayText(p);
                 const rl = p.rateLimitPercent;
@@ -66,10 +70,10 @@ Item {
         const prompts = activeProvider.todayPrompts;
         const sess = activeProvider.todaySessions;
         const tokens = root.mainInstance?.formatTokenCount(root.activeProvider.todayTotalTokens) ?? "0";
-        let tip = name + " \u2014 Today: " + prompts + " prompts, " + sess + " sessions, " + tokens + " tokens";
+        let tip = root.tr("widget.todaySummary", { "provider": name, "prompts": prompts, "sessions": sess, "tokens": tokens });
         const rl = activeProvider.rateLimitPercent;
         if (rl >= 0)
-            tip += " \u00b7 " + activeProvider.rateLimitLabel + ": " + Math.round(rl * 100) + "%";
+            tip += " · " + root.tr("widget.rateLimitFragment", { "label": activeProvider.rateLimitLabel, "percent": Math.round(rl * 100) });
         else if ((activeProvider.usageStatusText ?? "") !== "")
             tip += " \u00b7 " + activeProvider.usageStatusText;
         return tip;
@@ -113,7 +117,7 @@ Item {
     function formatUsageWithPrefix(percent, prefix) {
         if (!(percent >= 0))
             return "—";
-        return prefix + ": " + root.formatUsagePercent(percent);
+        return root.tr("widget.usagePrefix", { "prefix": prefix, "value": root.formatUsagePercent(percent) });
     }
 
     function providerDisplayText(provider) {
@@ -182,17 +186,17 @@ Item {
 
         model: [
             {
-                "label": "Refresh",
+                "label": root.tr("menu.refresh"),
                 "action": "refresh",
                 "icon": "refresh"
             },
             {
-                "label": root.barTextShowOnHover ? "Show text always" : "Show text on hover",
+                "label": root.barTextShowOnHover ? root.tr("widget.showTextAlways") : root.tr("widget.showTextOnHover"),
                 "action": "toggle-show-on-hover",
                 "icon": root.barTextShowOnHover ? "eye-off" : "eye"
             },
             {
-                "label": "Settings",
+                "label": root.tr("menu.settings"),
                 "action": "settings",
                 "icon": "settings"
             },

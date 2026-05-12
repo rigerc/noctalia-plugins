@@ -7,18 +7,24 @@ Item {
     id: root
     visible: false
 
+    property var pluginApi: null
+
+    function tr(key, vars) {
+        return root.pluginApi?.tr(key, vars);
+    }
+
     property string providerId: "gemini"
-    property string providerName: "Gemini"
+    property string providerName: root.tr("providers.names.gemini")
     property string providerIcon: "ai"
     property string providerIconAsset: "assets/geminicli.svg"
     property bool providerEnabled: false
     property bool ready: false
 
     property real rateLimitPercent: -1
-    property string rateLimitLabel: "Pro models"
+    property string rateLimitLabel: root.tr("providers.rateLimits.proModels")
     property string rateLimitResetAt: ""
     property real secondaryRateLimitPercent: -1
-    property string secondaryRateLimitLabel: "Flash models"
+    property string secondaryRateLimitLabel: root.tr("providers.rateLimits.flashModels")
     property string secondaryRateLimitResetAt: ""
 
     property int todayPrompts: 0
@@ -32,7 +38,7 @@ Item {
     property var modelUsage: ({})
 
     property string tierLabel: ""
-    property string authHelpText: "Run gemini auth to authenticate."
+    property string authHelpText: root.tr("providers.help.gemini")
     property string usageStatusText: ""
     property bool hasLocalStats: false
 
@@ -87,12 +93,12 @@ Item {
                     root.fetchAll();
             } catch (e) {
                 Logger.d("model-usage/gemini", "Failed to parse oauth_creds.json: " + e);
-                root.usageStatusText = "Could not read ~/.gemini/oauth_creds.json. " + root.authHelpText;
+                root.usageStatusText = root.tr("providers.status.couldNotReadGeminiCreds", { "help": root.authHelpText });
             }
         }
         onLoadFailed: error => {
             if (error === FileViewError.FileNotFound) {
-                root.usageStatusText = "Not authenticated. " + root.authHelpText;
+                root.usageStatusText = root.tr("providers.status.notAuthenticatedHelp", { "help": root.authHelpText });
             } else {
                 Logger.d("model-usage/gemini", "Creds file load failed: " + error);
             }
@@ -146,7 +152,7 @@ Item {
                 }
             } else {
                 Logger.e("model-usage/gemini", "Token refresh failed (status " + xhr.status + ")");
-                root.usageStatusText = "Token refresh failed. " + root.authHelpText;
+                root.usageStatusText = root.tr("providers.status.tokenRefreshFailed", { "help": root.authHelpText });
             }
         };
 
@@ -174,7 +180,7 @@ Item {
             if (xhr.status !== 200) {
                 Logger.e("model-usage/gemini", "retrieveUserQuota failed (status " + xhr.status + ")");
                 if (xhr.status === 401 || xhr.status === 403)
-                    root.usageStatusText = "Authentication failed. " + root.authHelpText;
+                    root.usageStatusText = root.tr("providers.status.authenticationFailed", { "help": root.authHelpText });
                 return;
             }
             try {
@@ -268,13 +274,13 @@ Item {
         const hasHd = Array.isArray(claims) && claims.some(c => String(c).toLowerCase().includes("hd"));
 
         if (tier.includes("standard"))
-            root.tierLabel = "Paid";
+            root.tierLabel = root.tr("providers.tiers.paid");
         else if (tier.includes("legacy"))
-            root.tierLabel = "Legacy";
+            root.tierLabel = root.tr("providers.tiers.legacy");
         else if (tier.includes("free") && hasHd)
-            root.tierLabel = "Workspace";
+            root.tierLabel = root.tr("providers.tiers.workspace");
         else if (tier.includes("free"))
-            root.tierLabel = "Free";
+            root.tierLabel = root.tr("providers.tiers.free");
         else
             root.tierLabel = tier || "";
     }
