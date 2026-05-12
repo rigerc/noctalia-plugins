@@ -398,32 +398,32 @@ Item {
             root.tierLabel = pt.charAt(0).toUpperCase() + pt.slice(1);
         }
 
-        // Primary rate limit (short window, e.g. 5h for Plus)
+        // Primary rate limit (short window, e.g. 5h for Plus) → secondaryRateLimitPercent (5h slot)
         const primary = data.rate_limit?.primary_window;
         if (primary && typeof primary.used_percent === "number" && isFinite(primary.used_percent)) {
-            root.rateLimitPercent = Math.min(1, Math.max(0, primary.used_percent / 100));
+            root.secondaryRateLimitPercent = Math.min(1, Math.max(0, primary.used_percent / 100));
             const windowSec = primary.limit_window_seconds ?? 0;
-            if (windowSec > 0) {
-                if (windowSec >= 86400)
-                    root.rateLimitLabel = Math.round(windowSec / 86400) + "-day window";
-                else
-                    root.rateLimitLabel = Math.round(windowSec / 3600) + "h window";
-            }
-            root.rateLimitResetAt = root.unixToIso(primary.reset_at);
-        }
-
-        // Secondary rate limit (long window, e.g. 7-day)
-        const secondary = data.rate_limit?.secondary_window;
-        if (secondary && typeof secondary.used_percent === "number" && isFinite(secondary.used_percent)) {
-            root.secondaryRateLimitPercent = Math.min(1, Math.max(0, secondary.used_percent / 100));
-            const windowSec = secondary.limit_window_seconds ?? 0;
             if (windowSec > 0) {
                 if (windowSec >= 86400)
                     root.secondaryRateLimitLabel = Math.round(windowSec / 86400) + "-day window";
                 else
                     root.secondaryRateLimitLabel = Math.round(windowSec / 3600) + "h window";
             }
-            root.secondaryRateLimitResetAt = root.unixToIso(secondary.reset_at);
+            root.secondaryRateLimitResetAt = root.unixToIso(primary.reset_at);
+        }
+
+        // Secondary rate limit (long window, e.g. 7-day) → rateLimitPercent (7d slot)
+        const secondary = data.rate_limit?.secondary_window;
+        if (secondary && typeof secondary.used_percent === "number" && isFinite(secondary.used_percent)) {
+            root.rateLimitPercent = Math.min(1, Math.max(0, secondary.used_percent / 100));
+            const windowSec = secondary.limit_window_seconds ?? 0;
+            if (windowSec > 0) {
+                if (windowSec >= 86400)
+                    root.rateLimitLabel = Math.round(windowSec / 86400) + "-day window";
+                else
+                    root.rateLimitLabel = Math.round(windowSec / 3600) + "h window";
+            }
+            root.rateLimitResetAt = root.unixToIso(secondary.reset_at);
         }
 
         // Limit reached status

@@ -223,6 +223,7 @@ Item {
     }
 
     function parseCredentials(content) {
+        if (!root.providerEnabled || root.useCodexbar) return;
         try {
             const data = JSON.parse(content);
             const oauth = data.claudeAiOauth ?? {};
@@ -454,6 +455,7 @@ Item {
 
 
     function probeRateLimits() {
+        if (!root.providerEnabled || root.useCodexbar) return;
         if (!root.oauthAccessToken || root.authMode !== "oauth") {
             root.clearAuthoritativeRateLimits();
             return;

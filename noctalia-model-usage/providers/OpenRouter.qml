@@ -38,6 +38,7 @@ Item {
 
     property string tierLabel: ""
     property string authHelpText: root.tr("providers.help.openrouter")
+    property string usageStatusText: ""
     property bool hasLocalStats: true
 
     property real usageDaily: 0

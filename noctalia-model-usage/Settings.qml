@@ -91,6 +91,11 @@ ColumnLayout {
         return root.codexbarProviderIds.indexOf(String(id || "")) !== -1;
     }
 
+    function codexbarName(providerId) {
+        const map = { kilocode: "kilo", zen: "opencode" };
+        return map[providerId] ?? providerId;
+    }
+
     function ensureProviderSettings(id) {
         if (!root.editSettings)
             root.editSettings = {};
@@ -907,11 +912,16 @@ ColumnLayout {
 
                                     CodexbarFetcher {
                                         id: codexbarChecker
-                                        codexbarProvider: providerCard.providerId
-                                        onDataReady: _ => { codexbarSection.checkState = "ok" }
+                                        codexbarProvider: root.codexbarName(providerCard.providerId)
+                                        onDataReady: _ => {
+                                            if (providerCard.providerCfg.useCodexbar)
+                                                codexbarSection.checkState = "ok";
+                                        }
                                         onFetchError: message => {
-                                            codexbarSection.checkState = "error";
-                                            codexbarSection.checkError = message;
+                                            if (providerCard.providerCfg.useCodexbar) {
+                                                codexbarSection.checkState = "error";
+                                                codexbarSection.checkError = message;
+                                            }
                                         }
                                     }
 

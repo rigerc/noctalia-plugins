@@ -38,6 +38,7 @@ Item {
 
     property string tierLabel: ""
     property string authHelpText: root.tr("providers.help.zen")
+    property string usageStatusText: ""
     property bool hasLocalStats: true
 
     property var providerSettings: ({})
