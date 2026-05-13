@@ -48,6 +48,7 @@ Item {
     property bool useCodexbar: root.providerSettings?.useCodexbar ?? false
     readonly property string codexbarProviderName: "kilo"
     property var utils: ProviderUtils {}
+    readonly property var providerData: ProviderDataMapper {}
     property int refreshIntervalSec: 30
     property double lastApiRefreshAtMs: 0
 
@@ -198,49 +199,11 @@ Item {
 
 
     function applyCodexbarData(result) {
-        const usage = result?.usage ?? null;
-        const primary = usage?.primary ?? null;
-        const secondary = usage?.secondary ?? null;
-        const identity = usage?.identity ?? null;
-        const credits = result?.credits ?? null;
-
-        if (secondary) {
-            root.rateLimitPercent = Math.min(1, Math.max(0, Number(secondary.usedPercent ?? 0) / 100));
-            root.rateLimitLabel = utils.windowMinutesToLabel(secondary.windowMinutes) || "7d";
-            root.rateLimitResetAt = secondary.resetsAt ?? "";
-        } else {
-            root.rateLimitPercent = -1;
-            root.rateLimitLabel = "";
-            root.rateLimitResetAt = "";
-        }
-
-        if (primary) {
-            root.secondaryRateLimitPercent = Math.min(1, Math.max(0, Number(primary.usedPercent ?? 0) / 100));
-            root.secondaryRateLimitLabel = utils.windowMinutesToLabel(primary.windowMinutes) || "5h";
-            root.secondaryRateLimitResetAt = primary.resetsAt ?? "";
-        } else {
-            root.secondaryRateLimitPercent = -1;
-            root.secondaryRateLimitLabel = "";
-            root.secondaryRateLimitResetAt = "";
-        }
-
-        if (!secondary && credits && Number(credits.total ?? 0) > 0) {
-            const used = Number(credits.used ?? 0);
-            const total = Number(credits.total ?? 0);
-            root.rateLimitPercent = Math.min(1, Math.max(0, used / total));
-            root.rateLimitLabel = "Credits ($" + used.toFixed(2) + " / $" + total.toFixed(2) + ")";
-            root.rateLimitResetAt = "";
-        }
-
-        root.tierLabel = identity?.loginMethod ?? root.tierLabel;
-        root.usageStatusText = "";
-        root.ready = true;
+        providerData.applyCodexbarData(root, result, utils);
     }
 
     function shouldRefreshApi(force) {
-        if (force || root.lastApiRefreshAtMs <= 0)
-            return true;
-        return (Date.now() - root.lastApiRefreshAtMs) >= Math.max(5, root.refreshIntervalSec) * 1000;
+        return providerData.shouldRefresh(root.lastApiRefreshAtMs, root.refreshIntervalSec, force === true);
     }
 
     function refresh(force) {

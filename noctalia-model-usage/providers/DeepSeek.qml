@@ -45,6 +45,7 @@ Item {
 
     property var providerSettings: ({})
     property var utils: ProviderUtils {}
+    readonly property var providerData: ProviderDataMapper {}
     property string apiKey: {
         const envKey = Quickshell.env("DEEPSEEK_API_KEY") ?? "";
         return envKey || (providerSettings?.apiKey ?? "");
@@ -137,9 +138,7 @@ Item {
     }
 
     function shouldRefreshApi(force) {
-        if (force || root.lastApiRefreshAtMs <= 0)
-            return true;
-        return (Date.now() - root.lastApiRefreshAtMs) >= Math.max(5, root.refreshIntervalSec) * 1000;
+        return providerData.shouldRefresh(root.lastApiRefreshAtMs, root.refreshIntervalSec, force === true);
     }
 
     function refresh(force) {
