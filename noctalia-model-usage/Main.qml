@@ -124,7 +124,17 @@ Item {
 
     property var manualProviderOrder: root.normalizedProviderOrder(pluginSettings?.providerOrder)
 
-    property var effectiveProviderOrder: {
+    property var enabledProviders: {
+        const result = [];
+        for (const id of root.manualProviderOrder) {
+            const p = root.providerMap[id];
+            if (p && p.providerEnabled)
+                result.push(p);
+        }
+        return result;
+    }
+
+    property var barProviderOrder: {
         root.providerSortRevision;
         const order = root.manualProviderOrder.slice();
         const usageWindow = root.recentChangeUsageWindow();
@@ -145,22 +155,13 @@ Item {
         });
     }
 
-    property var enabledProviders: {
-        const result = [];
-        for (const id of root.effectiveProviderOrder) {
-            const p = root.providerMap[id];
-            if (p && p.providerEnabled)
-                result.push(p);
-        }
-        return result;
-    }
-
-    // Bar-only filtered subset (respects showInWidget)
+    // Bar-only filtered subset (respects showInWidget and recent-change ordering)
     property var barProviders: {
         const result = [];
-        for (const p of root.enabledProviders) {
-            const ps = pluginSettings?.providers?.[p.providerId] ?? {};
-            if (ps.showInWidget !== false)
+        for (const id of root.barProviderOrder) {
+            const p = root.providerMap[id];
+            const ps = pluginSettings?.providers?.[id] ?? {};
+            if (p && p.providerEnabled && ps.showInWidget !== false)
                 result.push(p);
         }
         if (root.recentChangeUsageWindow() !== "")
