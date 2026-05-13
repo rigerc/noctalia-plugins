@@ -21,6 +21,21 @@ ColumnLayout {
         return root.pluginApi?.tr(key, vars);
     }
 
+    function refreshIntervalMinutes() {
+        return Math.max(1, Math.min(360, Math.ceil(Number(root.editSettings?.refreshIntervalSec ?? 60) / 60)));
+    }
+
+    function formatRefreshInterval(seconds) {
+        const mins = Math.max(1, Math.ceil(Number(seconds ?? 60) / 60));
+        if (mins < 60)
+            return root.tr("settings.refresh.minutesValue", { "count": mins });
+        const hours = Math.floor(mins / 60);
+        const rem = mins % 60;
+        if (rem === 0)
+            return root.tr("settings.refresh.hoursValue", { "count": hours });
+        return root.tr("settings.refresh.hoursMinutesValue", { "hours": hours, "minutes": rem });
+    }
+
     readonly property var providerCatalog: ProviderCatalog {}
     readonly property var normalizedEditProviderOrder: providerCatalog.normalizeProviderOrder(root.editSettings?.providerOrder)
 
@@ -416,16 +431,48 @@ ColumnLayout {
                         defaultValue: root.defaults.includeCacheTokens ?? true
                     }
 
-                    NSpinBox {
+                    ColumnLayout {
                         Layout.fillWidth: true
-                        label: root.tr("settings.refresh.intervalLabel")
-                        description: root.tr("settings.refresh.intervalDesc")
-                        from: 5
-                        to: 21600
-                        value: root.editSettings?.refreshIntervalSec ?? 30
-                        stepSize: 5
-                        onValueChanged: root.editSettings.refreshIntervalSec = value
-                        defaultValue: root.defaults.refreshIntervalSec ?? 30
+                        spacing: Style.marginS
+
+                        NLabel {
+                            Layout.fillWidth: true
+                            label: root.tr("settings.refresh.intervalLabel")
+                            description: root.tr("settings.refresh.intervalDesc")
+                            showIndicator: root.refreshIntervalMinutes() * 60 !== Math.ceil(Number(root.defaults.refreshIntervalSec ?? 60) / 60) * 60
+                            indicatorTooltip: root.tr("settings.refresh.defaultInterval", {
+                                "time": root.formatRefreshInterval(root.defaults.refreshIntervalSec ?? 60)
+                            })
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: Style.marginL
+
+                            NSlider {
+                                id: refreshIntervalSlider
+                                Layout.fillWidth: true
+                                from: 1
+                                to: 360
+                                stepSize: 1
+                                value: root.refreshIntervalMinutes()
+                                snapAlways: true
+                                tooltipText: root.formatRefreshInterval(value * 60)
+                                onMoved: {
+                                    root.editSettings.refreshIntervalSec = Math.ceil(refreshIntervalSlider.value) * 60;
+                                    root.editSettingsChanged();
+                                }
+                            }
+
+                            NText {
+                                Layout.alignment: Qt.AlignVCenter
+                                Layout.preferredWidth: 90 * Style.uiScaleRatio
+                                horizontalAlignment: Text.AlignRight
+                                text: root.formatRefreshInterval(root.editSettings?.refreshIntervalSec ?? 60)
+                                pointSize: Style.fontSizeM
+                                color: Color.mOnSurface
+                            }
+                        }
                     }
                 }
             }

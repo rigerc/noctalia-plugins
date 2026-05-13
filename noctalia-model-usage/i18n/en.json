@@ -92,8 +92,12 @@
       "desc": "Control how often network-backed provider data is refreshed.",
       "cacheLabel": "Include cache tokens in token count",
       "cacheDesc": "Counts cache read and cache write tokens in totals wherever the provider exposes them. Disable this if you want to focus only on direct input and output tokens.",
-      "intervalLabel": "Network refresh interval (seconds)",
-      "intervalDesc": "How often to poll API and codexbar-backed providers. Local file providers still use file watching and their own lightweight fallback polling when needed."
+      "intervalLabel": "Network refresh interval",
+      "intervalDesc": "How often to poll API and codexbar-backed providers. Values are rounded up to whole minutes, up to 6 hours.",
+      "defaultInterval": "Default: {time}",
+      "minutesValue": "{count} min",
+      "hoursValue": "{count} hr",
+      "hoursMinutesValue": "{hours} hr {minutes} min"
     },
     "providers": {
       "label": "Providers",
