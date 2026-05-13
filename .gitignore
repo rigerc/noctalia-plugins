@@ -37,3 +37,8 @@ opencode.json
 
 # Pi project-local packages (if using pi install -l)
 .pi/npm/
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key

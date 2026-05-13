@@ -190,65 +190,27 @@ ColumnLayout {
         iconColor: Color.mPrimary
     }
 
-    NBox {
+    NTabBar {
+        id: settingsTabBar
         Layout.fillWidth: true
-        implicitHeight: summaryBody.implicitHeight + Style.marginXL * 2
 
-        ColumnLayout {
-            id: summaryBody
-            anchors.fill: parent
-            anchors.margins: Style.marginXL
-            spacing: Style.marginL
-
-            NHeader {
-                Layout.fillWidth: true
-                label: root.tr("settings.overview.label")
-                description: root.tr("settings.overview.desc")
-            }
-
-            Flow {
-                Layout.fillWidth: true
-                spacing: Style.marginM
-
-                Repeater {
-                    model: [
-                        { "label": root.tr("settings.summary.enabled"), "value": String(root.enabledProviderCount) },
-                        { "label": root.tr("settings.summary.shownInBar"), "value": String(root.shownInBarCount) },
-                        { "label": root.tr("settings.summary.barMetric"), "value": root.barMetricLabel(root.editSettings?.barMetric ?? "prompts") },
-                        { "label": root.tr("settings.summary.orderMode"), "value": (root.editSettings?.providerOrderMode ?? "manual") === "recent7dChange" ? root.tr("settings.summary.recent7dChange") : root.tr("settings.summary.manual") }
-                    ]
-
-                    delegate: NBox {
-                        id: summaryChip
-                        required property var modelData
-                        implicitHeight: chipContent.implicitHeight + Style.marginS * 2
-                        implicitWidth: Math.max(140 * Style.uiScaleRatio, chipContent.implicitWidth + Style.marginM * 2)
-
-                        ColumnLayout {
-                            id: chipContent
-                            anchors.fill: parent
-                            anchors.margins: Style.marginS
-                            spacing: 0
-
-                            NText {
-                                text: summaryChip.modelData.label
-                                pointSize: Style.fontSizeXS
-                                color: Color.mOnSurfaceVariant
-                            }
-
-                            NText {
-                                text: summaryChip.modelData.value
-                                pointSize: Style.fontSizeM
-                                font.weight: Style.fontWeightSemiBold
-                                color: Color.mOnSurface
-                                wrapMode: Text.Wrap
-                            }
-                        }
-                    }
-                }
-            }
+        NTabButton {
+            tabIndex: 0
+            text: root.tr("settings.general.label")
+            icon: "adjustments-horizontal"
+            checked: settingsTabBar.currentIndex === 0
+        }
+        NTabButton {
+            tabIndex: 1
+            text: root.tr("settings.providers.label")
+            icon: "plug-connected"
+            checked: settingsTabBar.currentIndex === 1
         }
     }
+
+    NTabView {
+        Layout.fillWidth: true
+        currentIndex: settingsTabBar.currentIndex
 
     NBox {
         Layout.fillWidth: true
@@ -260,12 +222,6 @@ ColumnLayout {
             anchors.margins: Style.marginXL
             spacing: Style.marginXL * 2
 
-            NHeader {
-                Layout.fillWidth: true
-                label: root.tr("settings.general.label")
-                description: root.tr("settings.general.desc")
-            }
-
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: Style.marginXL
@@ -275,6 +231,7 @@ ColumnLayout {
                     label: root.tr("settings.barDisplay.label")
                     description: root.tr("settings.barDisplay.desc")
                     labelSize: Style.fontSizeL
+                    icon: "layout-navbar"
                 }
 
                 RowLayout {
@@ -402,6 +359,7 @@ ColumnLayout {
                     label: root.tr("settings.usageDisplay.label")
                     description: root.tr("settings.usageDisplay.desc")
                     labelSize: Style.fontSizeL
+                    icon: "chart-pie"
                 }
 
                 NText {
@@ -561,6 +519,7 @@ ColumnLayout {
                     label: root.tr("settings.refresh.label")
                     description: root.tr("settings.refresh.desc")
                     labelSize: Style.fontSizeL
+                    icon: "refresh"
                 }
 
                 RowLayout {
@@ -663,12 +622,6 @@ ColumnLayout {
             anchors.fill: parent
             anchors.margins: Style.marginXL
             spacing: Style.marginL
-
-            NHeader {
-                Layout.fillWidth: true
-                label: root.tr("settings.providers.label")
-                description: root.tr("settings.providers.desc")
-            }
 
             NComboBox {
                 Layout.fillWidth: true
@@ -889,6 +842,7 @@ ColumnLayout {
                                     label: root.tr("settings.providers.detailsLabel")
                                     description: root.tr("settings.providers.detailsDesc", { "provider": root.providerDisplayName(providerCard.providerId) })
                                     labelSize: Style.fontSizeL
+                                    icon: "settings-2"
                                 }
 
                                 ColumnLayout {
@@ -1119,6 +1073,8 @@ ColumnLayout {
                 }
             }
         }
+    }
+
     }
 
     Item {
