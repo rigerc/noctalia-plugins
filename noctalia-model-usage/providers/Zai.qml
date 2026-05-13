@@ -46,6 +46,7 @@ Item {
     readonly property string codexbarProviderName: "zai"
     property var utils: ProviderUtils {}
     property int apiRefreshIntervalMin: 1
+    property double lastApiRefreshAtMs: 0
 
     readonly property string apiKey: {
         const envKey = Quickshell.env("Z_AI_API_KEY") ?? "";
@@ -99,6 +100,7 @@ Item {
             return;
         }
 
+        root.lastApiRefreshAtMs = Date.now();
         const xhr = new XMLHttpRequest();
         xhr.open("GET", root.quotaUrl);
         xhr.setRequestHeader("Authorization", "Bearer " + root.apiKey);
@@ -234,13 +236,19 @@ Item {
         root.ready = true;
     }
 
-    function refresh() {
+    function shouldRefreshApi(force) {
+        if (force || root.lastApiRefreshAtMs <= 0)
+            return true;
+        return (Date.now() - root.lastApiRefreshAtMs) >= root.apiRefreshIntervalMin * 60 * 1000;
+    }
+
+    function refresh(force) {
         if (root.useCodexbar) {
             codexbarFetcher.fetch();
             return;
         }
 
-        if (root.apiKey !== "")
+        if (root.apiKey !== "" && root.shouldRefreshApi(force === true))
             fetchQuota();
     }
 }

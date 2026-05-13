@@ -48,6 +48,7 @@ Item {
     property string ghToken: ""
     property double lastRefreshAtMs: 0
     property int refreshMinIntervalMs: 5 * 60 * 1000
+    property int tokenProcessTimeoutMs: 30000
     property var providerSettings: ({})
     property bool useCodexbar: root.providerSettings?.useCodexbar ?? false
     readonly property string codexbarProviderName: "copilot"
@@ -87,12 +88,28 @@ Item {
         }
         // qmllint disable signal-handler-parameters
         onExited: (code) => {
+            tokenTimeoutTimer.stop();
             if (code !== 0) {
                 Logger.e("model-usage/copilot", "gh auth token failed (exit " + code + ")");
                 root.usageStatusText = root.tr("providers.status.notAuthenticated");
                 root.ready = false;
                 root.clearRateLimits();
             }
+        }
+    }
+
+    Timer {
+        id: tokenTimeoutTimer
+        interval: root.tokenProcessTimeoutMs
+        repeat: false
+        onTriggered: {
+            if (!tokenProcess.running)
+                return;
+            tokenProcess.running = false;
+            Logger.e("model-usage/copilot", "gh auth token timed out");
+            root.usageStatusText = root.tr("providers.status.notAuthenticated");
+            root.ready = false;
+            root.clearRateLimits();
         }
     }
 
@@ -113,9 +130,10 @@ Item {
     }
 
     function refreshToken() {
-        if (root.useCodexbar)
+        if (root.useCodexbar || tokenProcess.running)
             return;
         tokenProcess.running = true;
+        tokenTimeoutTimer.restart();
     }
 
     function fetchUsage() {
@@ -269,14 +287,14 @@ Item {
         root.ready = true;
     }
 
-    function refresh() {
+    function refresh(force) {
         if (root.useCodexbar) {
             codexbarFetcher.fetch();
             return;
         }
 
         const now = Date.now();
-        if (root.lastRefreshAtMs > 0 && (now - root.lastRefreshAtMs) < root.refreshMinIntervalMs)
+        if (force !== true && root.lastRefreshAtMs > 0 && (now - root.lastRefreshAtMs) < root.refreshMinIntervalMs)
             return;
         root.lastRefreshAtMs = now;
         refreshToken();

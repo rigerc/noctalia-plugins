@@ -47,6 +47,7 @@ Item {
     readonly property string codexbarProviderName: "kilo"
     property var utils: ProviderUtils {}
     property int apiRefreshIntervalMin: 1
+    property double lastApiRefreshAtMs: 0
 
     property string _accessToken: ""
 
@@ -118,6 +119,7 @@ Item {
             return;
         }
 
+        root.lastApiRefreshAtMs = Date.now();
         const input = encodeURIComponent(JSON.stringify({ "0": {}, "1": {} }));
         const url = "https://app.kilo.ai/api/trpc/user.getCreditBlocks,kiloPass.getState?batch=1&input=" + input;
 
@@ -237,13 +239,19 @@ Item {
         root.ready = true;
     }
 
-    function refresh() {
+    function shouldRefreshApi(force) {
+        if (force || root.lastApiRefreshAtMs <= 0)
+            return true;
+        return (Date.now() - root.lastApiRefreshAtMs) >= root.apiRefreshIntervalMin * 60 * 1000;
+    }
+
+    function refresh(force) {
         if (root.useCodexbar) {
             codexbarFetcher.fetch();
             return;
         }
 
-        if (root.effectiveToken !== "")
+        if (root.effectiveToken !== "" && root.shouldRefreshApi(force === true))
             fetchUsage();
     }
 }

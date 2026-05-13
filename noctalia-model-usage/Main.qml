@@ -207,14 +207,14 @@ Item {
         id: initialRefreshTimer
         interval: 1
         repeat: false
-        onTriggered: root.refreshAll()
+        onTriggered: root.refreshAll(true)
     }
 
     Timer {
         interval: root.refreshIntervalSec * 1000
         running: true
         repeat: true
-        onTriggered: root.refreshAll()
+        onTriggered: root.refreshAll(false)
     }
 
     Timer {
@@ -265,7 +265,11 @@ Item {
         seenByWindow[usageWindow] = seen;
         root.lastSeenPercentByWindow = seenByWindow;
 
-        if (previous === undefined || previous === roundedPercent)
+        if (previous === undefined) {
+            root.schedulePersistRecentChangeState();
+            return;
+        }
+        if (previous === roundedPercent)
             return;
 
         root.providerChangeSequence += 1;
@@ -299,16 +303,16 @@ Item {
     }
 
     function refresh() {
-        refreshAll();
+        refreshAll(true);
     }
 
     property string lastRefreshTime: ""
 
-    function refreshAll() {
+    function refreshAll(forceApiRefresh) {
         root.refreshTimestamp();
         for (const p of providers) {
             if (p.providerEnabled)
-                p.refresh();
+                p.refresh(forceApiRefresh === true);
         }
     }
 

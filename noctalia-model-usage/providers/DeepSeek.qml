@@ -53,6 +53,8 @@ Item {
     property real grantedBalance: 0
     property real toppedUpBalance: 0
     property string currency: ""
+    property double lastApiRefreshAtMs: 0
+    readonly property int apiRefreshIntervalMin: 5
 
     Timer {
         interval: 5 * 60 * 1000
@@ -78,6 +80,7 @@ Item {
         if (!root.apiKey)
             return;
 
+        root.lastApiRefreshAtMs = Date.now();
         const xhr = new XMLHttpRequest();
         xhr.open("GET", "https://api.deepseek.com/user/balance");
         xhr.setRequestHeader("Authorization", "Bearer " + root.apiKey);
@@ -135,8 +138,14 @@ Item {
         }
     }
 
-    function refresh() {
-        if (root.apiKey !== "")
+    function shouldRefreshApi(force) {
+        if (force || root.lastApiRefreshAtMs <= 0)
+            return true;
+        return (Date.now() - root.lastApiRefreshAtMs) >= root.apiRefreshIntervalMin * 60 * 1000;
+    }
+
+    function refresh(force) {
+        if (root.apiKey !== "" && root.shouldRefreshApi(force === true))
             fetchBalance();
     }
 

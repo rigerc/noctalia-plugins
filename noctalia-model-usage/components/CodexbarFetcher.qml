@@ -11,6 +11,7 @@ Item {
     property bool _completed: false
     property string _stdout: ""
     property string _stderr: ""
+    property int timeoutMs: 30000
 
     signal dataReady(var result)
     signal fetchError(string message)
@@ -24,11 +25,13 @@ Item {
         root._stdout = "";
         root._stderr = "";
         proc.running = true;
+        timeoutTimer.restart();
     }
 
     function completeWithError(message) {
         if (!root._fetchActive || root._completed)
             return;
+        timeoutTimer.stop();
         root._completed = true;
         root._fetchActive = false;
         root.fetchError(message);
@@ -37,9 +40,22 @@ Item {
     function completeWithData(result) {
         if (!root._fetchActive || root._completed)
             return;
+        timeoutTimer.stop();
         root._completed = true;
         root._fetchActive = false;
         root.dataReady(result);
+    }
+
+    Timer {
+        id: timeoutTimer
+        interval: root.timeoutMs
+        repeat: false
+        onTriggered: {
+            if (!root._fetchActive || root._completed)
+                return;
+            proc.running = false;
+            root.completeWithError("codexbar timed out");
+        }
     }
 
     Process {

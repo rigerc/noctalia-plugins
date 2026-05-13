@@ -56,7 +56,7 @@ Item {
     property int apiRefreshIntervalMin: 1
 
     property double _lastApiRefreshMs: 0
-    readonly property int _apiRefreshMinIntervalMs: 60000
+    readonly property int _apiRefreshMinIntervalMs: root.apiRefreshIntervalMin * 60 * 1000
 
     property var utils: ProviderUtils {}
 
@@ -249,7 +249,8 @@ Item {
     }
 
     function scanSessions() {
-        sessionLister.running = true;
+        if (!sessionLister.running)
+            sessionLister.running = true;
     }
 
     function parseSessionList(output) {
@@ -538,7 +539,7 @@ Item {
         root.ready = true;
     }
 
-    function refresh() {
+    function refresh(force) {
         if (root.useCodexbar) {
             codexbarFetcher.fetch();
             return;
@@ -554,7 +555,8 @@ Item {
             historyFile.reload();
             configFile.reload();
             authFile.reload();
-            root.scanSessions();
+            if (force === true)
+                root.scanSessions();
         }
     }
 

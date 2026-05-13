@@ -363,6 +363,8 @@ Item {
         Item {
             id: content
             anchors.centerIn: parent
+            width: implicitWidth
+            height: implicitHeight
             implicitWidth: {
                 if (!root.barCycleEnabled)
                     return root.isBarVertical ? allColLayout.implicitWidth : allRowLayout.implicitWidth;

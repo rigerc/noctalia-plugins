@@ -56,6 +56,7 @@ Item {
     }
 
     property int apiRefreshIntervalMin: 1
+    property double lastApiRefreshAtMs: 0
 
     property var utils: ProviderUtils {}
 
@@ -95,6 +96,7 @@ Item {
         if (!root.apiKey)
             return;
 
+        root.lastApiRefreshAtMs = Date.now();
         const xhr = new XMLHttpRequest();
         xhr.open("GET", "https://openrouter.ai/api/v1/key");
         xhr.setRequestHeader("Authorization", "Bearer " + root.apiKey);
@@ -310,13 +312,19 @@ Item {
         root.ready = true;
     }
 
-    function refresh() {
+    function shouldRefreshApi(force) {
+        if (force || root.lastApiRefreshAtMs <= 0)
+            return true;
+        return (Date.now() - root.lastApiRefreshAtMs) >= root.apiRefreshIntervalMin * 60 * 1000;
+    }
+
+    function refresh(force) {
         if (root.useCodexbar) {
             codexbarFetcher.fetch();
             return;
         }
 
-        if (root.apiKey !== "")
+        if (root.apiKey !== "" && root.shouldRefreshApi(force === true))
             fetchKeyInfo();
     }
 

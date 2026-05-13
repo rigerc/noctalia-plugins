@@ -78,6 +78,7 @@ Item {
     property string defaultModel: ""
 
     property int apiRefreshIntervalMin: 1
+    property double lastApiRefreshAtMs: 0
 
     ApiRefreshTimer {
         providerEnabled: root.providerEnabled && !root.useCodexbar
@@ -179,6 +180,7 @@ Item {
     }
 
     function fetchModels() {
+        root.lastApiRefreshAtMs = Date.now();
         const xhr = new XMLHttpRequest();
         xhr.open("GET", root.apiBaseUrl + "/models");
         if (root.apiKey)
@@ -258,13 +260,20 @@ Item {
         root.ready = true;
     }
 
-    function refresh() {
+    function shouldRefreshApi(force) {
+        if (force || root.lastApiRefreshAtMs <= 0)
+            return true;
+        return (Date.now() - root.lastApiRefreshAtMs) >= root.apiRefreshIntervalMin * 60 * 1000;
+    }
+
+    function refresh(force) {
         if (root.useCodexbar) {
             codexbarFetcher.fetch();
             return;
         }
 
-        fetchModels();
+        if (root.shouldRefreshApi(force === true))
+            fetchModels();
         if (root.apiKey && (root.validatedApiKey !== root.apiKey || root.authState === "unknown" || root.authState === "checking"))
             validateApiKey();
         else

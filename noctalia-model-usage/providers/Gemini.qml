@@ -47,6 +47,7 @@ Item {
     readonly property string codexbarProviderName: "gemini"
     property var utils: ProviderUtils {}
     property int apiRefreshIntervalMin: 1
+    property double lastApiRefreshAtMs: 0
 
     property string _accessToken: ""
     property string _refreshToken: ""
@@ -124,6 +125,7 @@ Item {
     function fetchAll() {
         if (!root._credsLoaded)
             return;
+        root.lastApiRefreshAtMs = Date.now();
         if (Date.now() >= root._expiryDate && root._refreshToken && root._clientId && root._clientSecret) {
             root.refreshToken();
         } else {
@@ -327,13 +329,19 @@ Item {
         root.ready = true;
     }
 
-    function refresh() {
+    function shouldRefreshApi(force) {
+        if (force || root.lastApiRefreshAtMs <= 0)
+            return true;
+        return (Date.now() - root.lastApiRefreshAtMs) >= root.apiRefreshIntervalMin * 60 * 1000;
+    }
+
+    function refresh(force) {
         if (root.useCodexbar) {
             codexbarFetcher.fetch();
             return;
         }
 
-        if (root._credsLoaded)
+        if (root._credsLoaded && root.shouldRefreshApi(force === true))
             fetchAll();
     }
 }
