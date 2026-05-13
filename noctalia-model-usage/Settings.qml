@@ -476,10 +476,7 @@ ColumnLayout {
                     value: Math.max(1, Math.min(root.normalizedEditProviderOrder.length,
                         Number(root.editSettings?.recentChangeWidgetProviderLimit ?? root.normalizedEditProviderOrder.length)))
                     stepSize: 1
-                    onValueChanged: {
-                        root.editSettings.recentChangeWidgetProviderLimit = value;
-                        root.editSettingsChanged();
-                    }
+                    onValueChanged: root.editSettings.recentChangeWidgetProviderLimit = value
                     defaultValue: root.defaults.recentChangeWidgetProviderLimit ?? root.normalizedEditProviderOrder.length
                 }
 
