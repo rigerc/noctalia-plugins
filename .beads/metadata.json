@@ -1,7 +1,7 @@
 {
   "database": "dolt",
   "backend": "dolt",
-  "dolt_mode": "embedded",
+  "dolt_mode": "server",
   "dolt_database": "noctalia_plugins",
-  "project_id": "54aac7d4-a13f-4c40-bf36-d6c8be350526"
+  "project_id": "f96632c4-0c0c-4174-8728-071677c94c80"
 }
