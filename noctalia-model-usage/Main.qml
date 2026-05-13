@@ -1,4 +1,5 @@
 import QtQuick
+import "components"
 import "providers"
 
 Item {
@@ -88,7 +89,8 @@ Item {
         onRateLimitPercentChanged: root.trackProvider7dUsageChange(providerId, rateLimitPercent)
     }
 
-    readonly property var defaultProviderOrder: ["claude", "codex", "copilot", "openrouter", "zen", "deepseek", "kilocode", "zai", "gemini"]
+    readonly property var providerCatalog: ProviderCatalog {}
+    readonly property var defaultProviderOrder: providerCatalog.defaultProviderOrder
     property var providers: [claudeProvider, codexProvider, copilotProvider, openRouterProvider, zenProvider, deepseekProvider, kiloCodeProvider, zaiProvider, geminiProvider]
 
     property var providerMap: ({
@@ -203,24 +205,7 @@ Item {
     onProviderOrderModeChanged: activeIndex = 0
 
     function normalizedProviderOrder(savedOrder) {
-        const result = [];
-        const seen = {};
-        const source = Array.isArray(savedOrder) ? savedOrder : [];
-
-        for (const rawId of source) {
-            const id = String(rawId || "");
-            if (root.defaultProviderOrder.indexOf(id) !== -1 && !seen[id]) {
-                result.push(id);
-                seen[id] = true;
-            }
-        }
-
-        for (const id of root.defaultProviderOrder) {
-            if (!seen[id])
-                result.push(id);
-        }
-
-        return result;
+        return root.providerCatalog.normalizeProviderOrder(savedOrder);
     }
 
     function trackProvider7dUsageChange(providerId, rawPercent) {

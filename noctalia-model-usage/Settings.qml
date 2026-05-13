@@ -21,27 +21,8 @@ ColumnLayout {
         return root.pluginApi?.tr(key, vars);
     }
 
-    readonly property var defaultProviderOrder: ["claude", "codex", "copilot", "openrouter", "zen", "deepseek", "kilocode", "zai", "gemini"]
-    readonly property var codexbarProviderIds: ["claude", "codex", "copilot", "openrouter", "zen", "kilocode", "zai", "gemini"]
-
-    readonly property var normalizedEditProviderOrder: {
-        const saved = root.editSettings?.providerOrder;
-        const source = Array.isArray(saved) ? saved : [];
-        const result = [];
-        const seen = {};
-        for (const rawId of source) {
-            const id = String(rawId || "");
-            if (root.defaultProviderOrder.indexOf(id) !== -1 && !seen[id]) {
-                result.push(id);
-                seen[id] = true;
-            }
-        }
-        for (const id of root.defaultProviderOrder) {
-            if (!seen[id])
-                result.push(id);
-        }
-        return result;
-    }
+    readonly property var providerCatalog: ProviderCatalog {}
+    readonly property var normalizedEditProviderOrder: providerCatalog.normalizeProviderOrder(root.editSettings?.providerOrder)
 
     readonly property var providerOrderModeOptions: [
         {
@@ -89,15 +70,11 @@ ColumnLayout {
     }
 
     function providerSupportsCodexbar(id) {
-        return root.codexbarProviderIds.indexOf(String(id || "")) !== -1;
+        return root.providerCatalog.supportsCodexbar(id);
     }
 
     function codexbarName(providerId) {
-        const map = {
-            kilocode: "kilo",
-            zen: "opencode"
-        };
-        return map[providerId] ?? providerId;
+        return root.providerCatalog.codexbarName(providerId);
     }
 
     function ensureProviderSettings(id) {
