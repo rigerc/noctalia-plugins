@@ -18,6 +18,8 @@ Item {
     property string providerIconAsset: "assets/openrouter.svg"
     property bool providerEnabled: false
     property bool ready: false
+    property int pendingRefreshRequests: 0
+    readonly property bool refreshing: codexbarFetcher.running || root.pendingRefreshRequests > 0
 
     property real rateLimitPercent: -1
     property string rateLimitLabel: root.tr("providers.rateLimits.spendingLimit")
@@ -96,6 +98,7 @@ Item {
         if (!root.apiKey)
             return;
 
+        root.pendingRefreshRequests += 1;
         root.lastApiRefreshAtMs = Date.now();
         const xhr = new XMLHttpRequest();
         xhr.open("GET", "https://openrouter.ai/api/v1/key");
@@ -104,6 +107,7 @@ Item {
         xhr.onreadystatechange = function () {
             if (xhr.readyState !== XMLHttpRequest.DONE)
                 return;
+            root.pendingRefreshRequests = Math.max(0, root.pendingRefreshRequests - 1);
             if (xhr.status !== 200) {
                 Logger.e("model-usage/openrouter", "Key info request failed (status " + xhr.status + ")");
                 return;
@@ -171,6 +175,7 @@ Item {
 
         for (let i = 0; i < days.length; i++) {
             const date = days[i];
+            root.pendingRefreshRequests += 1;
             const xhr = new XMLHttpRequest();
             xhr.open("GET", "https://openrouter.ai/api/v1/activity?date=" + date);
             xhr.setRequestHeader("Authorization", "Bearer " + root.apiKey);
@@ -178,6 +183,8 @@ Item {
             xhr.onreadystatechange = function () {
                 if (xhr.readyState !== XMLHttpRequest.DONE)
                     return;
+
+                root.pendingRefreshRequests = Math.max(0, root.pendingRefreshRequests - 1);
 
                 if (xhr.status === 200) {
                     try {

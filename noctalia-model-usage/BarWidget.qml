@@ -19,6 +19,7 @@ Item {
 
     property var mainInstance: root.pluginApi?.mainInstance
     property var activeProvider: root.mainInstance?.activeProvider
+    readonly property bool refreshing: root.mainInstance?.refreshing ?? false
 
     function tr(key, vars) {
         return root.pluginApi?.tr(key, vars);
@@ -394,6 +395,7 @@ Item {
                     color: root.resolvedProviderIconColor
                     colorize: root.resolvedProviderIconColor !== Color.mOnSurface
                     colorizeColor: root.resolvedProviderIconColor
+                    loading: root.refreshing
                 }
 
                 Item {
@@ -431,6 +433,7 @@ Item {
                     color: root.resolvedProviderIconColor
                     colorize: root.resolvedProviderIconColor !== Color.mOnSurface
                     colorizeColor: root.resolvedProviderIconColor
+                    loading: root.refreshing
                 }
 
                 Item {
@@ -480,6 +483,7 @@ Item {
                             color: root.resolvedProviderIconColorFor(rowDel.modelData)
                             colorize: root.resolvedProviderIconColorFor(rowDel.modelData) !== Color.mOnSurface
                             colorizeColor: root.resolvedProviderIconColorFor(rowDel.modelData)
+                            loading: root.refreshing
                         }
 
                         Item {
@@ -527,6 +531,7 @@ Item {
                             color: root.resolvedProviderIconColorFor(colDel.modelData)
                             colorize: root.resolvedProviderIconColorFor(colDel.modelData) !== Color.mOnSurface
                             colorizeColor: root.resolvedProviderIconColorFor(colDel.modelData)
+                            loading: root.refreshing
                         }
 
                         Item {

@@ -101,6 +101,16 @@ Item {
     readonly property var providerCatalog: ProviderCatalog {}
     readonly property var defaultProviderOrder: providerCatalog.defaultProviderOrder
     property var providers: [claudeProvider, codexProvider, copilotProvider, openRouterProvider, zenProvider, deepseekProvider, kiloCodeProvider, zaiProvider, geminiProvider]
+    property bool refreshPulseActive: false
+    readonly property bool refreshing: {
+        if (root.refreshPulseActive)
+            return true;
+        for (const p of root.providers) {
+            if (p.providerEnabled && (p.refreshing ?? false))
+                return true;
+        }
+        return false;
+    }
 
     property var providerMap: ({
         "claude": claudeProvider,
@@ -224,6 +234,13 @@ Item {
         onTriggered: root.persistRecentChangeState()
     }
 
+    Timer {
+        id: refreshPulseTimer
+        interval: 800
+        repeat: false
+        onTriggered: root.refreshPulseActive = false
+    }
+
     onBarProvidersChanged: {
         if (barProviders.length === 0) {
             activeIndex = 0;
@@ -309,6 +326,8 @@ Item {
     property string lastRefreshTime: ""
 
     function refreshAll(forceApiRefresh) {
+        root.refreshPulseActive = true;
+        refreshPulseTimer.restart();
         root.refreshTimestamp();
         for (const p of providers) {
             if (p.providerEnabled)

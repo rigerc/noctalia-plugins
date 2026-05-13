@@ -22,6 +22,8 @@ Item {
     property string providerIconAsset: "assets/copilot.svg"
     property bool providerEnabled: false
     property bool ready: false
+    property int pendingRefreshRequests: 0
+    readonly property bool refreshing: codexbarFetcher.running || tokenProcess.running || root.pendingRefreshRequests > 0
 
     property real rateLimitPercent: -1
     property string rateLimitLabel: root.tr("providers.rateLimits.premium")
@@ -140,6 +142,7 @@ Item {
         if (!root.ghToken)
             return;
 
+        root.pendingRefreshRequests += 1;
         const xhr = new XMLHttpRequest();
         xhr.open("GET", "https://api.github.com/copilot_internal/user");
         xhr.setRequestHeader("Authorization", "token " + root.ghToken);
@@ -148,6 +151,8 @@ Item {
         xhr.onreadystatechange = function () {
             if (xhr.readyState !== XMLHttpRequest.DONE)
                 return;
+
+            root.pendingRefreshRequests = Math.max(0, root.pendingRefreshRequests - 1);
 
             if (xhr.status === 401 || xhr.status === 403) {
                 root.usageStatusText = root.tr("providers.status.tokenInvalid");

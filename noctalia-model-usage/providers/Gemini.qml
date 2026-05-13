@@ -19,6 +19,8 @@ Item {
     property string providerIconAsset: "assets/geminicli.svg"
     property bool providerEnabled: false
     property bool ready: false
+    property int pendingRefreshRequests: 0
+    readonly property bool refreshing: codexbarFetcher.running || root.pendingRefreshRequests > 0
 
     property real rateLimitPercent: -1
     property string rateLimitLabel: root.tr("providers.rateLimits.proModels")
@@ -135,6 +137,7 @@ Item {
     }
 
     function refreshToken() {
+        root.pendingRefreshRequests += 1;
         const xhr = new XMLHttpRequest();
         xhr.open("POST", "https://oauth2.googleapis.com/token");
         xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
@@ -142,6 +145,7 @@ Item {
         xhr.onreadystatechange = function () {
             if (xhr.readyState !== XMLHttpRequest.DONE)
                 return;
+            root.pendingRefreshRequests = Math.max(0, root.pendingRefreshRequests - 1);
             if (xhr.status === 200) {
                 try {
                     const data = JSON.parse(xhr.responseText);
@@ -170,6 +174,7 @@ Item {
         if (!root._accessToken)
             return;
 
+        root.pendingRefreshRequests += 1;
         const xhr = new XMLHttpRequest();
         xhr.open("POST", "https://cloudcode-pa.googleapis.com/v1internal:retrieveUserQuota");
         xhr.setRequestHeader("Authorization", "Bearer " + root._accessToken);
@@ -180,6 +185,7 @@ Item {
         xhr.onreadystatechange = function () {
             if (xhr.readyState !== XMLHttpRequest.DONE)
                 return;
+            root.pendingRefreshRequests = Math.max(0, root.pendingRefreshRequests - 1);
             if (xhr.status !== 200) {
                 Logger.e("model-usage/gemini", "retrieveUserQuota failed (status " + xhr.status + ")");
                 if (xhr.status === 401 || xhr.status === 403)
@@ -203,6 +209,7 @@ Item {
         if (!root._accessToken)
             return;
 
+        root.pendingRefreshRequests += 1;
         const xhr = new XMLHttpRequest();
         xhr.open("POST", "https://cloudcode-pa.googleapis.com/v1internal:loadCodeAssist");
         xhr.setRequestHeader("Authorization", "Bearer " + root._accessToken);
@@ -211,6 +218,7 @@ Item {
         xhr.onreadystatechange = function () {
             if (xhr.readyState !== XMLHttpRequest.DONE)
                 return;
+            root.pendingRefreshRequests = Math.max(0, root.pendingRefreshRequests - 1);
             if (xhr.status !== 200) {
                 Logger.d("model-usage/gemini", "loadCodeAssist failed (status " + xhr.status + ")");
                 return;

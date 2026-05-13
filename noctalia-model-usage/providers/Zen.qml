@@ -18,6 +18,8 @@ Item {
     property string providerIconAsset: "assets/opencode.svg"
     property bool providerEnabled: false
     property bool ready: false
+    property int pendingRefreshRequests: 0
+    readonly property bool refreshing: codexbarFetcher.running || root.pendingRefreshRequests > 0
 
     property real rateLimitPercent: -1
     property string rateLimitLabel: ""
@@ -141,6 +143,7 @@ Item {
         if (!root.apiKey)
             return;
 
+        root.pendingRefreshRequests += 1;
         const xhr = new XMLHttpRequest();
         xhr.open("POST", root.apiBaseUrl + "/responses");
         xhr.setRequestHeader("Authorization", "Bearer " + root.apiKey);
@@ -150,6 +153,7 @@ Item {
             if (xhr.readyState !== XMLHttpRequest.DONE)
                 return;
 
+            root.pendingRefreshRequests = Math.max(0, root.pendingRefreshRequests - 1);
             root.validatedApiKey = root.apiKey;
 
             if (xhr.status === 401 || xhr.status === 403) {
@@ -180,6 +184,7 @@ Item {
     }
 
     function fetchModels() {
+        root.pendingRefreshRequests += 1;
         root.lastApiRefreshAtMs = Date.now();
         const xhr = new XMLHttpRequest();
         xhr.open("GET", root.apiBaseUrl + "/models");
@@ -189,6 +194,8 @@ Item {
         xhr.onreadystatechange = function () {
             if (xhr.readyState !== XMLHttpRequest.DONE)
                 return;
+
+            root.pendingRefreshRequests = Math.max(0, root.pendingRefreshRequests - 1);
 
             if (xhr.status !== 200) {
                 root.modelsLoaded = false;

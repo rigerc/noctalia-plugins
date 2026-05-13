@@ -18,6 +18,8 @@ Item {
     property string providerIconAsset: "assets/zai.svg"
     property bool providerEnabled: false
     property bool ready: false
+    property int pendingRefreshRequests: 0
+    readonly property bool refreshing: codexbarFetcher.running || root.pendingRefreshRequests > 0
 
     property real rateLimitPercent: -1
     property string rateLimitLabel: root.tr("providers.rateLimits.tokens")
@@ -100,6 +102,7 @@ Item {
             return;
         }
 
+        root.pendingRefreshRequests += 1;
         root.lastApiRefreshAtMs = Date.now();
         const xhr = new XMLHttpRequest();
         xhr.open("GET", root.quotaUrl);
@@ -108,6 +111,7 @@ Item {
         xhr.onreadystatechange = function () {
             if (xhr.readyState !== XMLHttpRequest.DONE)
                 return;
+            root.pendingRefreshRequests = Math.max(0, root.pendingRefreshRequests - 1);
             if (xhr.status !== 200) {
                 Logger.e("model-usage/zai", "Quota request failed (status " + xhr.status + ")");
                 if (xhr.status === 401 || xhr.status === 403)

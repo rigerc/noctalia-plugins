@@ -20,6 +20,8 @@ Item {
     property string providerIconAsset: "assets/codex.svg"
     property bool providerEnabled: false
     property bool ready: false
+    property int pendingRefreshRequests: 0
+    readonly property bool refreshing: codexbarFetcher.running || sessionLister.running || root.sessionSearchInProgress || root.pendingRefreshRequests > 0
 
     property real rateLimitPercent: -1
     property string rateLimitLabel: root.tr("providers.rateLimits.weekly7d")
@@ -451,6 +453,7 @@ Item {
         if (root._lastApiRefreshMs > 0 && (now - root._lastApiRefreshMs) < root._apiRefreshMinIntervalMs)
             return;
 
+        root.pendingRefreshRequests += 1;
         const xhr = new XMLHttpRequest();
         xhr.open("GET", root.apiEndpoint);
         xhr.setRequestHeader("Authorization", "Bearer " + root.accessToken);
@@ -463,6 +466,7 @@ Item {
             if (xhr.readyState !== XMLHttpRequest.DONE)
                 return;
 
+            root.pendingRefreshRequests = Math.max(0, root.pendingRefreshRequests - 1);
             root._lastApiRefreshMs = Date.now();
 
             if (xhr.status === 401 || xhr.status === 403) {

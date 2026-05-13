@@ -20,6 +20,8 @@ Item {
     property string providerIconAsset: "assets/claude.svg"
     property bool providerEnabled: false
     property bool ready: false
+    property int pendingRefreshRequests: 0
+    readonly property bool refreshing: codexbarFetcher.running || root.pendingRefreshRequests > 0
     property string usageStatusText: ""
 
     property real rateLimitPercent: -1
@@ -363,6 +365,7 @@ Item {
     }
 
     function probeOAuthUsage() {
+        root.pendingRefreshRequests += 1;
         const xhr = new XMLHttpRequest();
         xhr.open("GET", "https://api.anthropic.com/api/oauth/usage");
         xhr.setRequestHeader("Authorization", "Bearer " + root.oauthAccessToken);
@@ -371,6 +374,8 @@ Item {
         xhr.onreadystatechange = function () {
             if (xhr.readyState !== XMLHttpRequest.DONE)
                 return;
+
+            root.pendingRefreshRequests = Math.max(0, root.pendingRefreshRequests - 1);
 
             if (xhr.status >= 200 && xhr.status < 300) {
                 try {

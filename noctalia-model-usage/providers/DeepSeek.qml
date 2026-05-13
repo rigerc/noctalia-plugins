@@ -18,6 +18,8 @@ Item {
     property string providerIconAsset: "assets/deepseek.svg"
     property bool providerEnabled: false
     property bool ready: false
+    property int pendingRefreshRequests: 0
+    readonly property bool refreshing: root.pendingRefreshRequests > 0
 
     property real rateLimitPercent: -1
     property string rateLimitLabel: ""
@@ -80,6 +82,7 @@ Item {
         if (!root.apiKey)
             return;
 
+        root.pendingRefreshRequests += 1;
         root.lastApiRefreshAtMs = Date.now();
         const xhr = new XMLHttpRequest();
         xhr.open("GET", "https://api.deepseek.com/user/balance");
@@ -89,6 +92,8 @@ Item {
         xhr.onreadystatechange = function () {
             if (xhr.readyState !== XMLHttpRequest.DONE)
                 return;
+
+            root.pendingRefreshRequests = Math.max(0, root.pendingRefreshRequests - 1);
 
             if (xhr.status === 401 || xhr.status === 403) {
                 root.usageStatusText = root.tr("providers.status.invalidApiKey");

@@ -13,6 +13,7 @@ Item {
     property color color: Color.mOnSurface
     property bool colorize: false
     property color colorizeColor: Color.mOnSurface
+    property bool loading: false
 
     readonly property string sourceMode: String(visualData?.source || "icon")
     readonly property string iconName: String(visualData?.icon || "ai")
@@ -22,19 +23,33 @@ Item {
     implicitWidth: Math.max(1, applyUiScale ? root.pointSize * Style.uiScaleRatio : root.pointSize)
     implicitHeight: Math.max(1, applyUiScale ? root.pointSize * Style.uiScaleRatio : root.pointSize)
 
+    onLoadingChanged: {
+        if (!root.loading)
+            iconItem.rotation = 0;
+    }
+
     NIcon {
+        id: iconItem
         anchors.fill: parent
-        visible: !root.useAsset
-        icon: root.iconName
-        color: root.colorize ? root.colorizeColor : root.color
+        visible: root.loading || !root.useAsset
+        icon: root.loading ? "loader" : root.iconName
+        color: root.loading ? Color.mOnSurfaceVariant : (root.colorize ? root.colorizeColor : root.color)
         pointSize: root.pointSize
         applyUiScale: root.applyUiScale
+
+        RotationAnimator on rotation {
+            running: root.loading
+            from: 0
+            to: 360
+            duration: 1000
+            loops: Animation.Infinite
+        }
     }
 
     Image {
         id: assetImage
         anchors.fill: parent
-        visible: root.useAsset
+        visible: !root.loading && root.useAsset
         source: root.assetUrl
         fillMode: Image.PreserveAspectFit
         smooth: true
