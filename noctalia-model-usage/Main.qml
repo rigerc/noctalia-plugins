@@ -204,6 +204,13 @@ Item {
     }
 
     Timer {
+        id: initialRefreshTimer
+        interval: 1
+        repeat: false
+        onTriggered: root.refreshAll()
+    }
+
+    Timer {
         interval: root.refreshIntervalSec * 1000
         running: true
         repeat: true
@@ -227,6 +234,8 @@ Item {
 
     onProviderSortRevisionChanged: activeIndex = 0
     onProviderOrderModeChanged: activeIndex = 0
+
+    Component.onCompleted: initialRefreshTimer.start()
 
     function normalizedProviderOrder(savedOrder) {
         return root.providerCatalog.normalizeProviderOrder(savedOrder);
