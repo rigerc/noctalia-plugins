@@ -32,6 +32,10 @@ ColumnLayout {
         {
             "key": "recent7dChange",
             "name": root.tr("settings.summary.recent7dChange")
+        },
+        {
+            "key": "recent5hChange",
+            "name": root.tr("settings.summary.recent5hChange")
         }
     ]
 
@@ -55,6 +59,10 @@ ColumnLayout {
                 count++;
         }
         return count;
+    }
+
+    function isRecentChangeOrderMode() {
+        return root.editSettings?.providerOrderMode === "recent7dChange" || root.editSettings?.providerOrderMode === "recent5hChange";
     }
 
     function providerDisplayName(id) {
@@ -154,7 +162,7 @@ ColumnLayout {
             return;
         const s = JSON.parse(JSON.stringify(root.editSettings ?? ({})));
 
-        if (s.providerOrderMode !== "recent7dChange")
+        if (s.providerOrderMode !== "recent7dChange" && s.providerOrderMode !== "recent5hChange")
             s.providerOrderMode = "manual";
         s.recentChangeWidgetProviderLimit = Math.max(1, Math.min(root.normalizedEditProviderOrder.length,
             Number(s.recentChangeWidgetProviderLimit ?? root.normalizedEditProviderOrder.length)));
@@ -458,7 +466,7 @@ ColumnLayout {
                 }
 
                 NText {
-                    visible: root.editSettings?.providerOrderMode === "recent7dChange"
+                    visible: root.isRecentChangeOrderMode()
                     text: root.tr("settings.providers.recentHelp")
                     pointSize: Style.fontSizeXS
                     color: Color.mOnSurfaceVariant
@@ -468,7 +476,7 @@ ColumnLayout {
 
                 NSpinBox {
                     Layout.fillWidth: true
-                    visible: root.editSettings?.providerOrderMode === "recent7dChange"
+                    visible: root.isRecentChangeOrderMode()
                     label: root.tr("settings.providers.recentLimitLabel")
                     description: root.tr("settings.providers.recentLimitDesc")
                     from: 1

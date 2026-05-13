@@ -38,7 +38,8 @@
       "barMetric": "Bar metric",
       "orderMode": "Order mode",
       "manual": "Manual",
-      "recent7dChange": "Recent 7d change"
+      "recent7dChange": "Recent 7d change",
+      "recent5hChange": "Recent 5h change"
     },
     "general": {
       "label": "General",
@@ -99,11 +100,11 @@
       "label": "Providers",
       "desc": "Enable providers, choose which ones appear in the bar, and configure provider-specific details when needed.",
       "orderLabel": "Provider order",
-      "orderDesc": "Manual order is used directly, or as a tie-breaker when sorting by recently changed 7d usage.",
-      "recentHelp": "Providers whose 7d usage percentage changed most recently move to the front. Providers without 7d usage stay in your manual drag order. This recent-change history resets when the shell restarts.",
+      "orderDesc": "Manual order is used directly, or as a tie-breaker when sorting by recently changed usage.",
+      "recentHelp": "Providers whose selected usage percentage changed most recently move to the front. Providers without that usage window stay in your manual drag order. This recent-change history resets when the shell restarts.",
       "recentLimitLabel": "Maximum recent providers in bar",
-      "recentLimitDesc": "Limits how many visible providers can appear in the bar while recent 7d change sorting is enabled. The panel still shows every enabled provider.",
-      "dragHelp": "Drag providers to set the manual order. The manual order also acts as the tie-break order when recent 7d change sorting is enabled.",
+      "recentLimitDesc": "Limits how many visible providers can appear in the bar while recent-change sorting is enabled. The panel still shows every enabled provider.",
+      "dragHelp": "Drag providers to set the manual order. The manual order also acts as the tie-break order when recent-change sorting is enabled.",
       "enable": "Enable",
       "showInBar": "Show in bar",
       "hideDetails": "Hide details",

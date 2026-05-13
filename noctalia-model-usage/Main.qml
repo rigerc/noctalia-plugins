@@ -15,7 +15,8 @@ Item {
         providerEnabled: root.providerEnabled("claude")
         providerSettings: root.pluginSettings?.providers?.claude ?? ({})
         includeCacheTokens: root.pluginSettings?.includeCacheTokens ?? true
-        onRateLimitPercentChanged: root.trackProvider7dUsageChange(providerId, rateLimitPercent)
+        onRateLimitPercentChanged: root.trackProviderUsageChange("usage7d", providerId, rateLimitPercent)
+        onSecondaryRateLimitPercentChanged: root.trackProviderUsageChange("usage5h", providerId, secondaryRateLimitPercent)
     }
 
     Codex {
@@ -25,7 +26,8 @@ Item {
         providerSettings: root.pluginSettings?.providers?.codex ?? ({})
         includeCacheTokens: root.pluginSettings?.includeCacheTokens ?? true
         apiRefreshIntervalMin: root.apiRefreshIntervalMin
-        onRateLimitPercentChanged: root.trackProvider7dUsageChange(providerId, rateLimitPercent)
+        onRateLimitPercentChanged: root.trackProviderUsageChange("usage7d", providerId, rateLimitPercent)
+        onSecondaryRateLimitPercentChanged: root.trackProviderUsageChange("usage5h", providerId, secondaryRateLimitPercent)
     }
 
     OpenRouter {
@@ -34,7 +36,8 @@ Item {
         providerEnabled: root.providerEnabled("openrouter")
         providerSettings: root.pluginSettings?.providers?.openrouter ?? ({})
         apiRefreshIntervalMin: root.apiRefreshIntervalMin
-        onRateLimitPercentChanged: root.trackProvider7dUsageChange(providerId, rateLimitPercent)
+        onRateLimitPercentChanged: root.trackProviderUsageChange("usage7d", providerId, rateLimitPercent)
+        onSecondaryRateLimitPercentChanged: root.trackProviderUsageChange("usage5h", providerId, secondaryRateLimitPercent)
     }
 
     Copilot {
@@ -42,7 +45,8 @@ Item {
         pluginApi: root.pluginApi
         providerEnabled: root.providerEnabled("copilot")
         providerSettings: root.pluginSettings?.providers?.copilot ?? ({})
-        onRateLimitPercentChanged: root.trackProvider7dUsageChange(providerId, rateLimitPercent)
+        onRateLimitPercentChanged: root.trackProviderUsageChange("usage7d", providerId, rateLimitPercent)
+        onSecondaryRateLimitPercentChanged: root.trackProviderUsageChange("usage5h", providerId, secondaryRateLimitPercent)
     }
 
     Zen {
@@ -51,7 +55,8 @@ Item {
         providerEnabled: root.providerEnabled("zen")
         providerSettings: root.pluginSettings?.providers?.zen ?? ({})
         apiRefreshIntervalMin: root.apiRefreshIntervalMin
-        onRateLimitPercentChanged: root.trackProvider7dUsageChange(providerId, rateLimitPercent)
+        onRateLimitPercentChanged: root.trackProviderUsageChange("usage7d", providerId, rateLimitPercent)
+        onSecondaryRateLimitPercentChanged: root.trackProviderUsageChange("usage5h", providerId, secondaryRateLimitPercent)
     }
 
     DeepSeek {
@@ -59,7 +64,8 @@ Item {
         pluginApi: root.pluginApi
         providerEnabled: root.providerEnabled("deepseek")
         providerSettings: root.pluginSettings?.providers?.deepseek ?? ({})
-        onRateLimitPercentChanged: root.trackProvider7dUsageChange(providerId, rateLimitPercent)
+        onRateLimitPercentChanged: root.trackProviderUsageChange("usage7d", providerId, rateLimitPercent)
+        onSecondaryRateLimitPercentChanged: root.trackProviderUsageChange("usage5h", providerId, secondaryRateLimitPercent)
     }
 
     KiloCode {
@@ -68,7 +74,8 @@ Item {
         providerEnabled: root.providerEnabled("kilocode")
         providerSettings: root.pluginSettings?.providers?.kilocode ?? ({})
         apiRefreshIntervalMin: root.apiRefreshIntervalMin
-        onRateLimitPercentChanged: root.trackProvider7dUsageChange(providerId, rateLimitPercent)
+        onRateLimitPercentChanged: root.trackProviderUsageChange("usage7d", providerId, rateLimitPercent)
+        onSecondaryRateLimitPercentChanged: root.trackProviderUsageChange("usage5h", providerId, secondaryRateLimitPercent)
     }
 
     Zai {
@@ -77,7 +84,8 @@ Item {
         providerEnabled: root.providerEnabled("zai")
         providerSettings: root.pluginSettings?.providers?.zai ?? ({})
         apiRefreshIntervalMin: root.apiRefreshIntervalMin
-        onRateLimitPercentChanged: root.trackProvider7dUsageChange(providerId, rateLimitPercent)
+        onRateLimitPercentChanged: root.trackProviderUsageChange("usage7d", providerId, rateLimitPercent)
+        onSecondaryRateLimitPercentChanged: root.trackProviderUsageChange("usage5h", providerId, secondaryRateLimitPercent)
     }
 
     Gemini {
@@ -86,7 +94,8 @@ Item {
         providerEnabled: root.providerEnabled("gemini")
         providerSettings: root.pluginSettings?.providers?.gemini ?? ({})
         apiRefreshIntervalMin: root.apiRefreshIntervalMin
-        onRateLimitPercentChanged: root.trackProvider7dUsageChange(providerId, rateLimitPercent)
+        onRateLimitPercentChanged: root.trackProviderUsageChange("usage7d", providerId, rateLimitPercent)
+        onSecondaryRateLimitPercentChanged: root.trackProviderUsageChange("usage5h", providerId, secondaryRateLimitPercent)
     }
 
     readonly property var providerCatalog: ProviderCatalog {}
@@ -106,8 +115,8 @@ Item {
     })
 
     property string providerOrderMode: String(pluginSettings?.providerOrderMode ?? "manual")
-    property var lastSeen7dPercentByProvider: ({})
-    property var lastChanged7dOrderByProvider: ({})
+    property var lastSeenPercentByWindow: ({})
+    property var lastChangedOrderByWindow: ({})
     property int providerChangeSequence: 0
     property int providerSortRevision: 0
     property int recentChangeWidgetProviderLimit: Math.max(1, Math.min(root.defaultProviderOrder.length,
@@ -118,16 +127,18 @@ Item {
     property var effectiveProviderOrder: {
         root.providerSortRevision;
         const order = root.manualProviderOrder.slice();
-        if (root.providerOrderMode !== "recent7dChange")
+        const usageWindow = root.recentChangeUsageWindow();
+        if (usageWindow === "")
             return order;
 
+        const changedOrder = root.lastChangedOrderByWindow[usageWindow] ?? {};
         const manualIndex = {};
         for (let i = 0; i < order.length; i++)
             manualIndex[order[i]] = i;
 
         return order.sort((a, b) => {
-            const aChanged = root.lastChanged7dOrderByProvider[a] ?? 0;
-            const bChanged = root.lastChanged7dOrderByProvider[b] ?? 0;
+            const aChanged = changedOrder[a] ?? 0;
+            const bChanged = changedOrder[b] ?? 0;
             if (aChanged !== bChanged)
                 return bChanged - aChanged;
             return (manualIndex[a] ?? 999) - (manualIndex[b] ?? 999);
@@ -152,7 +163,7 @@ Item {
             if (ps.showInWidget !== false)
                 result.push(p);
         }
-        if (root.providerOrderMode === "recent7dChange")
+        if (root.recentChangeUsageWindow() !== "")
             return result.slice(0, root.recentChangeWidgetProviderLimit);
         return result;
     }
@@ -212,25 +223,37 @@ Item {
         return root.providerCatalog.normalizeProviderOrder(savedOrder);
     }
 
-    function trackProvider7dUsageChange(providerId, rawPercent) {
+    function recentChangeUsageWindow() {
+        if (root.providerOrderMode === "recent7dChange")
+            return "usage7d";
+        if (root.providerOrderMode === "recent5hChange")
+            return "usage5h";
+        return "";
+    }
+
+    function trackProviderUsageChange(usageWindow, providerId, rawPercent) {
         const id = String(providerId || "");
         if (id === "" || !(rawPercent >= 0))
             return;
 
         const roundedPercent = Math.round(Number(rawPercent) * 100);
-        const seen = Object.assign({}, root.lastSeen7dPercentByProvider);
-        const changed = Object.assign({}, root.lastChanged7dOrderByProvider);
+        const seenByWindow = Object.assign({}, root.lastSeenPercentByWindow);
+        const changedByWindow = Object.assign({}, root.lastChangedOrderByWindow);
+        const seen = Object.assign({}, seenByWindow[usageWindow] ?? ({}));
+        const changed = Object.assign({}, changedByWindow[usageWindow] ?? ({}));
         const previous = seen[id];
 
         seen[id] = roundedPercent;
-        root.lastSeen7dPercentByProvider = seen;
+        seenByWindow[usageWindow] = seen;
+        root.lastSeenPercentByWindow = seenByWindow;
 
         if (previous === undefined || previous === roundedPercent)
             return;
 
         root.providerChangeSequence += 1;
         changed[id] = root.providerChangeSequence;
-        root.lastChanged7dOrderByProvider = changed;
+        changedByWindow[usageWindow] = changed;
+        root.lastChangedOrderByWindow = changedByWindow;
         root.providerSortRevision += 1;
     }
 
