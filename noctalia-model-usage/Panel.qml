@@ -102,7 +102,9 @@ Item {
 
                     NText {
                         visible: root.selectedProvider && !root.selectedProvider.ready
-                        text: root.selectedProvider ? root.tr("panel.waiting", { "provider": root.selectedProvider.providerName }) : ""
+                        text: root.selectedProvider ? root.tr("panel.waiting", {
+                            "provider": root.selectedProvider.providerName
+                        }) : ""
                         pointSize: Style.fontSizeM
                         color: Color.mOnSurfaceVariant
                         Layout.fillWidth: true
@@ -117,14 +119,16 @@ Item {
 
                         ProviderVisual {
                             visualData: root.mainInstance?.providerVisualData(root.selectedProvider?.providerId) ?? ({
-                                "source": "icon",
-                                "icon": "ai"
-                            })
-                            pointSize: Style.fontSizeXXXL
+                                    "source": "icon",
+                                    "icon": "ai"
+                                })
+                            pointSize: Style.fontSizeXXL
                         }
 
                         NText {
-                            text: root.tr("panel.usageHeading", { "provider": root.selectedProvider?.providerName ?? "" })
+                            text: root.tr("panel.usageHeading", {
+                                "provider": root.selectedProvider?.providerName ?? ""
+                            })
                             pointSize: Style.fontSizeXL
                             font.weight: Style.fontWeightBold
                             color: Color.mOnSurface
@@ -283,7 +287,9 @@ Item {
 
                                 NText {
                                     visible: (root.selectedProvider?.rateLimitResetAt ?? "") !== ""
-                                    text: root.tr("panel.resetsIn", { "time": root.utils.formatResetTime(root.selectedProvider?.rateLimitResetAt ?? "") ?? "" })
+                                    text: root.tr("panel.resetsIn", {
+                                        "time": root.utils.formatResetTime(root.selectedProvider?.rateLimitResetAt ?? "") ?? ""
+                                    })
                                     pointSize: Style.fontSizeXS
                                     color: Color.mOnSurfaceVariant
                                 }
@@ -358,7 +364,9 @@ Item {
 
                                 NText {
                                     visible: (root.selectedProvider?.secondaryRateLimitResetAt ?? "") !== ""
-                                    text: root.tr("panel.resetsIn", { "time": root.utils.formatResetTime(root.selectedProvider?.secondaryRateLimitResetAt ?? "") ?? "" })
+                                    text: root.tr("panel.resetsIn", {
+                                        "time": root.utils.formatResetTime(root.selectedProvider?.secondaryRateLimitResetAt ?? "") ?? ""
+                                    })
                                     pointSize: Style.fontSizeXS
                                     color: Color.mOnSurfaceVariant
                                 }
@@ -452,7 +460,9 @@ Item {
                                         Layout.fillWidth: true
                                     }
                                     NText {
-                                        text: root.tr("panel.tokensCount", { "count": root.mainInstance?.formatTokenCount(todayDel.modelData.count) ?? "0" })
+                                        text: root.tr("panel.tokensCount", {
+                                            "count": root.mainInstance?.formatTokenCount(todayDel.modelData.count) ?? "0"
+                                        })
                                         pointSize: Style.fontSizeS
                                         font.weight: Style.fontWeightSemiBold
                                         color: Color.mOnSurface
@@ -716,7 +726,9 @@ Item {
 
                     NText {
                         visible: root.selectedProvider && root.mainInstance?.lastRefreshTime
-                        text: root.tr("panel.lastRefreshed", { "time": root.mainInstance?.lastRefreshTime ?? "" })
+                        text: root.tr("panel.lastRefreshed", {
+                            "time": root.mainInstance?.lastRefreshTime ?? ""
+                        })
                         pointSize: Style.fontSizeXS
                         color: Color.mOnSurfaceVariant
                         Layout.alignment: Qt.AlignHCenter

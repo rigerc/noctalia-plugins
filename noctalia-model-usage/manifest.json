@@ -3,7 +3,7 @@
   "name": "Model Usage",
   "version": "0.4.0",
   "minNoctaliaVersion": "4.4.1",
-  "author": "cmptr",
+  "author": "rigerc",
   "license": "MIT",
   "description": "Shows AI coding assistant usage stats in the bar with detail panel (Claude Code, Codex, Copilot, OpenRouter, Zen, DeepSeek, Kilo Code, Z.ai, Gemini)",
   "repository": "https://github.com/noctalia-dev/noctalia-plugins",
