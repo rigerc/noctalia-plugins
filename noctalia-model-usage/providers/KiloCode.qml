@@ -48,7 +48,7 @@ Item {
     property bool useCodexbar: root.providerSettings?.useCodexbar ?? false
     readonly property string codexbarProviderName: "kilo"
     property var utils: ProviderUtils {}
-    property int apiRefreshIntervalMin: 1
+    property int refreshIntervalSec: 30
     property double lastApiRefreshAtMs: 0
 
     property string _accessToken: ""
@@ -93,12 +93,6 @@ Item {
     }
 
     readonly property string effectiveToken: root.apiKey || root._accessToken
-
-    ApiRefreshTimer {
-        providerEnabled: root.providerEnabled && !root.useCodexbar && root.effectiveToken !== ""
-        intervalMin: root.apiRefreshIntervalMin
-        onTick: root.fetchUsage()
-    }
 
     onProviderEnabledChanged: {
         if (providerEnabled) {
@@ -246,7 +240,7 @@ Item {
     function shouldRefreshApi(force) {
         if (force || root.lastApiRefreshAtMs <= 0)
             return true;
-        return (Date.now() - root.lastApiRefreshAtMs) >= root.apiRefreshIntervalMin * 60 * 1000;
+        return (Date.now() - root.lastApiRefreshAtMs) >= Math.max(5, root.refreshIntervalSec) * 1000;
     }
 
     function refresh(force) {

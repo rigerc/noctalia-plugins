@@ -49,7 +49,8 @@ Item {
 
     property string ghToken: ""
     property double lastRefreshAtMs: 0
-    property int refreshMinIntervalMs: 5 * 60 * 1000
+    property int refreshIntervalSec: 30
+    readonly property int refreshMinIntervalMs: Math.max(5, root.refreshIntervalSec) * 1000
     property int tokenProcessTimeoutMs: 30000
     property var providerSettings: ({})
     property bool useCodexbar: root.providerSettings?.useCodexbar ?? false
@@ -113,13 +114,6 @@ Item {
             root.ready = false;
             root.clearRateLimits();
         }
-    }
-
-    Timer {
-        interval: 5 * 60 * 1000
-        running: root.providerEnabled && !root.useCodexbar
-        repeat: true
-        onTriggered: root.refreshToken()
     }
 
     onProviderEnabledChanged: {

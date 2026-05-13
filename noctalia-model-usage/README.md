@@ -60,8 +60,8 @@ Restart or reload Noctalia Shell after installing if the plugin does not appear 
 
 ### Refresh Behavior
 
-- Configure polling for local file-backed providers.
-- Configure API refresh intervals for API-backed providers.
+- Configure one network refresh interval for API and codexbar-backed providers.
+- Local file-backed providers use file watching and lightweight fallback polling where needed.
 - Include or exclude cache tokens from token totals.
 
 ### Providers

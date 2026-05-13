@@ -52,7 +52,8 @@ Item {
     property bool hasAuthoritativeRateLimit: false
 
     property double lastProbeAtMs: 0
-    property int probeMinIntervalMs: 5 * 60 * 1000
+    property int refreshIntervalSec: 30
+    readonly property int probeMinIntervalMs: Math.max(5, root.refreshIntervalSec) * 1000
 
     property var providerSettings: ({})
     property bool useCodexbar: root.providerSettings?.useCodexbar ?? false
@@ -125,13 +126,6 @@ Item {
                     waitingForAuthTimer.restart();
             }
         }
-    }
-
-    Timer {
-        interval: 5 * 60 * 1000
-        running: root.providerEnabled && !root.useCodexbar && root.oauthAccessToken !== ""
-        repeat: true
-        onTriggered: root.probeRateLimits()
     }
 
     function parseClaudeJson(content) {
@@ -447,15 +441,18 @@ Item {
         root.ready = true;
     }
 
-    function refresh() {
+    function refresh(force) {
         if (root.useCodexbar) {
             codexbarFetcher.fetch();
             return;
         }
 
-        claudeJsonFile.reload();
-        historyFile.reload();
-        credentialsFile.reload();
+        if (force === true) {
+            claudeJsonFile.reload();
+            historyFile.reload();
+            credentialsFile.reload();
+        }
+        root.probeRateLimits();
     }
 
 

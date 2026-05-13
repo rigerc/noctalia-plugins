@@ -9,6 +9,7 @@ Item {
     property bool running: proc.running
     property bool _fetchActive: false
     property bool _completed: false
+    property bool _queuedFetch: false
     property string _stdout: ""
     property string _stderr: ""
     property int timeoutMs: 30000
@@ -17,8 +18,13 @@ Item {
     signal fetchError(string message)
 
     function fetch() {
-        if (!root.codexbarProvider || proc.running)
+        if (!root.codexbarProvider)
             return;
+
+        if (proc.running || root._fetchActive) {
+            root._queuedFetch = true;
+            return;
+        }
 
         root._fetchActive = true;
         root._completed = false;
@@ -28,6 +34,13 @@ Item {
         timeoutTimer.restart();
     }
 
+    function runQueuedFetchIfNeeded() {
+        if (!root._queuedFetch)
+            return;
+        root._queuedFetch = false;
+        root.fetch();
+    }
+
     function completeWithError(message) {
         if (!root._fetchActive || root._completed)
             return;
@@ -35,6 +48,7 @@ Item {
         root._completed = true;
         root._fetchActive = false;
         root.fetchError(message);
+        queueDrainTimer.restart();
     }
 
     function completeWithData(result) {
@@ -44,6 +58,7 @@ Item {
         root._completed = true;
         root._fetchActive = false;
         root.dataReady(result);
+        queueDrainTimer.restart();
     }
 
     Timer {
@@ -56,6 +71,13 @@ Item {
             proc.running = false;
             root.completeWithError("codexbar timed out");
         }
+    }
+
+    Timer {
+        id: queueDrainTimer
+        interval: 1
+        repeat: false
+        onTriggered: root.runQueuedFetchIfNeeded()
     }
 
     Process {
@@ -91,7 +113,11 @@ Item {
 
         // qmllint disable signal-handler-parameters
         onExited: code => {
-            if (!root._fetchActive || root._completed)
+            if (root._completed) {
+                queueDrainTimer.restart();
+                return;
+            }
+            if (!root._fetchActive)
                 return;
 
             if (code !== 0) {

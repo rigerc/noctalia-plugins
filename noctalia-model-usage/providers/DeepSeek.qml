@@ -56,14 +56,7 @@ Item {
     property real toppedUpBalance: 0
     property string currency: ""
     property double lastApiRefreshAtMs: 0
-    readonly property int apiRefreshIntervalMin: 5
-
-    Timer {
-        interval: 5 * 60 * 1000
-        running: root.providerEnabled && root.apiKey !== ""
-        repeat: true
-        onTriggered: root.fetchBalance()
-    }
+    property int refreshIntervalSec: 30
 
     onProviderEnabledChanged: {
         if (providerEnabled && apiKey !== "")
@@ -146,7 +139,7 @@ Item {
     function shouldRefreshApi(force) {
         if (force || root.lastApiRefreshAtMs <= 0)
             return true;
-        return (Date.now() - root.lastApiRefreshAtMs) >= root.apiRefreshIntervalMin * 60 * 1000;
+        return (Date.now() - root.lastApiRefreshAtMs) >= Math.max(5, root.refreshIntervalSec) * 1000;
     }
 
     function refresh(force) {

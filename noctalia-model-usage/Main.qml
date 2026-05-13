@@ -15,6 +15,7 @@ Item {
         providerEnabled: root.providerEnabled("claude")
         providerSettings: root.pluginSettings?.providers?.claude ?? ({})
         includeCacheTokens: root.pluginSettings?.includeCacheTokens ?? true
+        refreshIntervalSec: root.networkRefreshIntervalSec
         onRateLimitPercentChanged: root.trackProviderUsageChange("usage7d", providerId, rateLimitPercent)
         onSecondaryRateLimitPercentChanged: root.trackProviderUsageChange("usage5h", providerId, secondaryRateLimitPercent)
     }
@@ -25,7 +26,7 @@ Item {
         providerEnabled: root.providerEnabled("codex")
         providerSettings: root.pluginSettings?.providers?.codex ?? ({})
         includeCacheTokens: root.pluginSettings?.includeCacheTokens ?? true
-        apiRefreshIntervalMin: root.apiRefreshIntervalMin
+        refreshIntervalSec: root.networkRefreshIntervalSec
         onRateLimitPercentChanged: root.trackProviderUsageChange("usage7d", providerId, rateLimitPercent)
         onSecondaryRateLimitPercentChanged: root.trackProviderUsageChange("usage5h", providerId, secondaryRateLimitPercent)
     }
@@ -35,7 +36,7 @@ Item {
         pluginApi: root.pluginApi
         providerEnabled: root.providerEnabled("openrouter")
         providerSettings: root.pluginSettings?.providers?.openrouter ?? ({})
-        apiRefreshIntervalMin: root.apiRefreshIntervalMin
+        refreshIntervalSec: root.networkRefreshIntervalSec
         onRateLimitPercentChanged: root.trackProviderUsageChange("usage7d", providerId, rateLimitPercent)
         onSecondaryRateLimitPercentChanged: root.trackProviderUsageChange("usage5h", providerId, secondaryRateLimitPercent)
     }
@@ -45,6 +46,7 @@ Item {
         pluginApi: root.pluginApi
         providerEnabled: root.providerEnabled("copilot")
         providerSettings: root.pluginSettings?.providers?.copilot ?? ({})
+        refreshIntervalSec: root.networkRefreshIntervalSec
         onRateLimitPercentChanged: root.trackProviderUsageChange("usage7d", providerId, rateLimitPercent)
         onSecondaryRateLimitPercentChanged: root.trackProviderUsageChange("usage5h", providerId, secondaryRateLimitPercent)
     }
@@ -54,7 +56,7 @@ Item {
         pluginApi: root.pluginApi
         providerEnabled: root.providerEnabled("zen")
         providerSettings: root.pluginSettings?.providers?.zen ?? ({})
-        apiRefreshIntervalMin: root.apiRefreshIntervalMin
+        refreshIntervalSec: root.networkRefreshIntervalSec
         onRateLimitPercentChanged: root.trackProviderUsageChange("usage7d", providerId, rateLimitPercent)
         onSecondaryRateLimitPercentChanged: root.trackProviderUsageChange("usage5h", providerId, secondaryRateLimitPercent)
     }
@@ -64,6 +66,7 @@ Item {
         pluginApi: root.pluginApi
         providerEnabled: root.providerEnabled("deepseek")
         providerSettings: root.pluginSettings?.providers?.deepseek ?? ({})
+        refreshIntervalSec: root.networkRefreshIntervalSec
         onRateLimitPercentChanged: root.trackProviderUsageChange("usage7d", providerId, rateLimitPercent)
         onSecondaryRateLimitPercentChanged: root.trackProviderUsageChange("usage5h", providerId, secondaryRateLimitPercent)
     }
@@ -73,7 +76,7 @@ Item {
         pluginApi: root.pluginApi
         providerEnabled: root.providerEnabled("kilocode")
         providerSettings: root.pluginSettings?.providers?.kilocode ?? ({})
-        apiRefreshIntervalMin: root.apiRefreshIntervalMin
+        refreshIntervalSec: root.networkRefreshIntervalSec
         onRateLimitPercentChanged: root.trackProviderUsageChange("usage7d", providerId, rateLimitPercent)
         onSecondaryRateLimitPercentChanged: root.trackProviderUsageChange("usage5h", providerId, secondaryRateLimitPercent)
     }
@@ -83,7 +86,7 @@ Item {
         pluginApi: root.pluginApi
         providerEnabled: root.providerEnabled("zai")
         providerSettings: root.pluginSettings?.providers?.zai ?? ({})
-        apiRefreshIntervalMin: root.apiRefreshIntervalMin
+        refreshIntervalSec: root.networkRefreshIntervalSec
         onRateLimitPercentChanged: root.trackProviderUsageChange("usage7d", providerId, rateLimitPercent)
         onSecondaryRateLimitPercentChanged: root.trackProviderUsageChange("usage5h", providerId, secondaryRateLimitPercent)
     }
@@ -93,7 +96,7 @@ Item {
         pluginApi: root.pluginApi
         providerEnabled: root.providerEnabled("gemini")
         providerSettings: root.pluginSettings?.providers?.gemini ?? ({})
-        apiRefreshIntervalMin: root.apiRefreshIntervalMin
+        refreshIntervalSec: root.networkRefreshIntervalSec
         onRateLimitPercentChanged: root.trackProviderUsageChange("usage7d", providerId, rateLimitPercent)
         onSecondaryRateLimitPercentChanged: root.trackProviderUsageChange("usage5h", providerId, secondaryRateLimitPercent)
     }
@@ -190,9 +193,6 @@ Item {
         return barProviders[0];
     }
 
-    property int apiRefreshIntervalMin: Math.max(1, Math.min(360,
-        Number(pluginSettings?.apiRefreshIntervalMin ?? 1)))
-
     property bool barCycleEnabled: pluginSettings?.barCycleEnabled ?? false
     property int barCycleIntervalSec: pluginSettings?.barCycleIntervalSec ?? 5
     property bool barShowRemaining: pluginSettings?.barShowRemaining ?? false
@@ -200,7 +200,8 @@ Item {
     property bool barIconAlertOnLimit: pluginSettings?.barIconAlertOnLimit ?? false
     property int barIconAlertThreshold: Math.max(50, Math.min(100, Number(pluginSettings?.barIconAlertThreshold ?? 95)))
     property string barIconAlertWindow: String(pluginSettings?.barIconAlertWindow ?? "usage7d") === "usage5h" ? "usage5h" : "usage7d"
-    property int refreshIntervalSec: pluginSettings?.refreshIntervalSec ?? 30
+    property int refreshIntervalSec: Math.max(5, Math.min(86400, Number(pluginSettings?.refreshIntervalSec ?? 30)))
+    readonly property int networkRefreshIntervalSec: root.refreshIntervalSec
     property double currentTimeMs: Date.now()
     property double nextRefreshAtMs: 0
     readonly property int nextRefreshRemainingSec: Math.max(0, Math.ceil((root.nextRefreshAtMs - root.currentTimeMs) / 1000))

@@ -57,7 +57,7 @@ Item {
         return envKey || (providerSettings?.apiKey ?? "");
     }
 
-    property int apiRefreshIntervalMin: 1
+    property int refreshIntervalSec: 30
     property double lastApiRefreshAtMs: 0
 
     property var utils: ProviderUtils {}
@@ -73,12 +73,6 @@ Item {
         }
     }
 
-
-    ApiRefreshTimer {
-        providerEnabled: root.providerEnabled && !root.useCodexbar && root.apiKey !== ""
-        intervalMin: root.apiRefreshIntervalMin
-        onTick: root.fetchKeyInfo()
-    }
 
     onProviderEnabledChanged: {
         if (providerEnabled) {
@@ -322,7 +316,7 @@ Item {
     function shouldRefreshApi(force) {
         if (force || root.lastApiRefreshAtMs <= 0)
             return true;
-        return (Date.now() - root.lastApiRefreshAtMs) >= root.apiRefreshIntervalMin * 60 * 1000;
+        return (Date.now() - root.lastApiRefreshAtMs) >= Math.max(5, root.refreshIntervalSec) * 1000;
     }
 
     function refresh(force) {

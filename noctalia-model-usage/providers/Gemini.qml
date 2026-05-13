@@ -48,7 +48,7 @@ Item {
     property bool useCodexbar: root.providerSettings?.useCodexbar ?? false
     readonly property string codexbarProviderName: "gemini"
     property var utils: ProviderUtils {}
-    property int apiRefreshIntervalMin: 1
+    property int refreshIntervalSec: 30
     property double lastApiRefreshAtMs: 0
 
     property string _accessToken: ""
@@ -107,12 +107,6 @@ Item {
                 Logger.d("model-usage/gemini", "Creds file load failed: " + error);
             }
         }
-    }
-
-    ApiRefreshTimer {
-        providerEnabled: root.providerEnabled && !root.useCodexbar && root._credsLoaded
-        intervalMin: root.apiRefreshIntervalMin
-        onTick: root.fetchAll()
     }
 
     onProviderEnabledChanged: {
@@ -340,7 +334,7 @@ Item {
     function shouldRefreshApi(force) {
         if (force || root.lastApiRefreshAtMs <= 0)
             return true;
-        return (Date.now() - root.lastApiRefreshAtMs) >= root.apiRefreshIntervalMin * 60 * 1000;
+        return (Date.now() - root.lastApiRefreshAtMs) >= Math.max(5, root.refreshIntervalSec) * 1000;
     }
 
     function refresh(force) {

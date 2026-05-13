@@ -47,7 +47,7 @@ Item {
     property bool useCodexbar: root.providerSettings?.useCodexbar ?? false
     readonly property string codexbarProviderName: "zai"
     property var utils: ProviderUtils {}
-    property int apiRefreshIntervalMin: 1
+    property int refreshIntervalSec: 30
     property double lastApiRefreshAtMs: 0
 
     readonly property string apiKey: {
@@ -74,12 +74,6 @@ Item {
             root.ready = false;
             Logger.e("model-usage/" + root.providerId, "codexbar error: " + msg);
         }
-    }
-
-    ApiRefreshTimer {
-        providerEnabled: root.providerEnabled && !root.useCodexbar && root.apiKey !== ""
-        intervalMin: root.apiRefreshIntervalMin
-        onTick: root.fetchQuota()
     }
 
     onProviderEnabledChanged: {
@@ -243,7 +237,7 @@ Item {
     function shouldRefreshApi(force) {
         if (force || root.lastApiRefreshAtMs <= 0)
             return true;
-        return (Date.now() - root.lastApiRefreshAtMs) >= root.apiRefreshIntervalMin * 60 * 1000;
+        return (Date.now() - root.lastApiRefreshAtMs) >= Math.max(5, root.refreshIntervalSec) * 1000;
     }
 
     function refresh(force) {

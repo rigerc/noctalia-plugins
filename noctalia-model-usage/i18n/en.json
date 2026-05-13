@@ -6,7 +6,7 @@
     "todaySummary": "{provider} \u2014 Today: {prompts} prompts, {sessions} sessions, {tokens} tokens",
     "rateLimitFragment": "{label}: {percent}%",
     "usagePrefix": "{prefix}: {value}",
-    "nextRefresh": "Next refresh: {time}",
+    "nextRefresh": "Next network refresh: {time}",
     "showTextAlways": "Show text always",
     "showTextOnHover": "Show text on hover"
   },
@@ -89,13 +89,11 @@
     },
     "refresh": {
       "label": "Refresh behavior",
-      "desc": "Control how often local files are polled and how frequently API-backed providers are refreshed.",
+      "desc": "Control how often network-backed provider data is refreshed.",
       "cacheLabel": "Include cache tokens in token count",
       "cacheDesc": "Counts cache read and cache write tokens in totals wherever the provider exposes them. Disable this if you want to focus only on direct input and output tokens.",
-      "intervalLabel": "Refresh interval (seconds)",
-      "intervalDesc": "Fallback polling interval for local file-based providers when file watching does not catch an update.",
-      "apiIntervalLabel": "API providers refresh interval",
-      "apiIntervalDesc": "How often to poll API-backed providers such as Codex API mode, OpenRouter, Zen, Kilo Code, Z.ai, and Gemini."
+      "intervalLabel": "Network refresh interval (seconds)",
+      "intervalDesc": "How often to poll API and codexbar-backed providers. Local file providers still use file watching and their own lightweight fallback polling when needed."
     },
     "providers": {
       "label": "Providers",

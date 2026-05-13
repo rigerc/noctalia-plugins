@@ -55,10 +55,10 @@ Item {
     property string accountId: ""
     readonly property string apiEndpoint: "https://chatgpt.com/backend-api/wham/usage"
 
-    property int apiRefreshIntervalMin: 1
+    property int refreshIntervalSec: 30
 
     property double _lastApiRefreshMs: 0
-    readonly property int _apiRefreshMinIntervalMs: root.apiRefreshIntervalMin * 60 * 1000
+    readonly property int _apiRefreshMinIntervalMs: Math.max(5, root.refreshIntervalSec) * 1000
 
     property var utils: ProviderUtils {}
 
@@ -153,12 +153,6 @@ Item {
         running: root.providerEnabled && root.usageMode === "local"
         repeat: true
         onTriggered: root.scanSessions()
-    }
-
-    ApiRefreshTimer {
-        providerEnabled: root.providerEnabled && !root.useCodexbar && root.usageMode === "api"
-        intervalMin: root.apiRefreshIntervalMin
-        onTick: root.fetchUsageFromApi()
     }
 
     onProviderEnabledChanged: {
@@ -550,17 +544,18 @@ Item {
         }
 
         if (root.usageMode === "api") {
-            authFile.reload();
+            if (force === true) {
+                authFile.reload();
+                // Also read history for prompt counts (non-blocking)
+                historyFile.reload();
+                configFile.reload();
+            }
             root.fetchUsageFromApi();
-            // Also read history for prompt counts (non-blocking)
-            historyFile.reload();
-            configFile.reload();
-        } else {
+        } else if (force === true) {
             historyFile.reload();
             configFile.reload();
             authFile.reload();
-            if (force === true)
-                root.scanSessions();
+            root.scanSessions();
         }
     }
 

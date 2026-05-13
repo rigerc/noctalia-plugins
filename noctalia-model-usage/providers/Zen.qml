@@ -79,14 +79,8 @@ Item {
     property int availableModels: 0
     property string defaultModel: ""
 
-    property int apiRefreshIntervalMin: 1
+    property int refreshIntervalSec: 30
     property double lastApiRefreshAtMs: 0
-
-    ApiRefreshTimer {
-        providerEnabled: root.providerEnabled && !root.useCodexbar
-        intervalMin: root.apiRefreshIntervalMin
-        onTick: root.fetchModels()
-    }
 
     onProviderEnabledChanged: {
         if (providerEnabled)
@@ -270,7 +264,7 @@ Item {
     function shouldRefreshApi(force) {
         if (force || root.lastApiRefreshAtMs <= 0)
             return true;
-        return (Date.now() - root.lastApiRefreshAtMs) >= root.apiRefreshIntervalMin * 60 * 1000;
+        return (Date.now() - root.lastApiRefreshAtMs) >= Math.max(5, root.refreshIntervalSec) * 1000;
     }
 
     function refresh(force) {

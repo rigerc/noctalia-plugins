@@ -427,19 +427,6 @@ ColumnLayout {
                         onValueChanged: root.editSettings.refreshIntervalSec = value
                         defaultValue: root.defaults.refreshIntervalSec ?? 30
                     }
-
-                    NSpinBox {
-                        Layout.fillWidth: true
-                        label: root.tr("settings.refresh.apiIntervalLabel")
-                        description: root.tr("settings.refresh.apiIntervalDesc")
-                        from: 1
-                        to: 360
-                        value: root.editSettings?.apiRefreshIntervalMin ?? 1
-                        stepSize: 1
-                        suffix: root.tr("units.minutesShort")
-                        onValueChanged: root.editSettings.apiRefreshIntervalMin = value
-                        defaultValue: root.defaults.apiRefreshIntervalMin ?? 1
-                    }
                 }
             }
         }
