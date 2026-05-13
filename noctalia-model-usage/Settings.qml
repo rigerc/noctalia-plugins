@@ -260,11 +260,10 @@ ColumnLayout {
             anchors.margins: Style.marginXL
             spacing: Style.marginXL * 2
 
-            NLabel {
+            NHeader {
                 Layout.fillWidth: true
                 label: root.tr("settings.general.label")
                 description: root.tr("settings.general.desc")
-                labelSize: Style.fontSizeL
             }
 
             ColumnLayout {
@@ -275,7 +274,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     label: root.tr("settings.barDisplay.label")
                     description: root.tr("settings.barDisplay.desc")
-                    labelSize: Style.fontSizeM
+                    labelSize: Style.fontSizeL
                 }
 
                 RowLayout {
@@ -402,7 +401,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     label: root.tr("settings.usageDisplay.label")
                     description: root.tr("settings.usageDisplay.desc")
-                    labelSize: Style.fontSizeM
+                    labelSize: Style.fontSizeL
                 }
 
                 NText {
@@ -561,7 +560,7 @@ ColumnLayout {
                     Layout.fillWidth: true
                     label: root.tr("settings.refresh.label")
                     description: root.tr("settings.refresh.desc")
-                    labelSize: Style.fontSizeM
+                    labelSize: Style.fontSizeL
                 }
 
                 RowLayout {
@@ -665,11 +664,10 @@ ColumnLayout {
             anchors.margins: Style.marginXL
             spacing: Style.marginL
 
-            NLabel {
+            NHeader {
                 Layout.fillWidth: true
                 label: root.tr("settings.providers.label")
                 description: root.tr("settings.providers.desc")
-                labelSize: Style.fontSizeL
             }
 
             NComboBox {
@@ -890,7 +888,7 @@ ColumnLayout {
                                     Layout.fillWidth: true
                                     label: root.tr("settings.providers.detailsLabel")
                                     description: root.tr("settings.providers.detailsDesc", { "provider": root.providerDisplayName(providerCard.providerId) })
-                                    labelSize: Style.fontSizeM
+                                    labelSize: Style.fontSizeL
                                 }
 
                                 ColumnLayout {
