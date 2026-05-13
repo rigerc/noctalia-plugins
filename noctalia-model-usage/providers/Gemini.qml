@@ -45,6 +45,7 @@ Item {
     property var providerSettings: ({})
     property bool useCodexbar: root.providerSettings?.useCodexbar ?? false
     readonly property string codexbarProviderName: "gemini"
+    property var utils: ProviderUtils {}
     property int apiRefreshIntervalMin: 1
 
     property string _accessToken: ""
@@ -293,20 +294,20 @@ Item {
         const identity = usage?.identity ?? null;
         const credits = result?.credits ?? null;
 
-        if (primary) {
-            root.rateLimitPercent = Math.min(1, Math.max(0, Number(primary.usedPercent ?? 0) / 100));
-            root.rateLimitLabel = primary.resetDescription ?? "Usage";
-            root.rateLimitResetAt = primary.resetsAt ?? "";
+        if (secondary) {
+            root.rateLimitPercent = Math.min(1, Math.max(0, Number(secondary.usedPercent ?? 0) / 100));
+            root.rateLimitLabel = utils.windowMinutesToLabel(secondary.windowMinutes) || "7d";
+            root.rateLimitResetAt = secondary.resetsAt ?? "";
         } else {
             root.rateLimitPercent = -1;
             root.rateLimitLabel = "";
             root.rateLimitResetAt = "";
         }
 
-        if (secondary) {
-            root.secondaryRateLimitPercent = Math.min(1, Math.max(0, Number(secondary.usedPercent ?? 0) / 100));
-            root.secondaryRateLimitLabel = secondary.resetDescription ?? "Secondary";
-            root.secondaryRateLimitResetAt = secondary.resetsAt ?? "";
+        if (primary) {
+            root.secondaryRateLimitPercent = Math.min(1, Math.max(0, Number(primary.usedPercent ?? 0) / 100));
+            root.secondaryRateLimitLabel = utils.windowMinutesToLabel(primary.windowMinutes) || "5h";
+            root.secondaryRateLimitResetAt = primary.resetsAt ?? "";
         } else {
             root.secondaryRateLimitPercent = -1;
             root.secondaryRateLimitLabel = "";

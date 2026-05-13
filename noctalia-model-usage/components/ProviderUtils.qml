@@ -28,6 +28,14 @@ QtObject {
         return y + "-" + m + "-" + d;
     }
 
+    function windowMinutesToLabel(minutes) {
+        if (!(minutes > 0)) return "";
+        if (minutes < 60) return Math.round(minutes) + "m";
+        const h = Math.round(minutes / 60);
+        if (h < 48) return h + "h";
+        return Math.round(h / 24) + "d";
+    }
+
     function normalizeResetAt(value) {
         if (value === null || value === undefined || value === "")
             return "";
