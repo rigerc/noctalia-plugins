@@ -13,6 +13,7 @@ ColumnLayout {
     property real preferredWidth: 760 * Style.uiScaleRatio
 
     property var editSettings: JSON.parse(JSON.stringify(pluginApi?.pluginSettings ?? pluginApi?.manifest?.metadata?.defaultSettings ?? {}))
+    readonly property var defaults: pluginApi?.manifest?.metadata?.defaultSettings || ({})
     property int draggedProviderIndex: -1
     property var expandedProviders: ({})
 
@@ -92,7 +93,10 @@ ColumnLayout {
     }
 
     function codexbarName(providerId) {
-        const map = { kilocode: "kilo", zen: "opencode" };
+        const map = {
+            kilocode: "kilo",
+            zen: "opencode"
+        };
         return map[providerId] ?? providerId;
     }
 
@@ -169,11 +173,14 @@ ColumnLayout {
     }
 
     function saveSettings() {
-        if (!pluginApi) return;
+        if (!pluginApi)
+            return;
         const s = JSON.parse(JSON.stringify(root.editSettings ?? ({})));
 
-        if (s.providerOrderMode !== "recent7dChange") s.providerOrderMode = "manual";
-        if (s.barIconAlertWindow !== "usage5h") s.barIconAlertWindow = "usage7d";
+        if (s.providerOrderMode !== "recent7dChange")
+            s.providerOrderMode = "manual";
+        if (s.barIconAlertWindow !== "usage5h")
+            s.barIconAlertWindow = "usage7d";
         root.pluginApi.pluginSettings = s;
         root.pluginApi.saveSettings();
     }
@@ -212,672 +219,505 @@ ColumnLayout {
         Layout.fillWidth: true
         currentIndex: settingsTabBar.currentIndex
 
-    NBox {
-        Layout.fillWidth: true
-        implicitHeight: generalColumn.implicitHeight + Style.marginXL * 2
-
-        ColumnLayout {
-            id: generalColumn
-            anchors.fill: parent
-            anchors.margins: Style.marginXL
-            spacing: Style.marginXL * 2
+        NBox {
+            Layout.fillWidth: true
+            implicitHeight: generalColumn.implicitHeight + Style.marginXL * 2
+            height: implicitHeight
 
             ColumnLayout {
-                Layout.fillWidth: true
-                spacing: Style.marginXL
-
-                NLabel {
-                    Layout.fillWidth: true
-                    label: root.tr("settings.barDisplay.label")
-                    description: root.tr("settings.barDisplay.desc")
-                    labelSize: Style.fontSizeL
-                    icon: "layout-navbar"
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: Style.marginL
-
-                    NToggle {
-                        checked: root.editSettings?.barCycleEnabled ?? false
-                        onToggled: value => {
-                            root.editSettings.barCycleEnabled = value;
-                            root.editSettingsChanged();
-                        }
-                    }
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: Style.marginS
-
-                        NText {
-                            text: root.tr("settings.cycle.label")
-                            pointSize: Style.fontSizeM
-                            font.weight: Style.fontWeightSemiBold
-                            color: Color.mOnSurface
-                        }
-                        NText {
-                            text: root.tr("settings.cycle.desc")
-                            pointSize: Style.fontSizeXS
-                            color: Color.mOnSurfaceVariant
-                            wrapMode: Text.Wrap
-                        }
-                    }
-                }
+                id: generalColumn
+                anchors.fill: parent
+                anchors.margins: Style.marginXL
+                spacing: 0
 
                 ColumnLayout {
                     Layout.fillWidth: true
-                    visible: root.editSettings?.barCycleEnabled ?? false
-                    spacing: Style.marginS
+                    spacing: Style.marginL
 
-                    NText {
-                        text: root.tr("settings.cycle.intervalLabel")
-                        pointSize: Style.fontSizeM
-                        font.weight: Style.fontWeightSemiBold
-                        color: Color.mOnSurface
+                    NLabel {
+                        Layout.fillWidth: true
+                        label: root.tr("settings.barDisplay.label")
+                        description: root.tr("settings.barDisplay.desc")
+                        labelSize: Style.fontSizeXL
+                        icon: "layout-navbar"
                     }
 
-                    NText {
+                    NToggle {
                         Layout.fillWidth: true
-                        text: root.tr("settings.cycle.intervalDesc")
-                        pointSize: Style.fontSizeXS
-                        color: Color.mOnSurfaceVariant
-                        wrapMode: Text.Wrap
+                        label: root.tr("settings.cycle.label")
+                        description: root.tr("settings.cycle.desc")
+                        checked: root.editSettings?.barCycleEnabled ?? false
+                        onToggled: checked => {
+                            root.editSettings.barCycleEnabled = checked;
+                            root.editSettingsChanged();
+                        }
+                        defaultValue: root.defaults.barCycleEnabled ?? false
                     }
 
                     NSpinBox {
+                        Layout.fillWidth: true
+                        label: root.tr("settings.cycle.intervalLabel")
+                        description: root.tr("settings.cycle.intervalDesc")
                         from: 2
                         to: 60
                         value: root.editSettings?.barCycleIntervalSec ?? 5
                         stepSize: 1
                         onValueChanged: root.editSettings.barCycleIntervalSec = value
+                        defaultValue: root.defaults.barCycleIntervalSec ?? 5
+                        visible: root.editSettings?.barCycleEnabled ?? false
                     }
-                }
 
-                NComboBox {
-                    Layout.fillWidth: true
-                    label: root.tr("settings.barMetric.label")
-                    description: root.tr("settings.barMetric.desc")
-                    model: [
-                        { "key": "prompts", "name": root.tr("settings.barMetrics.prompts") },
-                        { "key": "tokens", "name": root.tr("settings.barMetrics.tokens") },
-                        { "key": "usage", "name": root.tr("settings.barMetrics.usage") },
-                        { "key": "usage5h", "name": root.tr("settings.barMetrics.usage5h") },
-                        { "key": "usage5h7d", "name": root.tr("settings.barMetrics.usage5h7d") }
-                    ]
-                    currentKey: root.editSettings?.barMetric ?? "prompts"
-                    onSelected: key => {
-                        root.editSettings.barMetric = key;
-                        root.editSettingsChanged();
+                    NComboBox {
+                        Layout.fillWidth: true
+                        label: root.tr("settings.barMetric.label")
+                        description: root.tr("settings.barMetric.desc")
+                        model: [
+                            {
+                                "key": "prompts",
+                                "name": root.tr("settings.barMetrics.prompts")
+                            },
+                            {
+                                "key": "tokens",
+                                "name": root.tr("settings.barMetrics.tokens")
+                            },
+                            {
+                                "key": "usage",
+                                "name": root.tr("settings.barMetrics.usage")
+                            },
+                            {
+                                "key": "usage5h",
+                                "name": root.tr("settings.barMetrics.usage5h")
+                            },
+                            {
+                                "key": "usage5h7d",
+                                "name": root.tr("settings.barMetrics.usage5h7d")
+                            }
+                        ]
+                        currentKey: root.editSettings?.barMetric ?? "prompts"
+                        onSelected: key => {
+                            root.editSettings.barMetric = key;
+                            root.editSettingsChanged();
+                        }
                     }
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: Style.marginL
 
                     NToggle {
+                        Layout.fillWidth: true
+                        label: root.tr("settings.hover.label")
+                        description: root.tr("settings.hover.desc")
                         checked: root.editSettings?.barTextShowOnHover ?? false
-                        onToggled: value => {
-                            root.editSettings.barTextShowOnHover = value;
+                        onToggled: checked => {
+                            root.editSettings.barTextShowOnHover = checked;
                             root.editSettingsChanged();
                         }
-                    }
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: Style.marginS
-
-                        NText {
-                            text: root.tr("settings.hover.label")
-                            pointSize: Style.fontSizeM
-                            font.weight: Style.fontWeightSemiBold
-                            color: Color.mOnSurface
-                        }
-                        NText {
-                            text: root.tr("settings.hover.desc")
-                            pointSize: Style.fontSizeXS
-                            color: Color.mOnSurfaceVariant
-                            wrapMode: Text.Wrap
-                        }
-                    }
-                }
-            }
-
-            NDivider {
-                Layout.fillWidth: true
-                Layout.topMargin: Style.marginM
-                Layout.bottomMargin: Style.marginM
-            }
-
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: Style.marginXL
-
-                NLabel {
-                    Layout.fillWidth: true
-                    label: root.tr("settings.usageDisplay.label")
-                    description: root.tr("settings.usageDisplay.desc")
-                    labelSize: Style.fontSizeL
-                    icon: "chart-pie"
-                }
-
-                NText {
-                    visible: {
-                        var metric = root.editSettings?.barMetric ?? "prompts";
-                        return !(metric === "usage" || metric === "usage5h" || metric === "usage5h7d");
-                    }
-                    Layout.fillWidth: true
-                    text: root.tr("settings.usageDisplay.nonUsage")
-                    pointSize: Style.fontSizeXS
-                    color: Color.mOnSurfaceVariant
-                    wrapMode: Text.Wrap
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: Style.marginL
-                    enabled: {
-                        var metric = root.editSettings?.barMetric ?? "prompts";
-                        return metric === "usage" || metric === "usage5h" || metric === "usage5h7d";
-                    }
-
-                    NToggle {
-                        checked: root.editSettings?.barShowRemaining ?? false
-                        onToggled: value => {
-                            root.editSettings.barShowRemaining = value;
-                            root.editSettingsChanged();
-                        }
-                    }
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: Style.marginS
-
-                        NText {
-                            text: root.tr("settings.usageDisplay.remainingLabel")
-                            pointSize: Style.fontSizeM
-                            font.weight: Style.fontWeightSemiBold
-                            color: Color.mOnSurface
-                        }
-                        NText {
-                            text: root.tr("settings.usageDisplay.remainingDesc")
-                            pointSize: Style.fontSizeXS
-                            color: Color.mOnSurfaceVariant
-                            wrapMode: Text.Wrap
-                        }
+                        defaultValue: root.defaults.barTextShowOnHover ?? false
                     }
                 }
 
-                RowLayout {
+                NDivider {
                     Layout.fillWidth: true
-                    spacing: Style.marginL
-
-                    NToggle {
-                        checked: root.editSettings?.barIconAlertOnLimit ?? false
-                        onToggled: value => {
-                            root.editSettings.barIconAlertOnLimit = value;
-                            root.editSettingsChanged();
-                        }
-                    }
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: Style.marginS
-
-                        NText {
-                            text: root.tr("settings.iconAlert.label")
-                            pointSize: Style.fontSizeM
-                            font.weight: Style.fontWeightSemiBold
-                            color: Color.mOnSurface
-                        }
-                        NText {
-                            text: root.tr("settings.iconAlert.desc")
-                            pointSize: Style.fontSizeXS
-                            color: Color.mOnSurfaceVariant
-                            wrapMode: Text.Wrap
-                        }
-                    }
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: Style.marginL
-
-                    NToggle {
-                        checked: (root.editSettings?.barIconAlertWindow ?? "usage7d") === "usage5h"
-                        onToggled: value => {
-                            root.editSettings.barIconAlertWindow = value ? "usage5h" : "usage7d";
-                            root.editSettingsChanged();
-                        }
-                    }
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: Style.marginS
-
-                        NText {
-                            text: root.tr("settings.iconAlert.windowLabel")
-                            pointSize: Style.fontSizeM
-                            font.weight: Style.fontWeightSemiBold
-                            color: Color.mOnSurface
-                        }
-
-                        NText {
-                            text: root.tr("settings.iconAlert.windowDesc")
-                            pointSize: Style.fontSizeXS
-                            color: Color.mOnSurfaceVariant
-                            wrapMode: Text.Wrap
-                        }
-                    }
+                    Layout.topMargin: Style.marginL
+                    Layout.bottomMargin: Style.marginL
                 }
 
                 ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: Style.marginS
+                    spacing: Style.marginL
 
-                    NText {
-                        text: root.tr("settings.iconAlert.thresholdLabel")
-                        pointSize: Style.fontSizeM
-                        font.weight: Style.fontWeightSemiBold
-                        color: Color.mOnSurface
+                    NLabel {
+                        Layout.fillWidth: true
+                        label: root.tr("settings.usageDisplay.label")
+                        description: root.tr("settings.usageDisplay.desc")
+                        labelSize: Style.fontSizeXL
+                        icon: "chart-pie"
                     }
 
                     NText {
+                        visible: {
+                            var metric = root.editSettings?.barMetric ?? "prompts";
+                            return !(metric === "usage" || metric === "usage5h" || metric === "usage5h7d");
+                        }
                         Layout.fillWidth: true
-                        text: (root.editSettings?.barIconAlertOnLimit ?? false)
-                            ? root.tr("settings.iconAlert.thresholdDescEnabled")
-                            : root.tr("settings.iconAlert.thresholdDescDisabled")
+                        text: root.tr("settings.usageDisplay.nonUsage")
                         pointSize: Style.fontSizeXS
                         color: Color.mOnSurfaceVariant
                         wrapMode: Text.Wrap
                     }
 
+                    NToggle {
+                        Layout.fillWidth: true
+                        label: root.tr("settings.usageDisplay.remainingLabel")
+                        description: root.tr("settings.usageDisplay.remainingDesc")
+                        enabled: {
+                            var metric = root.editSettings?.barMetric ?? "prompts";
+                            return metric === "usage" || metric === "usage5h" || metric === "usage5h7d";
+                        }
+                        checked: root.editSettings?.barShowRemaining ?? false
+                        onToggled: checked => {
+                            root.editSettings.barShowRemaining = checked;
+                            root.editSettingsChanged();
+                        }
+                        defaultValue: root.defaults.barShowRemaining ?? false
+                    }
+
+                    NToggle {
+                        Layout.fillWidth: true
+                        label: root.tr("settings.iconAlert.label")
+                        description: root.tr("settings.iconAlert.desc")
+                        checked: root.editSettings?.barIconAlertOnLimit ?? false
+                        onToggled: checked => {
+                            root.editSettings.barIconAlertOnLimit = checked;
+                            root.editSettingsChanged();
+                        }
+                        defaultValue: root.defaults.barIconAlertOnLimit ?? false
+                    }
+
+                    NToggle {
+                        Layout.fillWidth: true
+                        label: root.tr("settings.iconAlert.windowLabel")
+                        description: root.tr("settings.iconAlert.windowDesc")
+                        checked: (root.editSettings?.barIconAlertWindow ?? "usage7d") === "usage5h"
+                        onToggled: checked => {
+                            root.editSettings.barIconAlertWindow = checked ? "usage5h" : "usage7d";
+                            root.editSettingsChanged();
+                        }
+                        defaultValue: (root.defaults.barIconAlertWindow ?? "usage7d") === "usage5h"
+                    }
+
                     NSpinBox {
+                        Layout.fillWidth: true
+                        label: root.tr("settings.iconAlert.thresholdLabel")
+                        description: (root.editSettings?.barIconAlertOnLimit ?? false) ? root.tr("settings.iconAlert.thresholdDescEnabled") : root.tr("settings.iconAlert.thresholdDescDisabled")
                         from: 50
                         to: 100
                         stepSize: 5
                         value: root.editSettings?.barIconAlertThreshold ?? 95
                         suffix: "%"
                         onValueChanged: root.editSettings.barIconAlertThreshold = value
+                        defaultValue: root.defaults.barIconAlertThreshold ?? 95
                     }
                 }
-            }
 
-            NDivider {
-                Layout.fillWidth: true
-                Layout.topMargin: Style.marginM
-                Layout.bottomMargin: Style.marginM
-            }
-
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: Style.marginXL
-
-                NLabel {
+                NDivider {
                     Layout.fillWidth: true
-                    label: root.tr("settings.refresh.label")
-                    description: root.tr("settings.refresh.desc")
-                    labelSize: Style.fontSizeL
-                    icon: "refresh"
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: Style.marginL
-
-                    NToggle {
-                        checked: root.editSettings?.includeCacheTokens ?? true
-                        onToggled: value => {
-                            root.editSettings.includeCacheTokens = value;
-                            root.editSettingsChanged();
-                        }
-                    }
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: Style.marginS
-
-                        NText {
-                            text: root.tr("settings.refresh.cacheLabel")
-                            pointSize: Style.fontSizeM
-                            font.weight: Style.fontWeightSemiBold
-                            color: Color.mOnSurface
-                        }
-                        NText {
-                            text: root.tr("settings.refresh.cacheDesc")
-                            pointSize: Style.fontSizeXS
-                            color: Color.mOnSurfaceVariant
-                            wrapMode: Text.Wrap
-                        }
-                    }
+                    Layout.topMargin: Style.marginL
+                    Layout.bottomMargin: Style.marginL
                 }
 
                 ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: Style.marginS
+                    spacing: Style.marginL
 
-                    NText {
-                        text: root.tr("settings.refresh.intervalLabel")
-                        pointSize: Style.fontSizeM
-                        font.weight: Style.fontWeightSemiBold
-                        color: Color.mOnSurface
+                    NLabel {
+                        Layout.fillWidth: true
+                        label: root.tr("settings.refresh.label")
+                        description: root.tr("settings.refresh.desc")
+                        labelSize: Style.fontSizeXL
+                        icon: "refresh"
                     }
 
-                    NText {
+                    NToggle {
                         Layout.fillWidth: true
-                        text: root.tr("settings.refresh.intervalDesc")
-                        pointSize: Style.fontSizeXS
-                        color: Color.mOnSurfaceVariant
-                        wrapMode: Text.Wrap
+                        label: root.tr("settings.refresh.cacheLabel")
+                        description: root.tr("settings.refresh.cacheDesc")
+                        checked: root.editSettings?.includeCacheTokens ?? true
+                        onToggled: checked => {
+                            root.editSettings.includeCacheTokens = checked;
+                            root.editSettingsChanged();
+                        }
+                        defaultValue: root.defaults.includeCacheTokens ?? true
                     }
 
                     NSpinBox {
+                        Layout.fillWidth: true
+                        label: root.tr("settings.refresh.intervalLabel")
+                        description: root.tr("settings.refresh.intervalDesc")
                         from: 5
                         to: 300
                         value: root.editSettings?.refreshIntervalSec ?? 30
                         stepSize: 5
                         onValueChanged: root.editSettings.refreshIntervalSec = value
-                    }
-                }
-
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: Style.marginS
-
-                    NText {
-                        text: root.tr("settings.refresh.apiIntervalLabel")
-                        pointSize: Style.fontSizeM
-                        font.weight: Style.fontWeightSemiBold
-                        color: Color.mOnSurface
-                    }
-
-                    NText {
-                        Layout.fillWidth: true
-                        text: root.tr("settings.refresh.apiIntervalDesc")
-                        pointSize: Style.fontSizeXS
-                        color: Color.mOnSurfaceVariant
-                        wrapMode: Text.Wrap
+                        defaultValue: root.defaults.refreshIntervalSec ?? 30
                     }
 
                     NSpinBox {
+                        Layout.fillWidth: true
+                        label: root.tr("settings.refresh.apiIntervalLabel")
+                        description: root.tr("settings.refresh.apiIntervalDesc")
                         from: 1
                         to: 360
                         value: root.editSettings?.apiRefreshIntervalMin ?? 1
                         stepSize: 1
                         suffix: root.tr("units.minutesShort")
                         onValueChanged: root.editSettings.apiRefreshIntervalMin = value
+                        defaultValue: root.defaults.apiRefreshIntervalMin ?? 1
                     }
                 }
             }
         }
-    }
 
-    NBox {
-        Layout.fillWidth: true
-        implicitHeight: providersColumn.implicitHeight + Style.marginXL * 2
+        NBox {
+            Layout.fillWidth: true
+            implicitHeight: providersColumn.implicitHeight + Style.marginXL * 2
+            height: implicitHeight
 
-        ColumnLayout {
-            id: providersColumn
-            anchors.fill: parent
-            anchors.margins: Style.marginXL
-            spacing: Style.marginL
+            ColumnLayout {
+                id: providersColumn
+                anchors.fill: parent
+                anchors.margins: Style.marginXL
+                spacing: Style.marginL
 
-            NComboBox {
-                Layout.fillWidth: true
-                label: root.tr("settings.providers.orderLabel")
-                description: root.tr("settings.providers.orderDesc")
-                model: root.providerOrderModeOptions
-                currentKey: root.editSettings?.providerOrderMode ?? "manual"
-                onSelected: key => {
-                    root.editSettings.providerOrderMode = key;
-                    root.editSettingsChanged();
-                }
-            }
-
-            NText {
-                visible: root.editSettings?.providerOrderMode === "recent7dChange"
-                text: root.tr("settings.providers.recentHelp")
-                pointSize: Style.fontSizeXS
-                color: Color.mOnSurfaceVariant
-                wrapMode: Text.Wrap
-                Layout.fillWidth: true
-            }
-
-            NDivider { Layout.fillWidth: true }
-
-            NText {
-                text: root.tr("settings.providers.dragHelp")
-                pointSize: Style.fontSizeXS
-                color: Color.mOnSurfaceVariant
-                wrapMode: Text.Wrap
-                Layout.fillWidth: true
-            }
-
-            Repeater {
-                model: root.normalizedEditProviderOrder
-
-                delegate: DropArea {
-                    id: providerDropArea
-
-                    required property int index
-                    required property string modelData
-
+                NComboBox {
                     Layout.fillWidth: true
-                    implicitHeight: providerCard.implicitHeight
-
-                    onEntered: function(drag) {
-                        if (root.draggedProviderIndex < 0)
-                            return;
-                        if (root.draggedProviderIndex === providerDropArea.index)
-                            return;
-                        root.moveProvider(root.draggedProviderIndex, providerDropArea.index);
-                        root.draggedProviderIndex = providerDropArea.index;
+                    label: root.tr("settings.providers.orderLabel")
+                    description: root.tr("settings.providers.orderDesc")
+                    model: root.providerOrderModeOptions
+                    currentKey: root.editSettings?.providerOrderMode ?? "manual"
+                    onSelected: key => {
+                        root.editSettings.providerOrderMode = key;
+                        root.editSettingsChanged();
                     }
+                }
 
-                    NBox {
-                        id: providerCard
-                        width: parent.width
-                        implicitHeight: cardBody.implicitHeight + Style.marginL * 2
+                NText {
+                    visible: root.editSettings?.providerOrderMode === "recent7dChange"
+                    text: root.tr("settings.providers.recentHelp")
+                    pointSize: Style.fontSizeXS
+                    color: Color.mOnSurfaceVariant
+                    wrapMode: Text.Wrap
+                    Layout.fillWidth: true
+                }
 
-                        readonly property int providerIndex: providerDropArea.index
-                        readonly property string providerId: String(providerDropArea.modelData || "")
-                        readonly property var providerCfg: root.providerSettingsFor(providerId)
-                        readonly property bool expanded: root.isProviderExpanded(providerId)
-                        property bool dragging: dragHandleMouseArea.drag.active
+                NText {
+                    text: root.tr("settings.providers.dragHelp")
+                    pointSize: Style.fontSizeXS
+                    color: Color.mOnSurfaceVariant
+                    wrapMode: Text.Wrap
+                    Layout.fillWidth: true
+                }
 
-                        Drag.active: dragging
-                        Drag.source: providerCard
-                        Drag.hotSpot.x: width / 2
-                        Drag.hotSpot.y: height / 2
-                        Drag.keys: ["model-usage-provider"]
-                        z: dragging ? 1000 : 0
-                        scale: dragging ? 1.02 : 1.0
-                        opacity: dragging ? 0.92 : 1.0
+                Repeater {
+                    model: root.normalizedEditProviderOrder
 
-                        onDraggingChanged: {
-                            if (dragging)
-                                root.draggedProviderIndex = providerCard.providerIndex;
-                            if (!dragging && root.draggedProviderIndex === providerCard.providerIndex)
-                                root.draggedProviderIndex = -1;
+                    delegate: DropArea {
+                        id: providerDropArea
+
+                        required property int index
+                        required property string modelData
+
+                        Layout.fillWidth: true
+                        implicitHeight: providerCard.implicitHeight
+
+                        onEntered: function (drag) {
+                            if (root.draggedProviderIndex < 0)
+                                return;
+                            if (root.draggedProviderIndex === providerDropArea.index)
+                                return;
+                            root.moveProvider(root.draggedProviderIndex, providerDropArea.index);
+                            root.draggedProviderIndex = providerDropArea.index;
                         }
 
-                        Behavior on scale {
-                            NumberAnimation { duration: Style.animationFast }
-                        }
+                        NBox {
+                            id: providerCard
+                            width: parent.width
+                            implicitHeight: cardBody.implicitHeight + Style.marginL * 2
 
-                        ColumnLayout {
-                            id: cardBody
-                            anchors.fill: parent
-                            anchors.margins: Style.marginL
-                            spacing: Style.marginL
+                            readonly property int providerIndex: providerDropArea.index
+                            readonly property string providerId: String(providerDropArea.modelData || "")
+                            readonly property var providerCfg: root.providerSettingsFor(providerId)
+                            readonly property bool expanded: root.isProviderExpanded(providerId)
+                            property bool dragging: dragHandleMouseArea.drag.active
 
-                            RowLayout {
-                                Layout.fillWidth: true
-                                spacing: Style.marginXL
+                            Drag.active: dragging
+                            Drag.source: providerCard
+                            Drag.hotSpot.x: width / 2
+                            Drag.hotSpot.y: height / 2
+                            Drag.keys: ["model-usage-provider"]
+                            z: dragging ? 1000 : 0
+                            scale: dragging ? 1.02 : 1.0
+                            opacity: dragging ? 0.92 : 1.0
 
-                                Item {
-                                    Layout.preferredWidth: Style.fontSizeL + Style.marginS * 2
-                                    Layout.preferredHeight: Style.fontSizeL + Style.marginS * 2
-
-                                    NIcon {
-                                        anchors.centerIn: parent
-                                        icon: "grip-vertical"
-                                        color: Color.mOnSurfaceVariant
-                                    }
-
-                                    MouseArea {
-                                        id: dragHandleMouseArea
-                                        anchors.fill: parent
-                                        cursorShape: Qt.OpenHandCursor
-                                        drag.target: providerCard
-                                    }
-                                }
-
-                                ProviderVisual {
-                                    Layout.alignment: Qt.AlignVCenter
-                                    visualData: root.mainInstance?.providerVisualData(providerCard.providerId) ?? ({
-                                        "source": "icon",
-                                        "icon": "ai"
-                                    })
-                                    pointSize: Style.fontSizeL
-                                }
-
-                                ColumnLayout {
-                                    Layout.fillWidth: true
-                                    Layout.alignment: Qt.AlignVCenter
-                                    spacing: Style.marginXS
-
-                                    NText {
-                                        text: root.providerDisplayName(providerCard.providerId)
-                                        pointSize: Style.fontSizeM
-                                        font.weight: Style.fontWeightSemiBold
-                                        color: Color.mOnSurface
-                                    }
-
-                                    NText {
-                                        text: root.providerAuthLabel(providerCard.providerId)
-                                        pointSize: Style.fontSizeXS
-                                        color: Color.mOnSurfaceVariant
-                                    }
-                                }
-
-                                Item {
-                                    Layout.fillWidth: true
-                                }
-
-                                ColumnLayout {
-                                    Layout.preferredWidth: 90 * Style.uiScaleRatio
-                                    Layout.alignment: Qt.AlignVCenter
-                                    spacing: Style.marginXS
-
-                                    NToggle {
-                                        Layout.alignment: Qt.AlignHCenter
-                                        checked: providerCard.providerCfg.enabled ?? true
-                                        onToggled: value => root.setProviderEnabled(providerCard.providerId, value)
-                                    }
-
-                                    NText {
-                                        Layout.alignment: Qt.AlignHCenter
-                                        horizontalAlignment: Text.AlignHCenter
-                                        text: root.tr("settings.providers.enable")
-                                        pointSize: Style.fontSizeXS
-                                        color: Color.mOnSurfaceVariant
-                                    }
-                                }
-
-                                ColumnLayout {
-                                    Layout.preferredWidth: 110 * Style.uiScaleRatio
-                                    Layout.alignment: Qt.AlignVCenter
-                                    spacing: Style.marginXS
-
-                                    NToggle {
-                                        Layout.alignment: Qt.AlignHCenter
-                                        checked: providerCard.providerCfg.showInWidget ?? true
-                                        onToggled: value => root.setProviderShownInBar(providerCard.providerId, value)
-                                    }
-
-                                    NText {
-                                        Layout.alignment: Qt.AlignHCenter
-                                        horizontalAlignment: Text.AlignHCenter
-                                        text: root.tr("settings.providers.showInBar")
-                                        pointSize: Style.fontSizeXS
-                                        color: Color.mOnSurfaceVariant
-                                    }
-                                }
-
-                                Item {
-                                    Layout.preferredWidth: Style.marginM
-                                }
-
-                                NButton {
-                                    Layout.preferredWidth: 140 * Style.uiScaleRatio
-                                    text: providerCard.expanded ? root.tr("settings.providers.hideDetails") : root.tr("settings.providers.configure")
-                                    outlined: true
-                                    onClicked: root.toggleProviderExpanded(providerCard.providerId)
-                                }
+                            onDraggingChanged: {
+                                if (dragging)
+                                    root.draggedProviderIndex = providerCard.providerIndex;
+                                if (!dragging && root.draggedProviderIndex === providerCard.providerIndex)
+                                    root.draggedProviderIndex = -1;
                             }
 
-                            NText {
-                                visible: !providerCard.expanded
-                                text: providerCard.providerCfg.enabled ?? true
-                                    ? root.tr("settings.providers.enabledSummary")
-                                    : root.tr("settings.providers.disabledSummary")
-                                pointSize: Style.fontSizeXS
-                                color: Color.mOnSurfaceVariant
-                                wrapMode: Text.Wrap
-                                Layout.fillWidth: true
+                            Behavior on scale {
+                                NumberAnimation {
+                                    duration: Style.animationFast
+                                }
                             }
 
                             ColumnLayout {
-                                visible: providerCard.expanded
-                                Layout.fillWidth: true
-                                Layout.leftMargin: Style.marginXL * 2
+                                id: cardBody
+                                anchors.fill: parent
+                                anchors.margins: Style.marginL
                                 spacing: Style.marginL
 
-                                NDivider { Layout.fillWidth: true }
-
-                                NLabel {
+                                RowLayout {
                                     Layout.fillWidth: true
-                                    label: root.tr("settings.providers.detailsLabel")
-                                    description: root.tr("settings.providers.detailsDesc", { "provider": root.providerDisplayName(providerCard.providerId) })
-                                    labelSize: Style.fontSizeL
-                                    icon: "settings-2"
-                                }
+                                    spacing: Style.marginXL
 
-                                ColumnLayout {
-                                    id: codexbarSection
-                                    visible: root.providerSupportsCodexbar(providerCard.providerId)
-                                    Layout.fillWidth: true
-                                    spacing: Style.marginS
+                                    Item {
+                                        Layout.preferredWidth: Style.fontSizeL + Style.marginS * 2
+                                        Layout.preferredHeight: Style.fontSizeL + Style.marginS * 2
 
-                                    property string checkState: "idle"
-                                    property string checkError: ""
-
-                                    CodexbarFetcher {
-                                        id: codexbarChecker
-                                        codexbarProvider: root.codexbarName(providerCard.providerId)
-                                        onDataReady: _ => {
-                                            if (providerCard.providerCfg.useCodexbar)
-                                                codexbarSection.checkState = "ok";
+                                        NIcon {
+                                            anchors.centerIn: parent
+                                            icon: "grip-vertical"
+                                            color: Color.mOnSurfaceVariant
                                         }
-                                        onFetchError: message => {
-                                            if (providerCard.providerCfg.useCodexbar) {
-                                                codexbarSection.checkState = "error";
-                                                codexbarSection.checkError = message;
-                                            }
+
+                                        MouseArea {
+                                            id: dragHandleMouseArea
+                                            anchors.fill: parent
+                                            cursorShape: Qt.OpenHandCursor
+                                            drag.target: providerCard
                                         }
                                     }
 
-                                    RowLayout {
+                                    ProviderVisual {
+                                        Layout.alignment: Qt.AlignVCenter
+                                        visualData: root.mainInstance?.providerVisualData(providerCard.providerId) ?? ({
+                                                "source": "icon",
+                                                "icon": "ai"
+                                            })
+                                        pointSize: Style.fontSizeL
+                                    }
+
+                                    ColumnLayout {
                                         Layout.fillWidth: true
-                                        spacing: Style.marginL
+                                        Layout.alignment: Qt.AlignVCenter
+                                        spacing: Style.marginXS
+
+                                        NText {
+                                            text: root.providerDisplayName(providerCard.providerId)
+                                            pointSize: Style.fontSizeM
+                                            font.weight: Style.fontWeightSemiBold
+                                            color: Color.mOnSurface
+                                        }
+
+                                        NText {
+                                            text: root.providerAuthLabel(providerCard.providerId)
+                                            pointSize: Style.fontSizeXS
+                                            color: Color.mOnSurfaceVariant
+                                        }
+                                    }
+
+                                    Item {
+                                        Layout.fillWidth: true
+                                    }
+
+                                    ColumnLayout {
+                                        Layout.preferredWidth: 90 * Style.uiScaleRatio
+                                        Layout.alignment: Qt.AlignVCenter
+                                        spacing: Style.marginXS
 
                                         NToggle {
+                                            Layout.alignment: Qt.AlignHCenter
+                                            checked: providerCard.providerCfg.enabled ?? true
+                                            onToggled: value => root.setProviderEnabled(providerCard.providerId, value)
+                                        }
+
+                                        NText {
+                                            Layout.alignment: Qt.AlignHCenter
+                                            horizontalAlignment: Text.AlignHCenter
+                                            text: root.tr("settings.providers.enable")
+                                            pointSize: Style.fontSizeXS
+                                            color: Color.mOnSurfaceVariant
+                                        }
+                                    }
+
+                                    ColumnLayout {
+                                        Layout.preferredWidth: 110 * Style.uiScaleRatio
+                                        Layout.alignment: Qt.AlignVCenter
+                                        spacing: Style.marginXS
+
+                                        NToggle {
+                                            Layout.alignment: Qt.AlignHCenter
+                                            checked: providerCard.providerCfg.showInWidget ?? true
+                                            onToggled: value => root.setProviderShownInBar(providerCard.providerId, value)
+                                        }
+
+                                        NText {
+                                            Layout.alignment: Qt.AlignHCenter
+                                            horizontalAlignment: Text.AlignHCenter
+                                            text: root.tr("settings.providers.showInBar")
+                                            pointSize: Style.fontSizeXS
+                                            color: Color.mOnSurfaceVariant
+                                        }
+                                    }
+
+                                    Item {
+                                        Layout.preferredWidth: Style.marginM
+                                    }
+
+                                    NButton {
+                                        Layout.preferredWidth: 140 * Style.uiScaleRatio
+                                        text: providerCard.expanded ? root.tr("settings.providers.hideDetails") : root.tr("settings.providers.configure")
+                                        outlined: true
+                                        onClicked: root.toggleProviderExpanded(providerCard.providerId)
+                                    }
+                                }
+
+                                NText {
+                                    visible: !providerCard.expanded
+                                    text: providerCard.providerCfg.enabled ?? true ? root.tr("settings.providers.enabledSummary") : root.tr("settings.providers.disabledSummary")
+                                    pointSize: Style.fontSizeXS
+                                    color: Color.mOnSurfaceVariant
+                                    wrapMode: Text.Wrap
+                                    Layout.fillWidth: true
+                                }
+
+                                ColumnLayout {
+                                    visible: providerCard.expanded
+                                    Layout.fillWidth: true
+                                    Layout.leftMargin: Style.marginXL * 2
+                                    spacing: Style.marginL
+
+                                    NLabel {
+                                        Layout.fillWidth: true
+                                        label: root.tr("settings.providers.detailsLabel")
+                                        description: root.tr("settings.providers.detailsDesc", {
+                                            "provider": root.providerDisplayName(providerCard.providerId)
+                                        })
+                                        labelSize: Style.fontSizeL
+                                        icon: "settings-2"
+                                    }
+
+                                    ColumnLayout {
+                                        id: codexbarSection
+                                        visible: root.providerSupportsCodexbar(providerCard.providerId)
+                                        Layout.fillWidth: true
+                                        spacing: Style.marginS
+
+                                        property string checkState: "idle"
+                                        property string checkError: ""
+
+                                        CodexbarFetcher {
+                                            id: codexbarChecker
+                                            codexbarProvider: root.codexbarName(providerCard.providerId)
+                                            onDataReady: _ => {
+                                                if (providerCard.providerCfg.useCodexbar)
+                                                    codexbarSection.checkState = "ok";
+                                            }
+                                            onFetchError: message => {
+                                                if (providerCard.providerCfg.useCodexbar) {
+                                                    codexbarSection.checkState = "error";
+                                                    codexbarSection.checkError = message;
+                                                }
+                                            }
+                                        }
+
+                                        NToggle {
+                                            Layout.fillWidth: true
+                                            label: root.tr("settings.codexbar.label")
+                                            description: root.tr("settings.codexbar.desc")
                                             checked: providerCard.providerCfg.useCodexbar ?? false
-                                            onToggled: value => {
-                                                root.setProviderUseCodexbar(providerCard.providerId, value);
-                                                if (value) {
+                                            onToggled: checked => {
+                                                root.setProviderUseCodexbar(providerCard.providerId, checked);
+                                                if (checked) {
                                                     codexbarSection.checkState = "running";
                                                     codexbarSection.checkError = "";
                                                     codexbarChecker.fetch();
@@ -885,187 +725,169 @@ ColumnLayout {
                                                     codexbarSection.checkState = "idle";
                                                 }
                                             }
+                                            defaultValue: root.defaults.providers?.[providerCard.providerId]?.useCodexbar ?? false
                                         }
 
-                                        ColumnLayout {
+                                        RowLayout {
+                                            visible: codexbarSection.checkState !== "idle"
                                             Layout.fillWidth: true
-                                            spacing: Style.marginXS
+                                            spacing: Style.marginS
 
                                             NText {
-                                                text: root.tr("settings.codexbar.label")
-                                                pointSize: Style.fontSizeM
-                                                font.weight: Style.fontWeightSemiBold
-                                                color: Color.mOnSurface
+                                                visible: codexbarSection.checkState === "running"
+                                                text: root.tr("settings.codexbar.checking")
+                                                pointSize: Style.fontSizeXS
+                                                color: Color.mOnSurfaceVariant
+                                            }
+
+                                            NIcon {
+                                                visible: codexbarSection.checkState === "ok"
+                                                icon: "check"
+                                                color: Color.mPrimary
                                             }
 
                                             NText {
-                                                text: root.tr("settings.codexbar.desc")
+                                                visible: codexbarSection.checkState === "ok"
+                                                text: root.tr("settings.codexbar.ok")
                                                 pointSize: Style.fontSizeXS
-                                                color: Color.mOnSurfaceVariant
-                                                wrapMode: Text.Wrap
+                                                color: Color.mPrimary
+                                            }
+
+                                            NIcon {
+                                                visible: codexbarSection.checkState === "error"
+                                                icon: "x"
+                                                color: Color.mError
+                                            }
+
+                                            NText {
+                                                visible: codexbarSection.checkState === "error"
                                                 Layout.fillWidth: true
+                                                text: codexbarSection.checkError
+                                                pointSize: Style.fontSizeXS
+                                                color: Color.mError
+                                                wrapMode: Text.Wrap
                                             }
                                         }
                                     }
 
-                                    RowLayout {
-                                        visible: codexbarSection.checkState !== "idle"
+                                    ColumnLayout {
+                                        visible: providerCard.providerId === "codex" && (providerCard.providerCfg.enabled ?? true)
                                         Layout.fillWidth: true
                                         spacing: Style.marginS
 
+                                        NComboBox {
+                                            Layout.fillWidth: true
+                                            label: root.tr("settings.codex.sourceLabel")
+                                            description: root.tr("settings.codex.sourceDesc")
+                                            model: [
+                                                {
+                                                    "key": "local",
+                                                    "name": root.tr("settings.codex.local")
+                                                },
+                                                {
+                                                    "key": "api",
+                                                    "name": root.tr("settings.codex.api")
+                                                }
+                                            ]
+                                            currentKey: providerCard.providerCfg.usageMode ?? "local"
+                                            onSelected: function (key) {
+                                                root.ensureProviderSettings("codex").usageMode = key;
+                                                root.editSettingsChanged();
+                                            }
+                                        }
+
                                         NText {
-                                            visible: codexbarSection.checkState === "running"
-                                            text: root.tr("settings.codexbar.checking")
+                                            text: providerCard.providerCfg.usageMode === "api" ? root.tr("settings.codex.apiHelp") : root.tr("settings.codex.localHelp")
                                             pointSize: Style.fontSizeXS
                                             color: Color.mOnSurfaceVariant
-                                        }
-
-                                        NIcon {
-                                            visible: codexbarSection.checkState === "ok"
-                                            icon: "check"
-                                            color: Color.mPrimary
-                                        }
-
-                                        NText {
-                                            visible: codexbarSection.checkState === "ok"
-                                            text: root.tr("settings.codexbar.ok")
-                                            pointSize: Style.fontSizeXS
-                                            color: Color.mPrimary
-                                        }
-
-                                        NIcon {
-                                            visible: codexbarSection.checkState === "error"
-                                            icon: "x"
-                                            color: Color.mError
-                                        }
-
-                                        NText {
-                                            visible: codexbarSection.checkState === "error"
-                                            Layout.fillWidth: true
-                                            text: codexbarSection.checkError
-                                            pointSize: Style.fontSizeXS
-                                            color: Color.mError
                                             wrapMode: Text.Wrap
+                                            Layout.fillWidth: true
                                         }
                                     }
 
-                                    NDivider { Layout.fillWidth: true }
-                                }
-
-                                ColumnLayout {
-                                    visible: providerCard.providerId === "codex" && (providerCard.providerCfg.enabled ?? true)
-                                    Layout.fillWidth: true
-                                    spacing: Style.marginS
-
-                                    NComboBox {
+                                    ColumnLayout {
+                                        visible: providerCard.providerId === "openrouter"
                                         Layout.fillWidth: true
-                                        label: root.tr("settings.codex.sourceLabel")
-                                        description: root.tr("settings.codex.sourceDesc")
-                                        model: [
-                                            { "key": "local", "name": root.tr("settings.codex.local") },
-                                            { "key": "api", "name": root.tr("settings.codex.api") }
-                                        ]
-                                        currentKey: providerCard.providerCfg.usageMode ?? "local"
-                                        onSelected: function(key) {
-                                            root.ensureProviderSettings("codex").usageMode = key;
-                                            root.editSettingsChanged();
+                                        spacing: Style.marginS
+
+                                        NTextInput {
+                                            Layout.fillWidth: true
+                                            label: root.tr("settings.apiKey.openrouterLabel")
+                                            description: root.tr("settings.apiKey.openrouterDesc")
+                                            placeholderText: root.tr("settings.apiKey.openrouterPlaceholder")
+                                            text: providerCard.providerCfg.apiKey ?? ""
+                                            onTextChanged: root.ensureProviderSettings("openrouter").apiKey = text
+                                        }
+                                    }
+
+                                    ColumnLayout {
+                                        visible: providerCard.providerId === "zen"
+                                        Layout.fillWidth: true
+                                        spacing: Style.marginS
+
+                                        NTextInput {
+                                            Layout.fillWidth: true
+                                            label: root.tr("settings.apiKey.zenLabel")
+                                            description: root.tr("settings.apiKey.zenDesc")
+                                            placeholderText: root.tr("settings.apiKey.zenPlaceholder")
+                                            text: providerCard.providerCfg.apiKey ?? ""
+                                            onTextChanged: root.ensureProviderSettings("zen").apiKey = text
+                                        }
+                                    }
+
+                                    ColumnLayout {
+                                        visible: providerCard.providerId === "deepseek"
+                                        Layout.fillWidth: true
+                                        spacing: Style.marginS
+
+                                        NTextInput {
+                                            Layout.fillWidth: true
+                                            label: root.tr("settings.apiKey.deepseekLabel")
+                                            description: root.tr("settings.apiKey.deepseekDesc")
+                                            placeholderText: root.tr("settings.apiKey.deepseekPlaceholder")
+                                            text: providerCard.providerCfg.apiKey ?? ""
+                                            onTextChanged: root.ensureProviderSettings("deepseek").apiKey = text
+                                        }
+                                    }
+
+                                    ColumnLayout {
+                                        visible: providerCard.providerId === "kilocode"
+                                        Layout.fillWidth: true
+                                        spacing: Style.marginS
+
+                                        NTextInput {
+                                            Layout.fillWidth: true
+                                            label: root.tr("settings.apiKey.kilocodeLabel")
+                                            description: root.tr("settings.apiKey.kilocodeDesc")
+                                            placeholderText: root.tr("settings.apiKey.kilocodePlaceholder")
+                                            text: providerCard.providerCfg.apiKey ?? ""
+                                            onTextChanged: root.ensureProviderSettings("kilocode").apiKey = text
+                                        }
+                                    }
+
+                                    ColumnLayout {
+                                        visible: providerCard.providerId === "zai"
+                                        Layout.fillWidth: true
+                                        spacing: Style.marginS
+
+                                        NTextInput {
+                                            Layout.fillWidth: true
+                                            label: root.tr("settings.apiKey.zaiLabel")
+                                            description: root.tr("settings.apiKey.zaiDesc")
+                                            placeholderText: root.tr("settings.apiKey.zaiPlaceholder")
+                                            text: providerCard.providerCfg.apiKey ?? ""
+                                            onTextChanged: root.ensureProviderSettings("zai").apiKey = text
                                         }
                                     }
 
                                     NText {
-                                        text: providerCard.providerCfg.usageMode === "api"
-                                            ? root.tr("settings.codex.apiHelp")
-                                            : root.tr("settings.codex.localHelp")
+                                        visible: !root.providerSupportsCodexbar(providerCard.providerId) && providerCard.providerId !== "deepseek"
+                                        text: root.tr("settings.providers.noAdditional")
                                         pointSize: Style.fontSizeXS
                                         color: Color.mOnSurfaceVariant
                                         wrapMode: Text.Wrap
                                         Layout.fillWidth: true
                                     }
-                                }
-
-                                ColumnLayout {
-                                    visible: providerCard.providerId === "openrouter"
-                                    Layout.fillWidth: true
-                                    spacing: Style.marginS
-
-                                    NTextInput {
-                                        Layout.fillWidth: true
-                                        label: root.tr("settings.apiKey.openrouterLabel")
-                                        description: root.tr("settings.apiKey.openrouterDesc")
-                                        placeholderText: root.tr("settings.apiKey.openrouterPlaceholder")
-                                        text: providerCard.providerCfg.apiKey ?? ""
-                                        onTextChanged: root.ensureProviderSettings("openrouter").apiKey = text
-                                    }
-                                }
-
-                                ColumnLayout {
-                                    visible: providerCard.providerId === "zen"
-                                    Layout.fillWidth: true
-                                    spacing: Style.marginS
-
-                                    NTextInput {
-                                        Layout.fillWidth: true
-                                        label: root.tr("settings.apiKey.zenLabel")
-                                        description: root.tr("settings.apiKey.zenDesc")
-                                        placeholderText: root.tr("settings.apiKey.zenPlaceholder")
-                                        text: providerCard.providerCfg.apiKey ?? ""
-                                        onTextChanged: root.ensureProviderSettings("zen").apiKey = text
-                                    }
-                                }
-
-                                ColumnLayout {
-                                    visible: providerCard.providerId === "deepseek"
-                                    Layout.fillWidth: true
-                                    spacing: Style.marginS
-
-                                    NTextInput {
-                                        Layout.fillWidth: true
-                                        label: root.tr("settings.apiKey.deepseekLabel")
-                                        description: root.tr("settings.apiKey.deepseekDesc")
-                                        placeholderText: root.tr("settings.apiKey.deepseekPlaceholder")
-                                        text: providerCard.providerCfg.apiKey ?? ""
-                                        onTextChanged: root.ensureProviderSettings("deepseek").apiKey = text
-                                    }
-                                }
-
-                                ColumnLayout {
-                                    visible: providerCard.providerId === "kilocode"
-                                    Layout.fillWidth: true
-                                    spacing: Style.marginS
-
-                                    NTextInput {
-                                        Layout.fillWidth: true
-                                        label: root.tr("settings.apiKey.kilocodeLabel")
-                                        description: root.tr("settings.apiKey.kilocodeDesc")
-                                        placeholderText: root.tr("settings.apiKey.kilocodePlaceholder")
-                                        text: providerCard.providerCfg.apiKey ?? ""
-                                        onTextChanged: root.ensureProviderSettings("kilocode").apiKey = text
-                                    }
-                                }
-
-                                ColumnLayout {
-                                    visible: providerCard.providerId === "zai"
-                                    Layout.fillWidth: true
-                                    spacing: Style.marginS
-
-                                    NTextInput {
-                                        Layout.fillWidth: true
-                                        label: root.tr("settings.apiKey.zaiLabel")
-                                        description: root.tr("settings.apiKey.zaiDesc")
-                                        placeholderText: root.tr("settings.apiKey.zaiPlaceholder")
-                                        text: providerCard.providerCfg.apiKey ?? ""
-                                        onTextChanged: root.ensureProviderSettings("zai").apiKey = text
-                                    }
-                                }
-
-                                NText {
-                                    visible: !root.providerSupportsCodexbar(providerCard.providerId)
-                                        && providerCard.providerId !== "deepseek"
-                                    text: root.tr("settings.providers.noAdditional")
-                                    pointSize: Style.fontSizeXS
-                                    color: Color.mOnSurfaceVariant
-                                    wrapMode: Text.Wrap
-                                    Layout.fillWidth: true
                                 }
                             }
                         }
@@ -1073,8 +895,6 @@ ColumnLayout {
                 }
             }
         }
-    }
-
     }
 
     Item {
