@@ -87,6 +87,7 @@
       "refreshIntervalSec": 30,
       "apiRefreshIntervalMin": 1,
       "providerOrderMode": "manual",
+      "recentChangeWidgetProviderLimit": 9,
       "providerOrder": [
         "claude",
         "codex",

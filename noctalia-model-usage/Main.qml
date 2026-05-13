@@ -110,6 +110,8 @@ Item {
     property var lastChanged7dOrderByProvider: ({})
     property int providerChangeSequence: 0
     property int providerSortRevision: 0
+    property int recentChangeWidgetProviderLimit: Math.max(1, Math.min(root.defaultProviderOrder.length,
+        Number(pluginSettings?.recentChangeWidgetProviderLimit ?? root.defaultProviderOrder.length)))
 
     property var manualProviderOrder: root.normalizedProviderOrder(pluginSettings?.providerOrder)
 
@@ -150,6 +152,8 @@ Item {
             if (ps.showInWidget !== false)
                 result.push(p);
         }
+        if (root.providerOrderMode === "recent7dChange")
+            return result.slice(0, root.recentChangeWidgetProviderLimit);
         return result;
     }
 

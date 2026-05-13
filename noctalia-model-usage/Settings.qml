@@ -156,6 +156,8 @@ ColumnLayout {
 
         if (s.providerOrderMode !== "recent7dChange")
             s.providerOrderMode = "manual";
+        s.recentChangeWidgetProviderLimit = Math.max(1, Math.min(root.normalizedEditProviderOrder.length,
+            Number(s.recentChangeWidgetProviderLimit ?? root.normalizedEditProviderOrder.length)));
         if (s.barIconAlertWindow !== "usage5h")
             s.barIconAlertWindow = "usage7d";
         root.pluginApi.pluginSettings = s;
@@ -462,6 +464,23 @@ ColumnLayout {
                     color: Color.mOnSurfaceVariant
                     wrapMode: Text.Wrap
                     Layout.fillWidth: true
+                }
+
+                NSpinBox {
+                    Layout.fillWidth: true
+                    visible: root.editSettings?.providerOrderMode === "recent7dChange"
+                    label: root.tr("settings.providers.recentLimitLabel")
+                    description: root.tr("settings.providers.recentLimitDesc")
+                    from: 1
+                    to: root.normalizedEditProviderOrder.length
+                    value: Math.max(1, Math.min(root.normalizedEditProviderOrder.length,
+                        Number(root.editSettings?.recentChangeWidgetProviderLimit ?? root.normalizedEditProviderOrder.length)))
+                    stepSize: 1
+                    onValueChanged: {
+                        root.editSettings.recentChangeWidgetProviderLimit = value;
+                        root.editSettingsChanged();
+                    }
+                    defaultValue: root.defaults.recentChangeWidgetProviderLimit ?? root.normalizedEditProviderOrder.length
                 }
 
                 NText {

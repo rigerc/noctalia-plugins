@@ -101,6 +101,8 @@
       "orderLabel": "Provider order",
       "orderDesc": "Manual order is used directly, or as a tie-breaker when sorting by recently changed 7d usage.",
       "recentHelp": "Providers whose 7d usage percentage changed most recently move to the front. Providers without 7d usage stay in your manual drag order. This recent-change history resets when the shell restarts.",
+      "recentLimitLabel": "Maximum recent providers in bar",
+      "recentLimitDesc": "Limits how many visible providers can appear in the bar while recent 7d change sorting is enabled. The panel still shows every enabled provider.",
       "dragHelp": "Drag providers to set the manual order. The manual order also acts as the tie-break order when recent 7d change sorting is enabled.",
       "enable": "Enable",
       "showInBar": "Show in bar",
