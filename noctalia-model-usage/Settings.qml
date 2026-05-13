@@ -166,6 +166,8 @@ ColumnLayout {
             s.providerOrderMode = "manual";
         s.recentChangeWidgetProviderLimit = Math.max(1, Math.min(root.normalizedEditProviderOrder.length,
             Number(s.recentChangeWidgetProviderLimit ?? root.normalizedEditProviderOrder.length)));
+        if (root.pluginApi.pluginSettings?._recentChangeState)
+            s._recentChangeState = root.pluginApi.pluginSettings._recentChangeState;
         if (s.barIconAlertWindow !== "usage5h")
             s.barIconAlertWindow = "usage7d";
         root.pluginApi.pluginSettings = s;

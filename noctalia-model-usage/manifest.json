@@ -99,7 +99,12 @@
         "zai",
         "gemini"
       ],
-      "barIconAlertWindow": "usage7d"
+      "barIconAlertWindow": "usage7d",
+      "_recentChangeState": {
+        "lastSeenPercentByWindow": {},
+        "lastChangedOrderByWindow": {},
+        "providerChangeSequence": 0
+      }
     }
   }
 }

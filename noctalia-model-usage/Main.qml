@@ -115,9 +115,10 @@ Item {
     })
 
     property string providerOrderMode: String(pluginSettings?.providerOrderMode ?? "manual")
-    property var lastSeenPercentByWindow: ({})
-    property var lastChangedOrderByWindow: ({})
-    property int providerChangeSequence: 0
+    readonly property var persistedRecentChangeState: pluginSettings?._recentChangeState ?? ({})
+    property var lastSeenPercentByWindow: persistedRecentChangeState?.lastSeenPercentByWindow ?? ({})
+    property var lastChangedOrderByWindow: persistedRecentChangeState?.lastChangedOrderByWindow ?? ({})
+    property int providerChangeSequence: Number(persistedRecentChangeState?.providerChangeSequence ?? 0)
     property int providerSortRevision: 0
     property int recentChangeWidgetProviderLimit: Math.max(1, Math.min(root.defaultProviderOrder.length,
         Number(pluginSettings?.recentChangeWidgetProviderLimit ?? root.defaultProviderOrder.length)))
@@ -209,6 +210,13 @@ Item {
         onTriggered: root.refreshAll()
     }
 
+    Timer {
+        id: persistRecentChangeStateTimer
+        interval: 5000
+        repeat: false
+        onTriggered: root.persistRecentChangeState()
+    }
+
     onBarProvidersChanged: {
         if (barProviders.length === 0) {
             activeIndex = 0;
@@ -256,6 +264,25 @@ Item {
         changedByWindow[usageWindow] = changed;
         root.lastChangedOrderByWindow = changedByWindow;
         root.providerSortRevision += 1;
+        root.schedulePersistRecentChangeState();
+    }
+
+    function schedulePersistRecentChangeState() {
+        if (root.pluginApi)
+            persistRecentChangeStateTimer.restart();
+    }
+
+    function persistRecentChangeState() {
+        if (!root.pluginApi)
+            return;
+        if (!root.pluginApi.pluginSettings)
+            root.pluginApi.pluginSettings = {};
+        root.pluginApi.pluginSettings._recentChangeState = {
+            "lastSeenPercentByWindow": root.lastSeenPercentByWindow,
+            "lastChangedOrderByWindow": root.lastChangedOrderByWindow,
+            "providerChangeSequence": root.providerChangeSequence
+        };
+        root.pluginApi.saveSettings();
     }
 
     function providerEnabled(id) {
