@@ -232,7 +232,7 @@ ColumnLayout {
 
                 ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: Style.marginL
+                    spacing: Style.marginXL
 
                     NLabel {
                         Layout.fillWidth: true
@@ -321,7 +321,7 @@ ColumnLayout {
 
                 ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: Style.marginL
+                    spacing: Style.marginXL
 
                     NLabel {
                         Layout.fillWidth: true
@@ -405,7 +405,7 @@ ColumnLayout {
 
                 ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: Style.marginL
+                    spacing: Style.marginXL
 
                     NLabel {
                         Layout.fillWidth: true
