@@ -200,7 +200,7 @@ Item {
     property bool barIconAlertOnLimit: pluginSettings?.barIconAlertOnLimit ?? false
     property int barIconAlertThreshold: Math.max(50, Math.min(100, Number(pluginSettings?.barIconAlertThreshold ?? 95)))
     property string barIconAlertWindow: String(pluginSettings?.barIconAlertWindow ?? "usage7d") === "usage5h" ? "usage5h" : "usage7d"
-    property int refreshIntervalSec: Math.max(5, Math.min(86400, Number(pluginSettings?.refreshIntervalSec ?? 30)))
+    property int refreshIntervalSec: Math.max(5, Math.min(21600, Number(pluginSettings?.refreshIntervalSec ?? 30)))
     readonly property int networkRefreshIntervalSec: root.refreshIntervalSec
     property double currentTimeMs: Date.now()
     property double nextRefreshAtMs: 0

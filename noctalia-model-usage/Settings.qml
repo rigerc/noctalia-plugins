@@ -421,7 +421,7 @@ ColumnLayout {
                         label: root.tr("settings.refresh.intervalLabel")
                         description: root.tr("settings.refresh.intervalDesc")
                         from: 5
-                        to: 300
+                        to: 21600
                         value: root.editSettings?.refreshIntervalSec ?? 30
                         stepSize: 5
                         onValueChanged: root.editSettings.refreshIntervalSec = value
