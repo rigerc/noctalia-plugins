@@ -201,6 +201,9 @@ Item {
     property int barIconAlertThreshold: Math.max(50, Math.min(100, Number(pluginSettings?.barIconAlertThreshold ?? 95)))
     property string barIconAlertWindow: String(pluginSettings?.barIconAlertWindow ?? "usage7d") === "usage5h" ? "usage5h" : "usage7d"
     property int refreshIntervalSec: pluginSettings?.refreshIntervalSec ?? 30
+    property double currentTimeMs: Date.now()
+    property double nextRefreshAtMs: 0
+    readonly property int nextRefreshRemainingSec: Math.max(0, Math.ceil((root.nextRefreshAtMs - root.currentTimeMs) / 1000))
 
     property string barMetric: String(pluginSettings?.barMetric ?? "prompts").trim()
 
@@ -214,6 +217,13 @@ Item {
     }
 
     Timer {
+        interval: 1000
+        running: true
+        repeat: true
+        onTriggered: root.currentTimeMs = Date.now()
+    }
+
+    Timer {
         id: initialRefreshTimer
         interval: 1
         repeat: false
@@ -221,10 +231,14 @@ Item {
     }
 
     Timer {
+        id: periodicRefreshTimer
         interval: root.refreshIntervalSec * 1000
         running: true
         repeat: true
-        onTriggered: root.refreshAll(false)
+        onTriggered: {
+            root.refreshAll(false);
+            root.scheduleNextRefresh();
+        }
     }
 
     Timer {
@@ -252,7 +266,15 @@ Item {
     onProviderSortRevisionChanged: activeIndex = 0
     onProviderOrderModeChanged: activeIndex = 0
 
-    Component.onCompleted: initialRefreshTimer.start()
+    onRefreshIntervalSecChanged: {
+        periodicRefreshTimer.restart();
+        root.scheduleNextRefresh();
+    }
+
+    Component.onCompleted: {
+        root.scheduleNextRefresh();
+        initialRefreshTimer.start();
+    }
 
     function normalizedProviderOrder(savedOrder) {
         return root.providerCatalog.normalizeProviderOrder(savedOrder);
@@ -321,6 +343,13 @@ Item {
 
     function refresh() {
         refreshAll(true);
+        periodicRefreshTimer.restart();
+        root.scheduleNextRefresh();
+    }
+
+    function scheduleNextRefresh() {
+        root.currentTimeMs = Date.now();
+        root.nextRefreshAtMs = root.currentTimeMs + Math.max(1, root.refreshIntervalSec) * 1000;
     }
 
     property string lastRefreshTime: ""

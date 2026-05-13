@@ -25,6 +25,24 @@ Item {
         return root.pluginApi?.tr(key, vars);
     }
 
+    function formatRefreshCountdown(totalSeconds) {
+        const secs = Math.max(0, Math.floor(Number(totalSeconds ?? 0)));
+        const s = String(secs % 60).padStart(2, "0");
+        const mTotal = Math.floor(secs / 60);
+        if (mTotal < 60)
+            return mTotal + ":" + s;
+        const h = Math.floor(mTotal / 60);
+        const m = String(mTotal % 60).padStart(2, "0");
+        return h + ":" + m + ":" + s;
+    }
+
+    function tooltipWithNextRefresh(text) {
+        const remaining = root.mainInstance?.nextRefreshRemainingSec ?? -1;
+        if (!(remaining >= 0))
+            return text;
+        return text + "\n" + root.tr("widget.nextRefresh", { "time": root.formatRefreshCountdown(remaining) });
+    }
+
     readonly property string screenName: screen ? screen.name : ""
     readonly property string barPosition: Settings.getBarPositionForScreen(screenName)
     readonly property bool isBarVertical: barPosition === "left" || barPosition === "right"
@@ -53,8 +71,8 @@ Item {
         if (!activeProvider) {
             const ep = root.mainInstance?.barProviders ?? [];
             if (ep.length === 0)
-                return root.tr("widget.title");
-            return root.tr("widget.title") + " — " + root.tr("widget.providerCount", { "count": ep.length });
+                return root.tooltipWithNextRefresh(root.tr("widget.title"));
+            return root.tooltipWithNextRefresh(root.tr("widget.title") + " — " + root.tr("widget.providerCount", { "count": ep.length }));
         }
         if (!root.barCycleEnabled) {
             const ep = root.mainInstance?.barProviders ?? [];
@@ -65,7 +83,7 @@ Item {
                 if (rl >= 0)
                     tip += " (" + p.rateLimitLabel + ": " + Math.round(rl * 100) + "%)";
             }
-            return tip;
+            return root.tooltipWithNextRefresh(tip);
         }
         const name = activeProvider.providerName;
         const prompts = activeProvider.todayPrompts;
@@ -77,7 +95,12 @@ Item {
             tip += " · " + root.tr("widget.rateLimitFragment", { "label": activeProvider.rateLimitLabel, "percent": Math.round(rl * 100) });
         else if ((activeProvider.usageStatusText ?? "") !== "")
             tip += " \u00b7 " + activeProvider.usageStatusText;
-        return tip;
+        return root.tooltipWithNextRefresh(tip);
+    }
+
+    onTooltipTextChanged: {
+        if (mouseArea.containsMouse)
+            TooltipService.show(root, root.tooltipText, BarService.getTooltipDirection(root.screenName));
     }
 
     // Show-on-hover internal state (matches BarPillHorizontal pattern)

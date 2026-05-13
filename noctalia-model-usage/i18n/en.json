@@ -6,6 +6,7 @@
     "todaySummary": "{provider} \u2014 Today: {prompts} prompts, {sessions} sessions, {tokens} tokens",
     "rateLimitFragment": "{label}: {percent}%",
     "usagePrefix": "{prefix}: {value}",
+    "nextRefresh": "Next refresh: {time}",
     "showTextAlways": "Show text always",
     "showTextOnHover": "Show text on hover"
   },
