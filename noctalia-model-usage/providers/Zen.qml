@@ -245,7 +245,7 @@ Item {
             root.secondaryRateLimitResetAt = "";
         }
 
-        if (credits && Number(credits.total ?? 0) > 0) {
+        if (!secondary && credits && Number(credits.total ?? 0) > 0) {
             const used = Number(credits.used ?? 0);
             const total = Number(credits.total ?? 0);
             root.rateLimitPercent = Math.min(1, Math.max(0, used / total));
